@@ -63,15 +63,29 @@ func NewSignerWithPrivateKey(privateKey *rsa.PrivateKey) (Signer, error) {
 }
 
 func (s *signer) SignAccessToken(token *AccessToken) (string, error) {
-	return jwt.Signed(s.sig).Claims(token).Serialize()
+	// token_use is stamped here, not taken from the caller, so an access token
+	// cannot be signed as a refresh or demo-creation token.
+	claims := *token
+	claims.TokenUse = TokenUseAccess
+	return jwt.Signed(s.sig).Claims(claims).Serialize()
 }
 
 func (s *signer) SignRefreshToken(token *RefreshToken) (string, error) {
-	return jwt.Signed(s.sig).Claims(token).Serialize()
+	claims := *token
+	claims.TokenUse = TokenUseRefresh
+	// iss and aud are not written. The previous access and demo verifiers
+	// accept a token that carries them and do not read token_use, so a
+	// refresh token with those claims would verify as an access or demo
+	// token on a pod that has not been updated, for the refresh lifetime.
+	claims.Issuer = ""
+	claims.Audience = ""
+	return jwt.Signed(s.sig).Claims(claims).Serialize()
 }
 
 func (s *signer) SignDemoCreationToken(token *DemoCreationToken) (string, error) {
-	return jwt.Signed(s.sig).Claims(token).Serialize()
+	claims := *token
+	claims.TokenUse = TokenUseDemo
+	return jwt.Signed(s.sig).Claims(claims).Serialize()
 }
 
 func parseRSAPrivateKey(data []byte) (*rsa.PrivateKey, error) {

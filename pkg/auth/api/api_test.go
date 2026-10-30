@@ -481,7 +481,34 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 				if p.expectedFunc != nil {
 					p.expectedFunc(t, token, accessTokenTTL, refreshTokenTTL)
 				}
+				assertIssuedTokenUses(t, verifier, token)
 			}
 		})
 	}
+}
+
+func assertIssuedTokenUses(t *testing.T, verifier token.Verifier, issued *authproto.Token) {
+	t.Helper()
+	access, err := verifier.VerifyAccessToken(issued.AccessToken)
+	require.NoError(t, err)
+	assert.Equal(t, token.TokenUseAccess, access.TokenUse)
+	assert.Equal(t, "test-issuer", access.Issuer)
+	assert.Equal(t, "test-audience", access.Audience)
+
+	refresh, err := verifier.VerifyRefreshToken(issued.RefreshToken)
+	require.NoError(t, err)
+	assert.Equal(t, token.TokenUseRefresh, refresh.TokenUse)
+	assert.Empty(t, refresh.Issuer)
+	assert.Empty(t, refresh.Audience)
+	assert.Equal(t, access.Email, refresh.Email)
+	assert.Equal(t, access.OrganizationID, refresh.OrganizationID)
+
+	_, err = verifier.VerifyDemoCreationToken(issued.AccessToken)
+	assert.Error(t, err)
+	_, err = verifier.VerifyRefreshToken(issued.AccessToken)
+	assert.Error(t, err)
+	_, err = verifier.VerifyAccessToken(issued.RefreshToken)
+	assert.Error(t, err)
+	_, err = verifier.VerifyDemoCreationToken(issued.RefreshToken)
+	assert.Error(t, err)
 }

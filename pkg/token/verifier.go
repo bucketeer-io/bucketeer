@@ -69,6 +69,13 @@ func (v *verifier) VerifyAccessToken(rawAccessToken string) (*AccessToken, error
 	if err := json.Unmarshal(payload, t); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal claims: %w", err)
 	}
+	// Empty token_use is a token issued before the claim existed, including
+	// the service token. It still verifies here so the process can roll
+	// forward or back without a new token. Refresh and demo verifiers do
+	// not accept that token as their own kind.
+	if t.TokenUse != "" && t.TokenUse != TokenUseAccess {
+		return nil, fmt.Errorf("unexpected token_use %q, expected %q", t.TokenUse, TokenUseAccess)
+	}
 	if t.Issuer != v.issuer {
 		return nil, fmt.Errorf("id token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)
 	}
@@ -97,6 +104,22 @@ func (v *verifier) VerifyRefreshToken(rawRefreshToken string) (*RefreshToken, er
 	if err := json.Unmarshal(payload, t); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal claims: %w", err)
 	}
+	switch t.TokenUse {
+	case TokenUseRefresh:
+		// A refresh token must not carry iss or aud. The previous access and
+		// demo verifiers treat those claims as sufficient and ignore token_use.
+		if t.Issuer != "" || t.Audience != "" {
+			return nil, fmt.Errorf("refresh token must not include iss or aud")
+		}
+	case "":
+		// Issued before token_use. Those refresh tokens also have no iss or aud.
+		// An access token always has both, so it cannot take this path.
+		if t.Issuer != "" || t.Audience != "" {
+			return nil, fmt.Errorf("unexpected token_use %q, expected %q", t.TokenUse, TokenUseRefresh)
+		}
+	default:
+		return nil, fmt.Errorf("unexpected token_use %q, expected %q", t.TokenUse, TokenUseRefresh)
+	}
 	if t.Expiry.Before(time.Now()) {
 		return nil, fmt.Errorf("token is expired (Token Expiry: %v)", t.Expiry)
 	}
@@ -119,6 +142,9 @@ func (v *verifier) VerifyDemoCreationToken(rawDemoToken string) (*DemoCreationTo
 	if err := json.Unmarshal(payload, t); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal claims: %w", err)
 	}
+	if err := checkTokenUse(t.TokenUse, TokenUseDemo); err != nil {
+		return nil, err
+	}
 	if t.Issuer != v.issuer {
 		return nil, fmt.Errorf("demo token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)
 	}
@@ -132,6 +158,13 @@ func (v *verifier) VerifyDemoCreationToken(rawDemoToken string) (*DemoCreationTo
 		return nil, fmt.Errorf("email must be not empty")
 	}
 	return t, nil
+}
+
+func checkTokenUse(got, want string) error {
+	if got != want {
+		return fmt.Errorf("unexpected token_use %q, expected %q", got, want)
+	}
+	return nil
 }
 
 func parseRSAPublicKey(data []byte) (*rsa.PublicKey, error) {

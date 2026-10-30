@@ -186,6 +186,18 @@ func TestExchangeDemoToken_AuthType(t *testing.T) {
 			require.NotNil(t, resp)
 			require.NotNil(t, resp.DemoCreationToken)
 			assert.NotEmpty(t, resp.DemoCreationToken.AccessToken)
+			verifier, vErr := token.NewVerifier(
+				"../../token/testdata/valid-public.pem",
+				service.issuer,
+				service.audience,
+			)
+			require.NoError(t, vErr)
+			parsed, vErr := verifier.VerifyDemoCreationToken(resp.DemoCreationToken.AccessToken)
+			require.NoError(t, vErr)
+			assert.Equal(t, token.TokenUseDemo, parsed.TokenUse)
+			assert.Equal(t, email, parsed.Email)
+			_, vErr = verifier.VerifyAccessToken(resp.DemoCreationToken.AccessToken)
+			assert.Error(t, vErr)
 		})
 	}
 }
