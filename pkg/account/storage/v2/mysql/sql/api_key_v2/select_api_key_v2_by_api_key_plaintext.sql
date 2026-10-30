@@ -1,6 +1,8 @@
 -- Fallback for keys created before api_key_hash existed. The api_key column is
 -- still accurate for every row, so a row that was backfilled between the digest
--- lookup and this one is matched as well.
+-- lookup and this one is matched as well. The comparison is binary: the table
+-- collation is case-insensitive, while a key must match byte for byte, exactly
+-- as it does through its digest.
 SELECT
     id,
     name,
@@ -16,5 +18,5 @@ SELECT
 FROM
     api_key
 WHERE
-    api_key = ? AND
+    api_key COLLATE utf8mb4_bin = ? AND
     environment_id = ?

@@ -323,10 +323,13 @@ func TestEnvironmentAPIKeyCacheInMemoryRoundTrip(t *testing.T) {
 	assert.Equal(t, accountdomain.APIKeyPrefix(rawAPIKey), got.ApiKey.ApiKeyPrefix)
 
 	// A different key does not resolve to the cached entry, and neither does the
-	// digest of the key when it is presented as if it were a key.
+	// digest of the key when it is presented as if it were a key, nor a variant
+	// of the key that differs only in case.
 	_, err = c.Get(otherAPIKey)
 	assert.Equal(t, cache.ErrNotFound, err)
 	_, err = c.Get(accountdomain.HashAPIKey(rawAPIKey))
+	assert.Equal(t, cache.ErrNotFound, err)
+	_, err = c.Get(strings.ToUpper(rawAPIKey))
 	assert.Equal(t, cache.ErrNotFound, err)
 
 	// Neither key names nor values hold the key itself.

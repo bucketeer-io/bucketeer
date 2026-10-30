@@ -278,9 +278,11 @@ func scanResult(mockController *gomock.Controller, err error) *mock.MockRow {
 	return row
 }
 
-// The fallback lookups must match on the key column alone. Requiring the digest
-// to be missing would make a row that is backfilled between the digest lookup
-// and the fallback match neither query.
+// The fallback lookups must match on the key column alone, byte for byte.
+// Requiring the digest to be missing would make a row that is backfilled between
+// the digest lookup and the fallback match neither query, and the table collation
+// is case-insensitive, so the comparison has to force a binary collation to match
+// the key exactly like the digest lookup does.
 func TestAPIKeyPlaintextFallbackQueriesMatchOnKeyOnlyMySQL(t *testing.T) {
 	t.Parallel()
 	for _, query := range []string{
@@ -290,7 +292,7 @@ func TestAPIKeyPlaintextFallbackQueriesMatchOnKeyOnlyMySQL(t *testing.T) {
 		_, where, found := strings.Cut(query, "WHERE")
 		require.True(t, found)
 		assert.NotContains(t, where, "api_key_hash")
-		assert.Contains(t, where, "api_key = ?")
+		assert.Contains(t, where, "api_key COLLATE utf8mb4_bin = ?")
 	}
 }
 
