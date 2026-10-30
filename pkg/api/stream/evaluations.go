@@ -130,6 +130,17 @@ func (h *EvaluationsHandler) Handle(w http.ResponseWriter, httpReq *http.Request
 		rest.ReturnFailureResponse(w, errInternal)
 		return
 	}
+	// The REST server bounds every response with a write timeout. This
+	// response stays open for the lifetime of the SSE connection, so clear
+	// the deadline for this request; heartbeat write failures still detect
+	// clients that went away.
+	if err := http.NewResponseController(w).SetWriteDeadline(time.Time{}); err != nil {
+		h.logger.Warn("Failed to clear write deadline for stream",
+			zap.Error(err),
+			zap.String("environmentID", envID),
+			zap.String("tag", req.Tag),
+		)
+	}
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	// Disable proxy buffering so heartbeat and patch events reach the client immediately.

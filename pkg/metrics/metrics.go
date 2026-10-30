@@ -29,6 +29,17 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/health"
 )
 
+// http.Server timeouts of the metrics/health endpoint. The server only
+// answers short scrape and health-check requests, so a connection that does
+// not make progress within these bounds is closed instead of holding
+// resources indefinitely.
+const (
+	serverReadHeaderTimeout = 10 * time.Second
+	serverReadTimeout       = 30 * time.Second
+	serverWriteTimeout      = 30 * time.Second
+	serverIdleTimeout       = 60 * time.Second
+)
+
 type Registerer interface {
 	MustRegister(...prometheus.Collector)
 	Unregister(prometheus.Collector) bool
@@ -87,8 +98,12 @@ func NewMetrics(port int, path string, opts ...Option) Metrics {
 	m := &metrics{
 		mux: mux,
 		server: &http.Server{
-			Addr:    fmt.Sprintf(":%d", port),
-			Handler: mux,
+			Addr:              fmt.Sprintf(":%d", port),
+			Handler:           mux,
+			ReadHeaderTimeout: serverReadHeaderTimeout,
+			ReadTimeout:       serverReadTimeout,
+			WriteTimeout:      serverWriteTimeout,
+			IdleTimeout:       serverIdleTimeout,
 		},
 		defaultPath: path,
 		registries:  make(map[string]*registry),

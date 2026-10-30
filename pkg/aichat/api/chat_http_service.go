@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -274,6 +275,12 @@ func (h *chatHTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.logger.Warn("EnableFullDuplex failed", zap.Error(err))
 		writeJSONError(w, "Streaming not supported", http.StatusInternalServerError)
 		return
+	}
+	// The REST server bounds every response with a write timeout. This
+	// response stays open while the model streams, so clear the deadline for
+	// this request; flush errors still detect clients that went away.
+	if err := rc.SetWriteDeadline(time.Time{}); err != nil {
+		h.logger.Warn("Failed to clear write deadline for stream", zap.Error(err))
 	}
 
 	// Set SSE headers

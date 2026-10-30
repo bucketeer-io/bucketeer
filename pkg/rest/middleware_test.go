@@ -20,6 +20,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -115,6 +116,31 @@ func TestDisableBodyRecordingNestedRecorders(t *testing.T) {
 	assert.Equal(t, "", outer.body.String())
 	assert.Equal(t, "", inner.body.String()) // also not written
 	assert.Equal(t, "hello", w.Body.String())
+}
+
+// writeDeadlineRecorder stands in for the server connection: it records the
+// write deadlines set through http.ResponseController.
+type writeDeadlineRecorder struct {
+	*httptest.ResponseRecorder
+	writeDeadlines []time.Time
+}
+
+func (r *writeDeadlineRecorder) SetWriteDeadline(deadline time.Time) error {
+	r.writeDeadlines = append(r.writeDeadlines, deadline)
+	return nil
+}
+
+func TestResponseRecorderUnwrapReachesConnection(t *testing.T) {
+	t.Parallel()
+	conn := &writeDeadlineRecorder{ResponseRecorder: httptest.NewRecorder()}
+	// The log and metrics middlewares nest two recorders around the connection.
+	inner := &responseRecorder{ResponseWriter: conn, body: new(bytes.Buffer)}
+	outer := &responseRecorder{ResponseWriter: inner, body: new(bytes.Buffer)}
+
+	err := http.NewResponseController(outer).SetWriteDeadline(time.Time{})
+
+	require.NoError(t, err)
+	assert.Equal(t, []time.Time{{}}, conn.writeDeadlines)
 }
 
 func TestSplitURLPath(t *testing.T) {

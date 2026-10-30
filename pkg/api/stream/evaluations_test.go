@@ -313,6 +313,34 @@ func TestHandleKeepsStreamOpenWithHoldoutSnapshot(t *testing.T) {
 	assert.NotContains(t, rec.Body.String(), "event: error\n")
 }
 
+// writeDeadlineRecorder stands in for the server connection: it records the
+// write deadlines set through http.ResponseController.
+type writeDeadlineRecorder struct {
+	*httptest.ResponseRecorder
+	writeDeadlines []time.Time
+}
+
+func (r *writeDeadlineRecorder) SetWriteDeadline(deadline time.Time) error {
+	r.writeDeadlines = append(r.writeDeadlines, deadline)
+	return nil
+}
+
+// The REST server applies a write timeout to every response. A stream stays
+// open far longer than that, so Handle must clear the deadline of its response.
+func TestHandleClearsWriteDeadlineForStream(t *testing.T) {
+	t.Parallel()
+	d := NewDispatcher(10000, nil, zap.NewNop())
+	rec := &writeDeadlineRecorder{ResponseRecorder: httptest.NewRecorder()}
+	handleReturned := runStreamHandle(t, d, rec, fixedEvaluate("ueid-1"))
+
+	d.Shutdown()
+	<-handleReturned
+
+	assert.Equal(t, []time.Time{{}}, rec.writeDeadlines, "the write deadline must be cleared exactly once")
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Contains(t, rec.Body.String(), "event: put\n", "the stream must still be served")
+}
+
 func fixedEvaluate(ueid string) EvaluateFunc {
 	return func(
 		_ context.Context, _ *userproto.User, _, _ string, _ string, _ int64, _ bool,
@@ -336,7 +364,7 @@ func startBlockedStreamHandle(t *testing.T, d *Dispatcher) <-chan struct{} {
 // until the connection is registered or Handle returns. The returned channel
 // is closed when Handle returns.
 func runStreamHandle(
-	t *testing.T, d *Dispatcher, rec *httptest.ResponseRecorder, evaluate EvaluateFunc,
+	t *testing.T, d *Dispatcher, rec http.ResponseWriter, evaluate EvaluateFunc,
 ) <-chan struct{} {
 	t.Helper()
 	h := NewEvaluationsHandler(
