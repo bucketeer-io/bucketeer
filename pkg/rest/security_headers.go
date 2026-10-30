@@ -14,11 +14,42 @@
 
 package rest
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
+
+// contentSecurityPolicy lists the sources the dashboard (ui/dashboard) loads
+// resources from. Every deployment serves the dashboard, the web gRPC gateway
+// (/v1/) and the AI chat SSE stream (/v1/aichat/chat) from the same origin,
+// so 'self' covers all API traffic; the sign-in flow is a top-level redirect
+// to the identity provider and back, which CSP does not restrict.
+var contentSecurityPolicy = strings.Join([]string{
+	"default-src 'self'",
+	// The build emits only same-origin module scripts and worker files, and
+	// /static/js/env.js is served by this server. Known report: the JSON
+	// schema validation of variation values compiles schemas at runtime
+	// (Ajv uses new Function), which needs to change before enforcing.
+	"script-src 'self'",
+	// React inline style attributes and the style elements injected at
+	// runtime by the code editor and the select components.
+	"style-src 'self' 'unsafe-inline'",
+	// Small assets are inlined as data: URLs by the build, uploaded avatars are
+	// rendered as data: URLs, and identity provider account pictures are
+	// loaded from their https URL.
+	"img-src 'self' data: https:",
+	// The avatar picker converts the inlined avatar images with fetch(),
+	// which reads a data: URL.
+	"connect-src 'self' data:",
+	// Same restriction as X-Frame-Options: DENY.
+	"frame-ancestors 'none'",
+	"object-src 'none'",
+	"base-uri 'self'",
+}, "; ")
 
 // securityHeaders are added to every response served by the REST server.
-// The values match the ones already set by the docker-compose nginx config,
-// so deployments behind it do not receive conflicting duplicates.
+// Where the docker-compose nginx config already sets a header, the value
+// matches it, so deployments behind it do not receive conflicting duplicates.
 var securityHeaders = []struct {
 	key   string
 	value string
@@ -31,6 +62,10 @@ var securityHeaders = []struct {
 	{key: "X-Content-Type-Options", value: "nosniff"},
 	// Only the origin is sent as referrer to other origins, nothing on HTTPS->HTTP.
 	{key: "Referrer-Policy", value: "strict-origin-when-cross-origin"},
+	// The policy is only monitored for now: browsers log violations in the
+	// developer console without blocking anything, so it can be checked
+	// against real usage before it is switched to Content-Security-Policy.
+	{key: "Content-Security-Policy-Report-Only", value: contentSecurityPolicy},
 }
 
 // securityHeadersMiddleware sets the browser security headers before the
