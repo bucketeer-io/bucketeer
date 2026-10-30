@@ -164,6 +164,12 @@ oauth:
     clientId:
     clientSecret:
     redirectUrls:
+    # Optional list of Google Workspace domains allowed to sign in, matched
+    # against the hosted domain ("hd") Google reports for the account, e.g.
+    # ["example.com"]. Accounts outside these domains, including consumer
+    # Google accounts, are rejected. Leave empty to accept any verified
+    # Google account.
+    allowedDomains:
   demoSignIn:
     enabled:
     email:

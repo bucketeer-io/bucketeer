@@ -23,6 +23,10 @@ type Authenticator interface {
 		ctx context.Context,
 		state, redirectURL string,
 	) (string, error)
+	// Exchange trades the authorization code for the identity of the signed-in
+	// user. The returned email address is used as the account key, so
+	// implementations must only return identities whose email address the
+	// identity provider has verified.
 	Exchange(
 		ctx context.Context,
 		code, redirectURL string,
@@ -43,6 +47,10 @@ type GoogleConfig struct {
 	ClientID     string   `json:"clientId"`
 	ClientSecret string   `json:"clientSecret"`
 	RedirectURLs []string `json:"redirectUrls"`
+	// AllowedDomains restricts sign-in to Google Workspace accounts whose
+	// hosted domain (the "hd" claim reported by Google) is in this list.
+	// When empty, any verified Google account may sign in.
+	AllowedDomains []string `json:"allowedDomains"`
 }
 
 type DemoSignInConfig struct {

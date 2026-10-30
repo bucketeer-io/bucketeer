@@ -11,7 +11,8 @@
     "redirectUrls": [
       "https://localhost/auth/callback",
       "https://localhost/v3/auth/callback"
-    ]
+    ],
+    "allowedDomains": []
   },
   "demoSignIn": {
     "enabled": true,
