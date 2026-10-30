@@ -879,6 +879,11 @@ func (s *AccountService) ListAccountsV2(
 		// is nothing to list. The storage treats an empty environment role
 		// filter as the unrestricted admin filter, which would return every
 		// account in the organization.
+		// The storage is not queried, so apply the order validation it would
+		// have performed to keep rejecting invalid requests.
+		if _, ok := accountproto.ListAccountsV2Request_OrderBy_name[int32(req.OrderBy)]; !ok {
+			return nil, statusInvalidOrderBy.Err()
+		}
 		return &accountproto.ListAccountsV2Response{Accounts: []*accountproto.AccountV2{}, Cursor: cursor}, nil
 	}
 

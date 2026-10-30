@@ -82,6 +82,16 @@ func TestListSubscriptionsMemberEnvironmentScope(t *testing.T) {
 			wantErr: statusInvalidCursor.Err(),
 		},
 		{
+			name:    "member with no accessible environment still gets an invalid order rejected",
+			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
+			req: &proto.ListSubscriptionsRequest{
+				OrganizationId: "org0",
+				EnvironmentIds: []string{"env2"},
+				OrderBy:        proto.ListSubscriptionsRequest_OrderBy(999),
+			},
+			wantErr: statusInvalidOrderBy.Err(),
+		},
+		{
 			name:    "member requesting a mix keeps only the environments they have a role in",
 			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
 			req: &proto.ListSubscriptionsRequest{

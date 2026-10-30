@@ -47,7 +47,10 @@ func listScopeAccount(orgRole accountproto.AccountV2_Role_Organization) *domain.
 func TestListAPIKeysMemberEnvironmentScope(t *testing.T) {
 	t.Parallel()
 
-	storedKeys := []*accountproto.APIKey{{Id: "key0", Name: "key0", ApiKey: "1234567890abcdef"}}
+	// ListAPIKeys obfuscates the keys in place, so each case gets its own copy.
+	storedKeys := func() []*accountproto.APIKey {
+		return []*accountproto.APIKey{{Id: "key0", Name: "key0", ApiKey: "1234567890abcdef"}}
+	}
 
 	cases := []struct {
 		name            string
@@ -85,6 +88,16 @@ func TestListAPIKeysMemberEnvironmentScope(t *testing.T) {
 				Cursor:         "XXX",
 			},
 			wantErr: statusInvalidCursor.Err(),
+		},
+		{
+			name:    "member with no accessible environment still gets an invalid order rejected",
+			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
+			req: &accountproto.ListAPIKeysRequest{
+				OrganizationId: "org0",
+				EnvironmentIds: []string{"env2"},
+				OrderBy:        accountproto.ListAPIKeysRequest_OrderBy(999),
+			},
+			wantErr: statusInvalidOrderBy.Err(),
 		},
 		{
 			name:    "member requesting a mix keeps only the environments they have a role in",
@@ -145,7 +158,7 @@ func TestListAPIKeysMemberEnvironmentScope(t *testing.T) {
 					ListAPIKeys(gomock.Any(), gomock.Any()).
 					DoAndReturn(func(_ context.Context, p v2as.ListAPIKeysParams) ([]*accountproto.APIKey, int, int64, error) {
 						listed = &p
-						return storedKeys, 1, 1, nil
+						return storedKeys(), 1, 1, nil
 					})
 			}
 
@@ -174,6 +187,7 @@ func TestListAPIKeysMemberEnvironmentScope(t *testing.T) {
 			assert.Equal(t, tc.wantEnvFilter, listed.EnvironmentIDs)
 			require.Len(t, resp.ApiKeys, 1)
 			assert.Equal(t, "key0", resp.ApiKeys[0].Id)
+			assert.Equal(t, "1234....cdef", resp.ApiKeys[0].ApiKey)
 			assert.Equal(t, int64(1), resp.TotalCount)
 		})
 	}
@@ -182,7 +196,9 @@ func TestListAPIKeysMemberEnvironmentScope(t *testing.T) {
 func TestListAccountsV2MemberEnvironmentScope(t *testing.T) {
 	t.Parallel()
 
-	storedAccounts := []*accountproto.AccountV2{{Email: "other@example.com", OrganizationId: "org0"}}
+	storedAccounts := func() []*accountproto.AccountV2 {
+		return []*accountproto.AccountV2{{Email: "other@example.com", OrganizationId: "org0"}}
+	}
 
 	cases := []struct {
 		name            string
@@ -232,6 +248,16 @@ func TestListAccountsV2MemberEnvironmentScope(t *testing.T) {
 			wantErr: statusInvalidCursor.Err(),
 		},
 		{
+			name:    "member with no accessible environment still gets an invalid order rejected",
+			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
+			req: &accountproto.ListAccountsV2Request{
+				OrganizationId: "org0",
+				EnvironmentId:  wrapperspb.String("env2"),
+				OrderBy:        accountproto.ListAccountsV2Request_OrderBy(999),
+			},
+			wantErr: statusInvalidOrderBy.Err(),
+		},
+		{
 			name:    "member requesting an environment they have a role in is scoped to it",
 			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
 			req: &accountproto.ListAccountsV2Request{
@@ -279,7 +305,7 @@ func TestListAccountsV2MemberEnvironmentScope(t *testing.T) {
 					ListAccountsV2(gomock.Any(), gomock.Any()).
 					DoAndReturn(func(_ context.Context, p v2as.ListAccountsV2Params) ([]*accountproto.AccountV2, int, int64, error) {
 						listed = &p
-						return storedAccounts, 1, 1, nil
+						return storedAccounts(), 1, 1, nil
 					})
 			}
 

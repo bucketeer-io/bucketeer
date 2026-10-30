@@ -359,6 +359,11 @@ func (s *SubscriptionService) ListSubscriptions(
 		// The member has no role in any of the requested environments, so there
 		// is nothing to list. The storage treats an empty environment filter as
 		// no filter, which would return every subscription in the organization.
+		// The storage is not queried, so apply the order and cursor validation
+		// it would have performed to keep rejecting invalid requests.
+		if _, ok := subscriptionproto.ListSubscriptionsRequest_OrderBy_name[int32(req.OrderBy)]; !ok {
+			return nil, statusInvalidOrderBy.Err()
+		}
 		cursor := req.Cursor
 		if cursor == "" {
 			cursor = "0"

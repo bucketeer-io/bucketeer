@@ -45,7 +45,10 @@ func listScopeAccount(orgRole accountproto.AccountV2_Role_Organization) *account
 func TestListPushesMemberEnvironmentScope(t *testing.T) {
 	t.Parallel()
 
-	storedPushes := []*pushproto.Push{{Id: "push0", EnvironmentId: "env1", FcmServiceAccount: "secret"}}
+	// ListPushes clears the FCM service account in place, so each case gets its own copy.
+	storedPushes := func() []*pushproto.Push {
+		return []*pushproto.Push{{Id: "push0", EnvironmentId: "env1", FcmServiceAccount: "service-account-json"}}
+	}
 
 	cases := []struct {
 		name            string
@@ -138,7 +141,7 @@ func TestListPushesMemberEnvironmentScope(t *testing.T) {
 					ListPushes(gomock.Any(), gomock.Any()).
 					DoAndReturn(func(_ context.Context, p v2ps.ListPushesParams) ([]*pushproto.Push, int, int64, error) {
 						listed = &p
-						return storedPushes, 1, 1, nil
+						return storedPushes(), 1, 1, nil
 					})
 			}
 

@@ -45,7 +45,9 @@ func listScopeAccount(orgRole accountproto.AccountV2_Role_Organization) *account
 func TestListTagsMemberEnvironmentScope(t *testing.T) {
 	t.Parallel()
 
-	storedTags := []*proto.Tag{{Id: "tag0", Name: "tag0", EnvironmentId: "env1", EntityType: proto.Tag_FEATURE_FLAG}}
+	storedTags := func() []*proto.Tag {
+		return []*proto.Tag{{Id: "tag0", Name: "tag0", EnvironmentId: "env1", EntityType: proto.Tag_FEATURE_FLAG}}
+	}
 
 	cases := []struct {
 		name            string
@@ -82,6 +84,16 @@ func TestListTagsMemberEnvironmentScope(t *testing.T) {
 				Cursor:         "XXX",
 			},
 			wantErr: statusInvalidCursor.Err(),
+		},
+		{
+			name:    "member with no accessible environment still gets an invalid order rejected",
+			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
+			req: &proto.ListTagsRequest{
+				OrganizationId: "org0",
+				EnvironmentId:  "env2",
+				OrderBy:        proto.ListTagsRequest_OrderBy(999),
+			},
+			wantErr: statusInvalidOrderBy.Err(),
 		},
 		{
 			name:    "member requesting an environment they have a role in is scoped to it",
@@ -125,7 +137,7 @@ func TestListTagsMemberEnvironmentScope(t *testing.T) {
 					ListTags(gomock.Any(), gomock.Any()).
 					DoAndReturn(func(_ context.Context, p tagstorage.ListTagsParams) ([]*proto.Tag, int, int64, error) {
 						listed = &p
-						return storedTags, 1, 1, nil
+						return storedTags(), 1, 1, nil
 					})
 			}
 
