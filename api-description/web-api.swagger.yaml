@@ -10322,6 +10322,11 @@ definitions:
       lastUsedAt:
         type: string
         format: int64
+      apiKeyPrefix:
+        type: string
+        description: |-
+          First characters of the key, kept for display only. Empty for keys created
+          before the prefix was stored.
   accountAPIKeyRole:
     type: string
     enum:

@@ -108,7 +108,11 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 				}, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().CreateAPIKey(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Do(func(_ context.Context, k *domain.APIKey, _ string) {
+					// The generated key is stored with a display prefix derived from it.
+					require.NotEmpty(t, k.ApiKey)
+					assert.Equal(t, domain.APIKeyPrefix(k.ApiKey), k.ApiKeyPrefix)
+				}).Return(nil)
 
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -138,8 +142,13 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			_, err := service.CreateAPIKey(ctx, p.req)
+			resp, err := service.CreateAPIKey(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err, p.desc)
+			if err == nil {
+				// The full key is returned once, on creation, together with its prefix.
+				assert.NotEmpty(t, resp.ApiKey.ApiKey)
+				assert.Equal(t, domain.APIKeyPrefix(resp.ApiKey.ApiKey), resp.ApiKey.ApiKeyPrefix)
+			}
 		})
 	}
 }

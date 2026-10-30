@@ -39,6 +39,9 @@ message APIKey {
   string description = 9;
   string environment_name = 10;
   int64 last_used_at = 11;
+  // First characters of the key, kept for display only. Empty for keys created
+  // before the prefix was stored.
+  string api_key_prefix = 12;
 }
 
 message EnvironmentAPIKey {

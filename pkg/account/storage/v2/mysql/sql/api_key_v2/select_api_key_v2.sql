@@ -8,6 +8,7 @@ SELECT
     api_key.description,
     environment_v2.name as environment_name,
     api_key.api_key,
+    COALESCE(api_key.api_key_prefix, '') AS api_key_prefix,
     api_key.maintainer,
     api_key.last_used_at
 FROM

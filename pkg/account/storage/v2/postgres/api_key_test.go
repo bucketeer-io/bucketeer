@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
@@ -27,6 +28,9 @@ import (
 	pgmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/postgres/mock"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
+
+// testAPIKey has the length of a generated key (32 random bytes, hex encoded).
+const testAPIKey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 func TestCreateAPIKeyPostgres(t *testing.T) {
 	t.Parallel()
@@ -69,6 +73,24 @@ func TestCreateAPIKeyPostgres(t *testing.T) {
 				).Return(nil, nil)
 			},
 			apiKey:        &domain.APIKey{APIKey: &proto.APIKey{}},
+			environmentID: "env-1",
+			expectedErr:   nil,
+		},
+		{
+			desc: "Success: the digest and the prefix are stored next to the key",
+			setup: func(s *accountStorage) {
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), insertAPIKeyV2SQLQuery, gomock.Any(),
+				).DoAndReturn(func(_ context.Context, _ string, args ...interface{}) (postgres.Result, error) {
+					require.Len(t, args, 12)
+					assert.Equal(t, testAPIKey, args[7], "api_key")
+					assert.Equal(t, domain.HashAPIKey(testAPIKey), args[10], "api_key_hash")
+					assert.NotEqual(t, testAPIKey, args[10], "the digest must differ from the key")
+					assert.Equal(t, testAPIKey[:8], args[11], "api_key_prefix")
+					return nil, nil
+				})
+			},
+			apiKey:        &domain.APIKey{APIKey: &proto.APIKey{ApiKey: testAPIKey}},
 			environmentID: "env-1",
 			expectedErr:   nil,
 		},
@@ -281,55 +303,76 @@ func TestGetAPIKeyPostgres(t *testing.T) {
 	}
 }
 
+// scanResult returns a row whose Scan fails with err (nil for a found row).
+func scanResult(mockController *gomock.Controller, err error) *pgmock.MockRow {
+	row := pgmock.NewMockRow(mockController)
+	row.EXPECT().Scan(gomock.Any()).Return(err)
+	return row
+}
+
 func TestGetAPIKeyByAPIKeyPostgres(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	hash := domain.HashAPIKey(testAPIKey)
 	patterns := []struct {
-		desc          string
-		setup         func(*accountStorage)
-		apiKey        string
-		environmentID string
-		expectedErr   error
+		desc        string
+		setup       func(*accountStorage)
+		expectedErr error
 	}{
 		{
-			desc: "ErrAPIKeyNotFound",
+			desc: "Success: matched on the digest of the key",
 			setup: func(s *accountStorage) {
-				row := pgmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(postgres.ErrNoRows)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
+				).Return(scanResult(mockController, nil))
 			},
-			apiKey:        "some-api-key",
-			environmentID: "env-1",
-			expectedErr:   v2as.ErrAPIKeyNotFound,
+			expectedErr: nil,
 		},
 		{
-			desc: "Error",
+			desc: "Success: row without a digest yet is matched on the key itself",
 			setup: func(s *accountStorage) {
-				row := pgmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errInternal)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
+				).Return(scanResult(mockController, postgres.ErrNoRows))
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectAPIKeyV2ByAPIKeyPlaintextSQLQuery, testAPIKey, "env-1",
+				).Return(scanResult(mockController, nil))
 			},
-			apiKey:        "some-api-key",
-			environmentID: "env-1",
-			expectedErr:   errInternal,
+			expectedErr: nil,
 		},
 		{
-			desc: "Success",
+			desc: "ErrAPIKeyNotFound: no row from either lookup",
 			setup: func(s *accountStorage) {
-				row := pgmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
+				).Return(scanResult(mockController, postgres.ErrNoRows))
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectAPIKeyV2ByAPIKeyPlaintextSQLQuery, testAPIKey, "env-1",
+				).Return(scanResult(mockController, postgres.ErrNoRows))
 			},
-			apiKey:        "some-api-key",
-			environmentID: "env-1",
-			expectedErr:   nil,
+			expectedErr: v2as.ErrAPIKeyNotFound,
+		},
+		{
+			desc: "Error: internal error on the digest lookup is returned without falling back",
+			setup: func(s *accountStorage) {
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
+				).Return(scanResult(mockController, errInternal))
+			},
+			expectedErr: errInternal,
+		},
+		{
+			desc: "Error: internal error on the fallback lookup",
+			setup: func(s *accountStorage) {
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
+				).Return(scanResult(mockController, postgres.ErrNoRows))
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectAPIKeyV2ByAPIKeyPlaintextSQLQuery, testAPIKey, "env-1",
+				).Return(scanResult(mockController, errInternal))
+			},
+			expectedErr: errInternal,
 		},
 	}
 	for _, p := range patterns {
@@ -338,7 +381,7 @@ func TestGetAPIKeyByAPIKeyPostgres(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			_, err := storage.GetAPIKeyByAPIKey(context.Background(), p.apiKey, p.environmentID)
+			_, err := storage.GetAPIKeyByAPIKey(context.Background(), testAPIKey, "env-1")
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -348,47 +391,65 @@ func TestGetEnvironmentAPIKeyPostgres(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	hash := domain.HashAPIKey(testAPIKey)
 	patterns := []struct {
 		desc        string
 		setup       func(*accountStorage)
-		apiKey      string
 		expectedErr error
 	}{
 		{
-			desc: "ErrAPIKeyNotFound",
+			desc: "Success: matched on the digest of the key",
 			setup: func(s *accountStorage) {
-				row := pgmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(postgres.ErrNoRows)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+					gomock.Any(), selectEnvironmentAPIKeySQLQuery, hash,
+				).Return(scanResult(mockController, nil))
 			},
-			apiKey:      "some-api-key",
+			expectedErr: nil,
+		},
+		{
+			desc: "Success: row without a digest yet is matched on the key itself",
+			setup: func(s *accountStorage) {
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectEnvironmentAPIKeySQLQuery, hash,
+				).Return(scanResult(mockController, postgres.ErrNoRows))
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectEnvironmentAPIKeyPlaintextSQLQuery, testAPIKey,
+				).Return(scanResult(mockController, nil))
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "ErrAPIKeyNotFound: no row from either lookup",
+			setup: func(s *accountStorage) {
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectEnvironmentAPIKeySQLQuery, hash,
+				).Return(scanResult(mockController, postgres.ErrNoRows))
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectEnvironmentAPIKeyPlaintextSQLQuery, testAPIKey,
+				).Return(scanResult(mockController, postgres.ErrNoRows))
+			},
 			expectedErr: v2as.ErrAPIKeyNotFound,
 		},
 		{
-			desc: "Error",
+			desc: "Error: internal error on the digest lookup is returned without falling back",
 			setup: func(s *accountStorage) {
-				row := pgmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errInternal)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+					gomock.Any(), selectEnvironmentAPIKeySQLQuery, hash,
+				).Return(scanResult(mockController, errInternal))
 			},
-			apiKey:      "some-api-key",
 			expectedErr: errInternal,
 		},
 		{
-			desc: "Success",
+			desc: "Error: internal error on the fallback lookup",
 			setup: func(s *accountStorage) {
-				row := pgmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+					gomock.Any(), selectEnvironmentAPIKeySQLQuery, hash,
+				).Return(scanResult(mockController, postgres.ErrNoRows))
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), selectEnvironmentAPIKeyPlaintextSQLQuery, testAPIKey,
+				).Return(scanResult(mockController, errInternal))
 			},
-			apiKey:      "some-api-key",
-			expectedErr: nil,
+			expectedErr: errInternal,
 		},
 	}
 	for _, p := range patterns {
@@ -397,7 +458,7 @@ func TestGetEnvironmentAPIKeyPostgres(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			_, err := storage.GetEnvironmentAPIKey(context.Background(), p.apiKey)
+			_, err := storage.GetEnvironmentAPIKey(context.Background(), testAPIKey)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
