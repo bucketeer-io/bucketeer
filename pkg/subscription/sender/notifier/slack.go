@@ -407,9 +407,15 @@ func maskWebhookURLInError(err error, webhookURL string) error {
 	msg := err.Error()
 	masked := msg
 	for _, secret := range secrets {
-		if secret != "" {
-			masked = strings.ReplaceAll(masked, secret, subscriptiondomain.MaskWebhookURL(secret))
+		if secret == "" {
+			continue
 		}
+		replacement := subscriptiondomain.MaskWebhookURL(secret)
+		// url.Error formats the URL with %q, which escapes characters such
+		// as quotes, so the quoted form has to be replaced as well as the
+		// raw one.
+		masked = strings.ReplaceAll(masked, strconv.Quote(secret), strconv.Quote(replacement))
+		masked = strings.ReplaceAll(masked, secret, replacement)
 	}
 	if masked == msg {
 		return err
