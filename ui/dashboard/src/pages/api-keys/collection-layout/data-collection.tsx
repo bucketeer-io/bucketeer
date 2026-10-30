@@ -5,7 +5,6 @@ import { useAuthAccess } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { APIKey, APIKeyRole } from '@types';
-import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import Switch from 'components/switch';
 import { Tooltip } from 'components/tooltip';
@@ -14,6 +13,7 @@ import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { APIKeyActionsType } from '../types';
+import { formatAPIKeyLabel } from '../utils';
 
 export const useColumns = ({
   onActions
@@ -72,7 +72,7 @@ export const useColumns = ({
       size: 400,
       cell: ({ row }) => {
         const record = row.original;
-        const { id, name, apiKey } = record;
+        const { id, name } = record;
         return (
           <div className="flex flex-col gap-0.5 max-w-fit">
             <NameWithTooltip
@@ -91,7 +91,7 @@ export const useColumns = ({
             />
 
             <div className="typo-para-tiny h-5 text-gray-500 select-none">
-              {truncateTextCenter(apiKey)}
+              {formatAPIKeyLabel(record)}
             </div>
           </div>
         );
