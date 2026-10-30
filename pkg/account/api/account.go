@@ -318,7 +318,7 @@ func (s *AccountService) UpdateAccountV2(
 			}
 		}
 		if req.Disabled != nil && req.Disabled.Value {
-			if err := s.checkNotOrganizationOwner(ctx, req.OrganizationId, existing.Email); err != nil {
+			if err := s.checkNotOrganizationOwner(ctx, req.OrganizationId, existing); err != nil {
 				return nil, err
 			}
 		}
@@ -489,7 +489,7 @@ func (s *AccountService) DisableAccountV2(
 	); err != nil {
 		return nil, err
 	}
-	if err := s.checkNotOrganizationOwner(ctx, req.OrganizationId, target.Email); err != nil {
+	if err := s.checkNotOrganizationOwner(ctx, req.OrganizationId, target); err != nil {
 		return nil, err
 	}
 	accountV2Pb, err := s.updateAccountV2NoCommandMysql(
@@ -693,7 +693,7 @@ func (s *AccountService) DeleteAccountV2(
 	); err != nil {
 		return nil, err
 	}
-	if err := s.checkNotOrganizationOwner(ctx, req.OrganizationId, target.Email); err != nil {
+	if err := s.checkNotOrganizationOwner(ctx, req.OrganizationId, target); err != nil {
 		return nil, err
 	}
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
@@ -1000,13 +1000,14 @@ func (s *AccountService) checkOrganizationRoleWithinEditorAuthority(
 // checkNotOrganizationOwner rejects disabling or deleting the account referenced
 // by the organization's owner email. Ownership has to be transferred through the
 // organization update first so the organization always keeps an active owner.
-// The email must be the one stored on the resolved account, not the one from the
-// request: account lookups are case-insensitive, so the request may spell the
-// same address differently. The comparison itself is case-insensitive too, as the
-// owner email is stored as it was typed when ownership was set.
+// The owner email is stored as it was typed when ownership was set, and account
+// lookups follow the database's matching rules (e.g. case-insensitive collation),
+// so instead of comparing raw strings the owner email is resolved to its account
+// and the stored emails of the two accounts are compared.
 func (s *AccountService) checkNotOrganizationOwner(
 	ctx context.Context,
-	organizationID, email string,
+	organizationID string,
+	target *domain.AccountV2,
 ) error {
 	organization, err := s.getOrganization(ctx, organizationID)
 	if err != nil {
@@ -1015,19 +1016,36 @@ func (s *AccountService) checkNotOrganizationOwner(
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", organizationID),
-				zap.String("email", email),
+				zap.String("email", target.Email),
 			)...,
 		)
 		return api.NewGRPCStatus(err).Err()
 	}
-	if !strings.EqualFold(organization.OwnerEmail, email) {
+	owner, err := s.accountStorage.GetAccountV2(ctx, organization.OwnerEmail, organizationID)
+	if err != nil {
+		if errors.Is(err, v2as.ErrAccountNotFound) {
+			// The owner email does not reference an account in this organization,
+			// so there is no owner account to protect.
+			return nil
+		}
+		s.logger.Error(
+			"Failed to get organization owner account",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", organizationID),
+				zap.String("email", target.Email),
+			)...,
+		)
+		return api.NewGRPCStatus(err).Err()
+	}
+	if owner.Email != target.Email {
 		return nil
 	}
 	s.logger.Warn(
 		"Rejected disabling or deleting the organization owner account",
 		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.String("organizationID", organizationID),
-			zap.String("email", email),
+			zap.String("email", target.Email),
 		)...,
 	)
 	return statusPermissionDenied.Err()

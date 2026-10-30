@@ -769,6 +769,10 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
+				// Organization owner account lookup (declared first so it takes the owner email call)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), "owner@example.com", gomock.Any(),
+				).Return(nil, v2as.ErrAccountNotFound)
 				// Editor and target account lookups
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -800,6 +804,10 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
+				// Organization owner account lookup (declared first so it takes the owner email call)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), "owner@example.com", gomock.Any(),
+				).Return(nil, v2as.ErrAccountNotFound)
 				// Editor lookup, target account lookup, and the lookup inside the transaction
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -961,6 +969,10 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
+				// Organization owner account lookup (declared first so it takes the owner email call)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), "owner@example.com", gomock.Any(),
+				).Return(nil, v2as.ErrAccountNotFound)
 				// Editor and target account lookups
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -992,6 +1004,10 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
+				// Organization owner account lookup (declared first so it takes the owner email call)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), "owner@example.com", gomock.Any(),
+				).Return(nil, v2as.ErrAccountNotFound)
 				// Editor lookup, target account lookup, and the lookup inside the transaction
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),

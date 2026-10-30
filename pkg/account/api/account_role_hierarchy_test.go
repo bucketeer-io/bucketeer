@@ -72,16 +72,20 @@ func hierarchyAccounts() map[string]*domain.AccountV2 {
 }
 
 // setupHierarchyLookups serves account lookups from hierarchyAccounts and the
-// organization lookup with hierarchyOwnerEmail as the organization owner.
-// Account lookups match the email case-insensitively, like the database
-// collation does, and return the account with its stored email.
-func setupHierarchyLookups(service *AccountService) {
+// organization lookup with the given owner email (hierarchyOwnerEmail when
+// empty). Account lookups match the email the way the database collation does,
+// ignoring case and trailing spaces, and return the account with its stored
+// email.
+func setupHierarchyLookups(service *AccountService, ownerEmail string) {
+	if ownerEmail == "" {
+		ownerEmail = hierarchyOwnerEmail
+	}
 	accounts := hierarchyAccounts()
 	service.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().
 		GetAccountV2(gomock.Any(), gomock.Any(), hierarchyOrgID).
 		DoAndReturn(func(_ context.Context, email, _ string) (*domain.AccountV2, error) {
 			for storedEmail, account := range accounts {
-				if strings.EqualFold(storedEmail, email) {
+				if strings.EqualFold(strings.TrimRight(storedEmail, " "), strings.TrimRight(email, " ")) {
 					return account, nil
 				}
 			}
@@ -92,7 +96,7 @@ func setupHierarchyLookups(service *AccountService) {
 		Return(&environmentproto.GetOrganizationResponse{
 			Organization: &environmentproto.Organization{
 				Id:         hierarchyOrgID,
-				OwnerEmail: hierarchyOwnerEmail,
+				OwnerEmail: ownerEmail,
 			},
 		}, nil).AnyTimes()
 }
@@ -147,7 +151,7 @@ func TestCreateAccountV2OrganizationRoleHierarchy(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{})
 
 			service := createAccountService(t, mockController, nil)
-			setupHierarchyLookups(service)
+			setupHierarchyLookups(service, "")
 
 			var created *domain.AccountV2
 			if tc.wantErr == nil {
@@ -200,10 +204,13 @@ func TestUpdateAccountV2OrganizationRoleHierarchy(t *testing.T) {
 		name          string
 		editorEmail   string
 		isSystemAdmin bool
-		req           *accountproto.UpdateAccountV2Request
-		wantErr       error
-		wantRole      accountproto.AccountV2_Role_Organization
-		wantDisabled  bool
+		// ownerEmail is the owner email stored on the organization; defaults to
+		// hierarchyOwnerEmail.
+		ownerEmail   string
+		req          *accountproto.UpdateAccountV2Request
+		wantErr      error
+		wantRole     accountproto.AccountV2_Role_Organization
+		wantDisabled bool
 	}{
 		{
 			name:        "admin cannot update an owner",
@@ -266,6 +273,17 @@ func TestUpdateAccountV2OrganizationRoleHierarchy(t *testing.T) {
 			req: &accountproto.UpdateAccountV2Request{
 				OrganizationId: hierarchyOrgID,
 				Email:          strings.ToUpper(hierarchyOwnerEmail),
+				Disabled:       wrapperspb.Bool(true),
+			},
+			wantErr: statusPermissionDenied.Err(),
+		},
+		{
+			name:        "owner cannot disable the organization owner when the owner email was stored with a trailing space",
+			editorEmail: hierarchyCoOwnerEmail,
+			ownerEmail:  hierarchyOwnerEmail + " ",
+			req: &accountproto.UpdateAccountV2Request{
+				OrganizationId: hierarchyOrgID,
+				Email:          hierarchyOwnerEmail,
 				Disabled:       wrapperspb.Bool(true),
 			},
 			wantErr: statusPermissionDenied.Err(),
@@ -340,7 +358,7 @@ func TestUpdateAccountV2OrganizationRoleHierarchy(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{})
 
 			service := createAccountService(t, mockController, nil)
-			setupHierarchyLookups(service)
+			setupHierarchyLookups(service, tc.ownerEmail)
 
 			var persisted *domain.AccountV2
 			if tc.wantErr == nil {
@@ -385,8 +403,11 @@ func TestDisableAccountV2OrganizationRoleHierarchy(t *testing.T) {
 		name          string
 		editorEmail   string
 		isSystemAdmin bool
-		targetEmail   string
-		wantErr       error
+		// ownerEmail is the owner email stored on the organization; defaults to
+		// hierarchyOwnerEmail.
+		ownerEmail  string
+		targetEmail string
+		wantErr     error
 	}{
 		{
 			name:        "admin cannot disable the organization owner",
@@ -417,6 +438,13 @@ func TestDisableAccountV2OrganizationRoleHierarchy(t *testing.T) {
 			name:        "owner cannot disable the organization owner using a differently cased email",
 			editorEmail: hierarchyCoOwnerEmail,
 			targetEmail: strings.ToUpper(hierarchyOwnerEmail),
+			wantErr:     statusPermissionDenied.Err(),
+		},
+		{
+			name:        "owner cannot disable the organization owner when the owner email was stored with a trailing space",
+			editorEmail: hierarchyCoOwnerEmail,
+			ownerEmail:  hierarchyOwnerEmail + " ",
+			targetEmail: hierarchyOwnerEmail,
 			wantErr:     statusPermissionDenied.Err(),
 		},
 		{
@@ -453,7 +481,7 @@ func TestDisableAccountV2OrganizationRoleHierarchy(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{})
 
 			service := createAccountService(t, mockController, nil)
-			setupHierarchyLookups(service)
+			setupHierarchyLookups(service, tc.ownerEmail)
 
 			var persisted *domain.AccountV2
 			if tc.wantErr == nil {
@@ -500,8 +528,11 @@ func TestDeleteAccountV2OrganizationRoleHierarchy(t *testing.T) {
 		name          string
 		editorEmail   string
 		isSystemAdmin bool
-		targetEmail   string
-		wantErr       error
+		// ownerEmail is the owner email stored on the organization; defaults to
+		// hierarchyOwnerEmail.
+		ownerEmail  string
+		targetEmail string
+		wantErr     error
 	}{
 		{
 			name:        "admin cannot delete the organization owner",
@@ -532,6 +563,13 @@ func TestDeleteAccountV2OrganizationRoleHierarchy(t *testing.T) {
 			name:        "owner cannot delete the organization owner using a differently cased email",
 			editorEmail: hierarchyCoOwnerEmail,
 			targetEmail: strings.ToUpper(hierarchyOwnerEmail),
+			wantErr:     statusPermissionDenied.Err(),
+		},
+		{
+			name:        "owner cannot delete the organization owner when the owner email was stored with a trailing space",
+			editorEmail: hierarchyCoOwnerEmail,
+			ownerEmail:  hierarchyOwnerEmail + " ",
+			targetEmail: hierarchyOwnerEmail,
 			wantErr:     statusPermissionDenied.Err(),
 		},
 		{
@@ -573,7 +611,7 @@ func TestDeleteAccountV2OrganizationRoleHierarchy(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{})
 
 			service := createAccountService(t, mockController, nil)
-			setupHierarchyLookups(service)
+			setupHierarchyLookups(service, tc.ownerEmail)
 
 			var deleted *domain.AccountV2
 			if tc.wantErr == nil {
