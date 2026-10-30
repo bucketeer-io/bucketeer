@@ -324,13 +324,16 @@ func TestEnvironmentAPIKeyCacheInMemoryRoundTrip(t *testing.T) {
 
 	// A different key does not resolve to the cached entry, and neither does the
 	// digest of the key when it is presented as if it were a key, nor a variant
-	// of the key that differs only in case.
-	_, err = c.Get(otherAPIKey)
-	assert.Equal(t, cache.ErrNotFound, err)
-	_, err = c.Get(accountdomain.HashAPIKey(rawAPIKey))
-	assert.Equal(t, cache.ErrNotFound, err)
-	_, err = c.Get(strings.ToUpper(rawAPIKey))
-	assert.Equal(t, cache.ErrNotFound, err)
+	// of the key that differs only in case or in trailing spaces.
+	for _, presented := range []string{
+		otherAPIKey,
+		accountdomain.HashAPIKey(rawAPIKey),
+		strings.ToUpper(rawAPIKey),
+		rawAPIKey + " ",
+	} {
+		_, err = c.Get(presented)
+		assert.Equal(t, cache.ErrNotFound, err, presented)
+	}
 
 	// Neither key names nor values hold the key itself.
 	backing.entries.Range(func(k, v interface{}) bool {
