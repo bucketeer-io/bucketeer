@@ -84,6 +84,13 @@ func (rr *responseRecorder) Flush() {
 	}
 }
 
+// Unwrap returns the wrapped ResponseWriter so that http.ResponseController
+// can reach the underlying connection through the middleware chain, e.g. to
+// clear the write deadline of a long-lived SSE response.
+func (rr *responseRecorder) Unwrap() http.ResponseWriter {
+	return rr.ResponseWriter
+}
+
 func splitURLPath(path string) (string, string, string) {
 	// format: /api_version/service_name/api_name
 	parts := strings.Split(path, "/")

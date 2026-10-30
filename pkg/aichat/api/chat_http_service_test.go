@@ -24,6 +24,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -365,6 +366,46 @@ func TestChatHTTPService_StreamError(t *testing.T) {
 		}
 	}
 	assert.True(t, found, "expected error event in SSE stream")
+}
+
+// writeDeadlineRecorder stands in for the server connection: it records the
+// write deadlines set through http.ResponseController.
+type writeDeadlineRecorder struct {
+	*httptest.ResponseRecorder
+	writeDeadlines []time.Time
+}
+
+func (r *writeDeadlineRecorder) SetWriteDeadline(deadline time.Time) error {
+	r.writeDeadlines = append(r.writeDeadlines, deadline)
+	return nil
+}
+
+// The REST server applies a write timeout to every response. A chat stream can
+// outlast it, so the handler must clear the deadline of its response.
+func TestChatHTTPService_StreamClearsWriteDeadline(t *testing.T) {
+	t.Parallel()
+	v := &mockVerifier{
+		token: &token.AccessToken{Email: "test@example.com"},
+	}
+	mockLLM := createMockLLMClient(t, []*aichatproto.ChatStreamResponse{
+		{Content: "Hello", Done: false},
+		{Content: "", Done: true, FinishReason: "stop"},
+	}, nil)
+	handler := NewChatHTTPService(mockLLM, nil, ChatConfig{Model: "test-model"}, v, newMockAccountClient(t), nil, zap.NewNop())
+
+	body := `{"messages":[{"role":"user","content":"hi"}],"environmentId":"env-1"}`
+	req := httptest.NewRequest(http.MethodPost, "/v1/aichat/chat", strings.NewReader(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := &writeDeadlineRecorder{ResponseRecorder: httptest.NewRecorder()}
+
+	handler.ServeHTTP(rec, req)
+
+	assert.Equal(t, []time.Time{{}}, rec.writeDeadlines, "the write deadline must be cleared exactly once")
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "text/event-stream", rec.Header().Get("Content-Type"))
+	events := parseSSEEvents(t, rec.Body.String())
+	require.NotEmpty(t, events)
+	assert.Equal(t, "[DONE]", events[len(events)-1])
 }
 
 func TestChatHTTPService_ToProtoRequest(t *testing.T) {

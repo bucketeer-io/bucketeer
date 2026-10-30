@@ -26,19 +26,36 @@ import (
 )
 
 type Server struct {
-	certPath   string
-	keyPath    string
-	port       int
-	metrics    metrics.Registerer
-	httpServer *http.Server
-	mux        *http.ServeMux
-	logger     *zap.Logger
-	services   []Service
+	certPath          string
+	keyPath           string
+	port              int
+	metrics           metrics.Registerer
+	httpServer        *http.Server
+	mux               *http.ServeMux
+	logger            *zap.Logger
+	services          []Service
+	readHeaderTimeout time.Duration
+	readTimeout       time.Duration
+	writeTimeout      time.Duration
+	idleTimeout       time.Duration
 }
 
 type Option func(*Server)
 
 const httpName = "http"
+
+// Default http.Server timeouts. They bound how long a single connection can
+// hold server resources without making progress (slow headers, slow request
+// bodies, clients that stop reading, idle keep-alive connections).
+// Handlers that legitimately stream for longer than writeTimeout, such as
+// SSE endpoints, clear the write deadline of their own response with
+// http.ResponseController.
+const (
+	defaultReadHeaderTimeout = 10 * time.Second
+	defaultReadTimeout       = 30 * time.Second
+	defaultWriteTimeout      = 30 * time.Second
+	defaultIdleTimeout       = 60 * time.Second
+)
 
 func WithLogger(logger *zap.Logger) Option {
 	return func(s *Server) {
@@ -64,11 +81,28 @@ func WithService(service Service) Option {
 	}
 }
 
+// WithTimeouts overrides the http.Server ReadHeaderTimeout, ReadTimeout,
+// WriteTimeout and IdleTimeout. The values are passed to http.Server
+// unchanged, so zero and negative values keep their net/http meaning (for
+// example a zero ReadHeaderTimeout falls back to ReadTimeout).
+func WithTimeouts(readHeaderTimeout, readTimeout, writeTimeout, idleTimeout time.Duration) Option {
+	return func(s *Server) {
+		s.readHeaderTimeout = readHeaderTimeout
+		s.readTimeout = readTimeout
+		s.writeTimeout = writeTimeout
+		s.idleTimeout = idleTimeout
+	}
+}
+
 func NewServer(certPath, keyPath string, opt ...Option) *Server {
 	server := &Server{
-		port:   8000,
-		logger: zap.NewNop(),
-		mux:    http.NewServeMux(),
+		port:              8000,
+		logger:            zap.NewNop(),
+		mux:               http.NewServeMux(),
+		readHeaderTimeout: defaultReadHeaderTimeout,
+		readTimeout:       defaultReadTimeout,
+		writeTimeout:      defaultWriteTimeout,
+		idleTimeout:       defaultIdleTimeout,
 	}
 	for _, o := range opt {
 		o(server)
@@ -115,8 +149,12 @@ func (s *Server) setup() {
 		service.Register(s.mux)
 	}
 	s.httpServer = &http.Server{
-		Addr:    fmt.Sprintf(":%d", s.port),
-		Handler: mws.Handle(s.mux),
+		Addr:              fmt.Sprintf(":%d", s.port),
+		Handler:           mws.Handle(s.mux),
+		ReadHeaderTimeout: s.readHeaderTimeout,
+		ReadTimeout:       s.readTimeout,
+		WriteTimeout:      s.writeTimeout,
+		IdleTimeout:       s.idleTimeout,
 	}
 }
 
