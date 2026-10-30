@@ -24,6 +24,15 @@ import (
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
+const (
+	// signInDemoAccountKey is the throttling key for sign-in attempts that
+	// target the configured demo account.
+	signInDemoAccountKey = "demo-account"
+	// signInOtherAccountKey is the throttling key for sign-in attempts that
+	// target any other email. Such attempts can never succeed.
+	signInOtherAccountKey = "other-account"
+)
+
 func (s *authService) SignIn(
 	ctx context.Context,
 	request *authproto.SignInRequest,
@@ -32,17 +41,23 @@ func (s *authService) SignIn(
 	if err != nil {
 		return nil, err
 	}
-	// Attempts are counted per submitted email so repeated guesses against a
-	// single account are slowed down regardless of where they come from.
-	if err := s.throttle(ctx, s.opts.signInRateLimiter, "sign_in", request.Email); err != nil {
-		return nil, err
-	}
 	config := s.config.DemoSignIn
 	// Both credentials are compared in constant time, and both comparisons
 	// always run, so the response time does not depend on how much of the
 	// submitted values match the configured ones.
 	emailMatches := subtle.ConstantTimeCompare([]byte(request.Email), []byte(config.Email)) == 1
 	passwordMatches := subtle.ConstantTimeCompare([]byte(request.Password), []byte(config.Password)) == 1
+	// Only the configured demo account can ever sign in, so attempts for that
+	// account share one bucket and attempts for any other email share another.
+	// This slows down repeated guesses against the demo account regardless of
+	// where they come from while keeping the number of tracked keys bounded.
+	key := signInOtherAccountKey
+	if emailMatches {
+		key = signInDemoAccountKey
+	}
+	if err := s.throttle(ctx, s.opts.signInRateLimiter, "sign_in", key); err != nil {
+		return nil, err
+	}
 	if !config.Enabled || !emailMatches || !passwordMatches {
 		s.logger.Error(
 			"Sign in failed",

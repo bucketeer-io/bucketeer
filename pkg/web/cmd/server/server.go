@@ -1628,10 +1628,10 @@ func (s *server) createAuthService(
 		authapi.WithAccessTokenTTL(*s.accessTokenTTL),
 		authapi.WithRefreshTokenTTL(*s.refreshTokenTTL),
 		authapi.WithDemoSiteEnabled(*s.isDemoSiteEnabled),
-		// Sign-in attempts are counted per submitted email, so the limit is
-		// deliberately tight. Token exchange and refresh are counted per
-		// client address, which many users may share behind a proxy, so the
-		// limit is kept well above the dashboard's refresh cadence.
+		// Sign-in attempts share a bucket per targeted account, so the limit
+		// is deliberately tight. Token exchanges and rejected token refreshes
+		// are counted per client address, which many users may share behind
+		// a proxy, so that limit is kept generous.
 		authapi.WithSignInRateLimiter(aichatratelimit.NewLimiter(ctx, aichatratelimit.Config{
 			RequestsPerMinute: 10,
 			BurstSize:         5,

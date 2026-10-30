@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"net"
+	"strings"
 	"testing"
 	"time"
 
@@ -76,10 +77,31 @@ func TestClientAddressFromContext(t *testing.T) {
 			expected: "203.0.113.10",
 		},
 		{
-			desc: "first non-empty forwarded value",
+			desc: "first forwarded value that is an IP address",
 			ctx: metadata.NewIncomingContext(context.Background(),
 				metadata.Pairs(xForwardedForKey, " ", xForwardedForKey, "198.51.100.7")),
 			expected: "198.51.100.7",
+		},
+		{
+			desc: "IPv6 forwarded address is normalized",
+			ctx: metadata.NewIncomingContext(context.Background(),
+				metadata.Pairs(xForwardedForKey, "2001:DB8::1, 10.0.0.1")),
+			expected: "2001:db8::1",
+		},
+		{
+			desc: "forwarded value that is not an IP address falls back to the peer",
+			ctx: peer.NewContext(
+				metadata.NewIncomingContext(context.Background(),
+					metadata.Pairs(xForwardedForKey, strings.Repeat("x", 4096)+", 10.0.0.1")),
+				&peer.Peer{Addr: &net.TCPAddr{IP: net.ParseIP("192.0.2.5"), Port: 50051}},
+			),
+			expected: "192.0.2.5",
+		},
+		{
+			desc: "forwarded value that is not an IP address without a peer",
+			ctx: metadata.NewIncomingContext(context.Background(),
+				metadata.Pairs(xForwardedForKey, "not-an-address")),
+			expected: unknownClientAddress,
 		},
 		{
 			desc: "peer address without forwarded metadata",
@@ -221,7 +243,7 @@ func TestAuthService_RefreshToken_RateLimit(t *testing.T) {
 		run     func(*testing.T, *authService, string, *accountclientmock.MockClient)
 	}{
 		{
-			desc:    "err: invalid tokens from one client are rejected after the burst before verification",
+			desc:    "err: invalid tokens from one client are rejected after the burst",
 			limiter: newTestTokenLimiter,
 			run: func(t *testing.T, s *authService, _ string, _ *accountclientmock.MockClient) {
 				t.Helper()
@@ -238,18 +260,39 @@ func TestAuthService_RefreshToken_RateLimit(t *testing.T) {
 			},
 		},
 		{
-			desc:    "err: a valid token from a throttled client is rejected",
+			desc:    "success: a valid token is accepted even when the client address is throttled",
 			limiter: newTestTokenLimiter,
-			run: func(t *testing.T, s *authService, refreshToken string, _ *accountclientmock.MockClient) {
+			run: func(t *testing.T, s *authService, refreshToken string, ac *accountclientmock.MockClient) {
 				t.Helper()
 				ctx := contextWithClientAddress("203.0.113.10")
-				for i := 0; i < testBurst; i++ {
+				for i := 0; i < testBurst+1; i++ {
 					_, err := s.RefreshToken(ctx, &authproto.RefreshTokenRequest{RefreshToken: "not-a-token"})
 					require.Error(t, err)
 				}
-				_, err := s.RefreshToken(ctx, &authproto.RefreshTokenRequest{RefreshToken: refreshToken})
-				require.Error(t, err)
-				assert.Equal(t, statusTooManyRequests.Err().Error(), err.Error())
+				expectAccountLookup(ac)
+				resp, err := s.RefreshToken(ctx, &authproto.RefreshTokenRequest{RefreshToken: refreshToken})
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				assert.NotEmpty(t, resp.Token.AccessToken)
+			},
+		},
+		{
+			desc:    "success: valid tokens do not consume the limit",
+			limiter: newTestTokenLimiter,
+			run: func(t *testing.T, s *authService, refreshToken string, ac *accountclientmock.MockClient) {
+				t.Helper()
+				ctx := contextWithClientAddress("203.0.113.10")
+				for i := 0; i < testBurst*2; i++ {
+					expectAccountLookup(ac)
+					_, err := s.RefreshToken(ctx, &authproto.RefreshTokenRequest{RefreshToken: refreshToken})
+					require.NoError(t, err)
+				}
+				// The full burst is still available for rejected tokens.
+				for i := 0; i < testBurst; i++ {
+					_, err := s.RefreshToken(ctx, &authproto.RefreshTokenRequest{RefreshToken: "not-a-token"})
+					require.Error(t, err)
+					assert.Equal(t, statusUnauthenticated.Err().Error(), err.Error())
+				}
 			},
 		},
 		{

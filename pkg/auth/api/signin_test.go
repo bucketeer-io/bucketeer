@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -169,7 +170,7 @@ func TestAuthService_SignIn_RateLimit(t *testing.T) {
 		run     func(*testing.T, *authService, *accountclientmock.MockClient)
 	}{
 		{
-			desc:    "err: repeated wrong passwords for one email are rejected after the burst",
+			desc:    "err: repeated wrong passwords for the demo account are rejected after the burst",
 			limiter: newLimiter,
 			run: func(t *testing.T, s *authService, _ *accountclientmock.MockClient) {
 				t.Helper()
@@ -185,7 +186,28 @@ func TestAuthService_SignIn_RateLimit(t *testing.T) {
 			},
 		},
 		{
-			desc:    "err: valid credentials are also rejected once the email is throttled",
+			desc:    "err: attempts for unknown emails share one bucket regardless of the email",
+			limiter: newLimiter,
+			run: func(t *testing.T, s *authService, _ *accountclientmock.MockClient) {
+				t.Helper()
+				for i := 0; i < burst; i++ {
+					_, err := s.SignIn(context.Background(), &authproto.SignInRequest{
+						Email:    fmt.Sprintf("user-%d@example.com", i),
+						Password: "wrong-password",
+					})
+					require.Error(t, err)
+					assert.Equal(t, statusAccessDenied.Err().Error(), err.Error())
+				}
+				_, err := s.SignIn(context.Background(), &authproto.SignInRequest{
+					Email:    "another@example.com",
+					Password: "wrong-password",
+				})
+				require.Error(t, err)
+				assert.Equal(t, statusTooManyRequests.Err().Error(), err.Error())
+			},
+		},
+		{
+			desc:    "err: valid credentials are also rejected once the demo account is throttled",
 			limiter: newLimiter,
 			run: func(t *testing.T, s *authService, ac *accountclientmock.MockClient) {
 				t.Helper()
@@ -202,7 +224,7 @@ func TestAuthService_SignIn_RateLimit(t *testing.T) {
 			},
 		},
 		{
-			desc:    "success: attempts are counted per email",
+			desc:    "success: attempts for unknown emails do not throttle the demo account",
 			limiter: newLimiter,
 			run: func(t *testing.T, s *authService, ac *accountclientmock.MockClient) {
 				t.Helper()

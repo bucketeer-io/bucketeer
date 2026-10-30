@@ -63,13 +63,14 @@ func (s *authService) throttle(
 // clientAddressFromContext returns the address of the client that sent the
 // request. It prefers the first address of the x-forwarded-for metadata,
 // which grpc-gateway always populates for requests received over HTTP, and
-// falls back to the gRPC peer address.
+// falls back to the gRPC peer address. Forwarded values that are not an IP
+// address are ignored so that the returned key is always bounded in size.
 func clientAddressFromContext(ctx context.Context) string {
 	if md, ok := metadata.FromIncomingContext(ctx); ok {
 		for _, value := range md.Get(xForwardedForKey) {
 			first, _, _ := strings.Cut(value, ",")
-			if addr := strings.TrimSpace(first); addr != "" {
-				return addr
+			if ip := net.ParseIP(strings.TrimSpace(first)); ip != nil {
+				return ip.String()
 			}
 		}
 	}

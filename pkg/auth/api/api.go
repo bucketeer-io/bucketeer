@@ -57,7 +57,8 @@ type options struct {
 	isDemoSiteEnabled bool
 	// signInRateLimiter throttles SignIn attempts per submitted email.
 	signInRateLimiter *ratelimit.Limiter
-	// tokenRateLimiter throttles ExchangeToken and RefreshToken per client address.
+	// tokenRateLimiter throttles ExchangeToken requests and rejected
+	// RefreshToken requests per client address.
 	tokenRateLimiter *ratelimit.Limiter
 }
 
@@ -108,8 +109,9 @@ func WithSignInRateLimiter(limiter *ratelimit.Limiter) Option {
 	}
 }
 
-// WithTokenRateLimiter throttles ExchangeToken and RefreshToken requests.
-// Requests are counted per client address. A nil limiter disables throttling.
+// WithTokenRateLimiter throttles ExchangeToken requests and RefreshToken
+// requests whose token is rejected. Requests are counted per client address.
+// A nil limiter disables throttling.
 func WithTokenRateLimiter(limiter *ratelimit.Limiter) Option {
 	return func(opts *options) {
 		opts.tokenRateLimiter = limiter
@@ -317,15 +319,18 @@ func (s *authService) RefreshToken(
 		)
 		return nil, err
 	}
-	if err := s.throttle(ctx, s.opts.tokenRateLimiter, "refresh_token", clientAddressFromContext(ctx)); err != nil {
-		return nil, err
-	}
 	refreshToken, err := s.verifier.VerifyRefreshToken(req.RefreshToken)
 	if err != nil {
 		s.logger.Error("Refresh token is invalid",
 			zap.Error(err),
 			zap.String("refresh_token", obfuscateString(req.RefreshToken, obfuscateTokenLength)),
 		)
+		// Only rejected tokens count toward the limit, so a client holding a
+		// valid refresh token is never throttled and never signed out because
+		// of other traffic from the same address.
+		if err := s.throttle(ctx, s.opts.tokenRateLimiter, "refresh_token", clientAddressFromContext(ctx)); err != nil {
+			return nil, err
+		}
 		return nil, statusUnauthenticated.Err()
 	}
 	organizations, err := s.getOrganizationsByEmail(ctx, refreshToken.Email)
