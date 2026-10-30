@@ -62,6 +62,15 @@ func (s *AccountService) CreateAccountV2(
 		)
 		return nil, err
 	}
+	if err := s.checkOrganizationRoleWithinEditorAuthority(
+		ctx,
+		editor,
+		req.OrganizationId,
+		req.Email,
+		req.OrganizationRole,
+	); err != nil {
+		return nil, err
+	}
 	account := domain.NewAccountV2(
 		req.Email,
 		req.Name,
@@ -263,14 +272,14 @@ func (s *AccountService) UpdateAccountV2(
 		return nil, err
 	}
 
+	existing, err := s.getAccountV2(ctx, req.Email, req.OrganizationId)
+	if err != nil {
+		return nil, err
+	}
 	organizationRole := req.OrganizationRole
 	environmentRoles := req.EnvironmentRoles
 	disabled := req.Disabled
 	if selfServiceUpdate {
-		existing, err := s.getAccountV2(ctx, req.Email, req.OrganizationId)
-		if err != nil {
-			return nil, err
-		}
 		if selfServicePrivilegeChangeAttempted(existing, req) {
 			s.logger.Warn(
 				"Rejected self-service account update attempting to change privilege fields",
@@ -284,6 +293,35 @@ func (s *AccountService) UpdateAccountV2(
 		organizationRole = nil
 		environmentRoles = nil
 		disabled = nil
+	} else {
+		// Admins may only manage accounts up to their own organization role, both
+		// the account's current role and the role being assigned. Disabling the
+		// organization owner's account is rejected regardless of the caller.
+		if err := s.checkOrganizationRoleWithinEditorAuthority(
+			ctx,
+			editor,
+			req.OrganizationId,
+			req.Email,
+			existing.OrganizationRole,
+		); err != nil {
+			return nil, err
+		}
+		if req.OrganizationRole != nil {
+			if err := s.checkOrganizationRoleWithinEditorAuthority(
+				ctx,
+				editor,
+				req.OrganizationId,
+				req.Email,
+				req.OrganizationRole.Role,
+			); err != nil {
+				return nil, err
+			}
+		}
+		if req.Disabled != nil && req.Disabled.Value {
+			if err := s.checkNotOrganizationOwner(ctx, req.OrganizationId, req.Email); err != nil {
+				return nil, err
+			}
+		}
 	}
 	updatedAccountPb, err := s.updateAccountV2NoCommandMysql(
 		ctx,
@@ -436,6 +474,22 @@ func (s *AccountService) DisableAccountV2(
 				zap.String("email", req.Email),
 			)...,
 		)
+		return nil, err
+	}
+	target, err := s.getAccountV2(ctx, req.Email, req.OrganizationId)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.checkOrganizationRoleWithinEditorAuthority(
+		ctx,
+		editor,
+		req.OrganizationId,
+		req.Email,
+		target.OrganizationRole,
+	); err != nil {
+		return nil, err
+	}
+	if err := s.checkNotOrganizationOwner(ctx, req.OrganizationId, req.Email); err != nil {
 		return nil, err
 	}
 	accountV2Pb, err := s.updateAccountV2NoCommandMysql(
@@ -624,6 +678,22 @@ func (s *AccountService) DeleteAccountV2(
 				zap.String("email", req.Email),
 			)...,
 		)
+		return nil, err
+	}
+	target, err := s.getAccountV2(ctx, req.Email, req.OrganizationId)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.checkOrganizationRoleWithinEditorAuthority(
+		ctx,
+		editor,
+		req.OrganizationId,
+		req.Email,
+		target.OrganizationRole,
+	); err != nil {
+		return nil, err
+	}
+	if err := s.checkNotOrganizationOwner(ctx, req.OrganizationId, req.Email); err != nil {
 		return nil, err
 	}
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
@@ -887,6 +957,76 @@ func (s *AccountService) constructEnvironmentRoles(
 		requestEnvironmentRoles = append(requestEnvironmentRoles, editor.EnvironmentRoles...)
 	}
 	return requestEnvironmentRoles, nil
+}
+
+// canManageOrganizationRole reports whether the editor may assign the given
+// organization role or act on an account that holds it. Organization roles are
+// ordered MEMBER < ADMIN < OWNER and an editor may only manage roles up to
+// their own, so an admin cannot create, promote, disable or delete an owner.
+// System admins are not bound by the hierarchy.
+func canManageOrganizationRole(
+	editor *eventproto.Editor,
+	role accountproto.AccountV2_Role_Organization,
+) bool {
+	if editor.IsAdmin {
+		return true
+	}
+	return role <= editor.OrganizationRole
+}
+
+// checkOrganizationRoleWithinEditorAuthority rejects a request that assigns, or
+// acts on an account holding, an organization role above the editor's own.
+func (s *AccountService) checkOrganizationRoleWithinEditorAuthority(
+	ctx context.Context,
+	editor *eventproto.Editor,
+	organizationID, email string,
+	role accountproto.AccountV2_Role_Organization,
+) error {
+	if canManageOrganizationRole(editor, role) {
+		return nil
+	}
+	s.logger.Warn(
+		"Rejected account change involving an organization role above the editor's",
+		log.FieldsFromIncomingContext(ctx).AddFields(
+			zap.String("organizationID", organizationID),
+			zap.String("email", email),
+			zap.String("role", role.String()),
+			zap.String("editorRole", editor.OrganizationRole.String()),
+		)...,
+	)
+	return statusPermissionDenied.Err()
+}
+
+// checkNotOrganizationOwner rejects disabling or deleting the account referenced
+// by the organization's owner email. Ownership has to be transferred through the
+// organization update first so the organization always keeps an active owner.
+func (s *AccountService) checkNotOrganizationOwner(
+	ctx context.Context,
+	organizationID, email string,
+) error {
+	organization, err := s.getOrganization(ctx, organizationID)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get organization",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", organizationID),
+				zap.String("email", email),
+			)...,
+		)
+		return api.NewGRPCStatus(err).Err()
+	}
+	if organization.OwnerEmail != email {
+		return nil
+	}
+	s.logger.Warn(
+		"Rejected disabling or deleting the organization owner account",
+		log.FieldsFromIncomingContext(ctx).AddFields(
+			zap.String("organizationID", organizationID),
+			zap.String("email", email),
+		)...,
+	)
+	return statusPermissionDenied.Err()
 }
 
 func selfServicePrivilegeChangeAttempted(
