@@ -374,29 +374,34 @@ func (s *PushService) GetPush(
 	ctx context.Context,
 	req *pushproto.GetPushRequest,
 ) (*pushproto.GetPushResponse, error) {
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentId)
+	if err != nil {
+		return nil, err
+	}
 	if err := s.validateGetPushRequest(req); err != nil {
 		return nil, err
 	}
 
 	push, err := s.pushStorage.GetPush(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
+		s.logger.Error(
+			"Failed to get push",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
 		if errors.Is(err, v2ps.ErrPushNotFound) {
-			s.logger.Error(
-				"Failed to get push",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("id", req.Id),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
 			return nil, statusNotFound.Err()
 		}
+		return nil, api.NewGRPCStatus(err).Err()
 	}
 
-	if push.Push != nil {
-		// For security reasons we remove the service account from the API response
-		push.FcmServiceAccount = ""
-	}
+	// For security reasons we remove the service account from the API response
+	push.FcmServiceAccount = ""
 
 	return &pushproto.GetPushResponse{
 		Push: push.Push,
