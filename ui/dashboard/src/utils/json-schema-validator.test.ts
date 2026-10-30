@@ -47,6 +47,7 @@ describe('compileJsonSchema: schema definition', () => {
 
   it('rejects keywords with a shape no draft accepts', () => {
     const invalid = [
+      { $schema: 42 },
       { type: 'nonsense' },
       { type: ['string', 'nonsense'] },
       { properties: 'oops' },
@@ -96,6 +97,24 @@ describe('compileJsonSchema: schema definition', () => {
     const result = validate({});
     expect(result.valid).toBe(false);
     expect(result.detail).toContain('Unresolved $ref "#/$defs/missing".');
+  });
+
+  it('ignores if/then/else for draft-06 schemas, which predate them', () => {
+    const conditional = {
+      type: 'number',
+      if: { type: 'number' },
+      then: { minimum: 0 }
+    };
+    const asDraft06 = compile({
+      $schema: 'http://json-schema.org/draft-06/schema#',
+      ...conditional
+    })!;
+    expect(asDraft06(-1)).toEqual({ valid: true });
+    const asDraft07 = compile({ $schema: draft07, ...conditional })!;
+    expect(asDraft07(-1)).toEqual({
+      valid: false,
+      detail: '/ Instance does not match "then" schema.; / -1 is less than 0.'
+    });
   });
 });
 
@@ -193,6 +212,20 @@ describe('compileJsonSchema: detail', () => {
     const sizes = compile({
       type: 'object',
       properties: { size: { enum: ['a', 'b', 'c', 'd', 'e', 'f', 'g'] } }
+    })!;
+    expect(sizes({ size: 'z' })).toEqual({
+      valid: false,
+      detail:
+        '/size Instance does not match any of ["a", "b", "c", "d", "e", +2 more].'
+    });
+  });
+
+  it('caps the listed enum values of an enum under an array keyword', () => {
+    const sizes = compile({
+      type: 'object',
+      properties: {
+        size: { anyOf: [{ enum: ['a', 'b', 'c', 'd', 'e', 'f', 'g'] }] }
+      }
     })!;
     expect(sizes({ size: 'z' })).toEqual({
       valid: false,

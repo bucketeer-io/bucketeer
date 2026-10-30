@@ -52,6 +52,7 @@ const nonNegativeInteger: Schema = { type: 'integer', minimum: 0 };
 const schemaShape: Schema = {
   type: ['object', 'boolean'],
   properties: {
+    $schema: { type: 'string' },
     $ref: { type: 'string' },
     $defs: subschemaMap,
     definitions: subschemaMap,
@@ -99,35 +100,55 @@ const schemaShape: Schema = {
 };
 const schemaShapeValidator = new Validator(schemaShape, '2020-12');
 
+interface DraftHandling {
+  draft: SchemaDraft;
+  // Keywords the backend does not evaluate for this draft but the validator
+  // would; they are removed from the schema before it is interpreted.
+  ignoredKeywords: readonly string[];
+}
+
 // The backend defaults to draft 2020-12 and follows $schema when present.
-const draftOf = (schema: Schema | boolean): SchemaDraft => {
-  const id = typeof schema === 'boolean' ? '' : (schema.$schema ?? '');
-  if (id.includes('draft-04')) return '4';
-  if (id.includes('draft-06') || id.includes('draft-07')) return '7';
-  if (id.includes('2019-09')) return '2019-09';
-  return '2020-12';
+const draftHandlingOf = (schema: Schema | boolean): DraftHandling => {
+  const id =
+    typeof schema !== 'boolean' && typeof schema.$schema === 'string'
+      ? schema.$schema
+      : '';
+  if (id.includes('draft-04')) return { draft: '4', ignoredKeywords: [] };
+  // The validator has no draft-06 mode. Draft-07 only adds the if/then/else
+  // keywords to what is evaluated, and draft-06 ignores those.
+  if (id.includes('draft-06')) {
+    return { draft: '7', ignoredKeywords: ['if', 'then', 'else'] };
+  }
+  if (id.includes('draft-07')) return { draft: '7', ignoredKeywords: [] };
+  // From draft 2019-09 on, "format" is an annotation unless the validator
+  // opts in to asserting it. The backend does not opt in, so a value it
+  // accepts must not be rejected here.
+  return {
+    draft: id.includes('2019-09') ? '2019-09' : '2020-12',
+    ignoredKeywords: ['format']
+  };
 };
 
-// From draft 2019-09 on, "format" is an annotation unless the validator opts
-// in to asserting it. The backend does not opt in, so a value it accepts
-// must not be rejected here. Returns a copy of the schema without the
-// keyword; property names, enum values and other data are left untouched.
-const withoutFormat = (schema: Schema | boolean): Schema | boolean => {
+// Returns a copy of the schema without the given keywords in any subschema;
+// property names, enum values and other data are left untouched.
+const withoutKeywords = (
+  schema: Schema | boolean,
+  keywords: readonly string[]
+): Schema | boolean => {
   if (typeof schema === 'boolean') return schema;
+  const strip = (sub: unknown): unknown =>
+    isSchema(sub) ? withoutKeywords(sub, keywords) : sub;
   const copy: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(schema)) {
-    if (key === 'format') continue;
+    if (keywords.includes(key)) continue;
     if (key in schemaMapKeyword && isRecord(value)) {
       copy[key] = Object.fromEntries(
-        Object.entries(value).map(([name, sub]) => [
-          name,
-          isSchema(sub) ? withoutFormat(sub) : sub
-        ])
+        Object.entries(value).map(([name, sub]) => [name, strip(sub)])
       );
     } else if (key in schemaArrayKeyword && Array.isArray(value)) {
-      copy[key] = value.map(sub => (isSchema(sub) ? withoutFormat(sub) : sub));
-    } else if (key in schemaKeyword && isSchema(value)) {
-      copy[key] = withoutFormat(value);
+      copy[key] = value.map(strip);
+    } else if (key in schemaKeyword) {
+      copy[key] = strip(value);
     } else {
       copy[key] = value;
     }
@@ -159,8 +180,10 @@ const specificErrors = (errors: OutputUnit[]): OutputUnit[] =>
     );
   });
 
-// Resolves the schema node a keyword location points at. Locations that go
-// through a $ref cannot be followed in the root schema and yield undefined.
+// Resolves the schema node a keyword location points at, through objects
+// (properties, $defs, ...) and arrays (allOf, anyOf, prefixItems, ...).
+// Locations that go through a $ref cannot be followed in the root schema
+// and yield undefined.
 const schemaNodeAt = (
   schema: Schema | boolean,
   keywordLocation: string
@@ -168,13 +191,11 @@ const schemaNodeAt = (
   decodePointer(keywordLocation)
     .split('/')
     .slice(1)
-    .reduce<unknown>(
-      (node, token) =>
-        isRecord(node)
-          ? node[token.replace(/~1/g, '/').replace(/~0/g, '~')]
-          : undefined,
-      schema
-    );
+    .reduce<unknown>((node, token) => {
+      const key = token.replace(/~1/g, '/').replace(/~0/g, '~');
+      if (Array.isArray(node)) return node[Number(key)];
+      return isRecord(node) ? node[key] : undefined;
+    }, schema);
 
 // The validator's enum message lists every allowed value; cap the list like
 // the error count so a long enum does not flood the detail.
@@ -230,12 +251,14 @@ export const compileJsonSchema = (
   if (!isSchema(parsed) || !schemaShapeValidator.validate(parsed).valid) {
     return null;
   }
-  const draft = draftOf(parsed);
-  const asserted =
-    draft === '4' || draft === '7' ? parsed : withoutFormat(parsed);
+  const { draft, ignoredKeywords } = draftHandlingOf(parsed);
   let validator: Validator;
   try {
-    validator = new Validator(asserted, draft, false);
+    validator = new Validator(
+      withoutKeywords(parsed, ignoredKeywords),
+      draft,
+      false
+    );
   } catch {
     return null;
   }
