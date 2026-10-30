@@ -83,14 +83,41 @@ func isFontFile(path string) bool {
 	return ext == ".woff2" || ext == ".woff" || ext == ".ttf" || ext == ".otf"
 }
 
+// fileOnlyFileSystem wraps an http.FileSystem and reports directories as
+// missing, so http.FileServer responds with 404 instead of rendering a
+// directory listing.
+type fileOnlyFileSystem struct {
+	root http.FileSystem
+}
+
+// Open method for fileOnlyFileSystem
+func (ffs *fileOnlyFileSystem) Open(name string) (http.File, error) {
+	f, err := ffs.root.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	stat, err := f.Stat()
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+	if stat.IsDir() {
+		f.Close()
+		return nil, fs.ErrNotExist
+	}
+	return f, nil
+}
+
 // compressedFileServer serves pre-compressed Brotli/Gzip assets when available.
+// Only regular files are served; directory paths respond with 404.
 func compressedFileServer(root http.FileSystem) http.Handler {
+	files := &fileOnlyFileSystem{root: root}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		ae := r.Header.Get("Accept-Encoding")
 		// Brotli
 		if strings.Contains(ae, "br") {
-			if f, err := root.Open(path + ".br"); err == nil {
+			if f, err := files.Open(path + ".br"); err == nil {
 				defer f.Close()
 				w.Header().Set("Content-Encoding", "br")
 				w.Header().Set("Vary", "Accept-Encoding")
@@ -100,7 +127,7 @@ func compressedFileServer(root http.FileSystem) http.Handler {
 		}
 		// Gzip
 		if strings.Contains(ae, "gzip") {
-			if f, err := root.Open(path + ".gz"); err == nil {
+			if f, err := files.Open(path + ".gz"); err == nil {
 				defer f.Close()
 				w.Header().Set("Content-Encoding", "gzip")
 				w.Header().Set("Vary", "Accept-Encoding")
@@ -109,7 +136,7 @@ func compressedFileServer(root http.FileSystem) http.Handler {
 			}
 		}
 		// Fallback
-		http.FileServer(root).ServeHTTP(w, r)
+		http.FileServer(files).ServeHTTP(w, r)
 	})
 }
 
