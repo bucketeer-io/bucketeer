@@ -27,9 +27,10 @@ import (
 var contentSecurityPolicy = strings.Join([]string{
 	"default-src 'self'",
 	// The build emits only same-origin module scripts and worker files, and
-	// /static/js/env.js is served by this server. Known report: the JSON
-	// schema validation of variation values compiles schemas at runtime
-	// (Ajv uses new Function), which needs to change before enforcing.
+	// /static/js/env.js is served by this server. Nothing turns strings into
+	// code at runtime (the JSON Schema validation of variation values
+	// interprets the schema instead of generating a validator function), so
+	// 'unsafe-eval' is not needed.
 	"script-src 'self'",
 	// React inline style attributes and the style elements injected at
 	// runtime by the code editor and the select components.
@@ -62,10 +63,9 @@ var securityHeaders = []struct {
 	{key: "X-Content-Type-Options", value: "nosniff"},
 	// Only the origin is sent as referrer to other origins, nothing on HTTPS->HTTP.
 	{key: "Referrer-Policy", value: "strict-origin-when-cross-origin"},
-	// The policy is only monitored for now: browsers log violations in the
-	// developer console without blocking anything, so it can be checked
-	// against real usage before it is switched to Content-Security-Policy.
-	{key: "Content-Security-Policy-Report-Only", value: contentSecurityPolicy},
+	// Browsers block every resource load, connection, inline script and
+	// framing attempt the policy does not allow.
+	{key: "Content-Security-Policy", value: contentSecurityPolicy},
 }
 
 // securityHeadersMiddleware sets the browser security headers before the
