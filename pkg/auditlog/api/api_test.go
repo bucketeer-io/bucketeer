@@ -138,6 +138,45 @@ func TestGetAuditLog(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			desc:    "success: public api editor key obfuscated",
+			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED),
+			context: createContextWithToken(t, true),
+			setup: func(s *auditlogService) {
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
+					gomock.Any(), "id-1", "", "org-1",
+				).Return(&proto.AuditLog{
+					Id: "id-1",
+					Editor: &domaineventproto.Editor{
+						Email: "maintainer@bucketeer.io",
+						PublicApiEditor: &domaineventproto.Editor_PublicAPIEditor{
+							Token:      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+							Maintainer: "maintainer@bucketeer.io",
+							Name:       "key-1",
+						},
+					},
+				}, nil)
+			},
+			input: &proto.GetAuditLogRequest{
+				Id:             "id-1",
+				OrganizationId: "org-1",
+			},
+			expected: &proto.GetAuditLogResponse{
+				AuditLog: &proto.AuditLog{
+					Id: "id-1",
+					Editor: &domaineventproto.Editor{
+						Email: "maintainer@bucketeer.io",
+						PublicApiEditor: &domaineventproto.Editor_PublicAPIEditor{
+							Token:      "0123....cdef",
+							Maintainer: "maintainer@bucketeer.io",
+							Name:       "key-1",
+						},
+					},
+					LocalizedMessage: domainevent.LocalizedMessage(domaineventproto.Event_UNKNOWN, locale.NewLocalizer(context.Background())),
+				},
+			},
+			expectedErr: nil,
+		},
+		{
 			desc:    "success: environment and organization scope combined",
 			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
 			context: createContextWithToken(t, false),
@@ -661,6 +700,19 @@ func TestListFeatureHistory(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			desc:    "success: public api editor key obfuscated",
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
+			context: createContextWithToken(t, false),
+			setup: func(s *auditlogService) {
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+					gomock.Any(), gomock.Any(),
+				).Return(createPublicAPIAuditLogs(t, "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"), 2, int64(10), nil)
+			},
+			input:       &proto.ListFeatureHistoryRequest{FeatureId: "fid-1", EnvironmentId: "ns0"},
+			expected:    &proto.ListFeatureHistoryResponse{AuditLogs: createPublicAPIAuditLogs(t, "0123....cdef"), Cursor: "2", TotalCount: int64(10)},
+			expectedErr: nil,
+		},
+		{
 			desc:    "success: page size exceeds maximum",
 			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context: createContextWithToken(t, false),
@@ -766,6 +818,20 @@ func createAuditLogs(t *testing.T) []*proto.AuditLog {
 		{Id: "id-0", LocalizedMessage: msgUnknown, Editor: &domaineventproto.Editor{}},
 		{Id: "id-1", LocalizedMessage: msgUnknown, Editor: &domaineventproto.Editor{}},
 	}
+}
+
+func createPublicAPIAuditLogs(t *testing.T, apiKey string) []*proto.AuditLog {
+	t.Helper()
+	auditlogs := createAuditLogs(t)
+	auditlogs[0].Editor = &domaineventproto.Editor{
+		Email: "maintainer@bucketeer.io",
+		PublicApiEditor: &domaineventproto.Editor_PublicAPIEditor{
+			Token:      apiKey,
+			Maintainer: "maintainer@bucketeer.io",
+			Name:       "key-1",
+		},
+	}
+	return auditlogs
 }
 
 func createContextWithToken(t *testing.T, isSystemAdmin bool) context.Context {

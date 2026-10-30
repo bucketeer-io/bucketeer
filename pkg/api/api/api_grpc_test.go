@@ -50,6 +50,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	pushclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/push/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	subscriptionclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client/mock"
 	tagclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client/mock"
 	teamclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/team/client/mock"
@@ -5585,4 +5586,18 @@ func TestSingleflightFetchCollapsesConcurrentCallers(t *testing.T) {
 		require.NoErrorf(t, errs[i], "caller %d", i)
 		assert.Equalf(t, "shared", results[i], "caller %d", i)
 	}
+}
+
+func TestPublicAPIEditorMetadata(t *testing.T) {
+	t.Parallel()
+	md := publicAPIEditorMetadata(&accountproto.EnvironmentAPIKey{
+		ApiKey: &accountproto.APIKey{
+			ApiKey:     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			Maintainer: "maintainer@bucketeer.io",
+			Name:       "key-1",
+		},
+	})
+	assert.Equal(t, []string{"0123....cdef"}, md.Get(role.APIKeyTokenMDKey))
+	assert.Equal(t, []string{"maintainer@bucketeer.io"}, md.Get(role.APIKeyMaintainerMDKey))
+	assert.Equal(t, []string{"key-1"}, md.Get(role.APIKeyNameMDKey))
 }

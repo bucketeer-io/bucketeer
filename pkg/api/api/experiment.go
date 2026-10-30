@@ -21,7 +21,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
@@ -150,11 +149,7 @@ func (s *grpcGatewayService) CreateExperiment(
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateExperiment, "",
 	).Inc()
 
-	headerMetaData := metadata.New(map[string]string{
-		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
-		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	})
+	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 	resp, err := s.experimentClient.CreateExperiment(ctx, &experimentproto.CreateExperimentRequest{
 		EnvironmentId:   envAPIKey.Environment.Id,
@@ -206,11 +201,7 @@ func (s *grpcGatewayService) UpdateExperiment(
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodUpdateExperiment, "",
 	).Inc()
 
-	headerMetaData := metadata.New(map[string]string{
-		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
-		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	})
+	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 	_, err = s.experimentClient.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
 		EnvironmentId: envAPIKey.Environment.Id,

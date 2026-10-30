@@ -28,11 +28,16 @@ import (
 
 const apiKeyJSONField = "api_key"
 
-// ObfuscateAPIKey obfuscates the API key of an API key audit log, in place.
+// ObfuscateAPIKey obfuscates, in place, the API key of an API key audit log and the API key
+// of a public API editor, whatever the entity type.
 // The audit log is where the key would be persisted, so it is masked here instead of in the domain
 // event, whose entity data is where the API key cache pipeline reads the raw key from.
 func ObfuscateAPIKey(auditlog *proto.AuditLog) error {
-	if auditlog == nil || auditlog.EntityType != domainevent.Event_APIKEY {
+	if auditlog == nil {
+		return nil
+	}
+	obfuscateEditorAPIKey(auditlog.Editor)
+	if auditlog.EntityType != domainevent.Event_APIKEY {
 		return nil
 	}
 	entityData, entityErr := ObfuscateAPIKeyEntityData(auditlog.EntityData)
@@ -42,6 +47,14 @@ func ObfuscateAPIKey(auditlog *proto.AuditLog) error {
 	event, eventErr := ObfuscateAPIKeyEventData(auditlog.Event)
 	auditlog.Event = event
 	return errors.Join(entityErr, previousErr, eventErr)
+}
+
+// obfuscateEditorAPIKey covers the events and rows from before the gateway relayed the key obfuscated.
+func obfuscateEditorAPIKey(editor *domainevent.Editor) {
+	if editor == nil || editor.PublicApiEditor == nil {
+		return
+	}
+	editor.PublicApiEditor.Token = accountdomain.ObfuscateAPIKey(editor.PublicApiEditor.Token)
 }
 
 // ObfuscateAPIKeyEntityData obfuscates the API key of the JSON encoded API key entity data.

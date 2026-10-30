@@ -37,6 +37,11 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
+const (
+	rawAPIKey        = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	obfuscatedAPIKey = "0123....cdef"
+)
+
 func TestCheckSystemAdminRole(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
@@ -267,7 +272,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 			inputCtx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -290,7 +295,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 				Email: "apikey_maintainer@example.com",
 				Name:  "apikey maintainer",
 				PublicApiEditor: &eventproto.Editor_PublicAPIEditor{
-					Token:      "apikey_token",
+					Token:      obfuscatedAPIKey,
 					Maintainer: "apikey_maintainer@example.com",
 					Name:       "apikey_name",
 				},
@@ -306,7 +311,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 			inputCtx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -327,7 +332,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 			inputCtx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -343,7 +348,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 			inputCtx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -365,7 +370,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 			inputCtx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "admin@bucketeer.io", Name: "admin", IsSystemAdmin: true},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -382,7 +387,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 			inputCtx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "admin@bucketeer.io", Name: "admin", IsSystemAdmin: true},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -403,7 +408,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 			inputCtx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "member@example.com"},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -588,7 +593,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			ctx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -610,7 +615,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 				Email: "apikey_maintainer@example.com",
 				Name:  "apikey maintainer",
 				PublicApiEditor: &eventproto.Editor_PublicAPIEditor{
-					Token:      "apikey_token",
+					Token:      obfuscatedAPIKey,
 					Maintainer: "apikey_maintainer@example.com",
 					Name:       "apikey_name",
 				},
@@ -625,7 +630,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			ctx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -642,7 +647,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 				Email: "apikey_maintainer@example.com",
 				Name:  "maintainer",
 				PublicApiEditor: &eventproto.Editor_PublicAPIEditor{
-					Token:      "apikey_token",
+					Token:      obfuscatedAPIKey,
 					Maintainer: "apikey_maintainer@example.com",
 					Name:       "apikey_name",
 				},
@@ -655,7 +660,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			ctx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -678,7 +683,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			ctx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -695,7 +700,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			ctx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -716,7 +721,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			ctx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "admin@bucketeer.io", Name: "admin", IsSystemAdmin: true},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -734,7 +739,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			ctx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "admin@bucketeer.io", Name: "admin", IsSystemAdmin: true},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -756,7 +761,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			ctx: getContextWithTokenAndAPIKey(
 				t,
 				&token.AccessToken{Email: "viewer@example.com", Name: "viewer"},
-				"apikey_token",
+				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
 			),
@@ -1302,4 +1307,44 @@ func TestCheckOrganizationRoleByEnvironmentIDWithLog(t *testing.T) {
 		_, hasOrganizationID := logEntry["organizationId"]
 		assert.False(t, hasOrganizationID)
 	})
+}
+
+func TestGetAPIKeyEditor(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		ctx      context.Context
+		expected *eventproto.Editor_PublicAPIEditor
+	}{
+		{
+			desc:     "no metadata",
+			ctx:      context.Background(),
+			expected: nil,
+		},
+		{
+			desc:     "no api key metadata",
+			ctx:      metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{"other": "value"})),
+			expected: nil,
+		},
+		{
+			desc: "api key obfuscated",
+			ctx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "api-gateway@bucketeer.io", IsSystemAdmin: true, IsServiceToken: true},
+				rawAPIKey,
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			expected: &eventproto.Editor_PublicAPIEditor{
+				Token:      obfuscatedAPIKey,
+				Maintainer: "apikey_maintainer@example.com",
+				Name:       "apikey_name",
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			assert.Equal(t, p.expected, getAPIKeyEditor(p.ctx))
+		})
+	}
 }

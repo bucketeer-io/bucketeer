@@ -213,3 +213,87 @@ func TestNewAuditLogObfuscatesAPIKey(t *testing.T) {
 	require.NoError(t, actual.Event.UnmarshalTo(created))
 	assert.Equal(t, obfuscatedAPIKey, created.ApiKey)
 }
+
+func TestObfuscateAPIKeyEditor(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		input    *proto.AuditLog
+		expected *eventproto.Editor
+	}{
+		{
+			desc:     "no editor",
+			input:    &proto.AuditLog{EntityType: eventproto.Event_FEATURE},
+			expected: nil,
+		},
+		{
+			desc: "console editor: untouched",
+			input: &proto.AuditLog{
+				EntityType: eventproto.Event_FEATURE,
+				Editor:     &eventproto.Editor{Email: "bucketeer@bucketeer.io"},
+			},
+			expected: &eventproto.Editor{Email: "bucketeer@bucketeer.io"},
+		},
+		{
+			desc: "public api editor of any entity type: api key obfuscated",
+			input: &proto.AuditLog{
+				EntityType: eventproto.Event_FEATURE,
+				Editor: &eventproto.Editor{
+					Email: "maintainer@bucketeer.io",
+					PublicApiEditor: &eventproto.Editor_PublicAPIEditor{
+						Token:      rawAPIKey,
+						Maintainer: "maintainer@bucketeer.io",
+						Name:       "key-1",
+					},
+				},
+			},
+			expected: &eventproto.Editor{
+				Email: "maintainer@bucketeer.io",
+				PublicApiEditor: &eventproto.Editor_PublicAPIEditor{
+					Token:      obfuscatedAPIKey,
+					Maintainer: "maintainer@bucketeer.io",
+					Name:       "key-1",
+				},
+			},
+		},
+		{
+			desc: "already obfuscated: unchanged",
+			input: &proto.AuditLog{
+				EntityType: eventproto.Event_APIKEY,
+				Editor: &eventproto.Editor{
+					PublicApiEditor: &eventproto.Editor_PublicAPIEditor{Token: obfuscatedAPIKey},
+				},
+			},
+			expected: &eventproto.Editor{
+				PublicApiEditor: &eventproto.Editor_PublicAPIEditor{Token: obfuscatedAPIKey},
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			require.NoError(t, ObfuscateAPIKey(p.input))
+			assert.Equal(t, p.expected, p.input.Editor)
+		})
+	}
+}
+
+func TestNewAuditLogObfuscatesEditorAPIKey(t *testing.T) {
+	t.Parallel()
+	actual := NewAuditLog(&eventproto.Event{
+		Id:         "auditlog-1",
+		EntityType: eventproto.Event_FEATURE,
+		EntityId:   "feature-1",
+		Type:       eventproto.Event_FEATURE_CREATED,
+		Editor: &eventproto.Editor{
+			Email: "maintainer@bucketeer.io",
+			PublicApiEditor: &eventproto.Editor_PublicAPIEditor{
+				Token:      rawAPIKey,
+				Maintainer: "maintainer@bucketeer.io",
+				Name:       "key-1",
+			},
+		},
+	}, "env-1")
+	assert.Equal(t, obfuscatedAPIKey, actual.Editor.PublicApiEditor.Token)
+	assert.Equal(t, "maintainer@bucketeer.io", actual.Editor.PublicApiEditor.Maintainer)
+	assert.Equal(t, "key-1", actual.Editor.PublicApiEditor.Name)
+}
