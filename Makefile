@@ -431,7 +431,7 @@ ensure-encryption-key:
 	@if [ ! -f $(DEV_OAUTH_CERT_DIR)/encryption-key ]; then \
 		echo "Generating development encryption key in $(DEV_OAUTH_CERT_DIR)..."; \
 		mkdir -p $(DEV_OAUTH_CERT_DIR) && \
-		openssl rand -base64 32 > $(DEV_OAUTH_CERT_DIR)/encryption-key && \
+		(umask 077 && openssl rand -base64 32 > $(DEV_OAUTH_CERT_DIR)/encryption-key) && \
 		chmod 600 $(DEV_OAUTH_CERT_DIR)/encryption-key || \
 		{ echo "Failed to generate encryption key" >&2; rm -f $(DEV_OAUTH_CERT_DIR)/encryption-key; exit 1; }; \
 	else \

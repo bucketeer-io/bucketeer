@@ -242,9 +242,9 @@ subscriber services must use the same key and key id. The batch service does not
 the key, because it receives subscriptions through the web service.
 
 ```bash
-# Generate a key (make docker-compose-setup / deploy-bucketeer do this on first run,
-# writing tools/dev/cert/encryption-key, which is gitignored)
-openssl rand -base64 32 > tools/dev/cert/encryption-key
+# Generate a key readable only by you (make docker-compose-setup / deploy-bucketeer
+# do this on first run, writing tools/dev/cert/encryption-key, which is gitignored)
+(umask 077 && openssl rand -base64 32 > tools/dev/cert/encryption-key)
 ```
 
 Docker Compose: set the type and a key id in `.env` (the key is mounted from
