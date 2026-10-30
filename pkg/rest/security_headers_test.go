@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,16 +26,96 @@ import (
 )
 
 var expectedSecurityHeaders = map[string]string{
-	"X-Frame-Options":           "DENY",
-	"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-	"X-Content-Type-Options":    "nosniff",
-	"Referrer-Policy":           "strict-origin-when-cross-origin",
+	"X-Frame-Options":                     "DENY",
+	"Strict-Transport-Security":           "max-age=31536000; includeSubDomains",
+	"X-Content-Type-Options":              "nosniff",
+	"Referrer-Policy":                     "strict-origin-when-cross-origin",
+	"Content-Security-Policy-Report-Only": contentSecurityPolicy,
 }
 
 func assertSecurityHeaders(t *testing.T, header http.Header) {
 	t.Helper()
 	for key, value := range expectedSecurityHeaders {
 		assert.Equal(t, []string{value}, header.Values(key), key)
+	}
+	// The policy is monitored only; nothing must be enforced yet.
+	assert.Empty(t, header.Values("Content-Security-Policy"))
+}
+
+// parseContentSecurityPolicy splits a serialized policy into its directives,
+// keyed by directive name with the source list as value.
+func parseContentSecurityPolicy(t *testing.T, policy string) map[string]string {
+	t.Helper()
+	directives := map[string]string{}
+	for _, directive := range strings.Split(policy, ";") {
+		fields := strings.Fields(directive)
+		require.NotEmpty(t, fields, "empty directive in %q", policy)
+		name := fields[0]
+		_, duplicated := directives[name]
+		require.False(t, duplicated, "directive %q appears twice in %q", name, policy)
+		directives[name] = strings.Join(fields[1:], " ")
+	}
+	return directives
+}
+
+func TestContentSecurityPolicyDirectives(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc      string
+		directive string
+		want      string
+	}{
+		{
+			desc:      "everything not listed below is restricted to the dashboard origin",
+			directive: "default-src",
+			want:      "'self'",
+		},
+		{
+			desc:      "scripts and workers only come from the dashboard origin",
+			directive: "script-src",
+			want:      "'self'",
+		},
+		{
+			desc:      "inline style attributes and injected style elements are allowed",
+			directive: "style-src",
+			want:      "'self' 'unsafe-inline'",
+		},
+		{
+			desc:      "inlined assets, uploaded avatars and identity provider pictures load",
+			directive: "img-src",
+			want:      "'self' data: https:",
+		},
+		{
+			desc:      "the same-origin API, SSE stream and inlined avatar images are reachable",
+			directive: "connect-src",
+			want:      "'self' data:",
+		},
+		{
+			desc:      "the dashboard cannot be framed",
+			directive: "frame-ancestors",
+			want:      "'none'",
+		},
+		{
+			desc:      "plugins are not allowed",
+			directive: "object-src",
+			want:      "'none'",
+		},
+		{
+			desc:      "the document base URL cannot be changed",
+			directive: "base-uri",
+			want:      "'self'",
+		},
+	}
+	directives := parseContentSecurityPolicy(t, contentSecurityPolicy)
+	assert.Len(t, directives, len(patterns), "unexpected directive in %q", contentSecurityPolicy)
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			value, ok := directives[p.directive]
+			require.True(t, ok, "directive %q is missing", p.directive)
+			assert.Equal(t, p.want, value)
+		})
 	}
 }
 
