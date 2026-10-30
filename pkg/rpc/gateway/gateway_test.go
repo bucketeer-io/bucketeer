@@ -1,12 +1,26 @@
 package gateway
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func TestBooleanConversionMarshaler_PreprocessJSON(t *testing.T) {
@@ -252,6 +266,131 @@ func TestStringToBool(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGatewayRequestBodySizeLimit(t *testing.T) {
+	t.Parallel()
+	const maxBodyBytes = 64
+	baseURL := startTestGateway(t, WithMaxRequestBodyBytes(maxBodyBytes))
+
+	// bodyOfSize builds a valid JSON body of exactly size bytes.
+	const bodyTemplate = `{"name":"%s"}`
+	bodyOfSize := func(size int) string {
+		pad := size - len(fmt.Sprintf(bodyTemplate, ""))
+		return fmt.Sprintf(bodyTemplate, strings.Repeat("x", pad))
+	}
+
+	patterns := []struct {
+		desc           string
+		body           string
+		chunked        bool
+		expectedStatus int
+	}{
+		{
+			desc:           "body within the limit is decoded",
+			body:           `{"name":"ok"}`,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:           "body at the limit is decoded",
+			body:           bodyOfSize(maxBodyBytes),
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:           "body over the limit is rejected",
+			body:           bodyOfSize(maxBodyBytes + 1),
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			desc:           "chunked body over the limit is rejected",
+			body:           bodyOfSize(maxBodyBytes + 1),
+			chunked:        true,
+			expectedStatus: http.StatusBadRequest,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			var body io.Reader = strings.NewReader(p.body)
+			if p.chunked {
+				// Hide the reader's length so the client sends the body with
+				// chunked transfer encoding and no Content-Length header.
+				body = io.NopCloser(body)
+			}
+			req, err := http.NewRequest(http.MethodPost, baseURL+"/v1/echo", body)
+			require.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			defer resp.Body.Close()
+			respBody, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			assert.Equal(t, p.expectedStatus, resp.StatusCode, string(respBody))
+			if p.expectedStatus == http.StatusOK {
+				// The whole body must have been read and decoded.
+				var want, got map[string]string
+				require.NoError(t, json.Unmarshal([]byte(p.body), &want))
+				require.NoError(t, json.Unmarshal(respBody, &got))
+				assert.Equal(t, want, got)
+				return
+			}
+			assert.Contains(t, string(respBody), "request body too large")
+			// resp.Close records the "Connection: close" sent by the server.
+			assert.True(t, resp.Close,
+				"the server must close the connection instead of reading the rest of the body")
+		})
+	}
+}
+
+// startTestGateway starts a gateway on a loopback port with a POST /v1/echo
+// handler that decodes the request body the same way the generated
+// gRPC-Gateway handlers do and echoes the decoded message back.
+// It returns the base URL of the gateway.
+func startTestGateway(t *testing.T, opts ...Option) string {
+	t.Helper()
+	// Reserve a free loopback port for the gateway to listen on.
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	addr := ln.Addr().String()
+	require.NoError(t, ln.Close())
+
+	echo := func(_ context.Context, mux *runtime.ServeMux, _ []grpc.DialOption) error {
+		return mux.HandlePath(http.MethodPost, "/v1/echo",
+			func(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+				inbound, outbound := runtime.MarshalerForRequest(mux, r)
+				msg := &structpb.Struct{}
+				if err := inbound.NewDecoder(r.Body).Decode(msg); err != nil && !errors.Is(err, io.EOF) {
+					runtime.HTTPError(r.Context(), mux, outbound, w, r, status.Errorf(codes.InvalidArgument, "%v", err))
+					return
+				}
+				data, err := protojson.Marshal(msg)
+				if err != nil {
+					runtime.HTTPError(r.Context(), mux, outbound, w, r, status.Errorf(codes.Internal, "%v", err))
+					return
+				}
+				_, _ = w.Write(data)
+			},
+		)
+	}
+
+	g, err := NewGateway(addr, append([]Option{WithLogger(zap.NewNop())}, opts...)...)
+	require.NoError(t, err)
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	require.NoError(t, g.Start(ctx, echo))
+	t.Cleanup(func() { g.Stop(time.Second) })
+
+	require.Eventually(t, func() bool {
+		conn, err := net.Dial("tcp", addr)
+		if err != nil {
+			return false
+		}
+		return conn.Close() == nil
+	}, 5*time.Second, 10*time.Millisecond, "gateway did not start listening")
+
+	return "http://" + addr
 }
 
 func TestBooleanConversionMarshaler_Integration(t *testing.T) {

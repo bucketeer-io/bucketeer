@@ -377,10 +377,13 @@ func (g *Gateway) Start(ctx context.Context,
 		}
 	}
 
-	// Create and start the HTTP server
+	// Create and start the HTTP server.
+	// The decoder buffers the whole request body before unmarshaling it, so
+	// cap the bytes any handler can read from it. A body over the limit makes
+	// the decoder fail and the connection is closed instead of being drained.
 	g.httpServer = &http.Server{
 		Addr:         g.restAddr,
-		Handler:      mux,
+		Handler:      http.MaxBytesHandler(mux, g.opts.maxRequestBodyBytes),
 		ReadTimeout:  g.opts.httpReadTimeout,
 		WriteTimeout: g.opts.httpWriteTimeout,
 		IdleTimeout:  g.opts.httpIdleTimeout,
