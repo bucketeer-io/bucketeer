@@ -26,11 +26,11 @@ import (
 )
 
 var expectedSecurityHeaders = map[string]string{
-	"X-Frame-Options":                     "DENY",
-	"Strict-Transport-Security":           "max-age=31536000; includeSubDomains",
-	"X-Content-Type-Options":              "nosniff",
-	"Referrer-Policy":                     "strict-origin-when-cross-origin",
-	"Content-Security-Policy-Report-Only": contentSecurityPolicy,
+	"X-Frame-Options":           "DENY",
+	"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+	"X-Content-Type-Options":    "nosniff",
+	"Referrer-Policy":           "strict-origin-when-cross-origin",
+	"Content-Security-Policy":   contentSecurityPolicy,
 }
 
 func assertSecurityHeaders(t *testing.T, header http.Header) {
@@ -38,8 +38,9 @@ func assertSecurityHeaders(t *testing.T, header http.Header) {
 	for key, value := range expectedSecurityHeaders {
 		assert.Equal(t, []string{value}, header.Values(key), key)
 	}
-	// The policy is monitored only; nothing must be enforced yet.
-	assert.Empty(t, header.Values("Content-Security-Policy"))
+	// The policy is enforced; it must not be sent as report-only as well,
+	// which would make browsers evaluate and report it twice.
+	assert.Empty(t, header.Values("Content-Security-Policy-Report-Only"))
 }
 
 // parseContentSecurityPolicy splits a serialized policy into its directives,

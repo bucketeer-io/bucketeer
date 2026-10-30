@@ -95,6 +95,9 @@ describe('validateSchemaDefinition', () => {
         'JSON'
       )
     ).toBe('json-schema-invalid');
+    expect(
+      validateSchemaDefinition(jsonSchema({ type: 'nonsense' }), 'JSON')
+    ).toBe('json-schema-invalid');
   });
 
   it('accepts a valid JSON Schema', () => {
@@ -171,15 +174,17 @@ describe('createValueValidator: JSON_SCHEMA', () => {
     const validate = createValueValidator(schema, 'JSON')!;
     const result = validate('{}');
     expect(result.valid).toBe(false);
-    expect(result.detail).toBe("/ must have required property 'name'");
+    expect(result.detail).toBe(
+      '/ Instance does not have required property "name".'
+    );
   });
 
   it('names the offending additional property', () => {
     const validate = createValueValidator(schema, 'JSON')!;
     const result = validate('{"name":"a","extraField":"x"}');
     expect(result.valid).toBe(false);
-    expect(result.detail).toContain(
-      "must NOT have additional properties ('extraField')"
+    expect(result.detail).toBe(
+      '/ Property "extraField" does not match additional properties schema.'
     );
   });
 
@@ -187,10 +192,9 @@ describe('createValueValidator: JSON_SCHEMA', () => {
     const validate = createValueValidator(schema, 'JSON')!;
     const result = validate('{"name":"a","theme":"blue"}');
     expect(result.valid).toBe(false);
-    expect(result.detail).toContain(
-      '/theme must be equal to one of the allowed values'
+    expect(result.detail).toBe(
+      '/theme Instance does not match any of ["light", "dark"].'
     );
-    expect(result.detail).toContain('"light", "dark"');
   });
 
   it('truncates long enum allowed-value lists', () => {
@@ -219,9 +223,9 @@ describe('createValueValidator: JSON_SCHEMA', () => {
     const result = validate('{}');
     expect(result.valid).toBe(false);
     expect(result.detail).toBe(
-      "/ must have required property 'a'; " +
-        "/ must have required property 'b'; " +
-        "/ must have required property 'c' (+1 more)"
+      '/ Instance does not have required property "a".; ' +
+        '/ Instance does not have required property "b".; ' +
+        '/ Instance does not have required property "c". (+1 more)'
     );
   });
 
