@@ -366,7 +366,7 @@ func (h *EvaluationsHandler) checkStreamEvaluationsRequest(
 		h.logger.Error("Failed to check StreamEvaluations request",
 			zap.Error(err),
 			zap.String("tag", req.Tag),
-			zap.Any("user", req.User),
+			zap.String("userID", req.User.GetId()),
 			zap.Any("sourceId", req.SourceId),
 		)
 		return nil, nil, err
@@ -375,7 +375,7 @@ func (h *EvaluationsHandler) checkStreamEvaluationsRequest(
 		h.logger.Error("Failed to validate StreamEvaluations request",
 			zap.Error(err),
 			zap.String("tag", req.Tag),
-			zap.Any("user", req.User),
+			zap.String("userID", req.User.GetId()),
 			zap.Any("sourceId", req.SourceId),
 		)
 		return nil, nil, err

@@ -203,7 +203,6 @@ func (s *authService) GetAuthenticationURL(
 		s.logger.Error("Failed to validate the get authentication url request",
 			zap.Error(err),
 			zap.Any("type", req.Type),
-			zap.String("state", req.State),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		return nil, err
@@ -213,7 +212,6 @@ func (s *authService) GetAuthenticationURL(
 		s.logger.Error("Failed to get the authenticator",
 			zap.Error(err),
 			zap.Any("type", req.Type),
-			zap.String("state", req.State),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		return nil, api.NewGRPCStatus(err).Err()
@@ -223,7 +221,6 @@ func (s *authService) GetAuthenticationURL(
 		s.logger.Error("Failed to get the login url",
 			zap.Error(err),
 			zap.Any("type", req.Type),
-			zap.String("state", req.State),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		return nil, api.NewGRPCStatus(err).Err()
@@ -239,7 +236,6 @@ func (s *authService) ExchangeToken(
 		s.logger.Error("Failed to validate the exchange token request",
 			zap.Error(err),
 			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		return nil, err
@@ -252,7 +248,6 @@ func (s *authService) ExchangeToken(
 		s.logger.Error("Failed to get the authenticator",
 			zap.Error(err),
 			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		return nil, api.NewGRPCStatus(err).Err()
@@ -262,7 +257,6 @@ func (s *authService) ExchangeToken(
 		s.logger.Error("Failed to exchange",
 			zap.Error(err),
 			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		return nil, api.NewGRPCStatus(err).Err()
@@ -273,7 +267,6 @@ func (s *authService) ExchangeToken(
 		s.logger.Error("Failed to get organizations by email",
 			zap.Error(err),
 			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		return nil, err
@@ -299,7 +292,6 @@ func (s *authService) ExchangeToken(
 		s.logger.Error("Failed to generate token",
 			zap.Error(err),
 			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		return nil, err

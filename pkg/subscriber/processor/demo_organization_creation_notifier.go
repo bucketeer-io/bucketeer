@@ -156,7 +156,6 @@ func (d demoOrganizationCreationNotifier) handleMessage(msg *puller.Message) {
 		d.logger.Error("Failed to send notification",
 			zap.Error(err),
 			zap.String("event id", domainEvent.Id),
-			zap.String("webhookURL", d.demoOrganizationCreationNotifierConfig.Notifier.Slack.WebHookURL),
 			zap.String("organizationId", organizationCreatedEvent.Id),
 		)
 		subscriberHandledCounter.WithLabelValues(

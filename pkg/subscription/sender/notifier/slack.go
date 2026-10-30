@@ -20,7 +20,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/slack-go/slack"
@@ -379,6 +381,10 @@ func lastDays(now, stopAt time.Time) int {
 
 func (n *slackNotifier) postWebhook(ctx context.Context, msg *slack.WebhookMessage, webhookURL string) error {
 	if err := slack.PostWebhookCustomHTTPContext(ctx, webhookURL, n.httpClient, msg); err != nil {
+		// Transport errors embed the request URL, which contains the secret,
+		// so mask it before the error is logged here or returned to callers
+		// that log it themselves.
+		err = maskWebhookURLInError(err, webhookURL)
 		n.logger.Error("Failed to post a message",
 			zap.Error(err),
 			// Avoid logging a webhook URL which contains secret.
@@ -387,4 +393,32 @@ func (n *slackNotifier) postWebhook(ctx context.Context, msg *slack.WebhookMessa
 		return err
 	}
 	return nil
+}
+
+// maskWebhookURLInError replaces the webhook URL embedded in err (for example
+// by *url.Error on transport failures) with its masked form. Errors that do
+// not mention the URL are returned unchanged so that their type is preserved.
+func maskWebhookURLInError(err error, webhookURL string) error {
+	secrets := []string{webhookURL}
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) {
+		secrets = append(secrets, urlErr.URL)
+	}
+	msg := err.Error()
+	masked := msg
+	for _, secret := range secrets {
+		if secret == "" {
+			continue
+		}
+		replacement := subscriptiondomain.MaskWebhookURL(secret)
+		// url.Error formats the URL with %q, which escapes characters such
+		// as quotes, so the quoted form has to be replaced as well as the
+		// raw one.
+		masked = strings.ReplaceAll(masked, strconv.Quote(secret), strconv.Quote(replacement))
+		masked = strings.ReplaceAll(masked, secret, replacement)
+	}
+	if masked == msg {
+		return err
+	}
+	return errors.New(masked)
 }

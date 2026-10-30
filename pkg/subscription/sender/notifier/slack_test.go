@@ -17,6 +17,8 @@ package notifier
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -30,6 +32,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"go.uber.org/zap/zaptest/observer"
 	"google.golang.org/grpc/metadata"
 
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
@@ -217,6 +221,114 @@ func TestPostWebhook(t *testing.T) {
 		})
 	}
 	assert.Equal(t, int32(0), atomic.LoadInt32(&redirectTargetHits))
+}
+
+func TestPostWebhookMasksWebhookURLInErrors(t *testing.T) {
+	t.Parallel()
+
+	transportFailure := func(*http.Request) (*http.Response, error) {
+		return nil, errors.New("dial tcp: connection refused")
+	}
+	patterns := []struct {
+		desc            string
+		webhookURL      string
+		roundTrip       func(*http.Request) (*http.Response, error)
+		expectedErr     bool
+		expectedErrType error
+		expectedErrText string
+	}{
+		{
+			desc:            "err: transport failure embeds the url and is masked",
+			webhookURL:      testSlackWebhookURL,
+			roundTrip:       transportFailure,
+			expectedErr:     true,
+			expectedErrText: "connection refused",
+		},
+		{
+			// url.Error quotes the URL with %q, so characters such as quotes
+			// are escaped in the error text and must still be masked.
+			desc:            "err: transport failure with a url that is escaped when quoted is masked",
+			webhookURL:      testSlackWebhookURL + `?label="alerts"`,
+			roundTrip:       transportFailure,
+			expectedErr:     true,
+			expectedErrText: "connection refused",
+		},
+		{
+			desc:       "err: status code failure is returned unchanged",
+			webhookURL: testSlackWebhookURL,
+			roundTrip: func(req *http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusInternalServerError,
+					Status:     "500 Internal Server Error",
+					Body:       io.NopCloser(strings.NewReader("")),
+					Request:    req,
+				}, nil
+			},
+			expectedErr:     true,
+			expectedErrType: slack.StatusCodeError{},
+			expectedErrText: "500",
+		},
+		{
+			desc:       "success: 200 OK",
+			webhookURL: testSlackWebhookURL,
+			roundTrip: func(req *http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Status:     "200 OK",
+					Body:       io.NopCloser(strings.NewReader("ok")),
+					Request:    req,
+				}, nil
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			core, logs := observer.New(zapcore.DebugLevel)
+			client := newWebhookHTTPClient()
+			client.Transport = roundTripperFunc(p.roundTrip)
+			notifier := &slackNotifier{
+				webURL:     "https://example.com",
+				httpClient: client,
+				logger:     zap.New(core),
+			}
+			// The credential is the path; neither it nor its %q-escaped form
+			// may appear anywhere in the error or the log.
+			secret := strings.TrimPrefix(p.webhookURL, "https://hooks.slack.com")
+			quoted := strconv.Quote(secret)
+			escapedSecret := quoted[1 : len(quoted)-1]
+			err := notifier.postWebhook(context.Background(), &slack.WebhookMessage{Text: "hello"}, p.webhookURL)
+			for _, entry := range logs.All() {
+				for _, value := range []string{secret, escapedSecret} {
+					assert.NotContains(t, entry.Message, value)
+					for key, field := range entry.ContextMap() {
+						assert.NotContains(t, fmt.Sprint(field), value, "field %q of %q", key, entry.Message)
+					}
+				}
+			}
+			if !p.expectedErr {
+				require.NoError(t, err)
+				assert.Empty(t, logs.All())
+				return
+			}
+			require.Error(t, err)
+			assert.NotContains(t, err.Error(), secret)
+			assert.NotContains(t, err.Error(), escapedSecret)
+			assert.Contains(t, err.Error(), p.expectedErrText)
+			if p.expectedErrType != nil {
+				assert.IsType(t, p.expectedErrType, err)
+			} else {
+				assert.Contains(t, err.Error(), subscriptiondomain.MaskWebhookURL(p.webhookURL))
+			}
+			entries := logs.FilterMessage("Failed to post a message").All()
+			require.Len(t, entries, 1)
+			assert.Equal(t, err.Error(), entries[0].ContextMap()["error"])
+			assert.Equal(t,
+				subscriptiondomain.SlackChannelRecipientID(p.webhookURL),
+				entries[0].ContextMap()["slackRecipientId"],
+			)
+		})
+	}
 }
 
 func TestLastDays(t *testing.T) {
