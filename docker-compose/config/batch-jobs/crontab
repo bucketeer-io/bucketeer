@@ -51,3 +51,6 @@
 
 # Scheduled Flag Change Executor - every minute
 * * * * * /usr/local/bin/run-batch-job.sh ScheduledFlagChangeExecutor
+
+# Monthly Summarizer - every minute (dev override)
+* * * * * /usr/local/bin/run-batch-job.sh MonthlySummarizer
