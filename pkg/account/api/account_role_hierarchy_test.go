@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -72,16 +73,19 @@ func hierarchyAccounts() map[string]*domain.AccountV2 {
 
 // setupHierarchyLookups serves account lookups from hierarchyAccounts and the
 // organization lookup with hierarchyOwnerEmail as the organization owner.
+// Account lookups match the email case-insensitively, like the database
+// collation does, and return the account with its stored email.
 func setupHierarchyLookups(service *AccountService) {
 	accounts := hierarchyAccounts()
 	service.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().
 		GetAccountV2(gomock.Any(), gomock.Any(), hierarchyOrgID).
 		DoAndReturn(func(_ context.Context, email, _ string) (*domain.AccountV2, error) {
-			account, ok := accounts[email]
-			if !ok {
-				return nil, v2as.ErrAccountNotFound
+			for storedEmail, account := range accounts {
+				if strings.EqualFold(storedEmail, email) {
+					return account, nil
+				}
 			}
-			return account, nil
+			return nil, v2as.ErrAccountNotFound
 		}).AnyTimes()
 	service.environmentClient.(*ecmock.MockClient).EXPECT().
 		GetOrganization(gomock.Any(), gomock.Any()).
@@ -257,6 +261,16 @@ func TestUpdateAccountV2OrganizationRoleHierarchy(t *testing.T) {
 			wantErr: statusPermissionDenied.Err(),
 		},
 		{
+			name:        "owner cannot disable the organization owner using a differently cased email",
+			editorEmail: hierarchyCoOwnerEmail,
+			req: &accountproto.UpdateAccountV2Request{
+				OrganizationId: hierarchyOrgID,
+				Email:          strings.ToUpper(hierarchyOwnerEmail),
+				Disabled:       wrapperspb.Bool(true),
+			},
+			wantErr: statusPermissionDenied.Err(),
+		},
+		{
 			name:        "admin can promote a member to admin",
 			editorEmail: hierarchyAdminEmail,
 			req: &accountproto.UpdateAccountV2Request{
@@ -400,9 +414,20 @@ func TestDisableAccountV2OrganizationRoleHierarchy(t *testing.T) {
 			wantErr:       statusPermissionDenied.Err(),
 		},
 		{
+			name:        "owner cannot disable the organization owner using a differently cased email",
+			editorEmail: hierarchyCoOwnerEmail,
+			targetEmail: strings.ToUpper(hierarchyOwnerEmail),
+			wantErr:     statusPermissionDenied.Err(),
+		},
+		{
 			name:        "admin can disable a member",
 			editorEmail: hierarchyAdminEmail,
 			targetEmail: hierarchyMemberEmail,
+		},
+		{
+			name:        "admin can disable a member using a differently cased email",
+			editorEmail: hierarchyAdminEmail,
+			targetEmail: strings.ToUpper(hierarchyMemberEmail),
 		},
 		{
 			name:        "owner can disable another owner who is not the organization owner",
@@ -461,7 +486,7 @@ func TestDisableAccountV2OrganizationRoleHierarchy(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.NotNil(t, persisted)
-			assert.Equal(t, tc.targetEmail, persisted.Email)
+			assert.True(t, strings.EqualFold(tc.targetEmail, persisted.Email))
 			assert.True(t, persisted.Disabled)
 			assert.True(t, resp.Account.Disabled)
 		})
@@ -504,9 +529,20 @@ func TestDeleteAccountV2OrganizationRoleHierarchy(t *testing.T) {
 			wantErr:       statusPermissionDenied.Err(),
 		},
 		{
+			name:        "owner cannot delete the organization owner using a differently cased email",
+			editorEmail: hierarchyCoOwnerEmail,
+			targetEmail: strings.ToUpper(hierarchyOwnerEmail),
+			wantErr:     statusPermissionDenied.Err(),
+		},
+		{
 			name:        "admin can delete a member",
 			editorEmail: hierarchyAdminEmail,
 			targetEmail: hierarchyMemberEmail,
+		},
+		{
+			name:        "admin can delete a member using a differently cased email",
+			editorEmail: hierarchyAdminEmail,
+			targetEmail: strings.ToUpper(hierarchyMemberEmail),
 		},
 		{
 			name:        "admin can delete an admin",
@@ -568,7 +604,7 @@ func TestDeleteAccountV2OrganizationRoleHierarchy(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.NotNil(t, deleted)
-			assert.Equal(t, tc.targetEmail, deleted.Email)
+			assert.True(t, strings.EqualFold(tc.targetEmail, deleted.Email))
 		})
 	}
 }
