@@ -683,7 +683,7 @@ func (s *gatewayService) findEnvironmentAPIKey(
 		cacheLayerExternal,
 	)
 	if err == nil {
-		putEnvironmentAPIKeyCache(ctx, envAPIKey, s.environmentAPIKeyCache, s.logger)
+		putEnvironmentAPIKeyCache(ctx, apikey, envAPIKey, s.environmentAPIKeyCache, s.logger)
 		return envAPIKey, nil
 	}
 	// L3: direct DB query
@@ -717,7 +717,7 @@ func (s *gatewayService) findEnvironmentAPIKey(
 		return nil, err
 	}
 	envAPIKey = k.(*accountproto.EnvironmentAPIKey)
-	putEnvironmentAPIKeyCache(ctx, envAPIKey, s.environmentAPIKeyCache, s.logger)
+	putEnvironmentAPIKeyCache(ctx, apikey, envAPIKey, s.environmentAPIKeyCache, s.logger)
 	return envAPIKey, nil
 }
 

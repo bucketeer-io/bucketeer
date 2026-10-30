@@ -20,6 +20,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
+	accountdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
@@ -28,9 +29,12 @@ const (
 	environmentAPIKeyKind = "environment_apikey"
 )
 
+// EnvironmentAPIKeyCache is keyed by the API key presented by the client. The key
+// is hashed before it is used as a cache key and the cached value only keeps its
+// obfuscated form, so neither the key names nor the values hold the key itself.
 type EnvironmentAPIKeyCache interface {
-	Get(string) (*accountproto.EnvironmentAPIKey, error)
-	Put(*accountproto.EnvironmentAPIKey) error
+	Get(apiKey string) (*accountproto.EnvironmentAPIKey, error)
+	Put(apiKey string, environmentAPIKey *accountproto.EnvironmentAPIKey) error
 	Evict(apiKey string) error
 }
 
@@ -60,13 +64,22 @@ func (c *environmentAPIKeyCache) Get(apiKey string) (*accountproto.EnvironmentAP
 	return environmentAPIKey, nil
 }
 
-func (c *environmentAPIKeyCache) Put(environmentAPIKey *accountproto.EnvironmentAPIKey) error {
-	buffer, err := proto.Marshal(environmentAPIKey)
+func (c *environmentAPIKeyCache) Put(apiKey string, environmentAPIKey *accountproto.EnvironmentAPIKey) error {
+	// The caller's message is left untouched: it may be shared between caches.
+	cached, ok := proto.Clone(environmentAPIKey).(*accountproto.EnvironmentAPIKey)
+	if !ok {
+		return cache.ErrInvalidType
+	}
+	if cached.ApiKey != nil {
+		// Only the obfuscated form is cached. It is what the public API relays as
+		// the editor of its changes, and it cannot be used to authenticate.
+		cached.ApiKey.ApiKey = accountdomain.ObfuscateAPIKey(cached.ApiKey.ApiKey)
+	}
+	buffer, err := proto.Marshal(cached)
 	if err != nil {
 		return err
 	}
-	key := c.key(environmentAPIKey.ApiKey.ApiKey)
-	return c.cache.Put(key, buffer, c.ttl)
+	return c.cache.Put(c.key(apiKey), buffer, c.ttl)
 }
 
 func (c *environmentAPIKeyCache) Evict(apiKey string) error {
@@ -77,5 +90,6 @@ func (c *environmentAPIKeyCache) key(apiKey string) string {
 	// Pass "" as environmentId to skip the environment prefix in the cache key.
 	// At lookup time we only have the API key string from the authorization header
 	// and don't yet know which environment it belongs to.
-	return cache.MakeKey(environmentAPIKeyKind, apiKey, "")
+	// The key is stored by its digest so the cache never holds the key itself.
+	return cache.MakeKey(environmentAPIKeyKind, accountdomain.HashAPIKey(apiKey), "")
 }

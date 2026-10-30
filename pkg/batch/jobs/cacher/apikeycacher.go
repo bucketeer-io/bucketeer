@@ -84,7 +84,7 @@ func (c *apiKeyCacher) putCache(envAPIKey *accproto.EnvironmentAPIKey) int {
 		wg.Add(1) // Increment the WaitGroup counter
 		go func(cache cachev3.EnvironmentAPIKeyCache) {
 			defer wg.Done()
-			if err := cache.Put(envAPIKey); err != nil {
+			if err := cache.Put(envAPIKey.GetApiKey().GetApiKey(), envAPIKey); err != nil {
 				// Log the error, but do not stop the other goroutines
 				c.logger.Error("Failed to cache environment api key",
 					zap.Error(err),

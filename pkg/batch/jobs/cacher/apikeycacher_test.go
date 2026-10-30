@@ -36,6 +36,7 @@ func TestApiKeyPutCache(t *testing.T) {
 
 	envKey := &accproto.EnvironmentAPIKey{
 		ProjectId: "proj-id",
+		ApiKey:    &accproto.APIKey{ApiKey: "raw-api-key"},
 	}
 
 	patterns := []struct {
@@ -46,9 +47,9 @@ func TestApiKeyPutCache(t *testing.T) {
 		{
 			desc: "err: error at index 0",
 			setup: func(fc *apiKeyCacher) {
-				fc.caches[0].(*mockcachev3.MockEnvironmentAPIKeyCache).EXPECT().Put(envKey).
+				fc.caches[0].(*mockcachev3.MockEnvironmentAPIKeyCache).EXPECT().Put(envKey.ApiKey.ApiKey, envKey).
 					Return(errors.New("internal error"))
-				fc.caches[1].(*mockcachev3.MockEnvironmentAPIKeyCache).EXPECT().Put(envKey).
+				fc.caches[1].(*mockcachev3.MockEnvironmentAPIKeyCache).EXPECT().Put(envKey.ApiKey.ApiKey, envKey).
 					Return(nil)
 			},
 			expected: 1,
@@ -56,9 +57,9 @@ func TestApiKeyPutCache(t *testing.T) {
 		{
 			desc: "err: error at index 1",
 			setup: func(fc *apiKeyCacher) {
-				fc.caches[0].(*mockcachev3.MockEnvironmentAPIKeyCache).EXPECT().Put(envKey).
+				fc.caches[0].(*mockcachev3.MockEnvironmentAPIKeyCache).EXPECT().Put(envKey.ApiKey.ApiKey, envKey).
 					Return(nil)
-				fc.caches[1].(*mockcachev3.MockEnvironmentAPIKeyCache).EXPECT().Put(envKey).
+				fc.caches[1].(*mockcachev3.MockEnvironmentAPIKeyCache).EXPECT().Put(envKey.ApiKey.ApiKey, envKey).
 					Return(errors.New("internal error"))
 			},
 			expected: 1,
@@ -66,9 +67,9 @@ func TestApiKeyPutCache(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(fc *apiKeyCacher) {
-				fc.caches[0].(*mockcachev3.MockEnvironmentAPIKeyCache).EXPECT().Put(envKey).
+				fc.caches[0].(*mockcachev3.MockEnvironmentAPIKeyCache).EXPECT().Put(envKey.ApiKey.ApiKey, envKey).
 					Return(nil)
-				fc.caches[1].(*mockcachev3.MockEnvironmentAPIKeyCache).EXPECT().Put(envKey).
+				fc.caches[1].(*mockcachev3.MockEnvironmentAPIKeyCache).EXPECT().Put(envKey.ApiKey.ApiKey, envKey).
 					Return(nil)
 			},
 			expected: 2,

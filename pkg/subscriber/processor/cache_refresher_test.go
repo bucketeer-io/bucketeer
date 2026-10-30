@@ -370,7 +370,7 @@ func TestCacheRefresherHandleMessage(t *testing.T) {
 						},
 					}, nil)
 				m.environmentAPIKeyCache.EXPECT().
-					Put(gomock.Any()).
+					Put("secret-123", gomock.Any()).
 					Return(nil)
 				m.invalidationPublisher.EXPECT().
 					Publish(gomock.Any(), gomock.Any()).
@@ -396,7 +396,7 @@ func TestCacheRefresherHandleMessage(t *testing.T) {
 							ApiKey: &accountproto.APIKey{Id: "apikey-id-1", ApiKey: "old-secret"},
 						},
 					}, nil)
-				m.environmentAPIKeyCache.EXPECT().Put(gomock.Any()).Return(nil)
+				m.environmentAPIKeyCache.EXPECT().Put("old-secret", gomock.Any()).Return(nil)
 				m.accountStorage.EXPECT().
 					GetEnvironmentAPIKey(gomock.Any(), "new-secret").
 					Return(&accountdomain.EnvironmentAPIKey{
@@ -404,7 +404,7 @@ func TestCacheRefresherHandleMessage(t *testing.T) {
 							ApiKey: &accountproto.APIKey{Id: "apikey-id-1", ApiKey: "new-secret"},
 						},
 					}, nil)
-				m.environmentAPIKeyCache.EXPECT().Put(gomock.Any()).Return(nil)
+				m.environmentAPIKeyCache.EXPECT().Put("new-secret", gomock.Any()).Return(nil)
 				m.invalidationPublisher.EXPECT().
 					Publish(gomock.Any(), gomock.Any()).
 					Return(nil)
