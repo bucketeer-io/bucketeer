@@ -336,22 +336,7 @@ func NewOrFilter(queries []WherePart) WherePart {
 }
 
 func (f *OrFilter) SQLString() (sql string, args []interface{}) {
-	if len(f.Queries) == 0 {
-		return "", nil
-	}
-	var sb strings.Builder
-	sb.WriteString("(")
-	for i, q := range f.Queries {
-		if i != 0 {
-			sb.WriteString(" OR ")
-		}
-		qSQL, qArgs := q.SQLString()
-		sb.WriteString(qSQL)
-		args = append(args, qArgs...)
-	}
-	sb.WriteString(")")
-	sql = sb.String()
-	return
+	return joinWhereParts(f.Queries, " OR ")
 }
 
 type AndFilter struct {
@@ -365,38 +350,53 @@ func NewAndFilter(queries []WherePart) WherePart {
 }
 
 func (f *AndFilter) SQLString() (sql string, args []interface{}) {
-	if len(f.Queries) == 0 {
+	return joinWhereParts(f.Queries, " AND ")
+}
+
+// joinWhereParts wraps the non-empty fragments of the parts in parentheses,
+// joined with the separator. Parts that produce no SQL (for example a filter
+// without a column or without values) are skipped, so they never leave a
+// dangling operator behind. It returns no SQL when every part is empty.
+func joinWhereParts(parts []WherePart, separator string) (sql string, args []interface{}) {
+	var sb strings.Builder
+	for _, part := range parts {
+		partSQL, partArgs := part.SQLString()
+		if partSQL == "" {
+			continue
+		}
+		if sb.Len() == 0 {
+			sb.WriteString("(")
+		} else {
+			sb.WriteString(separator)
+		}
+		sb.WriteString(partSQL)
+		args = append(args, partArgs...)
+	}
+	if sb.Len() == 0 {
 		return "", nil
 	}
-	var sb strings.Builder
-	sb.WriteString("(")
-	for i, q := range f.Queries {
-		if i != 0 {
-			sb.WriteString(" AND ")
-		}
-		qSQL, qArgs := q.SQLString()
-		sb.WriteString(qSQL)
-		args = append(args, qArgs...)
-	}
 	sb.WriteString(")")
-	sql = sb.String()
-	return
+	return sb.String(), args
 }
 
 func ConstructWhereSQLString(wps []WherePart) (sql string, args []interface{}) {
 	var sb strings.Builder
-	if len(wps) == 0 {
-		return "", nil
-	} else {
-		sb.WriteString(" WHERE ")
-	}
-	for i, wp := range wps {
-		if i != 0 {
+	for _, wp := range wps {
+		wpSQL, wpArgs := wp.SQLString()
+		if wpSQL == "" {
+			// A part without SQL must not leave a dangling WHERE or AND behind.
+			continue
+		}
+		if sb.Len() == 0 {
+			sb.WriteString(" WHERE ")
+		} else {
 			sb.WriteString(" AND ")
 		}
-		wpSQL, wpArgs := wp.SQLString()
 		sb.WriteString(wpSQL)
 		args = append(args, wpArgs...)
+	}
+	if sb.Len() == 0 {
+		return "", nil
 	}
 	sql = sb.String() + " "
 	return
