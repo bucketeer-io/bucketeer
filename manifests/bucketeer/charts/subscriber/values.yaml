@@ -17,14 +17,24 @@ env:
     type: "mysql"
     mysql:
       user:
+      # Rendered into a chart-managed Secret and injected through secretKeyRef.
       pass:
+      # Existing Secret to read the password from instead of `pass`. Leave
+      # empty to inherit global.operationalDatabase.mysql.
+      existingSecret:
+      existingSecretKey:
       host:
       port: 3306
       name:
       openConns: 50
     postgres:
       user:
+      # Rendered into a chart-managed Secret and injected through secretKeyRef.
       pass:
+      # Existing Secret to read the password from instead of `pass`. Leave
+      # empty to inherit global.operationalDatabase.postgres.
+      existingSecret:
+      existingSecretKey:
       host:
       port: 5432
       name:
