@@ -956,6 +956,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	// authService
 	authService, err := s.createAuthService(
+		ctx,
 		dbClient,
 		accountClient,
 		accountStorage,
@@ -1607,6 +1608,7 @@ func (s *server) readOAuthConfig(
 }
 
 func (s *server) createAuthService(
+	ctx context.Context,
 	dbClient database.Client,
 	accountClient accountclient.Client,
 	accountStorage v2as.AccountStorage,
@@ -1626,6 +1628,18 @@ func (s *server) createAuthService(
 		authapi.WithAccessTokenTTL(*s.accessTokenTTL),
 		authapi.WithRefreshTokenTTL(*s.refreshTokenTTL),
 		authapi.WithDemoSiteEnabled(*s.isDemoSiteEnabled),
+		// Sign-in attempts are counted per submitted email, so the limit is
+		// deliberately tight. Token exchange and refresh are counted per
+		// client address, which many users may share behind a proxy, so the
+		// limit is kept well above the dashboard's refresh cadence.
+		authapi.WithSignInRateLimiter(aichatratelimit.NewLimiter(ctx, aichatratelimit.Config{
+			RequestsPerMinute: 10,
+			BurstSize:         5,
+		})),
+		authapi.WithTokenRateLimiter(aichatratelimit.NewLimiter(ctx, aichatratelimit.Config{
+			RequestsPerMinute: 120,
+			BurstSize:         30,
+		})),
 	}
 	if *s.emailFilter != "" {
 		filter, err := regexp.Compile(*s.emailFilter)

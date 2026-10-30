@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"crypto/subtle"
 
 	"go.uber.org/zap"
 
@@ -31,10 +32,18 @@ func (s *authService) SignIn(
 	if err != nil {
 		return nil, err
 	}
+	// Attempts are counted per submitted email so repeated guesses against a
+	// single account are slowed down regardless of where they come from.
+	if err := s.throttle(ctx, s.opts.signInRateLimiter, "sign_in", request.Email); err != nil {
+		return nil, err
+	}
 	config := s.config.DemoSignIn
-	if !config.Enabled ||
-		request.Email != config.Email ||
-		request.Password != config.Password {
+	// Both credentials are compared in constant time, and both comparisons
+	// always run, so the response time does not depend on how much of the
+	// submitted values match the configured ones.
+	emailMatches := subtle.ConstantTimeCompare([]byte(request.Email), []byte(config.Email)) == 1
+	passwordMatches := subtle.ConstantTimeCompare([]byte(request.Password), []byte(config.Password)) == 1
+	if !config.Enabled || !emailMatches || !passwordMatches {
 		s.logger.Error(
 			"Sign in failed",
 			zap.Bool("enabled", config.Enabled),
