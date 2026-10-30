@@ -37,6 +37,7 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/email"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/encryption"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client"
 	ecdwh "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
 	ecbigquery "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/bigquery"
@@ -94,6 +95,10 @@ type server struct {
 	webURL           *string
 	emailConfigPath  *string
 	demoSiteEnabled  *bool
+	// Encryption of secrets stored at rest
+	encryptionType    *string
+	encryptionKeyID   *string
+	encryptionKeyPath *string
 	// Operational database
 	operationalDatabaseType *string
 	// MySQL
@@ -166,6 +171,20 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
 		webURL:           cmd.Flag("web-url", "Web console URL.").Required().String(),
 		emailConfigPath:  cmd.Flag("email-config-path", "Path to email config.").Required().String(),
+		encryptionType: cmd.Flag(
+			"encryption-type",
+			"Encryption of stored secrets such as FCM service accounts (none, aead-local). "+
+				"Must match the web server configuration.",
+		).Default(encryption.TypeNone).String(),
+		encryptionKeyID: cmd.Flag(
+			"encryption-key-id",
+			"Identifier recorded in every encrypted value so that keys can be rotated. "+
+				"Required when encryption-type is aead-local.",
+		).String(),
+		encryptionKeyPath: cmd.Flag(
+			"encryption-key-path",
+			"Path to the file holding the base64-encoded 32-byte key. Required when encryption-type is aead-local.",
+		).String(),
 		operationalDatabaseType: cmd.Flag("storage-type", "Operational database type (mysql, postgres).").
 			Default("mysql").String(),
 		mysqlUser:        cmd.Flag("mysql-user", "MySQL user.").Required().String(),
@@ -340,8 +359,23 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	*s.serviceTokenPath = s.insertTelepresenceMountRoot(*s.serviceTokenPath)
 	*s.keyPath = s.insertTelepresenceMountRoot(*s.keyPath)
 	*s.certPath = s.insertTelepresenceMountRoot(*s.certPath)
+	if *s.encryptionKeyPath != "" {
+		*s.encryptionKeyPath = s.insertTelepresenceMountRoot(*s.encryptionKeyPath)
+	}
 
 	registerer := metrics.DefaultRegisterer()
+
+	// Encryption of secrets stored at rest. The push storage is wrapped so that
+	// the push sender keeps reading plaintext FCM service accounts.
+	fieldEncryptor, err := encryption.New(ctx, encryption.Config{
+		Type:    *s.encryptionType,
+		KeyID:   *s.encryptionKeyID,
+		KeyPath: *s.encryptionKeyPath,
+	})
+	if err != nil {
+		logger.Error("Failed to configure encryption of stored secrets", zap.Error(err))
+		return err
+	}
 
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
 	if err != nil {
@@ -390,6 +424,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentStorage = opmysql.NewExperimentStorage(mysqlClient)
 		autoOpsRuleStorage = opmysql.NewAutoOpsRuleStorage(mysqlClient)
 	}
+	pushStorage = pushstorage.NewEncryptedPushStorage(pushStorage, fieldEncryptor)
 
 	creds, err := client.NewPerRPCCredentials(*s.serviceTokenPath)
 	if err != nil {
