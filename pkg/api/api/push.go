@@ -21,7 +21,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
@@ -102,11 +101,7 @@ func (s *grpcGatewayService) CreatePush(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreatePush, "").Inc()
 
-	headerMetaData := metadata.New(map[string]string{
-		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
-		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	})
+	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 	res, err := s.pushClient.CreatePush(
 		ctx,
@@ -203,11 +198,7 @@ func (s *grpcGatewayService) UpdatePush(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodUpdatePush, "").Inc()
 
-	headerMetaData := metadata.New(map[string]string{
-		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
-		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	})
+	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 
 	if req.Deleted != nil && req.Deleted.Value {

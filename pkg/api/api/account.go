@@ -21,7 +21,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
@@ -49,11 +48,7 @@ func (s *grpcGatewayService) CreateAccountV2(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateAccountV2, "").Inc()
 
-	headerMetaData := metadata.New(map[string]string{
-		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
-		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	})
+	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 	res, err := s.accountClient.CreateAccountV2(
 		ctx,
@@ -112,11 +107,7 @@ func (s *grpcGatewayService) UpdateAccountV2(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodUpdateAccountV2, "").Inc()
 
-	headerMetaData := metadata.New(map[string]string{
-		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
-		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	})
+	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 
 	// delete account

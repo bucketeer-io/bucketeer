@@ -21,7 +21,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
@@ -49,11 +48,7 @@ func (s *grpcGatewayService) CreateTag(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateTag, "").Inc()
 
-	headerMetaData := metadata.New(map[string]string{
-		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
-		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	})
+	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 	res, err := s.tagClient.CreateTag(
 		ctx,
@@ -107,11 +102,7 @@ func (s *grpcGatewayService) DeleteTag(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodDeleteTag, "").Inc()
 
-	headerMetaData := metadata.New(map[string]string{
-		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
-		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	})
+	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 	_, err = s.tagClient.DeleteTag(
 		ctx,

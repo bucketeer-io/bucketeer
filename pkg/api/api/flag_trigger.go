@@ -21,7 +21,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
@@ -49,11 +48,7 @@ func (s *grpcGatewayService) CreateFlagTrigger(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateFlagTrigger, "").Inc()
 
-	headerMetaData := metadata.New(map[string]string{
-		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
-		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	})
+	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 	resp, err := s.featureClient.CreateFlagTrigger(ctx, &featureproto.CreateFlagTriggerRequest{
 		EnvironmentId: envAPIKey.Environment.Id,
@@ -106,11 +101,7 @@ func (s *grpcGatewayService) DeleteFlagTrigger(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodDeleteFlagTrigger, "").Inc()
 
-	headerMetaData := metadata.New(map[string]string{
-		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
-		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	})
+	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 	_, err = s.featureClient.DeleteFlagTrigger(ctx, &featureproto.DeleteFlagTriggerRequest{
 		EnvironmentId: envAPIKey.Environment.Id,
@@ -150,11 +141,7 @@ func (s *grpcGatewayService) UpdateFlagTrigger(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodUpdateFlagTrigger, "").Inc()
 
-	headerMetaData := metadata.New(map[string]string{
-		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
-		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	})
+	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 	resp, err := s.featureClient.UpdateFlagTrigger(ctx, &featureproto.UpdateFlagTriggerRequest{
 		EnvironmentId: envAPIKey.Environment.Id,

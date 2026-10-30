@@ -23,7 +23,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	coderefproto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
 	gatewayproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
@@ -142,11 +141,7 @@ func (s *grpcGatewayService) CreateCodeReference(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateCodeReference, "").Inc()
 
-	headerMetaData := metadata.New(map[string]string{
-		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
-		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	})
+	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 
 	resp, err := s.codeRefClient.CreateCodeReference(ctx, &coderefproto.CreateCodeReferenceRequest{
@@ -198,11 +193,7 @@ func (s *grpcGatewayService) UpdateCodeReference(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodUpdateCodeReference, "").Inc()
 
-	headerMetaData := metadata.New(map[string]string{
-		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
-		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	})
+	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 
 	resp, err := s.codeRefClient.UpdateCodeReference(ctx, &coderefproto.UpdateCodeReferenceRequest{
@@ -260,11 +251,7 @@ func (s *grpcGatewayService) DeleteCodeReference(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodDeleteCodeReference, "").Inc()
 
-	headerMetaData := metadata.New(map[string]string{
-		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
-		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	})
+	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 
 	_, err = s.codeRefClient.DeleteCodeReference(ctx, &coderefproto.DeleteCodeReferenceRequest{

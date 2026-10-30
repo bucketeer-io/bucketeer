@@ -32,6 +32,7 @@ import (
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
+	accountdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	accstorage "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	auditlogclient "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
@@ -47,6 +48,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	pushclient "github.com/bucketeer-io/bucketeer/v2/pkg/push/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	subscriptionclient "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/client"
 	tagclient "github.com/bucketeer-io/bucketeer/v2/pkg/tag/client"
@@ -1926,6 +1928,16 @@ func (s *grpcGatewayService) checkTrackRequest(
 		return nil, err
 	}
 	return envAPIKey, nil
+}
+
+// publicAPIEditorMetadata identifies the API key to the services, which record it as the editor.
+// The key itself is never relayed: only its obfuscated form may reach the audit log.
+func publicAPIEditorMetadata(envAPIKey *accountproto.EnvironmentAPIKey) gmetadata.MD {
+	return gmetadata.New(map[string]string{
+		role.APIKeyTokenMDKey:      accountdomain.ObfuscateAPIKey(envAPIKey.ApiKey.ApiKey),
+		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
+		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
+	})
 }
 
 func (s *grpcGatewayService) checkRequest(

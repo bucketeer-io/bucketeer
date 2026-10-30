@@ -411,7 +411,8 @@ func getAPIKeyEditor(ctx context.Context) *eventproto.Editor_PublicAPIEditor {
 	}
 
 	publicAPIEditor := &eventproto.Editor_PublicAPIEditor{}
-	publicAPIEditor.Token = apikeyToken[0]
+	// Only the obfuscated key may reach the domain events and the audit log.
+	publicAPIEditor.Token = accdomain.ObfuscateAPIKey(apikeyToken[0])
 
 	if len(md.Get(APIKeyMaintainerMDKey)) > 0 {
 		publicAPIEditor.Maintainer = md.Get(APIKeyMaintainerMDKey)[0]
