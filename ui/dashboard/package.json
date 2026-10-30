@@ -62,6 +62,7 @@
     "lodash": "^4.17.23",
     "lucide-react": "^0.577.0",
     "luxon": "^3.7.2",
+    "monaco-editor": "^0.55.1",
     "option-t": "^49.1.0",
     "prettier": "^3.9.9",
     "prism-react-renderer": "^2.4.1",
@@ -137,6 +138,7 @@
     "vitest": "4.1.11"
   },
   "resolutions": {
+    "dompurify": "^3.4.17",
     "seroval": "^1.6.3",
     "seroval-plugins": "^1.6.3"
   }

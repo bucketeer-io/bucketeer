@@ -23,10 +23,14 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          // Keep Vite's dynamic-import helper out of the on-demand monaco
+          // chunk; otherwise the entry chunk would pull the whole editor in
+          // just to reach the helper.
+          if (id.includes('vite/preload-helper')) return 'vendor';
           if (id.includes('node_modules')) {
             if (id.includes('react-date-range')) return 'react-date-range';
             if (id.includes('react-datepicker')) return 'react-datepicker';
-            if (id.includes('@monaco-editor/react')) return 'monaco';
+            if (id.includes('monaco-editor')) return 'monaco';
             if (id.includes('react-chartjs-2')) return 'react-chartjs-2';
             if (id.includes('chart.js')) return 'charts';
             if (id.includes('lodash')) return 'lodash';

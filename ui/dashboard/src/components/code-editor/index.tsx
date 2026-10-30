@@ -1,6 +1,6 @@
-import { RefObject, useCallback, useMemo } from 'react';
+import { RefObject, Suspense, lazy, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Editor, EditorProps, Monaco } from '@monaco-editor/react';
+import { EditorProps, Monaco } from '@monaco-editor/react';
 import { cn } from 'utils/style';
 import { IconExpandSquar } from '@icons';
 import Button from 'components/button';
@@ -8,6 +8,10 @@ import Icon from 'components/icon';
 import Spinner from 'components/spinner';
 import { Tooltip } from 'components/tooltip';
 import './style.css';
+
+// The bundled editor is several megabytes, so it is only downloaded once an
+// editor is actually rendered.
+const Editor = lazy(() => import('./bundled-editor'));
 
 interface ReactCodeEditorProps extends EditorProps {
   readOnly?: boolean;
@@ -33,7 +37,7 @@ export default function ReactCodeEditor({
 }: ReactCodeEditorProps) {
   const { t } = useTranslation('common');
 
-  const editorOptions = useMemo(
+  const editorOptions = useMemo<EditorProps['options']>(
     () => ({
       minimap: { enabled: false },
       fontSize: 14,
@@ -45,7 +49,7 @@ export default function ReactCodeEditor({
       lineNumbersMinChars: 3,
       bracketPairColorization: { enabled: true },
       scrollBeyondLastLine: false,
-      renderIndentGuides: false,
+      guides: { indentation: false },
       renderWhitespace: 'none',
       smoothScrolling: true,
       wordWrap: 'on',
@@ -105,6 +109,15 @@ export default function ReactCodeEditor({
     });
   }, []);
 
+  const loadingPlaceholder = (
+    <div className="flex-center w-full gap-x-2 h-[170px] bg-gray-100 animate-pulse duration-200">
+      <p className="typo-para-medium text-gray-600 animate-pulse duration-500">
+        {t('common:loading')}
+      </p>
+      <Spinner />
+    </div>
+  );
+
   return (
     <div
       className={cn(
@@ -127,71 +140,66 @@ export default function ReactCodeEditor({
           }
         />
       )}
-      <Editor
-        {...props}
-        height={'100%'}
-        width={'100%'}
-        defaultLanguage={props.defaultLanguage || 'json'}
-        theme="customLight"
-        wrapperProps={{
-          className: cn(
-            'flex border-none outline-none rounded-lg overflow-hidden editor-wrapper',
-            wrapCls
-          )
-        }}
-        options={editorOptions}
-        beforeMount={handleBeforeMount}
-        onMount={editor => {
-          const domNode = editor.getDomNode();
-          if (!domNode || !!props.isDefaulScroll) return;
+      <Suspense fallback={loadingPlaceholder}>
+        <Editor
+          {...props}
+          height={'100%'}
+          width={'100%'}
+          defaultLanguage={props.defaultLanguage || 'json'}
+          theme="customLight"
+          wrapperProps={{
+            className: cn(
+              'flex border-none outline-none rounded-lg overflow-hidden editor-wrapper',
+              wrapCls
+            )
+          }}
+          options={editorOptions}
+          beforeMount={handleBeforeMount}
+          onMount={editor => {
+            const domNode = editor.getDomNode();
+            if (!domNode || !!props.isDefaulScroll) return;
 
-          const wheelHandler = (event: WheelEvent) => {
-            const scrollTop = editor.getScrollTop();
-            const scrollHeight = editor.getScrollHeight();
-            const height = editor.getLayoutInfo().height;
+            const wheelHandler = (event: WheelEvent) => {
+              const scrollTop = editor.getScrollTop();
+              const scrollHeight = editor.getScrollHeight();
+              const height = editor.getLayoutInfo().height;
 
-            const isAtTop = scrollTop <= 0.5;
-            const isAtBottom = scrollTop + height >= scrollHeight - 0.5;
-            const scrollingUp = event.deltaY < 0;
-            const scrollingDown = event.deltaY > 0;
-            const editorHasNoScroll = scrollHeight <= height + 0.5;
-            if (
-              editorHasNoScroll ||
-              (isAtTop && scrollingUp) ||
-              (isAtBottom && scrollingDown)
-            ) {
-              event.preventDefault();
-              event.stopImmediatePropagation();
-              if (scrollParent) {
-                scrollParent?.current?.scrollBy({ top: event.deltaY });
-              } else {
-                window.scrollBy({ top: event.deltaY });
+              const isAtTop = scrollTop <= 0.5;
+              const isAtBottom = scrollTop + height >= scrollHeight - 0.5;
+              const scrollingUp = event.deltaY < 0;
+              const scrollingDown = event.deltaY > 0;
+              const editorHasNoScroll = scrollHeight <= height + 0.5;
+              if (
+                editorHasNoScroll ||
+                (isAtTop && scrollingUp) ||
+                (isAtBottom && scrollingDown)
+              ) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (scrollParent) {
+                  scrollParent?.current?.scrollBy({ top: event.deltaY });
+                } else {
+                  window.scrollBy({ top: event.deltaY });
+                }
               }
-            }
-          };
+            };
 
-          domNode.addEventListener('wheel', wheelHandler, {
-            passive: false,
-            capture: true
-          });
+            domNode.addEventListener('wheel', wheelHandler, {
+              passive: false,
+              capture: true
+            });
 
-          editor.onDidDispose(() => {
-            domNode.removeEventListener(
-              'wheel',
-              wheelHandler as EventListener,
-              { capture: true }
-            );
-          });
-        }}
-        loading={
-          <div className="flex-center w-full gap-x-2 h-[170px] bg-gray-100 animate-pulse duration-200">
-            <p className="typo-para-medium text-gray-600 animate-pulse duration-500">
-              {t('common:loading')}
-            </p>
-            <Spinner />
-          </div>
-        }
-      />
+            editor.onDidDispose(() => {
+              domNode.removeEventListener(
+                'wheel',
+                wheelHandler as EventListener,
+                { capture: true }
+              );
+            });
+          }}
+          loading={loadingPlaceholder}
+        />
+      </Suspense>
     </div>
   );
 }
