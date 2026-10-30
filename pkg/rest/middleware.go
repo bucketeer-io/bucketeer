@@ -95,7 +95,7 @@ func splitURLPath(path string) (string, string, string) {
 	// format: /api_version/service_name/api_name
 	parts := strings.Split(path, "/")
 	if len(parts) != 4 {
-		return "unknown", "unknown", "unknown"
+		return unknownLabelValue, unknownLabelValue, unknownLabelValue
 	}
 	return prometheusLabelValue(parts[1]), prometheusLabelValue(parts[2]), prometheusLabelValue(parts[3])
 }
@@ -104,7 +104,7 @@ func splitURLPath(path string) (string, string, string) {
 // Invalid UTF-8 in URL path segments must not reach WithLabelValues (it panics).
 func prometheusLabelValue(value string) string {
 	if value == "" || !utf8.ValidString(value) {
-		return "unknown"
+		return unknownLabelValue
 	}
 	return value
 }
