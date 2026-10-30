@@ -139,7 +139,6 @@ func (s *EnvironmentService) ExchangeDemoToken(
 	if !s.opts.isDemoSiteEnabled {
 		s.logger.Error("Demo site is not enabled",
 			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		return nil, statusDemoSiteDisabled.Err()
@@ -148,7 +147,6 @@ func (s *EnvironmentService) ExchangeDemoToken(
 		s.logger.Error("Failed to validate the exchange demo token request",
 			zap.Error(err),
 			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		return nil, err
@@ -158,7 +156,6 @@ func (s *EnvironmentService) ExchangeDemoToken(
 		s.logger.Error("Failed to get the authenticator",
 			zap.Error(err),
 			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		return nil, statusInternal.Err()
@@ -168,7 +165,6 @@ func (s *EnvironmentService) ExchangeDemoToken(
 		s.logger.Error("Failed to exchange",
 			zap.Error(err),
 			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		return nil, statusInternal.Err()
@@ -181,7 +177,6 @@ func (s *EnvironmentService) ExchangeDemoToken(
 		s.logger.Error("Email already exists in the system",
 			zap.String("email", userInfo.Email),
 			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		return nil, statusUserAlreadyInOrganization.Err()
@@ -192,7 +187,6 @@ func (s *EnvironmentService) ExchangeDemoToken(
 		s.logger.Error("Failed to generate demoToken",
 			zap.Error(err),
 			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		return nil, err

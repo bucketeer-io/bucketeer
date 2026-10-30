@@ -126,7 +126,6 @@ func (a Authenticator) getGoogleUserInfo(
 		a.logger.Error("auth/google: failed to read response body", zap.Error(err))
 		return userInfo, err
 	}
-	a.logger.Debug("auth/google: user info response", zap.String("response", string(bodyBytes)))
 	if err := json.Unmarshal(bodyBytes, &userInfo); err != nil {
 		a.logger.Error("auth/google: failed to decode user info", zap.Error(err))
 		return userInfo, err

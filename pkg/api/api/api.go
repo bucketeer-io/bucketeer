@@ -534,7 +534,7 @@ func (s *gatewayService) checkGetEvaluationsRequest(
 		s.logger.Error("Failed to check GetEvaluations request",
 			zap.Error(err),
 			zap.String("tag", body.Tag),
-			zap.Any("user", body.User),
+			zap.String("userId", body.User.GetId()),
 			zap.Any("sourceId", body.SourceID),
 		)
 		return nil, getEvaluationsRequest{}, err
@@ -543,7 +543,7 @@ func (s *gatewayService) checkGetEvaluationsRequest(
 		s.logger.Error("Failed to validate GetEvaluations request",
 			zap.Error(err),
 			zap.String("tag", body.Tag),
-			zap.Any("user", body.User),
+			zap.String("userId", body.User.GetId()),
 			zap.Any("sourceId", body.SourceID),
 		)
 		return nil, getEvaluationsRequest{}, err
@@ -572,7 +572,7 @@ func (s *gatewayService) checkGetEvaluationRequest(
 		s.logger.Error("Failed to check GetEvaluation request",
 			zap.Error(err),
 			zap.String("tag", body.Tag),
-			zap.Any("user", body.User),
+			zap.String("userId", body.User.GetId()),
 			zap.Any("sourceId", body.SourceId),
 			zap.String("featureId", body.FeatureID),
 		)
@@ -582,7 +582,7 @@ func (s *gatewayService) checkGetEvaluationRequest(
 		s.logger.Error("Failed to validate GetEvaluation request",
 			zap.Error(err),
 			zap.String("tag", body.Tag),
-			zap.Any("user", body.User),
+			zap.String("userId", body.User.GetId()),
 			zap.Any("sourceId", body.SourceId),
 			zap.String("featureId", body.FeatureID),
 		)

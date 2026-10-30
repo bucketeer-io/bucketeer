@@ -36,19 +36,27 @@ import (
 const testRedirectURL = "https://console.example.com/auth/callback"
 
 // fakeAuthenticator stands in for the Google authenticator so that the token
-// exchange can be exercised without a network round trip.
+// exchange can be exercised without a network round trip. When err is set,
+// both Login and Exchange fail with it.
 type fakeAuthenticator struct {
 	userInfo *auth.UserInfo
+	err      error
 	calls    int
 }
 
 func (a *fakeAuthenticator) Login(context.Context, string, string) (string, error) {
 	a.calls++
+	if a.err != nil {
+		return "", a.err
+	}
 	return "https://accounts.example.com/login", nil
 }
 
 func (a *fakeAuthenticator) Exchange(context.Context, string, string) (*auth.UserInfo, error) {
 	a.calls++
+	if a.err != nil {
+		return nil, a.err
+	}
 	return a.userInfo, nil
 }
 
