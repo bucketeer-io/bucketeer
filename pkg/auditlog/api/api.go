@@ -235,7 +235,7 @@ func listAuditLogsParams(req *proto.ListAuditLogsRequest) (v2als.ListAuditLogsPa
 		cursor = "0"
 	}
 	// Validate cursor before passing to storage
-	if _, err := strconv.Atoi(cursor); err != nil {
+	if offset, err := strconv.Atoi(cursor); err != nil || offset < 0 {
 		return v2als.ListAuditLogsParams{}, statusInvalidCursor.Err()
 	}
 	var entityType *int32
@@ -309,7 +309,7 @@ func (s *auditlogService) ListFeatureHistory(
 		cursor = "0"
 	}
 	// Validate cursor before passing to storage
-	if _, err := strconv.Atoi(cursor); err != nil {
+	if offset, err := strconv.Atoi(cursor); err != nil || offset < 0 {
 		return nil, statusInvalidCursor.Err()
 	}
 

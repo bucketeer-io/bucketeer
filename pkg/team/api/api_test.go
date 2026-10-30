@@ -195,11 +195,6 @@ func TestTeamService_ListTeams(t *testing.T) {
 		{
 			desc: "err: invalid cursor",
 			ctx:  ctx,
-			setup: func(s *TeamService) {
-				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().ListTeams(
-					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), storage.ErrInvalidListTeamsCursor)
-			},
 			req: &proto.ListTeamsRequest{
 				OrganizationId: "ns0",
 				Cursor:         "invalid",

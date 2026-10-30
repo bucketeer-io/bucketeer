@@ -23,6 +23,7 @@ import (
 var (
 	statusInternal                         = api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "internal"))
 	statusInvalidCursor                    = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AccountPackageName, "cursor is invalid", "Cursor"))
+	statusInvalidPageSize                  = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AccountPackageName, "page_size is invalid", "PageSize"))
 	statusNoCommand                        = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "command must not be empty", "Command"))
 	statusMissingOrganizationID            = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "organization id must be specified", "Organization"))
 	statusEmailIsEmpty                     = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "email is empty", "Email"))

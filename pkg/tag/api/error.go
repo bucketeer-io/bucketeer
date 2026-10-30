@@ -32,6 +32,9 @@ var (
 	statusInvalidCursor = api.NewGRPCStatus(
 		err.NewErrorInvalidArgNotMatchFormat(err.TagPackageName, "cursor is invalid", "Cursor"),
 	)
+	statusInvalidPageSize = api.NewGRPCStatus(
+		err.NewErrorInvalidArgNotMatchFormat(err.TagPackageName, "page_size is invalid", "PageSize"),
+	)
 	statusInvalidOrderBy = api.NewGRPCStatus(
 		err.NewErrorInvalidArgNotMatchFormat(err.TagPackageName, "order_by is invalid", "OrderBy"),
 	)

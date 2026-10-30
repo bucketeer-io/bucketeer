@@ -132,12 +132,7 @@ func TestListEnvironmentsV2(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "err: ErrInvalidCursor",
-			setup: func(s *EnvironmentService) {
-				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().ListEnvironmentsV2(
-					gomock.Any(), gomock.Any(),
-				).Return(nil, 0, int64(0), v2es.ErrInvalidCursor)
-			},
+			desc:        "err: ErrInvalidCursor",
 			input:       &proto.ListEnvironmentsV2Request{Cursor: "XXX"},
 			expected:    nil,
 			expectedErr: statusInvalidCursor.Err(),

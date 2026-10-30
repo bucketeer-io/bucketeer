@@ -15,6 +15,7 @@
 package mysql
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -171,7 +172,27 @@ func TestJSONFilterSQLString(t *testing.T) {
 				Values: []interface{}{"abc", "xyz"},
 			},
 			expectedSQL:  "JSON_CONTAINS(enums, ?)",
-			expectedArgs: []interface{}{`["abc", "xyz"]`},
+			expectedArgs: []interface{}{`["abc","xyz"]`},
+		},
+		{
+			desc: "Success: JSONContainsString escapes the values as JSON",
+			input: &JSONFilter{
+				Column: "tags",
+				Func:   JSONContainsString,
+				Values: []interface{}{`a"], "b`, `c:\tmp`, "line1\nline2"},
+			},
+			expectedSQL:  "JSON_CONTAINS(tags, ?)",
+			expectedArgs: []interface{}{`["a\"], \"b","c:\\tmp","line1\nline2"]`},
+		},
+		{
+			desc: "Empty: JSONContainsString with a non-string value",
+			input: &JSONFilter{
+				Column: "tags",
+				Func:   JSONContainsString,
+				Values: []interface{}{"ok", 42},
+			},
+			expectedSQL:  "",
+			expectedArgs: nil,
 		},
 		{
 			desc: "Success: JSONLengthGreaterThan empty",
@@ -190,8 +211,18 @@ func TestJSONFilterSQLString(t *testing.T) {
 				Func:   JSONLengthGreaterThan,
 				Values: []interface{}{"1"},
 			},
-			expectedSQL:  "JSON_LENGTH(enums) > 1",
-			expectedArgs: nil,
+			expectedSQL:  "JSON_LENGTH(enums) > ?",
+			expectedArgs: []interface{}{"1"},
+		},
+		{
+			desc: "Success: JSONLengthGreaterThan binds the value instead of inlining it",
+			input: &JSONFilter{
+				Column: "enums",
+				Func:   JSONLengthGreaterThan,
+				Values: []interface{}{"0 OR 1=1"},
+			},
+			expectedSQL:  "JSON_LENGTH(enums) > ?",
+			expectedArgs: []interface{}{"0 OR 1=1"},
 		},
 		{
 			desc: "Success: JSONLengthSmallerThan empty",
@@ -210,8 +241,8 @@ func TestJSONFilterSQLString(t *testing.T) {
 				Func:   JSONLengthSmallerThan,
 				Values: []interface{}{"1"},
 			},
-			expectedSQL:  "JSON_LENGTH(enums) < 1",
-			expectedArgs: nil,
+			expectedSQL:  "JSON_LENGTH(enums) < ?",
+			expectedArgs: []interface{}{"1"},
 		},
 	}
 	for _, p := range patterns {
@@ -300,6 +331,87 @@ func TestOrFilterSQLString(t *testing.T) {
 			expectedSQL:  "(name = ? OR id = ?)",
 			expectedArgs: []interface{}{"feature", "feature-1"},
 		},
+		{
+			desc: "Success: parts without SQL are skipped",
+			input: &OrFilter{
+				Queries: []WherePart{
+					NewFilter("name", "=", "feature"),
+					NewJSONFilter("tags", JSONContainsString, []interface{}{"ok", 42}),
+					NewFilter("id", "=", "feature-1"),
+				},
+			},
+			expectedSQL:  "(name = ? OR id = ?)",
+			expectedArgs: []interface{}{"feature", "feature-1"},
+		},
+		{
+			desc: "Empty: every part without SQL",
+			input: &OrFilter{
+				Queries: []WherePart{
+					&Filter{},
+					NewJSONFilter("tags", JSONLengthGreaterThan, nil),
+				},
+			},
+			expectedSQL:  "",
+			expectedArgs: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			sql, args := p.input.SQLString()
+			assert.Equal(t, p.expectedSQL, sql)
+			assert.Equal(t, p.expectedArgs, args)
+		})
+	}
+}
+
+func TestAndFilterSQLString(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc         string
+		input        *AndFilter
+		expectedSQL  string
+		expectedArgs []interface{}
+	}{
+		{
+			desc:         "Empty",
+			input:        &AndFilter{},
+			expectedSQL:  "",
+			expectedArgs: nil,
+		},
+		{
+			desc: "Success",
+			input: &AndFilter{
+				Queries: []WherePart{
+					NewFilter("name", "=", "feature"),
+					NewFilter("id", "=", "feature-1"),
+				},
+			},
+			expectedSQL:  "(name = ? AND id = ?)",
+			expectedArgs: []interface{}{"feature", "feature-1"},
+		},
+		{
+			desc: "Success: parts without SQL are skipped",
+			input: &AndFilter{
+				Queries: []WherePart{
+					NewJSONFilter("tags", JSONContainsString, []interface{}{"ok", 42}),
+					NewFilter("name", "=", "feature"),
+					NewFilter("id", "=", "feature-1"),
+				},
+			},
+			expectedSQL:  "(name = ? AND id = ?)",
+			expectedArgs: []interface{}{"feature", "feature-1"},
+		},
+		{
+			desc: "Empty: every part without SQL",
+			input: &AndFilter{
+				Queries: []WherePart{
+					&Filter{},
+					NewJSONFilter("tags", JSONLengthGreaterThan, nil),
+				},
+			},
+			expectedSQL:  "",
+			expectedArgs: nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -330,8 +442,35 @@ func TestSearchQuerySQLString(t *testing.T) {
 				Columns: []string{"id", "name"},
 				Keyword: "test",
 			},
-			expectedSQL:  " (id LIKE ? OR name LIKE ?)",
+			expectedSQL:  ` (id LIKE ? ESCAPE '\\' OR name LIKE ? ESCAPE '\\')`,
 			expectedArgs: []interface{}{"%test%", "%test%"},
+		},
+		{
+			desc: "Success: wildcards and the escape character are matched literally",
+			input: &SearchQuery{
+				Columns: []string{"name"},
+				Keyword: `100%_done\`,
+			},
+			expectedSQL:  ` (name LIKE ? ESCAPE '\\')`,
+			expectedArgs: []interface{}{`%100\%\_done\\%`},
+		},
+		{
+			desc: "Success: a keyword longer than the maximum is truncated by character",
+			input: &SearchQuery{
+				Columns: []string{"name"},
+				Keyword: strings.Repeat("あ", searchKeywordMaxLength) + "%tail",
+			},
+			expectedSQL:  ` (name LIKE ? ESCAPE '\\')`,
+			expectedArgs: []interface{}{"%" + strings.Repeat("あ", searchKeywordMaxLength) + "%"},
+		},
+		{
+			desc: "Success: a keyword at the maximum length is kept as it is",
+			input: &SearchQuery{
+				Columns: []string{"name"},
+				Keyword: strings.Repeat("a", searchKeywordMaxLength),
+			},
+			expectedSQL:  ` (name LIKE ? ESCAPE '\\')`,
+			expectedArgs: []interface{}{"%" + strings.Repeat("a", searchKeywordMaxLength) + "%"},
 		},
 	}
 	for _, p := range patterns {
@@ -379,6 +518,35 @@ func TestConstructWhereSQLString(t *testing.T) {
 			},
 			expectedSQL:  " WHERE deleted = ? AND (name = ? OR id = ?) ",
 			expectedArgs: []interface{}{false, "feature", "feature-1"},
+		},
+		{
+			desc: "Success: parts without SQL are skipped",
+			input: []WherePart{
+				NewFilter("name", "=", "feature"),
+				NewJSONFilter("tags", JSONContainsString, []interface{}{"ok", 42}),
+				NewJSONFilter("prerequisites", JSONLengthGreaterThan, nil),
+				NewFilter("deleted", "=", false),
+			},
+			expectedSQL:  " WHERE name = ? AND deleted = ? ",
+			expectedArgs: []interface{}{"feature", false},
+		},
+		{
+			desc: "Success: a leading part without SQL does not leave a dangling WHERE",
+			input: []WherePart{
+				NewJSONFilter("tags", JSONContainsString, []interface{}{42}),
+				NewFilter("deleted", "=", false),
+			},
+			expectedSQL:  " WHERE deleted = ? ",
+			expectedArgs: []interface{}{false},
+		},
+		{
+			desc: "Empty: every part without SQL",
+			input: []WherePart{
+				&Filter{},
+				NewJSONFilter("tags", JSONContainsString, []interface{}{42}),
+			},
+			expectedSQL:  "",
+			expectedArgs: nil,
 		},
 	}
 	for _, p := range patterns {
@@ -520,7 +688,7 @@ func TestConstructCountQuery(t *testing.T) {
 					Keyword: "test",
 				},
 			},
-			expectedSQL:  "SELECT COUNT(1) FROM feature WHERE  (name LIKE ? OR description LIKE ?) ",
+			expectedSQL:  `SELECT COUNT(1) FROM feature WHERE  (name LIKE ? ESCAPE '\\' OR description LIKE ? ESCAPE '\\') `,
 			expectedArgs: []interface{}{"%test%", "%test%"},
 		},
 		{

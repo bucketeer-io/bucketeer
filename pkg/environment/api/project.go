@@ -95,6 +95,9 @@ func (s *EnvironmentService) ListProjects(
 	if err != nil {
 		return nil, err
 	}
+	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
+		return nil, err
+	}
 	var disabled *bool
 	if req.Disabled != nil {
 		v := req.Disabled.Value
@@ -600,6 +603,9 @@ func (s *EnvironmentService) ListProjectsV2(
 				zap.String("organizationID", req.OrganizationId),
 			)...,
 		)
+		return nil, err
+	}
+	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}
 	var disabled *bool

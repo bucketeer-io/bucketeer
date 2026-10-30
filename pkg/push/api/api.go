@@ -569,6 +569,9 @@ func (s *PushService) ListPushes(
 		)
 		return nil, err
 	}
+	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
+		return nil, err
+	}
 	if !hasAllowedEnvironment {
 		// The member has no role in any of the requested environments, so there
 		// is nothing to list. The storage treats an empty environment filter as
@@ -576,9 +579,6 @@ func (s *PushService) ListPushes(
 		cursor := req.Cursor
 		if cursor == "" {
 			cursor = "0"
-		}
-		if _, err := strconv.Atoi(cursor); err != nil {
-			return nil, statusInvalidCursor.Err()
 		}
 		return &pushproto.ListPushesResponse{Pushes: []*pushproto.Push{}, Cursor: cursor}, nil
 	}
@@ -657,6 +657,23 @@ func validateListPushesOrder(
 	default:
 		return statusInvalidOrderBy.Err()
 	}
+}
+
+// validateListPagination checks the page_size and cursor of a list request.
+// Both become the LIMIT and OFFSET of the list query, which the database
+// rejects when negative, so a negative page size or a cursor that is not a
+// non-negative integer is reported as an invalid argument.
+func validateListPagination(pageSize int64, cursor string) error {
+	if pageSize < 0 {
+		return statusInvalidPageSize.Err()
+	}
+	if cursor == "" {
+		return nil
+	}
+	if offset, err := strconv.Atoi(cursor); err != nil || offset < 0 {
+		return statusInvalidCursor.Err()
+	}
+	return nil
 }
 
 func boolFromWrapper(v *wrapperspb.BoolValue) *bool {

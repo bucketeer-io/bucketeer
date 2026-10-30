@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"regexp"
+	"strconv"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
@@ -149,11 +150,28 @@ func validateGetSegmentRequest(req *featureproto.GetSegmentRequest) error {
 	return nil
 }
 
+// validateListPagination checks the page_size and cursor of a list request.
+// Both become the LIMIT and OFFSET of the list query, which the database
+// rejects when negative, so a negative page size or a cursor that is not a
+// non-negative integer is reported as an invalid argument.
+func validateListPagination(pageSize int64, cursor string) error {
+	if pageSize < 0 {
+		return statusInvalidPageSize.Err()
+	}
+	if cursor == "" {
+		return nil
+	}
+	if offset, err := strconv.Atoi(cursor); err != nil || offset < 0 {
+		return statusInvalidCursor.Err()
+	}
+	return nil
+}
+
 func validateListSegmentsRequest(req *featureproto.ListSegmentsRequest) error {
 	if req.PageSize > maxPageSizePerRequest {
 		return statusExceededMaxPageSizePerRequest.Err()
 	}
-	return nil
+	return validateListPagination(req.PageSize, req.Cursor)
 }
 
 func validateDeleteSegmentRequest(req *featureproto.DeleteSegmentRequest) error {
@@ -194,7 +212,7 @@ func validateListSegmentUsersRequest(req *featureproto.ListSegmentUsersRequest) 
 	if req.PageSize > maxPageSizePerRequest {
 		return statusExceededMaxPageSizePerRequest.Err()
 	}
-	return nil
+	return validateListPagination(req.PageSize, req.Cursor)
 }
 
 func validateBulkUploadSegmentUsersRequest(
@@ -368,7 +386,7 @@ func validateListFlagTriggersRequest(req *featureproto.ListFlagTriggersRequest) 
 	if req.FeatureId == "" {
 		return statusMissingTriggerFeatureID.Err()
 	}
-	return nil
+	return validateListPagination(int64(req.PageSize), req.Cursor)
 }
 
 // validateVariationDeletion validates that variations being deleted are not used as cross-feature dependencies.

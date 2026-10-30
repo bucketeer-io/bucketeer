@@ -16,12 +16,21 @@
 package mysql
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"strings"
 )
 
 const placeHolder = "?"
+
+// searchKeywordMaxLength is the maximum number of characters of a search
+// keyword that take part in the LIKE pattern; longer keywords are truncated.
+const searchKeywordMaxLength = 255
+
+// likeEscaper escapes the LIKE wildcards and the escape character itself so a
+// keyword is matched literally. The pattern must be used with ESCAPE '\\'.
+var likeEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
 
 type Operator int
 
@@ -203,17 +212,20 @@ func (f *JSONFilter) SQLString() (sql string, args []interface{}) {
 		args = append(args, sb.String())
 		return
 	case JSONContainsString:
-		sql = fmt.Sprintf("JSON_CONTAINS(%s, ?)", f.Column)
-		var sb strings.Builder
-		sb.WriteString("[")
-		for i, v := range f.Values {
-			if i != 0 {
-				sb.WriteString(", ")
+		strs := make([]string, 0, len(f.Values))
+		for _, v := range f.Values {
+			s, ok := v.(string)
+			if !ok {
+				return "", nil
 			}
-			sb.WriteString(fmt.Sprintf(`"%s"`, v))
+			strs = append(strs, s)
 		}
-		sb.WriteString("]")
-		args = append(args, sb.String())
+		payload, err := json.Marshal(strs)
+		if err != nil {
+			return "", nil
+		}
+		sql = fmt.Sprintf("JSON_CONTAINS(%s, ?)", f.Column)
+		args = append(args, string(payload))
 		return
 	case JSONContainsJSON:
 		sql = fmt.Sprintf("JSON_CONTAINS(%s, ?)", f.Column)
@@ -228,17 +240,16 @@ func (f *JSONFilter) SQLString() (sql string, args []interface{}) {
 		sb.WriteString("]")
 		args = append(args, sb.String())
 		return
-	case JSONLengthGreaterThan:
+	case JSONLengthGreaterThan, JSONLengthSmallerThan:
 		if len(f.Values) == 0 {
 			return "", nil
 		}
-		sql = fmt.Sprintf("JSON_LENGTH(%s) > %s", f.Column, f.Values[0])
-		return
-	case JSONLengthSmallerThan:
-		if len(f.Values) == 0 {
-			return "", nil
+		op := ">"
+		if f.Func == JSONLengthSmallerThan {
+			op = "<"
 		}
-		sql = fmt.Sprintf("JSON_LENGTH(%s) < %s", f.Column, f.Values[0])
+		sql = fmt.Sprintf("JSON_LENGTH(%s) %s ?", f.Column, op)
+		args = append(args, f.Values[0])
 		return
 	default:
 		return "", nil
@@ -264,16 +275,27 @@ func (q *SearchQuery) SQLString() (sql string, args []interface{}) {
 	} else {
 		sb.WriteString(" (")
 	}
+	pattern := searchKeywordPattern(q.Keyword)
 	for i, col := range q.Columns {
 		if i != 0 {
 			sb.WriteString(" OR ")
 		}
-		sb.WriteString(fmt.Sprintf("%s LIKE ?", col))
-		args = append(args, "%"+q.Keyword+"%")
+		sb.WriteString(fmt.Sprintf(`%s LIKE ? ESCAPE '\\'`, col))
+		args = append(args, pattern)
 	}
 	sb.WriteString(")")
 	sql = sb.String()
 	return
+}
+
+// searchKeywordPattern builds the LIKE pattern that matches the keyword as a
+// literal substring: the keyword is truncated to searchKeywordMaxLength
+// characters and its wildcards are escaped before it is wrapped in %.
+func searchKeywordPattern(keyword string) string {
+	if runes := []rune(keyword); len(runes) > searchKeywordMaxLength {
+		keyword = string(runes[:searchKeywordMaxLength])
+	}
+	return "%" + likeEscaper.Replace(keyword) + "%"
 }
 
 type ExistsFilter struct {
@@ -314,22 +336,7 @@ func NewOrFilter(queries []WherePart) WherePart {
 }
 
 func (f *OrFilter) SQLString() (sql string, args []interface{}) {
-	if len(f.Queries) == 0 {
-		return "", nil
-	}
-	var sb strings.Builder
-	sb.WriteString("(")
-	for i, q := range f.Queries {
-		if i != 0 {
-			sb.WriteString(" OR ")
-		}
-		qSQL, qArgs := q.SQLString()
-		sb.WriteString(qSQL)
-		args = append(args, qArgs...)
-	}
-	sb.WriteString(")")
-	sql = sb.String()
-	return
+	return joinWhereParts(f.Queries, " OR ")
 }
 
 type AndFilter struct {
@@ -343,38 +350,53 @@ func NewAndFilter(queries []WherePart) WherePart {
 }
 
 func (f *AndFilter) SQLString() (sql string, args []interface{}) {
-	if len(f.Queries) == 0 {
+	return joinWhereParts(f.Queries, " AND ")
+}
+
+// joinWhereParts wraps the non-empty fragments of the parts in parentheses,
+// joined with the separator. Parts that produce no SQL (for example a filter
+// without a column or without values) are skipped, so they never leave a
+// dangling operator behind. It returns no SQL when every part is empty.
+func joinWhereParts(parts []WherePart, separator string) (sql string, args []interface{}) {
+	var sb strings.Builder
+	for _, part := range parts {
+		partSQL, partArgs := part.SQLString()
+		if partSQL == "" {
+			continue
+		}
+		if sb.Len() == 0 {
+			sb.WriteString("(")
+		} else {
+			sb.WriteString(separator)
+		}
+		sb.WriteString(partSQL)
+		args = append(args, partArgs...)
+	}
+	if sb.Len() == 0 {
 		return "", nil
 	}
-	var sb strings.Builder
-	sb.WriteString("(")
-	for i, q := range f.Queries {
-		if i != 0 {
-			sb.WriteString(" AND ")
-		}
-		qSQL, qArgs := q.SQLString()
-		sb.WriteString(qSQL)
-		args = append(args, qArgs...)
-	}
 	sb.WriteString(")")
-	sql = sb.String()
-	return
+	return sb.String(), args
 }
 
 func ConstructWhereSQLString(wps []WherePart) (sql string, args []interface{}) {
 	var sb strings.Builder
-	if len(wps) == 0 {
-		return "", nil
-	} else {
-		sb.WriteString(" WHERE ")
-	}
-	for i, wp := range wps {
-		if i != 0 {
+	for _, wp := range wps {
+		wpSQL, wpArgs := wp.SQLString()
+		if wpSQL == "" {
+			// A part without SQL must not leave a dangling WHERE or AND behind.
+			continue
+		}
+		if sb.Len() == 0 {
+			sb.WriteString(" WHERE ")
+		} else {
 			sb.WriteString(" AND ")
 		}
-		wpSQL, wpArgs := wp.SQLString()
 		sb.WriteString(wpSQL)
 		args = append(args, wpArgs...)
+	}
+	if sb.Len() == 0 {
+		return "", nil
 	}
 	sql = sb.String() + " "
 	return

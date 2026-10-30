@@ -52,6 +52,8 @@ var (
 		))
 	statusInvalidCursor = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.FeaturePackageName, "cursor is invalid", "Cursor"))
+	statusInvalidPageSize = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.FeaturePackageName, "page_size is invalid", "PageSize"))
 	statusInvalidOrderBy = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.FeaturePackageName, "order_by is invalid", "OrderBy"))
 	statusMissingName = api.NewGRPCStatus(

@@ -355,21 +355,21 @@ func (s *SubscriptionService) ListSubscriptions(
 		}
 		filterEnvironmentIDs = append(filterEnvironmentIDs, req.EnvironmentId)
 	}
+	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
+		return nil, err
+	}
 	if !hasAllowedEnvironment {
 		// The member has no role in any of the requested environments, so there
 		// is nothing to list. The storage treats an empty environment filter as
 		// no filter, which would return every subscription in the organization.
-		// The storage is not queried, so apply the order and cursor validation
-		// it would have performed to keep rejecting invalid requests.
+		// The storage is not queried, so apply the order validation it would
+		// have performed to keep rejecting invalid requests.
 		if _, ok := subscriptionproto.ListSubscriptionsRequest_OrderBy_name[int32(req.OrderBy)]; !ok {
 			return nil, statusInvalidOrderBy.Err()
 		}
 		cursor := req.Cursor
 		if cursor == "" {
 			cursor = "0"
-		}
-		if _, err := strconv.Atoi(cursor); err != nil {
-			return nil, statusInvalidCursor.Err()
 		}
 		return &subscriptionproto.ListSubscriptionsResponse{
 			Subscriptions: []*subscriptionproto.Subscription{},
@@ -464,6 +464,9 @@ func (s *SubscriptionService) ListEnabledSubscriptions(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
 		req.EnvironmentId)
 	if err != nil {
+		return nil, err
+	}
+	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}
 	var disabled = false

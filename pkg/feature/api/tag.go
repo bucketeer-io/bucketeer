@@ -55,12 +55,12 @@ func (s *FeatureService) ListTags(
 	if req.OrderDirection == featureproto.ListTagsRequest_DESC {
 		orderDirection = tagproto.ListTagsRequest_DESC
 	}
+	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
+		return nil, err
+	}
 	cursor := req.Cursor
 	if cursor == "" {
 		cursor = "0"
-	}
-	if _, err := strconv.Atoi(cursor); err != nil {
-		return nil, statusInvalidCursor.Err()
 	}
 
 	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(ctx, tagstorage.ListTagsParams{

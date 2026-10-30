@@ -26,6 +26,8 @@ var (
 		pkgErr.NewErrorInvalidArgNil(pkgErr.EnvironmentPackageName, "no command", "Command"))
 	statusInvalidCursor = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EnvironmentPackageName, "cursor is invalid", "Cursor"))
+	statusInvalidPageSize = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EnvironmentPackageName, "page_size is invalid", "PageSize"))
 	// Essentially, the id field is required, but no validation is performed because some older services do not have ID.
 	//statusEnvironmentIDRequired = gstatus.New(codes.InvalidArgument, "environment: environment id must be specified")
 	statusEnvironmentNameRequired = api.NewGRPCStatus(

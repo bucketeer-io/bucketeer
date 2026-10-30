@@ -184,13 +184,13 @@ func (s *AccountService) ListAPIKeys(
 	if req.OrganizationId == "" {
 		return nil, statusInvalidListAPIKeyRequest.Err()
 	}
+	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
+		return nil, err
+	}
 	limit := int(req.PageSize)
 	cursor := req.Cursor
 	if cursor == "" {
 		cursor = "0"
-	}
-	if _, err := strconv.Atoi(cursor); err != nil {
-		return nil, statusInvalidCursor.Err()
 	}
 	if !hasAllowedEnvironment {
 		// The member has no role in any of the requested environments, so there

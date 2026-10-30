@@ -87,6 +87,9 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 	if err != nil {
 		return nil, err
 	}
+	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
+		return nil, err
+	}
 	var archived *bool
 	if req.Archived != nil {
 		v := req.Archived.Value
