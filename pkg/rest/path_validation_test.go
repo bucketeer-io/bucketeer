@@ -110,7 +110,7 @@ func TestRESTMiddlewareChain_invalidUTF8PathSegment(t *testing.T) {
 		t.Fatal("application handler must not run for invalid path")
 	})
 	mws := newMiddleWares()
-	mws.Append(MetricsServerMiddleware)
+	mws.Append(MetricsServerMiddleware(mux))
 	mws.Append(rejectInvalidRequestPathMiddleware)
 	handler := mws.Handle(mux)
 

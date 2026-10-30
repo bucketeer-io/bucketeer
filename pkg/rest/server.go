@@ -142,7 +142,7 @@ func (s *Server) Stop(timeout time.Duration) {
 func (s *Server) setup() {
 	mws := newMiddleWares()
 	mws.Append(LogServerMiddleware(s.logger))
-	mws.Append(MetricsServerMiddleware)
+	mws.Append(MetricsServerMiddleware(s.mux))
 	mws.Append(securityHeadersMiddleware)
 	mws.Append(rejectInvalidRequestPathMiddleware)
 	for _, service := range s.services {
