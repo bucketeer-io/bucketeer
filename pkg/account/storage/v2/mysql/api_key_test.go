@@ -278,101 +278,18 @@ func scanResult(mockController *gomock.Controller, err error) *mock.MockRow {
 	return row
 }
 
-// The fallback lookups must match on the key column alone, byte for byte.
+// The fallback lookup must match on the key column alone, byte for byte.
 // Requiring the digest to be missing would make a row that is backfilled between
 // the digest lookup and the fallback match neither query. The table collation is
 // case-insensitive and pads trailing spaces, so the comparison has to be made on
 // binary strings to match the key exactly like the digest lookup does.
-func TestAPIKeyPlaintextFallbackQueriesMatchOnKeyOnlyMySQL(t *testing.T) {
+func TestAPIKeyPlaintextFallbackQueryMatchesOnKeyOnlyMySQL(t *testing.T) {
 	t.Parallel()
-	for _, query := range []string{
-		selectEnvironmentAPIKeyPlaintextSQLQuery,
-		selectAPIKeyV2ByAPIKeyPlaintextSQLQuery,
-	} {
-		_, where, found := strings.Cut(query, "WHERE")
-		require.True(t, found)
-		assert.NotContains(t, where, "api_key_hash")
-		assert.Regexp(t, `CAST\((ak\.)?api_key AS BINARY\) = CAST\(\? AS BINARY\)`, where)
-		assert.NotRegexp(t, `\bapi_key = \?`, where)
-	}
-}
-
-func TestGetAPIKeyByAPIKeyMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	hash := domain.HashAPIKey(testAPIKey)
-	patterns := []struct {
-		desc        string
-		setup       func(*accountStorage)
-		expectedErr error
-	}{
-		{
-			desc: "success: matched on the digest of the key",
-			setup: func(s *accountStorage) {
-				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
-				).Return(scanResult(mockController, nil))
-			},
-			expectedErr: nil,
-		},
-		{
-			desc: "success: row without a digest yet is matched on the key itself",
-			setup: func(s *accountStorage) {
-				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
-				).Return(scanResult(mockController, mysql.ErrNoRows))
-				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), selectAPIKeyV2ByAPIKeyPlaintextSQLQuery, testAPIKey, "env-1",
-				).Return(scanResult(mockController, nil))
-			},
-			expectedErr: nil,
-		},
-		{
-			desc: "error: ErrNoRows from both lookups",
-			setup: func(s *accountStorage) {
-				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
-				).Return(scanResult(mockController, mysql.ErrNoRows))
-				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), selectAPIKeyV2ByAPIKeyPlaintextSQLQuery, testAPIKey, "env-1",
-				).Return(scanResult(mockController, mysql.ErrNoRows))
-			},
-			expectedErr: v2as.ErrAPIKeyNotFound,
-		},
-		{
-			desc: "error: internal error on the digest lookup is returned without falling back",
-			setup: func(s *accountStorage) {
-				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
-				).Return(scanResult(mockController, errors.New("internal error")))
-			},
-			expectedErr: errors.New("internal error"),
-		},
-		{
-			desc: "error: internal error on the fallback lookup",
-			setup: func(s *accountStorage) {
-				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), selectAPIKeyV2ByAPIKeySQLQuery, hash, "env-1",
-				).Return(scanResult(mockController, mysql.ErrNoRows))
-				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), selectAPIKeyV2ByAPIKeyPlaintextSQLQuery, testAPIKey, "env-1",
-				).Return(scanResult(mockController, errors.New("internal error")))
-			},
-			expectedErr: errors.New("internal error"),
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			storage := &accountStorage{qe: mock.NewMockClient(mockController)}
-			p.setup(storage)
-			_, err := storage.GetAPIKeyByAPIKey(
-				context.Background(), testAPIKey, "env-1",
-			)
-			assert.Equal(t, p.expectedErr, err)
-		})
-	}
+	_, where, found := strings.Cut(selectEnvironmentAPIKeyPlaintextSQLQuery, "WHERE")
+	require.True(t, found)
+	assert.NotContains(t, where, "api_key_hash")
+	assert.Regexp(t, `CAST\(ak\.api_key AS BINARY\) = CAST\(\? AS BINARY\)`, where)
+	assert.NotRegexp(t, `\bapi_key = \?`, where)
 }
 
 func TestGetEnvironmentAPIKeyMySQL(t *testing.T) {

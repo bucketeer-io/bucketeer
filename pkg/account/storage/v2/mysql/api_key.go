@@ -38,10 +38,6 @@ var (
 	selectAPIKeyV2SQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2_count.sql
 	selectAPIKeyV2CountSQLQuery string
-	//go:embed sql/api_key_v2/select_api_key_v2_by_api_key.sql
-	selectAPIKeyV2ByAPIKeySQLQuery string
-	//go:embed sql/api_key_v2/select_api_key_v2_by_api_key_plaintext.sql
-	selectAPIKeyV2ByAPIKeyPlaintextSQLQuery string
 	//go:embed sql/api_key_v2/select_environment_api_key_v2.sql
 	selectEnvironmentAPIKeySQLQuery string
 	//go:embed sql/api_key_v2/select_environment_api_key_v2_plaintext.sql
@@ -158,55 +154,6 @@ func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string
 	}
 	apiKey.Role = proto.APIKey_Role(role)
 	return &domain.APIKey{APIKey: &apiKey}, nil
-}
-
-func (s *accountStorage) GetAPIKeyByAPIKey(
-	ctx context.Context,
-	apiKey string,
-	environmentID string,
-) (*domain.APIKey, error) {
-	k, err := s.getAPIKeyByQuery(ctx, selectAPIKeyV2ByAPIKeySQLQuery, domain.HashAPIKey(apiKey), environmentID)
-	if !errors.Is(err, v2as.ErrAPIKeyNotFound) {
-		return k, err
-	}
-	// Keys created before the digest column existed are matched on the key
-	// itself until they are backfilled. The fallback does not require the digest
-	// to be missing, so a row backfilled between the two lookups still matches.
-	return s.getAPIKeyByQuery(ctx, selectAPIKeyV2ByAPIKeyPlaintextSQLQuery, apiKey, environmentID)
-}
-
-func (s *accountStorage) getAPIKeyByQuery(
-	ctx context.Context,
-	query string,
-	args ...interface{},
-) (*domain.APIKey, error) {
-	apiKeyDB := proto.APIKey{}
-	var role int32
-	err := s.qe.QueryRowContext(
-		ctx,
-		query,
-		args...,
-	).Scan(
-		&apiKeyDB.Id,
-		&apiKeyDB.Name,
-		&role,
-		&apiKeyDB.Disabled,
-		&apiKeyDB.CreatedAt,
-		&apiKeyDB.UpdatedAt,
-		&apiKeyDB.Description,
-		&apiKeyDB.ApiKey,
-		&apiKeyDB.ApiKeyPrefix,
-		&apiKeyDB.Maintainer,
-		&apiKeyDB.LastUsedAt,
-	)
-	if err != nil {
-		if errors.Is(err, mysqlstorage.ErrNoRows) {
-			return nil, v2as.ErrAPIKeyNotFound
-		}
-		return nil, err
-	}
-	apiKeyDB.Role = proto.APIKey_Role(role)
-	return &domain.APIKey{APIKey: &apiKeyDB}, nil
 }
 
 func (s *accountStorage) ListAllEnvironmentAPIKeys(
