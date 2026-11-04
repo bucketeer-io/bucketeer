@@ -43,8 +43,10 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/holdout/domain"
 	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
 	holdoutmock "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
+	redispubsub "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/redis"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -609,6 +611,58 @@ func TestCacheRefresherHandleMessageNacksOnRedisWriteRefusal(t *testing.T) {
 	}
 }
 
+// A publish that fails to marshal the event will fail the same way on every
+// redelivery, so it is acked as a bad message rather than retried forever.
+func TestCacheRefresherHandleMessageAcksOnPublishBadMessage(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc       string
+		publishErr error
+	}{
+		{desc: "publisher bad message", publishErr: publisher.ErrBadMessage},
+		{desc: "redis stream publisher bad message", publishErr: redispubsub.ErrStreamPublisherBadMessage},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			cr, mocks := newCacheRefresherWithMocks(t)
+
+			mocks.featureClient.EXPECT().
+				ListFeatures(gomock.Any(), gomock.Any()).
+				Return(&featureproto.ListFeaturesResponse{}, nil)
+			mocks.featuresCache.EXPECT().
+				PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+				Return(true, nil)
+			mocks.invalidationPublisher.EXPECT().
+				Publish(gomock.Any(), gomock.Any()).
+				Return(p.publishErr)
+
+			data, err := proto.Marshal(&domaineventproto.Event{
+				Id:            "evt-feature",
+				EntityType:    domaineventproto.Event_FEATURE,
+				EntityId:      "feature-id-1",
+				EnvironmentId: "env-1",
+				Type:          domaineventproto.Event_FEATURE_UPDATED,
+			})
+			assert.NoError(t, err)
+
+			acked := false
+			nacked := false
+			msg := &puller.Message{
+				Data: data,
+				Ack:  func() { acked = true },
+				Nack: func() { nacked = true },
+			}
+			cr.handleMessage(context.Background(), msg)
+
+			assert.True(t, acked)
+			assert.False(t, nacked)
+		})
+	}
+}
+
 // Regression test for the shutdown-mid-publish bug: if L2 was successfully
 // refreshed but the publish step then fails because the worker context was
 // canceled (graceful shutdown), the message must be NACKed so a healthy pod
@@ -759,6 +813,11 @@ func TestIsRepeatable(t *testing.T) {
 		{
 			desc:     "Redis refusal from an L2 write or publish is repeatable",
 			err:      writeError(errors.New("NOPERM No permissions to access a key")),
+			expected: true,
+		},
+		{
+			desc:     "write error wrapping a cache sentinel is repeatable",
+			err:      writeError(cache.ErrNotFound),
 			expected: true,
 		},
 		{

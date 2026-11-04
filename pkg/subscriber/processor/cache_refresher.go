@@ -42,6 +42,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
+	redispubsub "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/redis"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -638,7 +639,13 @@ func (c *cacheRefresher) publishCacheInvalidation(
 	if c.cacheInvalidationPublisher == nil {
 		return nil
 	}
-	return writeError(c.cacheInvalidationPublisher.Publish(ctx, event))
+	err := c.cacheInvalidationPublisher.Publish(ctx, event)
+	// A marshal failure won't succeed on redelivery, so ack it as a bad
+	// message instead of retrying forever.
+	if errors.Is(err, publisher.ErrBadMessage) || errors.Is(err, redispubsub.ErrStreamPublisherBadMessage) {
+		return fmt.Errorf("%w: %w", errCacheRefresherBadMessage, err)
+	}
+	return writeError(err)
 }
 
 // writeError marks an error from an L2 write or the invalidation publish as
@@ -674,11 +681,11 @@ func isRepeatable(err error) bool {
 	if errors.Is(err, context.DeadlineExceeded) {
 		return true
 	}
-	if errors.Is(err, cache.ErrNotFound) || errors.Is(err, cache.ErrInvalidType) {
-		return false
-	}
 	if errors.Is(err, errCacheRefresherWrite) {
 		return true
+	}
+	if errors.Is(err, cache.ErrNotFound) || errors.Is(err, cache.ErrInvalidType) {
+		return false
 	}
 	var ne net.Error
 	if errors.As(err, &ne) && ne.Timeout() {
