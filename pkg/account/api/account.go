@@ -296,7 +296,8 @@ func (s *AccountService) UpdateAccountV2(
 	} else {
 		// Admins may only manage accounts up to their own organization role, both
 		// the account's current role and the role being assigned. Disabling the
-		// organization owner's account is rejected regardless of the caller.
+		// organization owner's account or changing its organization role is
+		// rejected regardless of the caller.
 		if err := s.checkOrganizationRoleWithinEditorAuthority(
 			ctx,
 			editor,
@@ -317,7 +318,9 @@ func (s *AccountService) UpdateAccountV2(
 				return nil, err
 			}
 		}
-		if req.Disabled != nil && req.Disabled.Value {
+		disabling := req.Disabled != nil && req.Disabled.Value
+		changingRole := req.OrganizationRole != nil && req.OrganizationRole.Role != existing.OrganizationRole
+		if disabling || changingRole {
 			if err := s.checkNotOrganizationOwner(ctx, req.OrganizationId, existing); err != nil {
 				return nil, err
 			}
@@ -1010,9 +1013,10 @@ func (s *AccountService) checkOrganizationRoleWithinEditorAuthority(
 	return statusPermissionDenied.Err()
 }
 
-// checkNotOrganizationOwner rejects disabling or deleting the account referenced
-// by the organization's owner email. Ownership has to be transferred through the
-// organization update first so the organization always keeps an active owner.
+// checkNotOrganizationOwner rejects disabling, deleting or changing the
+// organization role of the account referenced by the organization's owner email.
+// Ownership has to be transferred through the organization update first so the
+// organization always keeps an active owner with the OWNER role.
 // The owner email is stored as it was typed when ownership was set, and account
 // lookups follow the database's matching rules (e.g. case-insensitive collation),
 // so instead of comparing raw strings the owner email is resolved to its account
@@ -1055,7 +1059,7 @@ func (s *AccountService) checkNotOrganizationOwner(
 		return nil
 	}
 	s.logger.Warn(
-		"Rejected disabling or deleting the organization owner account",
+		"Rejected disabling, deleting or changing the role of the organization owner account",
 		log.FieldsFromIncomingContext(ctx).AddFields(
 			zap.String("organizationID", organizationID),
 			zap.String("email", target.Email),

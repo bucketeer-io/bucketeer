@@ -76,11 +76,14 @@ func hierarchyAccounts() map[string]*domain.AccountV2 {
 // empty). Account lookups match the email the way the database collation does,
 // ignoring case and trailing spaces, and return the account with its stored
 // email.
-func setupHierarchyLookups(service *AccountService, ownerEmail string) {
+func setupHierarchyLookups(service *AccountService, ownerEmail string, opts ...func(map[string]*domain.AccountV2)) {
 	if ownerEmail == "" {
 		ownerEmail = hierarchyOwnerEmail
 	}
 	accounts := hierarchyAccounts()
+	for _, opt := range opts {
+		opt(accounts)
+	}
 	service.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().
 		GetAccountV2(gomock.Any(), gomock.Any(), hierarchyOrgID).
 		DoAndReturn(func(_ context.Context, email, _ string) (*domain.AccountV2, error) {
@@ -206,12 +209,77 @@ func TestUpdateAccountV2OrganizationRoleHierarchy(t *testing.T) {
 		isSystemAdmin bool
 		// ownerEmail is the owner email stored on the organization; defaults to
 		// hierarchyOwnerEmail.
-		ownerEmail   string
+		ownerEmail string
+		// ownerRole overrides the organization owner account's stored role.
+		ownerRole    accountproto.AccountV2_Role_Organization
 		req          *accountproto.UpdateAccountV2Request
 		wantErr      error
 		wantRole     accountproto.AccountV2_Role_Organization
 		wantDisabled bool
 	}{
+		{
+			name:        "owner cannot change their own organization role",
+			editorEmail: hierarchyOwnerEmail,
+			req: &accountproto.UpdateAccountV2Request{
+				OrganizationId: hierarchyOrgID,
+				Email:          hierarchyOwnerEmail,
+				OrganizationRole: &accountproto.UpdateAccountV2Request_OrganizationRoleValue{
+					Role: accountproto.AccountV2_Role_Organization_ADMIN,
+				},
+			},
+			wantErr: statusPermissionDenied.Err(),
+		},
+		{
+			name:        "owner cannot change the organization owner's role",
+			editorEmail: hierarchyCoOwnerEmail,
+			req: &accountproto.UpdateAccountV2Request{
+				OrganizationId: hierarchyOrgID,
+				Email:          hierarchyOwnerEmail,
+				OrganizationRole: &accountproto.UpdateAccountV2Request_OrganizationRoleValue{
+					Role: accountproto.AccountV2_Role_Organization_MEMBER,
+				},
+			},
+			wantErr: statusPermissionDenied.Err(),
+		},
+		{
+			name:          "system admin who is an organization admin cannot change the organization owner's role",
+			editorEmail:   hierarchyAdminEmail,
+			isSystemAdmin: true,
+			req: &accountproto.UpdateAccountV2Request{
+				OrganizationId: hierarchyOrgID,
+				Email:          hierarchyOwnerEmail,
+				OrganizationRole: &accountproto.UpdateAccountV2Request_OrganizationRoleValue{
+					Role: accountproto.AccountV2_Role_Organization_ADMIN,
+				},
+			},
+			wantErr: statusPermissionDenied.Err(),
+		},
+		{
+			name:        "admin cannot demote the organization owner whose account holds a lower role",
+			editorEmail: hierarchyAdminEmail,
+			ownerRole:   accountproto.AccountV2_Role_Organization_ADMIN,
+			req: &accountproto.UpdateAccountV2Request{
+				OrganizationId: hierarchyOrgID,
+				Email:          hierarchyOwnerEmail,
+				OrganizationRole: &accountproto.UpdateAccountV2Request_OrganizationRoleValue{
+					Role: accountproto.AccountV2_Role_Organization_MEMBER,
+				},
+			},
+			wantErr: statusPermissionDenied.Err(),
+		},
+		{
+			name:        "owner can update the organization owner's profile with the role unchanged",
+			editorEmail: hierarchyOwnerEmail,
+			req: &accountproto.UpdateAccountV2Request{
+				OrganizationId: hierarchyOrgID,
+				Email:          hierarchyOwnerEmail,
+				FirstName:      wrapperspb.String("Updated"),
+				OrganizationRole: &accountproto.UpdateAccountV2Request_OrganizationRoleValue{
+					Role: accountproto.AccountV2_Role_Organization_OWNER,
+				},
+			},
+			wantRole: accountproto.AccountV2_Role_Organization_OWNER,
+		},
 		{
 			name:        "admin cannot update an owner",
 			editorEmail: hierarchyAdminEmail,
@@ -358,7 +426,11 @@ func TestUpdateAccountV2OrganizationRoleHierarchy(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{})
 
 			service := createAccountService(t, mockController, nil)
-			setupHierarchyLookups(service, tc.ownerEmail)
+			setupHierarchyLookups(service, tc.ownerEmail, func(accounts map[string]*domain.AccountV2) {
+				if tc.ownerRole != accountproto.AccountV2_Role_Organization_UNASSIGNED {
+					accounts[hierarchyOwnerEmail].OrganizationRole = tc.ownerRole
+				}
+			})
 
 			var persisted *domain.AccountV2
 			if tc.wantErr == nil {
