@@ -62,6 +62,11 @@ spec:
         - name: oauth-key-secret
           secret:
             secretName: {{ template "oauth-key-secret" . }}
+        {{- if include "web.encryption-enabled" . }}
+        - name: encryption-key-secret
+          secret:
+            secretName: {{ .Values.global.encryption.secret }}
+        {{- end }}
         - name: env-js
           configMap:
             name: {{ template "web.name" . }}-env-js
@@ -293,8 +298,14 @@ spec:
               value: "{{ .Values.env.emailFilter }}"
             - name: BUCKETEER_WEB_WEBHOOK_BASE_URL
               value: "{{ .Values.webhook.baseURL }}"
-            - name: BUCKETEER_WEB_WEBHOOK_KMS_RESOURCE_NAME
-              value: "{{ .Values.webhook.kmsResourceName }}"
+            - name: BUCKETEER_WEB_ENCRYPTION_TYPE
+              value: "{{ include "web.encryption-type" . }}"
+            {{- if include "web.encryption-enabled" . }}
+            - name: BUCKETEER_WEB_ENCRYPTION_KEY_ID
+              value: "{{ .Values.global.encryption.keyId }}"
+            - name: BUCKETEER_WEB_ENCRYPTION_KEY_PATH
+              value: /usr/local/encryption-key/key
+            {{- end }}
             - name: BUCKETEER_WEB_WEB_CONSOLE_ENV_JS_PATH
               value: /usr/local/static/js
             - name: BUCKETEER_WEB_PROMETHEUS_URL
@@ -340,6 +351,11 @@ spec:
             - name: oauth-key-secret
               mountPath: /usr/local/oauth-key
               readOnly: true
+            {{- if include "web.encryption-enabled" . }}
+            - name: encryption-key-secret
+              mountPath: /usr/local/encryption-key
+              readOnly: true
+            {{- end }}
             - name: oauth-config
               mountPath: /usr/local/oauth-config
               readOnly: true

@@ -27,6 +27,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/googleapis/gax-go/v2 v2.26.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.31.0
+	github.com/hashicorp/go-kms-wrapping/v2 v2.0.26
 	github.com/hashicorp/vault/api v1.23.0
 	github.com/improbable-eng/grpc-web v0.15.0
 	github.com/jinzhu/copier v0.4.0
@@ -113,6 +114,7 @@ require (
 	github.com/hashicorp/go-secure-stdlib/parseutil v0.2.0 // indirect
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.7 // indirect
+	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/hcl v1.0.1-vault-7 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect

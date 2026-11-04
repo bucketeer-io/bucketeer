@@ -181,7 +181,6 @@ oauth:
     isSystemAdmin:
 webhook:
   baseURL:
-  kmsResourceName:
 envoy:
   image:
     repository: envoyproxy/envoy
