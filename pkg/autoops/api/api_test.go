@@ -58,6 +58,9 @@ var errPublish = bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "publish err
 // the transaction.
 var errStorage = bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "storage error")
 
+// errCommit simulates a transaction that fails to commit after the callback succeeded.
+var errCommit = bkterr.NewErrorInternal(bkterr.AutoopsPackageName, "commit error")
+
 func TestNewAutoOpsService(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -361,6 +364,31 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 				},
 			},
 			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "err: commit fails, event is not published",
+			setup: func(s *AutoOpsService) {
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().CreateAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				// Publish must not be called because the commit failed
+			},
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_SCHEDULE,
+				DatetimeClauses: []*autoopsproto.DatetimeClause{
+					{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+				},
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
 		},
 		{
 			desc: "err: publish fails after commit",
@@ -671,6 +699,55 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: api.NewGRPCStatus(errStorage).Err(),
 		},
 		{
+			desc: "err: commit fails, event is not published",
+			setup: func(s *AutoOpsService) {
+				existingClause, _ := anypb.New(&autoopsproto.DatetimeClause{
+					Time:       selfMatchTime,
+					ActionType: autoopsproto.ActionType_ENABLE,
+				})
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.All(),
+				).Return(&domain.AutoOpsRule{
+					AutoOpsRule: &autoopsproto.AutoOpsRule{
+						Id:            "aid1",
+						OpsType:       autoopsproto.OpsType_SCHEDULE,
+						AutoOpsStatus: autoopsproto.AutoOpsStatus_RUNNING,
+						Deleted:       false,
+						Clauses: []*autoopsproto.Clause{
+							{Id: "cid1", ActionType: autoopsproto.ActionType_ENABLE, Clause: existingClause},
+						}},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().UpdateAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				// Publish must not be called because the commit failed
+			},
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+				DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{
+					{
+						Id: "cid1",
+						Clause: &autoopsproto.DatetimeClause{
+							ActionType: autoopsproto.ActionType_DISABLE,
+							Time:       selfMatchTime,
+						},
+						ChangeType: autoopsproto.ChangeType_UPDATE,
+					},
+				},
+			},
+			expected:    nil,
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
+		},
+		{
 			desc: "err: publish fails after commit",
 			setup: func(s *AutoOpsService) {
 				existingClause, _ := anypb.New(&autoopsproto.DatetimeClause{
@@ -878,6 +955,31 @@ func TestStopAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: errStorage,
 		},
 		{
+			desc: "err: commit fails, event is not published",
+			setup: func(s *AutoOpsService) {
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(newRunningScheduleRule(), nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().UpdateAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				// Publish must not be called because the commit failed
+			},
+			req: &autoopsproto.StopAutoOpsRuleRequest{
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+			},
+			expectedErr: errCommit,
+		},
+		{
 			desc: "err: publish fails after commit",
 			setup: func(s *AutoOpsService) {
 				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
@@ -984,6 +1086,31 @@ func TestDeleteAutoOpsRuleMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 			},
 			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "err: commit fails, event is not published",
+			setup: func(s *AutoOpsService) {
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(newRunningScheduleRule(), nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().UpdateAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				// Publish must not be called because the commit failed
+			},
+			req: &autoopsproto.DeleteAutoOpsRuleRequest{
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
 		},
 		{
 			desc: "err: publish fails after commit",
@@ -1333,6 +1460,38 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				ClauseId:      "testClauseId",
 			},
 			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "err: commit fails, events are not published",
+			setup: func(s *AutoOpsService) {
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(newExecutableEnableRule(), nil).AnyTimes()
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.featureStorage.(*mockFeatureStorage.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+					gomock.Any(), "fid", "ns0",
+				).Return(newDisabledFeature(), nil)
+				s.featureStorage.(*mockFeatureStorage.MockFeatureStorage).EXPECT().UpdateFeature(
+					gomock.Any(), gomock.Any(), "ns0",
+				).Return(nil)
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().UpdateAutoOpsRule(
+					gomock.Any(), gomock.Any(), "ns0",
+				).Return(nil)
+				// Publish must not be called because the commit failed
+			},
+			req: &autoopsproto.ExecuteAutoOpsRequest{
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+				ClauseId:      "testClauseId",
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
 		},
 		{
 			desc: "err: publish fails after commit",

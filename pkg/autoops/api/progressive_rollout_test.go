@@ -789,6 +789,52 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			expectedErr: api.NewGRPCStatus(errStorage).Err(),
 		},
 		{
+			desc: "err: commit fails, event is not published",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+				aos.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				aos.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().CreateProgressiveRollout(
+					gomock.Any(), gomock.Any(), "env-id",
+				).Return(nil)
+				// Publish must not be called because the commit failed
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				EnvironmentId: "env-id",
+				FeatureId:     "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
+					Schedules:          validSchedules,
+					Interval:           autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:         2,
+				},
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
+		},
+		{
 			desc: "err: publish fails after commit",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
