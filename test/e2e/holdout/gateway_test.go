@@ -110,13 +110,11 @@ func TestServingBasic(t *testing.T) {
 	assert.False(t, hasHoldoutReason(other.Evaluations.Evaluations))
 
 	t.Run("REST", func(t *testing.T) {
-		waitForHoldoutRESTGetEvaluations(t, s.tag, s.heldOut, s.flag.Id, s.holdoutVariation(), s.group.Id)
-		resp := util.GetEvaluationsRaw(t, restEvaluationsBody(s.tag, s.heldOut, "", 0), *gatewayAddr, holdoutEnv.clientKeyPath)
-		requireHoldoutEvaluation(t, resp.Evaluations.Evaluations, s.flag.Id, s.holdoutVariation(), s.group.Id)
-		assert.Equal(t, held.UserEvaluationsId, resp.UserEvaluationsID, "REST and gRPC agree on the UEID")
-		waitForNormalRESTGetEvaluations(t, s.tag, s.notHeldOut, s.flag.Id, s.onVariation(), featureproto.Reason_DEFAULT)
-		resp = util.GetEvaluationsRaw(t, restEvaluationsBody(s.tag, s.notHeldOut, "", 0), *gatewayAddr, holdoutEnv.clientKeyPath)
-		requireNormalEvaluation(t, resp.Evaluations.Evaluations, s.flag.Id, s.onVariation(), featureproto.Reason_DEFAULT)
+		heldEvals, heldUEID := waitForHoldoutRESTGetEvaluations(t, s.tag, s.heldOut, s.flag.Id, s.holdoutVariation(), s.group.Id)
+		requireHoldoutEvaluation(t, heldEvals, s.flag.Id, s.holdoutVariation(), s.group.Id)
+		assert.Equal(t, held.UserEvaluationsId, heldUEID, "REST and gRPC agree on the UEID")
+		otherEvals := waitForNormalRESTGetEvaluations(t, s.tag, s.notHeldOut, s.flag.Id, s.onVariation(), featureproto.Reason_DEFAULT)
+		requireNormalEvaluation(t, otherEvals, s.flag.Id, s.onVariation(), featureproto.Reason_DEFAULT)
 	})
 	t.Run("SSE initial put", func(t *testing.T) {
 		var put *gatewayproto.StreamEvaluationsEvent
@@ -138,9 +136,8 @@ func TestServingBasic(t *testing.T) {
 		requireHoldoutEvaluation(t, []*featureproto.Evaluation{resp.Evaluation}, s.flag.Id, s.holdoutVariation(), s.group.Id)
 		resp = grpcGetEvaluation(t, s.tag, s.flag.Id, s.notHeldOut)
 		requireNormalEvaluation(t, []*featureproto.Evaluation{resp.Evaluation}, s.flag.Id, s.onVariation(), featureproto.Reason_DEFAULT)
-		waitForHoldoutRESTGetEvaluation(t, s.tag, s.flag.Id, s.heldOut, s.holdoutVariation(), s.group.Id)
-		rest := util.GetEvaluation(t, s.tag, s.flag.Id, s.heldOut, *gatewayAddr, holdoutEnv.clientKeyPath)
-		requireHoldoutEvaluation(t, []*featureproto.Evaluation{rest.Evaluation}, s.flag.Id, s.holdoutVariation(), s.group.Id)
+		restEval := waitForHoldoutRESTGetEvaluation(t, s.tag, s.flag.Id, s.heldOut, s.holdoutVariation(), s.group.Id)
+		requireHoldoutEvaluation(t, []*featureproto.Evaluation{restEval}, s.flag.Id, s.holdoutVariation(), s.group.Id)
 	})
 
 	cleared := s.stop(t, client)
