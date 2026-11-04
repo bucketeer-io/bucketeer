@@ -31,6 +31,7 @@ import (
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
@@ -59,6 +60,17 @@ var fcmServiceAccountDummy = []byte(`
 		"universe_domain": "googleapis.com"
 	}
 `)
+
+// errPublish is returned by the publisher mock to simulate a publish failure
+// after the transaction has committed.
+var errPublish = bkterr.NewErrorInternal(bkterr.PushPackageName, "publish error")
+
+// errStorage is returned by storage mocks to simulate a failed write inside
+// the transaction.
+var errStorage = bkterr.NewErrorInternal(bkterr.PushPackageName, "storage error")
+
+// errCommit simulates a transaction that fails to commit after the callback succeeded.
+var errCommit = bkterr.NewErrorInternal(bkterr.PushPackageName, "commit error")
 
 func TestNewPushService(t *testing.T) {
 	t.Parallel()
@@ -137,6 +149,79 @@ func TestCreatePushMySQL(t *testing.T) {
 				Name:              "name-1",
 			},
 			expectedErr: statusAlreadyExists.Err(),
+		},
+		{
+			desc: "err: storage write fails, event is not published",
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
+					gomock.Any(), gomock.Any(),
+				).Return([]*proto.Push{}, 0, int64(0), nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().CreatePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errStorage)
+			},
+			req: &pushproto.CreatePushRequest{
+				EnvironmentId:     "ns0",
+				FcmServiceAccount: fcmServiceAccountDummy,
+				Tags:              []string{"tag-0"},
+				Name:              "name-1",
+			},
+			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "err: commit fails, event is not published",
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
+					gomock.Any(), gomock.Any(),
+				).Return([]*proto.Push{}, 0, int64(0), nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().CreatePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &pushproto.CreatePushRequest{
+				EnvironmentId:     "ns0",
+				FcmServiceAccount: fcmServiceAccountDummy,
+				Tags:              []string{"tag-0"},
+				Name:              "name-1",
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
+		},
+		{
+			desc: "err: publish fails after commit",
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
+					gomock.Any(), gomock.Any(),
+				).Return([]*proto.Push{}, 0, int64(0), nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().CreatePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(errPublish).Times(1)
+			},
+			req: &pushproto.CreatePushRequest{
+				EnvironmentId:     "ns0",
+				FcmServiceAccount: fcmServiceAccountDummy,
+				Tags:              []string{"tag-0"},
+				Name:              "name-1",
+			},
+			expectedErr: api.NewGRPCStatus(errPublish).Err(),
 		},
 		{
 			desc: "success: with tags",
@@ -235,6 +320,122 @@ func TestUpdatePushMySQL(t *testing.T) {
 				Name: wrapperspb.String("push-0"),
 			},
 			expectedErr: statusNotFound.Err(),
+		},
+		{
+			desc: "err: storage write fails, event is not published",
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Push{
+					Push: &proto.Push{
+						Id:   "key-0",
+						Name: "push-0",
+						Tags: []string{"tag-0"},
+					},
+				}, nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().UpdatePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errStorage)
+			},
+			req: &pushproto.UpdatePushRequest{
+				EnvironmentId: "ns0",
+				Id:            "key-0",
+				Name:          wrapperspb.String("name-1"),
+			},
+			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "err: commit fails, event is not published",
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Push{
+					Push: &proto.Push{
+						Id:   "key-0",
+						Name: "push-0",
+						Tags: []string{"tag-0"},
+					},
+				}, nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().UpdatePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &pushproto.UpdatePushRequest{
+				EnvironmentId: "ns0",
+				Id:            "key-0",
+				Name:          wrapperspb.String("name-1"),
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
+		},
+		{
+			desc: "err: publish fails after commit",
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Push{
+					Push: &proto.Push{
+						Id:   "key-0",
+						Name: "push-0",
+						Tags: []string{"tag-0"},
+					},
+				}, nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().UpdatePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(errPublish).Times(1)
+			},
+			req: &pushproto.UpdatePushRequest{
+				EnvironmentId: "ns0",
+				Id:            "key-0",
+				Name:          wrapperspb.String("name-1"),
+			},
+			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+		},
+		{
+			desc: "success: no rows affected, event is not published",
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Push{
+					Push: &proto.Push{
+						Id:   "key-0",
+						Name: "push-0",
+						Tags: []string{"tag-0"},
+					},
+				}, nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().UpdatePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2ps.ErrPushUnexpectedAffectedRows)
+			},
+			req: &pushproto.UpdatePushRequest{
+				EnvironmentId: "ns0",
+				Id:            "key-0",
+				Name:          wrapperspb.String("name-1"),
+			},
+			expectedErr: nil,
 		},
 		{
 			desc: "success update name",
@@ -434,6 +635,118 @@ func TestDeletePushMySQL(t *testing.T) {
 				Id:            "key-1",
 			},
 			expectedErr: statusNotFound.Err(),
+		},
+		{
+			desc: "err: storage write fails, event is not published",
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Push{
+					Push: &proto.Push{
+						Id:   "key-0",
+						Name: "push-0",
+						Tags: []string{"tag-0"},
+					},
+				}, nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().DeletePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errStorage)
+			},
+			req: &pushproto.DeletePushRequest{
+				EnvironmentId: "ns0",
+				Id:            "key-0",
+			},
+			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "err: commit fails, event is not published",
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Push{
+					Push: &proto.Push{
+						Id:   "key-0",
+						Name: "push-0",
+						Tags: []string{"tag-0"},
+					},
+				}, nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().DeletePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &pushproto.DeletePushRequest{
+				EnvironmentId: "ns0",
+				Id:            "key-0",
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
+		},
+		{
+			desc: "err: publish fails after commit",
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Push{
+					Push: &proto.Push{
+						Id:   "key-0",
+						Name: "push-0",
+						Tags: []string{"tag-0"},
+					},
+				}, nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().DeletePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(errPublish).Times(1)
+			},
+			req: &pushproto.DeletePushRequest{
+				EnvironmentId: "ns0",
+				Id:            "key-0",
+			},
+			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+		},
+		{
+			desc: "success: no rows affected, event is not published",
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Push{
+					Push: &proto.Push{
+						Id:   "key-0",
+						Name: "push-0",
+						Tags: []string{"tag-0"},
+					},
+				}, nil)
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().DeletePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2ps.ErrPushUnexpectedAffectedRows)
+			},
+			req: &pushproto.DeletePushRequest{
+				EnvironmentId: "ns0",
+				Id:            "key-0",
+			},
+			expectedErr: nil,
 		},
 		{
 			desc: "success",
