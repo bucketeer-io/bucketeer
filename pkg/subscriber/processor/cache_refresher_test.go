@@ -43,8 +43,10 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/holdout/domain"
 	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
 	holdoutmock "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
+	redispubsub "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/redis"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -538,39 +540,127 @@ func TestCacheRefresherHandleMessageNackOnRepeatableError(t *testing.T) {
 	assert.True(t, nacked)
 }
 
-func TestCacheRefresherHandleMessageAcksOnPutFailureNonRepeatable(t *testing.T) {
+// A Redis refusal of the L2 write or the invalidation publish (OOM, NOPERM,
+// READONLY, ...) is not a transport error, but acking would drop the event
+// and leave api pods and SSE clients on the old value. It must be nacked so
+// the event is redelivered once Redis accepts writes again.
+func TestCacheRefresherHandleMessageNacksOnRedisWriteRefusal(t *testing.T) {
 	t.Parallel()
 
-	cr, mocks := newCacheRefresherWithMocks(t)
-
-	mocks.featureClient.EXPECT().
-		ListFeatures(gomock.Any(), gomock.Any()).
-		Return(&featureproto.ListFeaturesResponse{}, nil)
-	mocks.featuresCache.EXPECT().
-		PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
-		Return(false, errors.New("redis: oom"))
-	// non-repeatable error => Ack (drop the event)
-
-	data, err := proto.Marshal(&domaineventproto.Event{
-		Id:            "evt-feature",
-		EntityType:    domaineventproto.Event_FEATURE,
-		EntityId:      "feature-id-1",
-		EnvironmentId: "env-1",
-		Type:          domaineventproto.Event_FEATURE_UPDATED,
-	})
-	assert.NoError(t, err)
-
-	acked := false
-	nacked := false
-	msg := &puller.Message{
-		Data: data,
-		Ack:  func() { acked = true },
-		Nack: func() { nacked = true },
+	patterns := []struct {
+		desc       string
+		putErr     error
+		publishErr error
+	}{
+		{
+			desc:   "L2 put refused with OOM",
+			putErr: errors.New("OOM command not allowed when used memory > 'maxmemory'."),
+		},
+		{
+			desc:   "L2 put refused with READONLY",
+			putErr: errors.New("READONLY You can't write against a read only replica."),
+		},
+		{
+			desc:       "publish refused with NOPERM",
+			publishErr: errors.New("NOPERM No permissions to access a key"),
+		},
+		{
+			desc:       "publish refused with OOM",
+			publishErr: errors.New("OOM command not allowed when used memory > 'maxmemory'."),
+		},
 	}
-	cr.handleMessage(context.Background(), msg)
 
-	assert.True(t, acked)
-	assert.False(t, nacked)
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			cr, mocks := newCacheRefresherWithMocks(t)
+
+			mocks.featureClient.EXPECT().
+				ListFeatures(gomock.Any(), gomock.Any()).
+				Return(&featureproto.ListFeaturesResponse{}, nil)
+			mocks.featuresCache.EXPECT().
+				PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+				Return(p.putErr == nil, p.putErr)
+			if p.putErr == nil {
+				mocks.invalidationPublisher.EXPECT().
+					Publish(gomock.Any(), gomock.Any()).
+					Return(p.publishErr)
+			}
+
+			data, err := proto.Marshal(&domaineventproto.Event{
+				Id:            "evt-feature",
+				EntityType:    domaineventproto.Event_FEATURE,
+				EntityId:      "feature-id-1",
+				EnvironmentId: "env-1",
+				Type:          domaineventproto.Event_FEATURE_UPDATED,
+			})
+			assert.NoError(t, err)
+
+			acked := false
+			nacked := false
+			msg := &puller.Message{
+				Data: data,
+				Ack:  func() { acked = true },
+				Nack: func() { nacked = true },
+			}
+			cr.handleMessage(context.Background(), msg)
+
+			assert.False(t, acked, "must not drop the event when Redis refuses the write")
+			assert.True(t, nacked, "must nack so the event is redelivered")
+		})
+	}
+}
+
+// A publish that fails to marshal the event will fail the same way on every
+// redelivery, so it is acked as a bad message rather than retried forever.
+func TestCacheRefresherHandleMessageAcksOnPublishBadMessage(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc       string
+		publishErr error
+	}{
+		{desc: "publisher bad message", publishErr: publisher.ErrBadMessage},
+		{desc: "redis stream publisher bad message", publishErr: redispubsub.ErrStreamPublisherBadMessage},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			cr, mocks := newCacheRefresherWithMocks(t)
+
+			mocks.featureClient.EXPECT().
+				ListFeatures(gomock.Any(), gomock.Any()).
+				Return(&featureproto.ListFeaturesResponse{}, nil)
+			mocks.featuresCache.EXPECT().
+				PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+				Return(true, nil)
+			mocks.invalidationPublisher.EXPECT().
+				Publish(gomock.Any(), gomock.Any()).
+				Return(p.publishErr)
+
+			data, err := proto.Marshal(&domaineventproto.Event{
+				Id:            "evt-feature",
+				EntityType:    domaineventproto.Event_FEATURE,
+				EntityId:      "feature-id-1",
+				EnvironmentId: "env-1",
+				Type:          domaineventproto.Event_FEATURE_UPDATED,
+			})
+			assert.NoError(t, err)
+
+			acked := false
+			nacked := false
+			msg := &puller.Message{
+				Data: data,
+				Ack:  func() { acked = true },
+				Nack: func() { nacked = true },
+			}
+			cr.handleMessage(context.Background(), msg)
+
+			assert.True(t, acked)
+			assert.False(t, nacked)
+		})
+	}
 }
 
 // Regression test for the shutdown-mid-publish bug: if L2 was successfully
@@ -718,6 +808,21 @@ func TestIsRepeatable(t *testing.T) {
 		{
 			desc:     "wrapped cache.ErrNotFound is not repeatable",
 			err:      fmt.Errorf("lookup failed: %w", cache.ErrNotFound),
+			expected: false,
+		},
+		{
+			desc:     "Redis refusal from an L2 write or publish is repeatable",
+			err:      writeError(errors.New("NOPERM No permissions to access a key")),
+			expected: true,
+		},
+		{
+			desc:     "write error wrapping a cache sentinel is repeatable",
+			err:      writeError(cache.ErrNotFound),
+			expected: true,
+		},
+		{
+			desc:     "unwrapped Redis refusal is not repeatable",
+			err:      errors.New("NOPERM No permissions to access a key"),
 			expected: false,
 		},
 		{

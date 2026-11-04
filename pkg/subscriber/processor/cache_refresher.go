@@ -17,6 +17,7 @@ package processor
 import (
 	"context"
 	"errors"
+	"fmt"
 	"hash/fnv"
 	"net"
 	"strings"
@@ -41,6 +42,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
+	redispubsub "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/redis"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -74,7 +76,14 @@ const (
 	cacheRefresherWorkerQueueSize = 256
 )
 
-var errCacheRefresherBadMessage = errors.New("cache refresher bad message")
+var (
+	errCacheRefresherBadMessage = errors.New("cache refresher bad message")
+	// errCacheRefresherWrite marks a failed L2 write or cache-invalidation
+	// publish. Such failures are repeatable: acking would leave api pods (and
+	// connected SSE clients) on the old value, while the next delivery
+	// idempotently re-runs the refresh once Redis accepts writes again.
+	errCacheRefresherWrite = errors.New("cache refresher write failed")
+)
 
 // cacheRefresher subscribes to the domain-event topic and, for each
 // flag/segment/api-key change, refreshes the L2 (Redis) cache from
@@ -328,7 +337,7 @@ func (c *cacheRefresher) refreshHoldoutGroup(
 		// and marks evaluation IDs so recovery forces a full evaluation.
 		barrier := evaluation.UnavailableHoldoutSnapshot()
 		if _, putErr := c.holdoutGroupCache.PutIfNewer(barrier, event.EnvironmentId, generation); putErr != nil {
-			return putErr
+			return writeError(putErr)
 		}
 		if pubErr := c.publishCacheInvalidation(ctx, event); pubErr != nil {
 			return pubErr
@@ -337,7 +346,7 @@ func (c *cacheRefresher) refreshHoldoutGroup(
 	}
 	accepted, err := c.holdoutGroupCache.PutIfNewer(snapshot, event.EnvironmentId, generation)
 	if err != nil {
-		return err
+		return writeError(err)
 	}
 	if !accepted {
 		c.logger.Info("Skipped holdout redis cache write: a newer snapshot is already cached",
@@ -368,7 +377,7 @@ func (c *cacheRefresher) refreshFeatures(
 	}
 	accepted, err := c.featuresCache.PutIfNewer(features, event.EnvironmentId, generation)
 	if err != nil {
-		return err
+		return writeError(err)
 	}
 	if accepted {
 		c.logger.Debug("Refreshed features redis cache",
@@ -444,7 +453,7 @@ func (c *cacheRefresher) refreshSegmentUsers(
 	// announce the invalidation so api pods drop their L1 entries.
 	if event.Type == domaineventproto.Event_SEGMENT_DELETED {
 		if err := c.segmentUsersCache.Evict(event.EntityId, event.EnvironmentId); err != nil {
-			return err
+			return writeError(err)
 		}
 		c.logger.Debug("Evicted segment users redis cache (segment deleted)",
 			zap.String("environmentId", event.EnvironmentId),
@@ -476,7 +485,7 @@ func (c *cacheRefresher) refreshSegmentUsers(
 		UpdatedAt: getResp.Segment.UpdatedAt,
 	}
 	if err := c.segmentUsersCache.Put(segmentUsers, event.EnvironmentId); err != nil {
-		return err
+		return writeError(err)
 	}
 	c.logger.Debug("Refreshed segment users redis cache",
 		zap.String("environmentId", event.EnvironmentId),
@@ -524,7 +533,7 @@ func (c *cacheRefresher) refreshAPIKey(
 			// stale L2 entries don't authorise a removed key.
 			if errors.Is(err, accstorage.ErrAPIKeyNotFound) {
 				if evictErr := c.environmentAPIKeyCache.Evict(secret); evictErr != nil {
-					return evictErr
+					return writeError(evictErr)
 				}
 				c.logger.Debug("Evicted environment API key (no longer in DB)",
 					zap.String("environmentId", event.EnvironmentId),
@@ -536,7 +545,7 @@ func (c *cacheRefresher) refreshAPIKey(
 			return err
 		}
 		if err := c.environmentAPIKeyCache.Put(domainEnvAPIKey.EnvironmentAPIKey); err != nil {
-			return err
+			return writeError(err)
 		}
 		c.logger.Debug("Refreshed environment API key redis cache",
 			zap.String("environmentId", event.EnvironmentId),
@@ -575,7 +584,7 @@ func (c *cacheRefresher) refreshExperiments(
 	}
 	experiments := &experimentproto.Experiments{Experiments: resp.Experiments}
 	if _, err := c.experimentsCache.PutIfNewer(experiments, event.EnvironmentId, generation); err != nil {
-		return err
+		return writeError(err)
 	}
 	c.logger.Debug("Refreshed experiments redis cache",
 		zap.String("environmentId", event.EnvironmentId),
@@ -605,7 +614,7 @@ func (c *cacheRefresher) refreshAutoOpsRules(
 	}
 	autoOpsRules := &autoopsproto.AutoOpsRules{AutoOpsRules: resp.AutoOpsRules}
 	if _, err := c.autoOpsRulesCache.PutIfNewer(autoOpsRules, event.EnvironmentId, generation); err != nil {
-		return err
+		return writeError(err)
 	}
 	c.logger.Debug("Refreshed auto ops rules redis cache",
 		zap.String("environmentId", event.EnvironmentId),
@@ -630,12 +639,31 @@ func (c *cacheRefresher) publishCacheInvalidation(
 	if c.cacheInvalidationPublisher == nil {
 		return nil
 	}
-	return c.cacheInvalidationPublisher.Publish(ctx, event)
+	err := c.cacheInvalidationPublisher.Publish(ctx, event)
+	// A marshal failure won't succeed on redelivery, so ack it as a bad
+	// message instead of retrying forever.
+	if errors.Is(err, publisher.ErrBadMessage) || errors.Is(err, redispubsub.ErrStreamPublisherBadMessage) {
+		return fmt.Errorf("%w: %w", errCacheRefresherBadMessage, err)
+	}
+	return writeError(err)
+}
+
+// writeError marks an error from an L2 write or the invalidation publish as
+// repeatable (see errCacheRefresherWrite). Redis refusals such as OOM,
+// NOPERM or READONLY are not transport errors, so isRepeatable would
+// otherwise ack and drop the event.
+func writeError(err error) error {
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("%w: %w", errCacheRefresherWrite, err)
 }
 
 // isRepeatable returns true for transient errors that should be retried
 // (NACKed). DeadlineExceeded, context.Canceled, network timeouts, and known
 // connection-level strings are repeatable; cache lookup misses are not.
+// Failed L2 writes and invalidation publishes (errCacheRefresherWrite) are
+// repeatable whatever the cause, so a Redis refusal does not drop the event.
 //
 // Why context.Canceled is repeatable: the only thing that cancels a worker
 // context here is graceful shutdown (SIGTERM). If a refresh has already
@@ -651,6 +679,9 @@ func isRepeatable(err error) bool {
 		return true
 	}
 	if errors.Is(err, context.DeadlineExceeded) {
+		return true
+	}
+	if errors.Is(err, errCacheRefresherWrite) {
 		return true
 	}
 	if errors.Is(err, cache.ErrNotFound) || errors.Is(err, cache.ErrInvalidType) {
