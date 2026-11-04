@@ -659,6 +659,24 @@ func requireNormalEvaluation(t *testing.T, evaluations []*featureproto.Evaluatio
 	require.Empty(t, e.GetReason().GetHoldoutGroupId(), "holdout_group_id of %s", featureID)
 }
 
+func holdoutEvaluationVisible(e *featureproto.Evaluation, featureID, holdoutVariationID, groupID string) bool {
+	if e == nil || e.FeatureId != featureID {
+		return false
+	}
+	return e.VariationId == holdoutVariationID &&
+		e.GetReason().GetType() == featureproto.Reason_HOLDOUT &&
+		e.GetReason().GetHoldoutGroupId() == groupID
+}
+
+func normalEvaluationVisible(e *featureproto.Evaluation, featureID, variationID string, reason featureproto.Reason_Type) bool {
+	if e == nil || e.FeatureId != featureID {
+		return false
+	}
+	return e.VariationId == variationID &&
+		e.GetReason().GetType() == reason &&
+		e.GetReason().GetHoldoutGroupId() == ""
+}
+
 // waitForHoldoutServing polls GetEvaluations until the held-out user sees
 // the holdout variation for featureID, bounded by the cache propagation
 // time, and returns the response that observed it.
@@ -683,6 +701,48 @@ func waitForHoldoutCleared(t *testing.T, tag, userID string) *gatewayproto.GetEv
 		return !hasHoldoutReason(resp.Evaluations.Evaluations)
 	}, cachePropagationTimeout, pollInterval, "holdout for %s never cleared on the gateway", userID)
 	return resp
+}
+
+// waitForHoldoutRESTGetEvaluations polls /get_evaluations until holdout is
+// visible on the REST path (propagation can lag gRPC GetEvaluations).
+func waitForHoldoutRESTGetEvaluations(t *testing.T, tag, userID, featureID, holdoutVariationID, groupID string) {
+	t.Helper()
+	require.Eventually(t, func() bool {
+		resp := util.GetEvaluationsRaw(t,
+			restEvaluationsBody(tag, userID, "", 0),
+			*gatewayAddr, holdoutEnv.clientKeyPath)
+		e := findEvaluation(resp.Evaluations.Evaluations, featureID)
+		return holdoutEvaluationVisible(e, featureID, holdoutVariationID, groupID)
+	}, cachePropagationTimeout, pollInterval, "holdout for %s never reached REST GetEvaluations", featureID)
+}
+
+func waitForNormalRESTGetEvaluations(t *testing.T, tag, userID, featureID, variationID string, reason featureproto.Reason_Type) {
+	t.Helper()
+	require.Eventually(t, func() bool {
+		resp := util.GetEvaluationsRaw(t,
+			restEvaluationsBody(tag, userID, "", 0),
+			*gatewayAddr, holdoutEnv.clientKeyPath)
+		e := findEvaluation(resp.Evaluations.Evaluations, featureID)
+		return normalEvaluationVisible(e, featureID, variationID, reason)
+	}, cachePropagationTimeout, pollInterval, "normal evaluation for %s never reached REST GetEvaluations", featureID)
+}
+
+func waitForHoldoutGRPCGetEvaluation(t *testing.T, tag, featureID, userID, holdoutVariationID, groupID string) *gatewayproto.GetEvaluationResponse {
+	t.Helper()
+	var resp *gatewayproto.GetEvaluationResponse
+	require.Eventually(t, func() bool {
+		resp = grpcGetEvaluation(t, tag, featureID, userID)
+		return holdoutEvaluationVisible(resp.Evaluation, featureID, holdoutVariationID, groupID)
+	}, cachePropagationTimeout, pollInterval, "holdout for %s never reached gRPC GetEvaluation", featureID)
+	return resp
+}
+
+func waitForHoldoutRESTGetEvaluation(t *testing.T, tag, featureID, userID, holdoutVariationID, groupID string) {
+	t.Helper()
+	require.Eventually(t, func() bool {
+		resp := util.GetEvaluation(t, tag, featureID, userID, *gatewayAddr, holdoutEnv.clientKeyPath)
+		return holdoutEvaluationVisible(resp.Evaluation, featureID, holdoutVariationID, groupID)
+	}, cachePropagationTimeout, pollInterval, "holdout for %s never reached REST GetEvaluation", featureID)
 }
 
 // waitStalePoll polls with prev's UserEvaluationsID and evaluatedAt until pred
