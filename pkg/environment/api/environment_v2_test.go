@@ -50,6 +50,17 @@ func mockAdminEnvAuth(s *EnvironmentService) {
 	}, nil)
 }
 
+// errPublish is returned by the publisher mock to simulate a publish failure
+// after the transaction has committed.
+var errPublish = pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "publish error")
+
+// errStorage is returned by storage mocks to simulate a failed write inside
+// the transaction.
+var errStorage = pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "storage error")
+
+// errCommit simulates a transaction that fails to commit after the callback succeeded.
+var errCommit = pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "commit error")
+
 func TestGetEnvironmentV2(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -332,6 +343,85 @@ func TestCreateEnvironmentV2(t *testing.T) {
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error")).Err(),
 		},
 		{
+			desc: "err: storage write fails, event is not published",
+			setup: func(s *EnvironmentService) {
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
+				}, nil)
+				mockAdminOrgAuth(s)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().CreateEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errStorage)
+			},
+			req: &proto.CreateEnvironmentV2Request{
+				Name:      "name",
+				UrlCode:   "url-code",
+				ProjectId: "project-id",
+			},
+			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "err: commit fails, event is not published",
+			setup: func(s *EnvironmentService) {
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
+				}, nil)
+				mockAdminOrgAuth(s)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().CreateEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &proto.CreateEnvironmentV2Request{
+				Name:      "name",
+				UrlCode:   "url-code",
+				ProjectId: "project-id",
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
+		},
+		{
+			desc: "err: publish fails after commit",
+			setup: func(s *EnvironmentService) {
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
+				}, nil)
+				mockAdminOrgAuth(s)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().CreateEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(errPublish).Times(1)
+			},
+			req: &proto.CreateEnvironmentV2Request{
+				Name:      "name",
+				UrlCode:   "url-code",
+				ProjectId: "project-id",
+			},
+			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+		},
+		{
 			desc: "success: require comment is true",
 			setup: func(s *EnvironmentService) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
@@ -481,12 +571,102 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error")).Err(),
 		},
 		{
+			desc: "err: storage write fails, event is not published",
+			setup: func(s *EnvironmentService) {
+				mockAdminEnvAuth(s)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.EnvironmentV2{
+					EnvironmentV2: &proto.EnvironmentV2{Id: "id01", OrganizationId: "organization-id01"},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().UpdateEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errStorage)
+			},
+			req: &proto.UpdateEnvironmentV2Request{
+				Id:          "id01",
+				Name:        wrapperspb.String("name-1"),
+				Description: wrapperspb.String("desc-1"),
+			},
+			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "err: commit fails, event is not published",
+			setup: func(s *EnvironmentService) {
+				mockAdminEnvAuth(s)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.EnvironmentV2{
+					EnvironmentV2: &proto.EnvironmentV2{Id: "id01", OrganizationId: "organization-id01"},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().UpdateEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &proto.UpdateEnvironmentV2Request{
+				Id:          "id01",
+				Name:        wrapperspb.String("name-1"),
+				Description: wrapperspb.String("desc-1"),
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
+		},
+		{
+			desc: "err: publish fails after commit",
+			setup: func(s *EnvironmentService) {
+				mockAdminEnvAuth(s)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.EnvironmentV2{
+					EnvironmentV2: &proto.EnvironmentV2{Id: "id01", OrganizationId: "organization-id01"},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().UpdateEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(errPublish).Times(1)
+			},
+			req: &proto.UpdateEnvironmentV2Request{
+				Id:          "id01",
+				Name:        wrapperspb.String("name-1"),
+				Description: wrapperspb.String("desc-1"),
+			},
+			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+		},
+		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
 				mockAdminEnvAuth(s)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.EnvironmentV2{
+					EnvironmentV2: &proto.EnvironmentV2{Id: "id01", OrganizationId: "organization-id01"},
+				}, nil)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().UpdateEnvironmentV2(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 			},
 			req: &proto.UpdateEnvironmentV2Request{
 				Id:             "id01",
