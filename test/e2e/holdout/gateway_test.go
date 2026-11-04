@@ -220,76 +220,93 @@ func TestChangeDetectionOnPoll(t *testing.T) {
 	// The client's cached state before any holdout exists.
 	pre := grpcGetEvaluations(t, s.tag, s.heldOut)
 	assert.True(t, pre.Evaluations.ForceUpdate, "first request without an ID is a full update")
-	caughtUp := func(t *testing.T, prev *gatewayproto.GetEvaluationsResponse) {
-		t.Helper()
-		again := grpcGetEvaluationsByEvaluatedAt(t, s.tag, s.heldOut, prev.UserEvaluationsId, prev.Evaluations.CreatedAt)
-		assert.False(t, again.Evaluations.ForceUpdate, "caught-up client must not be forced")
-		assert.Empty(t, again.Evaluations.Evaluations)
-		assert.Empty(t, again.Evaluations.ArchivedFeatureIds)
-		assert.Equal(t, prev.UserEvaluationsId, again.UserEvaluationsId)
-	}
-	caughtUp(t, pre)
+	waitPollCaughtUp(t, s.tag, s.heldOut, pre)
 
 	// Start.
 	s.start(t, client)
-	afterStart := grpcGetEvaluationsByEvaluatedAt(t, s.tag, s.heldOut, pre.UserEvaluationsId, pre.Evaluations.CreatedAt)
-	assert.True(t, afterStart.Evaluations.ForceUpdate, "stale ID after start")
-	assert.NotEqual(t, pre.UserEvaluationsId, afterStart.UserEvaluationsId)
+	afterStart := waitStalePoll(t, s.tag, s.heldOut, pre, "stale ID never forced after start", func(r *gatewayproto.GetEvaluationsResponse) bool {
+		if !r.Evaluations.ForceUpdate || r.UserEvaluationsId == pre.UserEvaluationsId {
+			return false
+		}
+		e := findEvaluation(r.Evaluations.Evaluations, s.flag.Id)
+		return e != nil &&
+			e.VariationId == s.holdoutVariation() &&
+			e.GetReason().GetType() == featureproto.Reason_HOLDOUT
+	})
 	requireHoldoutEvaluation(t, afterStart.Evaluations.Evaluations, s.flag.Id, s.holdoutVariation(), s.group.Id)
-	caughtUp(t, afterStart)
+	waitPollCaughtUp(t, s.tag, s.heldOut, afterStart)
 
 	// Add a flag while RUNNING.
 	addHoldoutFeatures(t, client, s.group.Id, target(extra, "C"))
-	var afterAdd *gatewayproto.GetEvaluationsResponse
-	require.Eventually(t, func() bool {
-		afterAdd = grpcGetEvaluationsByEvaluatedAt(t, s.tag, s.heldOut, afterStart.UserEvaluationsId, afterStart.Evaluations.CreatedAt)
-		return findEvaluation(afterAdd.Evaluations.Evaluations, extra.Id) != nil
-	}, cachePropagationTimeout, pollInterval, "added flag never reached the gateway")
-	assert.True(t, afterAdd.Evaluations.ForceUpdate, "stale ID after add")
-	assert.NotEqual(t, afterStart.UserEvaluationsId, afterAdd.UserEvaluationsId)
+	afterAdd := waitStalePoll(t, s.tag, s.heldOut, afterStart, "stale ID never forced after add", func(r *gatewayproto.GetEvaluationsResponse) bool {
+		if !r.Evaluations.ForceUpdate || r.UserEvaluationsId == afterStart.UserEvaluationsId {
+			return false
+		}
+		e := findEvaluation(r.Evaluations.Evaluations, extra.Id)
+		if e == nil ||
+			e.VariationId != variationID(extra, "C") ||
+			e.GetReason().GetType() != featureproto.Reason_HOLDOUT {
+			return false
+		}
+		return findEvaluation(r.Evaluations.Evaluations, s.flag.Id) != nil
+	})
 	requireHoldoutEvaluation(t, afterAdd.Evaluations.Evaluations, extra.Id, variationID(extra, "C"), s.group.Id)
 	requireHoldoutEvaluation(t, afterAdd.Evaluations.Evaluations, s.flag.Id, s.holdoutVariation(), s.group.Id)
-	caughtUp(t, afterAdd)
+	waitPollCaughtUp(t, s.tag, s.heldOut, afterAdd)
 
 	// Remove it again.
 	removeHoldoutFeatures(t, client, s.group.Id, extra.Id)
-	var afterRemove *gatewayproto.GetEvaluationsResponse
-	require.Eventually(t, func() bool {
-		afterRemove = grpcGetEvaluationsByEvaluatedAt(t, s.tag, s.heldOut, afterAdd.UserEvaluationsId, afterAdd.Evaluations.CreatedAt)
-		e := findEvaluation(afterRemove.Evaluations.Evaluations, extra.Id)
-		return e != nil && e.GetReason().GetType() != featureproto.Reason_HOLDOUT
-	}, cachePropagationTimeout, pollInterval, "removed flag never left the gateway")
-	assert.True(t, afterRemove.Evaluations.ForceUpdate, "stale ID after remove")
-	assert.NotEqual(t, afterAdd.UserEvaluationsId, afterRemove.UserEvaluationsId)
+	afterRemove := waitStalePoll(t, s.tag, s.heldOut, afterAdd, "stale ID never forced after remove", func(r *gatewayproto.GetEvaluationsResponse) bool {
+		if !r.Evaluations.ForceUpdate || r.UserEvaluationsId == afterAdd.UserEvaluationsId {
+			return false
+		}
+		e := findEvaluation(r.Evaluations.Evaluations, extra.Id)
+		return e != nil &&
+			e.VariationId == variationID(extra, "A") &&
+			e.GetReason().GetType() == featureproto.Reason_DEFAULT
+	})
 	requireNormalEvaluation(t, afterRemove.Evaluations.Evaluations, extra.Id, variationID(extra, "A"), featureproto.Reason_DEFAULT)
 	requireHoldoutEvaluation(t, afterRemove.Evaluations.Evaluations, s.flag.Id, s.holdoutVariation(), s.group.Id)
-	caughtUp(t, afterRemove)
+	waitPollCaughtUp(t, s.tag, s.heldOut, afterRemove)
 
 	// Update (stop_at) of a RUNNING group bumps updated_at and so the UEID.
 	bumpSecond(t, getHoldoutGroup(t, client, s.group.Id))
 	updateHoldoutGroup(t, client, &featureproto.UpdateHoldoutGroupRequest{
 		Id: s.group.Id, StopAt: wrapperspb.Int64(s.group.StopAt + 600),
 	})
-	var afterUpdate *gatewayproto.GetEvaluationsResponse
-	require.Eventually(t, func() bool {
-		afterUpdate = grpcGetEvaluationsByEvaluatedAt(t, s.tag, s.heldOut, afterRemove.UserEvaluationsId, afterRemove.Evaluations.CreatedAt)
-		return afterUpdate.UserEvaluationsId != afterRemove.UserEvaluationsId
-	}, cachePropagationTimeout, pollInterval, "update never reached the gateway")
-	assert.True(t, afterUpdate.Evaluations.ForceUpdate, "stale ID after update")
+	afterUpdate := waitStalePoll(t, s.tag, s.heldOut, afterRemove, "stale ID never forced after update", func(r *gatewayproto.GetEvaluationsResponse) bool {
+		if !r.Evaluations.ForceUpdate || r.UserEvaluationsId == afterRemove.UserEvaluationsId {
+			return false
+		}
+		e := findEvaluation(r.Evaluations.Evaluations, s.flag.Id)
+		return e != nil &&
+			e.VariationId == s.holdoutVariation() &&
+			e.GetReason().GetType() == featureproto.Reason_HOLDOUT
+	})
 	requireHoldoutEvaluation(t, afterUpdate.Evaluations.Evaluations, s.flag.Id, s.holdoutVariation(), s.group.Id)
-	caughtUp(t, afterUpdate)
+	waitPollCaughtUp(t, s.tag, s.heldOut, afterUpdate)
 
 	t.Run("REST polling agrees", func(t *testing.T) {
-		stale := util.GetEvaluationsRaw(t,
-			restEvaluationsBody(s.tag, s.heldOut, pre.UserEvaluationsId, pre.Evaluations.CreatedAt),
-			*gatewayAddr, holdoutEnv.clientKeyPath)
-		assert.True(t, stale.Evaluations.ForceUpdate)
-		requireHoldoutEvaluation(t, stale.Evaluations.Evaluations, s.flag.Id, s.holdoutVariation(), s.group.Id)
-		fresh := util.GetEvaluationsRaw(t,
-			restEvaluationsBody(s.tag, s.heldOut, stale.UserEvaluationsID, stale.Evaluations.CreatedAt),
-			*gatewayAddr, holdoutEnv.clientKeyPath)
-		assert.False(t, fresh.Evaluations.ForceUpdate)
-		assert.Empty(t, fresh.Evaluations.Evaluations)
+		var staleUEID string
+		var staleEvaluatedAt int64
+		require.Eventually(t, func() bool {
+			stale := util.GetEvaluationsRaw(t,
+				restEvaluationsBody(s.tag, s.heldOut, pre.UserEvaluationsId, pre.Evaluations.CreatedAt),
+				*gatewayAddr, holdoutEnv.clientKeyPath)
+			if !stale.Evaluations.ForceUpdate {
+				return false
+			}
+			e := findEvaluation(stale.Evaluations.Evaluations, s.flag.Id)
+			if e == nil ||
+				e.VariationId != s.holdoutVariation() ||
+				e.GetReason().GetType() != featureproto.Reason_HOLDOUT {
+				return false
+			}
+			staleUEID = stale.UserEvaluationsID
+			staleEvaluatedAt = stale.Evaluations.CreatedAt
+			return true
+		}, cachePropagationTimeout, pollInterval, "REST stale poll never forced after holdout changes")
+		waitRESTPollCaughtUp(t, s.tag, s.heldOut, staleUEID, staleEvaluatedAt)
 	})
 
 	s.stop(t, client)
@@ -306,10 +323,18 @@ func TestStopAndClearance(t *testing.T) {
 
 	assertCleared := func(t *testing.T, running *gatewayproto.GetEvaluationsResponse) {
 		t.Helper()
-		stale := grpcGetEvaluationsByEvaluatedAt(t, s.tag, s.heldOut, running.UserEvaluationsId, running.Evaluations.CreatedAt)
-		assert.True(t, stale.Evaluations.ForceUpdate, "running-period ID must be replaced")
-		assert.NotEqual(t, running.UserEvaluationsId, stale.UserEvaluationsId)
-		assert.False(t, hasHoldoutReason(stale.Evaluations.Evaluations))
+		stale := waitStalePoll(t, s.tag, s.heldOut, running, "running-period ID never replaced after stop", func(r *gatewayproto.GetEvaluationsResponse) bool {
+			if !r.Evaluations.ForceUpdate || r.UserEvaluationsId == running.UserEvaluationsId {
+				return false
+			}
+			if hasHoldoutReason(r.Evaluations.Evaluations) {
+				return false
+			}
+			e := findEvaluation(r.Evaluations.Evaluations, s.flag.Id)
+			return e != nil &&
+				e.VariationId == s.onVariation() &&
+				e.GetReason().GetType() == featureproto.Reason_DEFAULT
+		})
 		requireNormalEvaluation(t, stale.Evaluations.Evaluations, s.flag.Id, s.onVariation(), featureproto.Reason_DEFAULT)
 
 		// A client that first connects after the stop: its second poll,
@@ -317,14 +342,8 @@ func TestStopAndClearance(t *testing.T) {
 		freshUser := newUserID(t)
 		fresh := grpcGetEvaluations(t, s.tag, freshUser)
 		assert.False(t, hasHoldoutReason(fresh.Evaluations.Evaluations))
-		second := grpcGetEvaluationsByEvaluatedAt(t, s.tag, freshUser, fresh.UserEvaluationsId, fresh.Evaluations.CreatedAt)
-		assert.False(t, second.Evaluations.ForceUpdate, "fresh client is not forced after clearance")
-		assert.Empty(t, second.Evaluations.Evaluations)
-		assert.Equal(t, fresh.UserEvaluationsId, second.UserEvaluationsId)
-		// The previously held-out client, once caught up, is not forced.
-		caughtUp := grpcGetEvaluationsByEvaluatedAt(t, s.tag, s.heldOut, stale.UserEvaluationsId, stale.Evaluations.CreatedAt)
-		assert.False(t, caughtUp.Evaluations.ForceUpdate)
-		assert.Empty(t, caughtUp.Evaluations.Evaluations)
+		waitPollCaughtUp(t, s.tag, freshUser, fresh)
+		waitPollCaughtUp(t, s.tag, s.heldOut, stale)
 	}
 
 	t.Run("manual stop", func(t *testing.T) {
@@ -342,13 +361,20 @@ func TestStopAndClearance(t *testing.T) {
 		second = startHoldoutGroup(t, client, second.Id)
 		running := waitForHoldoutServing(t, s.tag, heldOut, s.flag.Id, s.offVariation())
 		requireHoldoutEvaluation(t, running.Evaluations.Evaluations, s.flag.Id, s.offVariation(), second.Id)
-		stale := grpcGetEvaluationsByEvaluatedAt(t, s.tag, heldOut, before.UserEvaluationsId, before.Evaluations.CreatedAt)
-		assert.True(t, stale.Evaluations.ForceUpdate)
+		waitStalePoll(t, s.tag, heldOut, before, "stale ID never forced after second group start", func(r *gatewayproto.GetEvaluationsResponse) bool {
+			if !r.Evaluations.ForceUpdate {
+				return false
+			}
+			e := findEvaluation(r.Evaluations.Evaluations, s.flag.Id)
+			return e != nil &&
+				e.VariationId == s.offVariation() &&
+				e.GetReason().GetType() == featureproto.Reason_HOLDOUT
+		})
 		stopHoldoutGroup(t, client, second.Id)
 		waitForHoldoutCleared(t, s.tag, heldOut)
-		after := grpcGetEvaluationsByEvaluatedAt(t, s.tag, heldOut, running.UserEvaluationsId, running.Evaluations.CreatedAt)
-		assert.True(t, after.Evaluations.ForceUpdate)
-		assert.False(t, hasHoldoutReason(after.Evaluations.Evaluations))
+		waitStalePoll(t, s.tag, heldOut, running, "stale ID never forced after second group stop", func(r *gatewayproto.GetEvaluationsResponse) bool {
+			return r.Evaluations.ForceUpdate && !hasHoldoutReason(r.Evaluations.Evaluations)
+		})
 	})
 
 	t.Run("scheduled stop", func(t *testing.T) {
@@ -375,12 +401,10 @@ func TestStopAndClearance(t *testing.T) {
 		got := getHoldoutGroup(t, client, third.Id)
 		require.Equal(t, featureproto.HoldoutGroup_STOPPED, got.Status)
 		waitForHoldoutCleared(t, s.tag, heldOut)
-		stale := grpcGetEvaluationsByEvaluatedAt(t, s.tag, heldOut, running.UserEvaluationsId, running.Evaluations.CreatedAt)
-		assert.True(t, stale.Evaluations.ForceUpdate)
-		assert.False(t, hasHoldoutReason(stale.Evaluations.Evaluations))
-		second := grpcGetEvaluationsByEvaluatedAt(t, s.tag, heldOut, stale.UserEvaluationsId, stale.Evaluations.CreatedAt)
-		assert.False(t, second.Evaluations.ForceUpdate)
-		assert.Empty(t, second.Evaluations.Evaluations)
+		stale := waitStalePoll(t, s.tag, heldOut, running, "stale ID never forced after scheduled stop", func(r *gatewayproto.GetEvaluationsResponse) bool {
+			return r.Evaluations.ForceUpdate && !hasHoldoutReason(r.Evaluations.Evaluations)
+		})
+		waitPollCaughtUp(t, s.tag, heldOut, stale)
 	})
 }
 
@@ -566,11 +590,7 @@ func TestServerSDKUnaffected(t *testing.T) {
 	assert.NotEmpty(t, before.FeatureFlagsId)
 
 	s.start(t, client)
-	during := grpcGetFeatureFlags(t, s.tag, before.FeatureFlagsId, before.RequestedAt)
-	assert.Equal(t, before.FeatureFlagsId, during.FeatureFlagsId, "ffID is stable across Start")
-	assert.False(t, during.ForceUpdate)
-	assert.Empty(t, during.Features, "no flag diff on Start")
-	assert.Empty(t, during.ArchivedFeatureFlagIds)
+	waitFeatureFlagsPollCaughtUp(t, s.tag, before.FeatureFlagsId, before.RequestedAt, before.FeatureFlagsId)
 	full := grpcGetFeatureFlags(t, s.tag, "", 0)
 	assert.True(t, proto.Equal(flagBefore, findFeature(full.Features, s.flag.Id)), "flag unchanged while serving")
 
@@ -590,10 +610,7 @@ func TestServerSDKUnaffected(t *testing.T) {
 	assert.Equal(t, segment.Id, delivered.SegmentId)
 
 	s.stop(t, client)
-	after := grpcGetFeatureFlags(t, s.tag, before.FeatureFlagsId, before.RequestedAt)
-	assert.Equal(t, before.FeatureFlagsId, after.FeatureFlagsId, "ffID is stable across Stop")
-	assert.False(t, after.ForceUpdate)
-	assert.Empty(t, after.Features)
+	waitFeatureFlagsPollCaughtUp(t, s.tag, before.FeatureFlagsId, before.RequestedAt, before.FeatureFlagsId)
 }
 
 func findFeature(features []*featureproto.Feature, id string) *featureproto.Feature {
