@@ -34,6 +34,7 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gatewayproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
+	"github.com/bucketeer-io/bucketeer/v2/test/e2e/util"
 )
 
 // ---- features ----
@@ -682,6 +683,63 @@ func waitForHoldoutCleared(t *testing.T, tag, userID string) *gatewayproto.GetEv
 		return !hasHoldoutReason(resp.Evaluations.Evaluations)
 	}, cachePropagationTimeout, pollInterval, "holdout for %s never cleared on the gateway", userID)
 	return resp
+}
+
+// waitStalePoll polls with prev's UserEvaluationsID and evaluatedAt until pred
+// is satisfied. Holdout cache propagation can lag behind full GetEvaluations.
+func waitStalePoll(
+	t *testing.T,
+	tag, userID string,
+	prev *gatewayproto.GetEvaluationsResponse,
+	msg string,
+	pred func(*gatewayproto.GetEvaluationsResponse) bool,
+) *gatewayproto.GetEvaluationsResponse {
+	t.Helper()
+	var resp *gatewayproto.GetEvaluationsResponse
+	require.Eventually(t, func() bool {
+		resp = grpcGetEvaluationsByEvaluatedAt(t, tag, userID, prev.UserEvaluationsId, prev.Evaluations.CreatedAt)
+		return pred(resp)
+	}, cachePropagationTimeout, pollInterval, msg)
+	return resp
+}
+
+// waitPollCaughtUp polls until the gateway agrees the client cursor from prev
+// is current: empty non-forced diff and stable UEID (RFC §4.3.2).
+func waitPollCaughtUp(t *testing.T, tag, userID string, prev *gatewayproto.GetEvaluationsResponse) {
+	t.Helper()
+	require.Eventually(t, func() bool {
+		again := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, prev.UserEvaluationsId, prev.Evaluations.CreatedAt)
+		return !again.Evaluations.ForceUpdate &&
+			len(again.Evaluations.Evaluations) == 0 &&
+			len(again.Evaluations.ArchivedFeatureIds) == 0 &&
+			again.UserEvaluationsId == prev.UserEvaluationsId
+	}, cachePropagationTimeout, pollInterval, "client never reached caught-up poll state")
+}
+
+// waitRESTPollCaughtUp is waitPollCaughtUp for /get_evaluations.
+func waitRESTPollCaughtUp(t *testing.T, tag, userID, ueid string, evaluatedAt int64) {
+	t.Helper()
+	require.Eventually(t, func() bool {
+		fresh := util.GetEvaluationsRaw(t,
+			restEvaluationsBody(tag, userID, ueid, evaluatedAt),
+			*gatewayAddr, holdoutEnv.clientKeyPath)
+		return !fresh.Evaluations.ForceUpdate &&
+			len(fresh.Evaluations.Evaluations) == 0 &&
+			len(fresh.Evaluations.ArchivedFeatureIds) == 0
+	}, cachePropagationTimeout, pollInterval, "REST client never reached caught-up poll state")
+}
+
+// waitFeatureFlagsPollCaughtUp polls GetFeatureFlags until the server SDK
+// cursor is current (empty non-forced diff, stable feature_flags_id).
+func waitFeatureFlagsPollCaughtUp(t *testing.T, tag, featureFlagsID string, requestedAt int64, wantFeatureFlagsID string) {
+	t.Helper()
+	require.Eventually(t, func() bool {
+		resp := grpcGetFeatureFlags(t, tag, featureFlagsID, requestedAt)
+		return !resp.ForceUpdate &&
+			len(resp.Features) == 0 &&
+			len(resp.ArchivedFeatureFlagIds) == 0 &&
+			resp.FeatureFlagsId == wantFeatureFlagsID
+	}, cachePropagationTimeout, pollInterval, "server SDK never reached caught-up poll state")
 }
 
 // restEvaluationsBody builds the /get_evaluations request body for the REST
