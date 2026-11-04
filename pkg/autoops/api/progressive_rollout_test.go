@@ -23,6 +23,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2/mock"
@@ -745,6 +746,94 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			expectedErr: statusProgressiveRolloutWaitingOrRunningExperimentExists.Err(),
 		},
 		{
+			desc: "err: storage write fails, event is not published",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+				aos.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				aos.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().CreateProgressiveRollout(
+					gomock.Any(), gomock.Any(), "env-id",
+				).Return(errStorage)
+				// Publish must not be called because the transaction is rolled back
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				EnvironmentId: "env-id",
+				FeatureId:     "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
+					Schedules:          validSchedules,
+					Interval:           autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:         2,
+				},
+			},
+			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "err: publish fails after commit",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+				aos.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				aos.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().CreateProgressiveRollout(
+					gomock.Any(), gomock.Any(), "env-id",
+				).Return(nil)
+				aos.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(errPublish).Times(1)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				EnvironmentId: "env-id",
+				FeatureId:     "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					ControlVariationId: "vid-1",
+					TargetVariationId:  "vid-2",
+					Schedules:          validSchedules,
+					Interval:           autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:         2,
+				},
+			},
+			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+		},
+		{
 			desc: "success",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
@@ -766,7 +855,15 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 				)
 				aos.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				aos.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().CreateProgressiveRollout(
+					gomock.Any(), gomock.Any(), "env-id",
 				).Return(nil)
+				aos.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil).Times(1)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				EnvironmentId: "env-id",

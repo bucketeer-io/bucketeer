@@ -21,12 +21,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	ftmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
-	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -41,14 +39,14 @@ func TestEnableFeature(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	logger := zap.NewNop()
 
 	patterns := []struct {
-		desc         string
-		setupFunc    func() *ftdomain.Feature
-		setupMocks   func(storageMock *ftmock.MockFeatureStorage, publisherMock *publishermock.MockPublisher)
-		expectedFunc func() *ftdomain.Feature
-		expectedErr  error
+		desc              string
+		setupFunc         func() *ftdomain.Feature
+		setupMocks        func(storageMock *ftmock.MockFeatureStorage)
+		expectEvent       bool
+		expectedEventType eventproto.Event_Type
+		expectedErr       error
 	}{
 		{
 			desc: "err: internal",
@@ -63,22 +61,12 @@ func TestEnableFeature(t *testing.T) {
 					OffVariation: "vid-2",
 				}}
 			},
-			setupMocks: func(storageMock *ftmock.MockFeatureStorage, publisherMock *publishermock.MockPublisher) {
+			setupMocks: func(storageMock *ftmock.MockFeatureStorage) {
 				storageMock.EXPECT().UpdateFeature(ctx, gomock.Any(), "env").
 					Return(errors.New("internal error")).Times(1)
-				// No publisher calls expected when storage update fails
 			},
-			expectedFunc: func() *ftdomain.Feature {
-				return &ftdomain.Feature{Feature: &featureproto.Feature{
-					Enabled: true,
-					Version: 2,
-					Variations: []*featureproto.Variation{
-						{Id: "vid-1", Value: "true", Name: "variation-1"},
-						{Id: "vid-2", Value: "false", Name: "variation-2"},
-					},
-					OffVariation: "vid-2",
-				}}
-			},
+			// No event is returned when the storage update fails
+			expectEvent: false,
 			expectedErr: errors.New("internal error"),
 		},
 		{
@@ -94,7 +82,7 @@ func TestEnableFeature(t *testing.T) {
 					OffVariation: "vid-2",
 				}}
 			},
-			setupMocks: func(storageMock *ftmock.MockFeatureStorage, publisherMock *publishermock.MockPublisher) {
+			setupMocks: func(storageMock *ftmock.MockFeatureStorage) {
 				storageMock.EXPECT().UpdateFeature(ctx, gomock.Any(), "env").
 					DoAndReturn(func(ctx context.Context, f *ftdomain.Feature, env string) error {
 						// Verify the updated feature has the correct state
@@ -102,29 +90,11 @@ func TestEnableFeature(t *testing.T) {
 						assert.Equal(t, int32(2), f.Version)
 						return nil
 					}).Times(1)
-				// Expect feature domain event to be published
-				publisherMock.EXPECT().Publish(ctx, gomock.Any()).
-					DoAndReturn(func(ctx context.Context, event interface{}) error {
-						// Verify it's a feature domain event
-						domainEvent, ok := event.(*eventproto.Event)
-						assert.True(t, ok)
-						assert.Equal(t, eventproto.Event_FEATURE, domainEvent.EntityType)
-						assert.Equal(t, eventproto.Event_FEATURE_ENABLED, domainEvent.Type)
-						return nil
-					}).Times(1)
 			},
-			expectedFunc: func() *ftdomain.Feature {
-				return &ftdomain.Feature{Feature: &featureproto.Feature{
-					Enabled: true,
-					Version: 2,
-					Variations: []*featureproto.Variation{
-						{Id: "vid-1", Value: "true", Name: "variation-1"},
-						{Id: "vid-2", Value: "false", Name: "variation-2"},
-					},
-					OffVariation: "vid-2",
-				}}
-			},
-			expectedErr: nil,
+			// The feature domain event is returned to the caller, not published here
+			expectEvent:       true,
+			expectedEventType: eventproto.Event_FEATURE_ENABLED,
+			expectedErr:       nil,
 		},
 		{
 			desc: "no change: already enabled",
@@ -139,20 +109,10 @@ func TestEnableFeature(t *testing.T) {
 					OffVariation: "vid-2",
 				}}
 			},
-			setupMocks: func(storageMock *ftmock.MockFeatureStorage, publisherMock *publishermock.MockPublisher) {
-				// No storage or publisher calls expected when there's no change
+			setupMocks: func(storageMock *ftmock.MockFeatureStorage) {
+				// No storage calls expected when there's no change
 			},
-			expectedFunc: func() *ftdomain.Feature {
-				return &ftdomain.Feature{Feature: &featureproto.Feature{
-					Enabled: true,
-					Version: 1,
-					Variations: []*featureproto.Variation{
-						{Id: "vid-1", Value: "true", Name: "variation-1"},
-						{Id: "vid-2", Value: "false", Name: "variation-2"},
-					},
-					OffVariation: "vid-2",
-				}}
-			},
+			expectEvent: false,
 			expectedErr: nil,
 		},
 	}
@@ -160,23 +120,27 @@ func TestEnableFeature(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			storageMock := ftmock.NewMockFeatureStorage(mockController)
-			publisherMock := publishermock.NewMockPublisher(mockController)
 
 			// Setup mocks for this specific test case
-			p.setupMocks(storageMock, publisherMock)
+			p.setupMocks(storageMock)
 
-			err := enableFeature(
+			event, err := enableFeature(
 				ctx,
 				storageMock,
 				"env",
 				p.setupFunc(),
-				logger,
-				publisherMock,
 				&eventproto.Editor{
 					Email: "email",
 				},
 			)
 			assert.Equal(t, p.expectedErr, err)
+			if !p.expectEvent {
+				assert.Nil(t, event)
+				return
+			}
+			assert.NotNil(t, event)
+			assert.Equal(t, eventproto.Event_FEATURE, event.EntityType)
+			assert.Equal(t, p.expectedEventType, event.Type)
 		})
 	}
 }
@@ -191,14 +155,14 @@ func TestDisableFeature(t *testing.T) {
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
-	logger := zap.NewNop()
 
 	patterns := []struct {
-		desc         string
-		setupFunc    func() *ftdomain.Feature
-		setupMocks   func(storageMock *ftmock.MockFeatureStorage, publisherMock *publishermock.MockPublisher)
-		expectedFunc func() *ftdomain.Feature
-		expectedErr  error
+		desc              string
+		setupFunc         func() *ftdomain.Feature
+		setupMocks        func(storageMock *ftmock.MockFeatureStorage)
+		expectEvent       bool
+		expectedEventType eventproto.Event_Type
+		expectedErr       error
 	}{
 		{
 			desc: "err: internal",
@@ -213,22 +177,12 @@ func TestDisableFeature(t *testing.T) {
 					OffVariation: "vid-2",
 				}}
 			},
-			setupMocks: func(storageMock *ftmock.MockFeatureStorage, publisherMock *publishermock.MockPublisher) {
+			setupMocks: func(storageMock *ftmock.MockFeatureStorage) {
 				storageMock.EXPECT().UpdateFeature(ctx, gomock.Any(), "env").
 					Return(errors.New("internal error")).Times(1)
-				// No publisher calls expected when storage update fails
 			},
-			expectedFunc: func() *ftdomain.Feature {
-				return &ftdomain.Feature{Feature: &featureproto.Feature{
-					Enabled: false,
-					Version: 2,
-					Variations: []*featureproto.Variation{
-						{Id: "vid-1", Value: "true", Name: "variation-1"},
-						{Id: "vid-2", Value: "false", Name: "variation-2"},
-					},
-					OffVariation: "vid-2",
-				}}
-			},
+			// No event is returned when the storage update fails
+			expectEvent: false,
 			expectedErr: errors.New("internal error"),
 		},
 		{
@@ -244,7 +198,7 @@ func TestDisableFeature(t *testing.T) {
 					OffVariation: "vid-2",
 				}}
 			},
-			setupMocks: func(storageMock *ftmock.MockFeatureStorage, publisherMock *publishermock.MockPublisher) {
+			setupMocks: func(storageMock *ftmock.MockFeatureStorage) {
 				storageMock.EXPECT().UpdateFeature(ctx, gomock.Any(), "env").
 					DoAndReturn(func(ctx context.Context, f *ftdomain.Feature, env string) error {
 						// Verify the updated feature has the correct state
@@ -252,29 +206,11 @@ func TestDisableFeature(t *testing.T) {
 						assert.Equal(t, int32(2), f.Version)
 						return nil
 					}).Times(1)
-				// Expect feature domain event to be published
-				publisherMock.EXPECT().Publish(ctx, gomock.Any()).
-					DoAndReturn(func(ctx context.Context, event interface{}) error {
-						// Verify it's a feature domain event
-						domainEvent, ok := event.(*eventproto.Event)
-						assert.True(t, ok)
-						assert.Equal(t, eventproto.Event_FEATURE, domainEvent.EntityType)
-						assert.Equal(t, eventproto.Event_FEATURE_DISABLED, domainEvent.Type)
-						return nil
-					}).Times(1)
 			},
-			expectedFunc: func() *ftdomain.Feature {
-				return &ftdomain.Feature{Feature: &featureproto.Feature{
-					Enabled: false,
-					Version: 2,
-					Variations: []*featureproto.Variation{
-						{Id: "vid-1", Value: "true", Name: "variation-1"},
-						{Id: "vid-2", Value: "false", Name: "variation-2"},
-					},
-					OffVariation: "vid-2",
-				}}
-			},
-			expectedErr: nil,
+			// The feature domain event is returned to the caller, not published here
+			expectEvent:       true,
+			expectedEventType: eventproto.Event_FEATURE_DISABLED,
+			expectedErr:       nil,
 		},
 		{
 			desc: "no change: already disabled",
@@ -289,20 +225,10 @@ func TestDisableFeature(t *testing.T) {
 					OffVariation: "vid-2",
 				}}
 			},
-			setupMocks: func(storageMock *ftmock.MockFeatureStorage, publisherMock *publishermock.MockPublisher) {
-				// No storage or publisher calls expected when there's no change
+			setupMocks: func(storageMock *ftmock.MockFeatureStorage) {
+				// No storage calls expected when there's no change
 			},
-			expectedFunc: func() *ftdomain.Feature {
-				return &ftdomain.Feature{Feature: &featureproto.Feature{
-					Enabled: false,
-					Version: 1,
-					Variations: []*featureproto.Variation{
-						{Id: "vid-1", Value: "true", Name: "variation-1"},
-						{Id: "vid-2", Value: "false", Name: "variation-2"},
-					},
-					OffVariation: "vid-2",
-				}}
-			},
+			expectEvent: false,
 			expectedErr: nil,
 		},
 	}
@@ -310,23 +236,27 @@ func TestDisableFeature(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			storageMock := ftmock.NewMockFeatureStorage(mockController)
-			publisherMock := publishermock.NewMockPublisher(mockController)
 
 			// Setup mocks for this specific test case
-			p.setupMocks(storageMock, publisherMock)
+			p.setupMocks(storageMock)
 
-			err := disableFeature(
+			event, err := disableFeature(
 				ctx,
 				storageMock,
 				"env",
 				p.setupFunc(),
-				logger,
-				publisherMock,
 				&eventproto.Editor{
 					Email: "email",
 				},
 			)
 			assert.Equal(t, p.expectedErr, err)
+			if !p.expectEvent {
+				assert.Nil(t, event)
+				return
+			}
+			assert.NotNil(t, event)
+			assert.Equal(t, eventproto.Event_FEATURE, event.EntityType)
+			assert.Equal(t, p.expectedEventType, event.Type)
 		})
 	}
 }

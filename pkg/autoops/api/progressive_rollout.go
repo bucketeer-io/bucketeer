@@ -71,8 +71,10 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
+	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
-		event, err := domainevent.NewEvent(
+		var err error
+		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_AUTOOPS_RULE,
 			progressiveRollout.Id,
@@ -92,9 +94,6 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		if err != nil {
 			return err
 		}
-		if err := s.publisher.Publish(ctx, event); err != nil {
-			return err
-		}
 		return s.prStorage.CreateProgressiveRollout(contextWithTx, progressiveRollout, req.EnvironmentId)
 	})
 	if err != nil {
@@ -109,6 +108,9 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err := s.publishDomainEvent(ctx, event); err != nil {
+		return nil, err
 	}
 	return &autoopsproto.CreateProgressiveRolloutResponse{
 		ProgressiveRollout: progressiveRollout.ProgressiveRollout,
