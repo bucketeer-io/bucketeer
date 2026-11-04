@@ -26,6 +26,7 @@ import (
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
+	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
@@ -35,6 +36,17 @@ import (
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
+
+// errPublish is returned by the publisher mock to simulate a publish failure
+// after the transaction has committed.
+var errPublish = bkterr.NewErrorInternal(bkterr.ExperimentPackageName, "publish error")
+
+// errStorage is returned by storage mocks to simulate a failed write inside
+// the transaction.
+var errStorage = bkterr.NewErrorInternal(bkterr.ExperimentPackageName, "storage error")
+
+// errCommit simulates a transaction that fails to commit after the callback succeeded.
+var errCommit = bkterr.NewErrorInternal(bkterr.ExperimentPackageName, "commit error")
 
 func TestNewExperimentService(t *testing.T) {
 	t.Parallel()
@@ -129,7 +141,6 @@ func createExperimentService(c *gomock.Controller, specifiedEnvironmentId *strin
 	autoOpsClientMock := autoopsclientmock.NewMockClient(c)
 	dbClientMock := dbmock.NewMockClient(c)
 	p := publishermock.NewMockPublisher(c)
-	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	return &experimentService{
 		featureClient:     featureClientMock,
 		accountClient:     accountClientMock,

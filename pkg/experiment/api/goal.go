@@ -199,8 +199,10 @@ func (s *experimentService) CreateGoal(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
+	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
-		e, err := domainevent.NewEvent(
+		var err error
+		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_GOAL,
 			goal.Id,
@@ -221,9 +223,6 @@ func (s *experimentService) CreateGoal(
 		if err != nil {
 			return err
 		}
-		if err := s.publisher.Publish(ctx, e); err != nil {
-			return err
-		}
 		return s.goalStorage.CreateGoal(ctxWithTx, goal, req.EnvironmentId)
 	})
 	if err != nil {
@@ -238,6 +237,9 @@ func (s *experimentService) CreateGoal(
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err := s.publishDomainEvent(ctx, event); err != nil {
+		return nil, err
 	}
 	return &proto.CreateGoalResponse{
 		Goal: goal.Goal,
@@ -272,6 +274,7 @@ func (s *experimentService) UpdateGoal(
 		return nil, err
 	}
 	var updatedGoal *proto.Goal
+	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		goal, err := s.goalStorage.GetGoal(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -287,30 +290,27 @@ func (s *experimentService) UpdateGoal(
 		}
 		updatedGoal = updated.Goal
 
-		var event pb.Message
+		var eventMsg pb.Message
 		if req.Archived != nil && req.Archived.Value {
-			event = &eventproto.GoalArchivedEvent{Id: goal.Id}
+			eventMsg = &eventproto.GoalArchivedEvent{Id: goal.Id}
 		} else {
-			event = &eventproto.GoalUpdatedEvent{
+			eventMsg = &eventproto.GoalUpdatedEvent{
 				Id:          goal.Id,
 				Name:        req.Name,
 				Description: req.Description,
 			}
 		}
-		e, err := domainevent.NewEvent(
+		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_GOAL,
 			goal.Id,
 			eventproto.Event_GOAL_UPDATED,
-			event,
+			eventMsg,
 			req.EnvironmentId,
 			updated.Goal,
 			goal.Goal,
 		)
 		if err != nil {
-			return err
-		}
-		if err = s.publisher.Publish(ctx, e); err != nil {
 			return err
 		}
 		return s.goalStorage.UpdateGoal(ctxWithTx, updated, req.EnvironmentId)
@@ -320,6 +320,9 @@ func (s *experimentService) UpdateGoal(
 			return nil, statusGoalNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err := s.publishDomainEvent(ctx, event); err != nil {
+		return nil, err
 	}
 	return &proto.UpdateGoalResponse{
 		Goal: updatedGoal,
@@ -351,12 +354,13 @@ func (s *experimentService) DeleteGoal(
 	if req.Id == "" {
 		return nil, statusGoalIDRequired.Err()
 	}
+	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		goal, err := s.goalStorage.GetGoal(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
-		e, err := domainevent.NewEvent(
+		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_GOAL,
 			goal.Id,
@@ -371,9 +375,6 @@ func (s *experimentService) DeleteGoal(
 		if err != nil {
 			return err
 		}
-		if err := s.publisher.Publish(ctxWithTx, e); err != nil {
-			return err
-		}
 		return s.goalStorage.DeleteGoal(ctxWithTx, req.Id, req.EnvironmentId)
 	})
 	if err != nil {
@@ -381,6 +382,9 @@ func (s *experimentService) DeleteGoal(
 			return nil, statusGoalNotFound.Err()
 		}
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err := s.publishDomainEvent(ctx, event); err != nil {
+		return nil, err
 	}
 	return &proto.DeleteGoalResponse{}, nil
 }

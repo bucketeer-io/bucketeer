@@ -24,9 +24,11 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/mock"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
@@ -203,6 +205,86 @@ func TestCreateExperimentMySQL(t *testing.T) {
 			expectedErr: statusExperimentPeriodOutOfRange.Err(),
 		},
 		{
+			desc: "storage write fails, event is not published",
+			setup: func(s *experimentService) {
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{Id: "goalId", ConnectionType: experimentproto.Goal_EXPERIMENT},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().CreateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(errStorage)
+				// Publish must not be called because the transaction is rolled back
+			},
+			input: &experimentproto.CreateExperimentRequest{
+				FeatureId:       "fid",
+				GoalIds:         []string{"goalId"},
+				Name:            "exp0",
+				StartAt:         1,
+				StopAt:          10,
+				EnvironmentId:   "ns0",
+				BaseVariationId: "variation-b-id",
+			},
+			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "commit fails, event is not published",
+			setup: func(s *experimentService) {
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{Id: "goalId", ConnectionType: experimentproto.Goal_EXPERIMENT},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().CreateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				// Publish must not be called because the commit failed
+			},
+			input: &experimentproto.CreateExperimentRequest{
+				FeatureId:       "fid",
+				GoalIds:         []string{"goalId"},
+				Name:            "exp0",
+				StartAt:         1,
+				StopAt:          10,
+				EnvironmentId:   "ns0",
+				BaseVariationId: "variation-b-id",
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
+		},
+		{
+			desc: "publish fails after commit",
+			setup: func(s *experimentService) {
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{Id: "goalId", ConnectionType: experimentproto.Goal_EXPERIMENT},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().CreateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(errPublish).Times(1)
+			},
+			input: &experimentproto.CreateExperimentRequest{
+				FeatureId:       "fid",
+				GoalIds:         []string{"goalId"},
+				Name:            "exp0",
+				StartAt:         1,
+				StopAt:          10,
+				EnvironmentId:   "ns0",
+				BaseVariationId: "variation-b-id",
+			},
+			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+		},
+		{
 			desc: "success",
 			setup: func(s *experimentService) {
 				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Goal{
@@ -210,10 +292,13 @@ func TestCreateExperimentMySQL(t *testing.T) {
 				}, nil)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
-					_ = fn(ctx)
-				}).Return(nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
 				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().CreateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil).Times(1)
 			},
 			input: &experimentproto.CreateExperimentRequest{
 				FeatureId:       "fid",
@@ -233,7 +318,7 @@ func TestCreateExperimentMySQL(t *testing.T) {
 			p.setup(service)
 		}
 		_, err := service.CreateExperiment(ctx, p.input)
-		assert.Equal(t, p.expectedErr, err)
+		assert.Equal(t, p.expectedErr, err, p.desc)
 	}
 }
 
@@ -297,11 +382,94 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 			expectedErr: statusExperimentNotFound.Err(),
 		},
 		{
-			desc: "success",
+			desc: "storage write fails, event is not published",
 			setup: func(s *experimentService) {
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
+					Experiment: &experimentproto.Experiment{Id: "id-1"},
+				}, nil)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(errStorage)
+				// Publish must not be called because the transaction is rolled back
+			},
+			req: &experimentproto.UpdateExperimentRequest{
+				Id:            "id-1",
+				Name:          wrapperspb.String("new-name"),
+				StartAt:       wrapperspb.Int64(time.Now().Unix()),
+				StopAt:        wrapperspb.Int64(time.Now().AddDate(0, 0, 1).Unix()),
+				EnvironmentId: "ns0",
+			},
+			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "commit fails, event is not published",
+			setup: func(s *experimentService) {
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
+					Experiment: &experimentproto.Experiment{Id: "id-1"},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				// Publish must not be called because the commit failed
+			},
+			req: &experimentproto.UpdateExperimentRequest{
+				Id:            "id-1",
+				Name:          wrapperspb.String("new-name"),
+				StartAt:       wrapperspb.Int64(time.Now().Unix()),
+				StopAt:        wrapperspb.Int64(time.Now().AddDate(0, 0, 1).Unix()),
+				EnvironmentId: "ns0",
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
+		},
+		{
+			desc: "publish fails after commit",
+			setup: func(s *experimentService) {
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
+					Experiment: &experimentproto.Experiment{Id: "id-1"},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(errPublish).Times(1)
+			},
+			req: &experimentproto.UpdateExperimentRequest{
+				Id:            "id-1",
+				Name:          wrapperspb.String("new-name"),
+				StartAt:       wrapperspb.Int64(time.Now().Unix()),
+				StopAt:        wrapperspb.Int64(time.Now().AddDate(0, 0, 1).Unix()),
+				EnvironmentId: "ns0",
+			},
+			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+		},
+		{
+			desc: "success",
+			setup: func(s *experimentService) {
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
+					Experiment: &experimentproto.Experiment{Id: "id-1"},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil).Times(1)
 			},
 			req: &experimentproto.UpdateExperimentRequest{
 				Id:            "id-1",
@@ -319,7 +487,7 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 			p.setup(service)
 		}
 		_, err := service.UpdateExperiment(ctx, p.req)
-		assert.Equal(t, p.expectedErr, err)
+		assert.Equal(t, p.expectedErr, err, p.desc)
 	}
 }
 
@@ -374,6 +542,9 @@ func TestDeleteExperimentMySQL(t *testing.T) {
 					_ = fn(ctx)
 				}).Return(nil)
 				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil).Times(1)
 			},
 			req: &experimentproto.DeleteExperimentRequest{
 				Id:            "id-1",
