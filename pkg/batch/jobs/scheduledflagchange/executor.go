@@ -200,6 +200,9 @@ func (e *scheduledFlagChangeExecutor) executeOne(
 	if err != nil {
 		// The API method already marks the schedule as FAILED internally when
 		// validation fails or the feature is not found. So we just log here.
+		// An error can also mean the change was applied (the schedule is
+		// EXECUTED) but its domain event could not be published; such a
+		// schedule is no longer due, so it is not picked up again.
 		e.logger.Error("ExecuteScheduledFlagChange API returned error",
 			zap.String("id", schedule.Id),
 			zap.String("featureId", schedule.FeatureId),

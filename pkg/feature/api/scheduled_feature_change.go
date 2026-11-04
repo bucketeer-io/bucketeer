@@ -189,6 +189,9 @@ func (s *FeatureService) CreateScheduledFlagChange(
 		return nil, err
 	}
 
+	// The schedule is already committed. If the domain event cannot be
+	// published, the audit log entry is lost, so surface the failure to the
+	// caller instead of answering 200, as the other handlers of this service do.
 	if err := s.publishScheduledFlagChangeCreatedEvent(
 		ctx,
 		editor,
@@ -205,7 +208,7 @@ func (s *FeatureService) CreateScheduledFlagChange(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		// Don't fail the request if event publishing fails
+		return nil, statusInternal.Err()
 	}
 
 	return &ftproto.CreateScheduledFlagChangeResponse{
@@ -433,7 +436,8 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 		return nil, err
 	}
 
-	// Publish domain event for audit log
+	// Publish domain event for audit log. The update is already committed;
+	// a publish failure is returned so it is not silently lost.
 	featureName := ""
 	if feature != nil {
 		featureName = feature.Name
@@ -455,7 +459,7 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		// Don't fail the request if event publishing fails
+		return nil, statusInternal.Err()
 	}
 
 	return &ftproto.UpdateScheduledFlagChangeResponse{
@@ -528,7 +532,8 @@ func (s *FeatureService) DeleteScheduledFlagChange(
 		return nil, err
 	}
 
-	// Publish domain event for audit log
+	// Publish domain event for audit log. The cancellation is already
+	// committed; a publish failure is returned so it is not silently lost.
 	if err := s.publishScheduledFlagChangeCancelledEvent(
 		ctx,
 		editor,
@@ -545,7 +550,7 @@ func (s *FeatureService) DeleteScheduledFlagChange(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		// Don't fail the request if event publishing fails
+		return nil, statusInternal.Err()
 	}
 
 	return &ftproto.DeleteScheduledFlagChangeResponse{}, nil
@@ -815,16 +820,23 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 
-	// Publish domain event and update cache (post-transaction operations)
+	// Publish the FEATURE_UPDATED event (post-transaction operation). The flag
+	// change and the EXECUTED status are already committed, so a publish
+	// failure cannot be rolled back; it is returned, like UpdateFeature does,
+	// so the lost audit log entry is visible to the caller instead of being
+	// hidden behind a 200. The batch executor does not retry a schedule that
+	// is no longer PENDING, so the change is not applied twice.
 	if errs := s.publishDomainEvents(ctx, []*eventproto.Event{event}); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish events after scheduled flag change execution",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
+				zap.String("id", req.Id),
+				zap.String("featureId", featureID),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		// Don't fail the execution if event publishing fails
+		return nil, statusInternal.Err()
 	}
 
 	return &ftproto.ExecuteScheduledFlagChangeResponse{

@@ -25,11 +25,13 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	envclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -1324,4 +1326,258 @@ func TestCreateScheduledFlagChange_CircularPrerequisite(t *testing.T) {
 			}
 		})
 	}
+}
+
+// The domain event is published after the transaction has committed, so a
+// publish failure cannot be rolled back and the audit log entry is lost. The
+// handlers must report that failure instead of answering with a success,
+// consistent with the other handlers of the feature service.
+
+func TestCreateScheduledFlagChange_PublishFailureReturnsError(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	service := createFeatureServiceWithGetAccountByEnvironmentMock(
+		ctrl,
+		accountproto.AccountV2_Role_Organization_MEMBER,
+		accountproto.AccountV2_Role_Environment_EDITOR,
+	)
+
+	dbClient := service.dbClient.(*databasemock.MockClient)
+	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
+	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
+	domainPublisher := service.domainPublisher.(*publishermock.MockPublisher)
+
+	feature := &domain.Feature{
+		Feature: &featureproto.Feature{
+			Id:      "feature-id",
+			Name:    "Test Feature",
+			Version: 1,
+			Variations: []*featureproto.Variation{
+				{Id: "var-1", Name: "Variation 1", Value: "true"},
+				{Id: "var-2", Name: "Variation 2", Value: "false"},
+			},
+		},
+	}
+
+	dbClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, f func(context.Context) error) error {
+			return f(ctx)
+		},
+	)
+	featureStorage.EXPECT().GetFeature(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
+	scheduledStorage.EXPECT().ListScheduledFlagChanges(gomock.Any(), gomock.Any()).
+		Return([]*featureproto.ScheduledFlagChange{}, 0, int64(0), nil).
+		Times(2)
+	// The schedule is committed before the event is published.
+	scheduledStorage.EXPECT().CreateScheduledFlagChange(gomock.Any(), gomock.Any()).Return(nil)
+	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(errors.New("publish failed"))
+
+	resp, err := service.CreateScheduledFlagChange(createContextWithToken(), &featureproto.CreateScheduledFlagChangeRequest{
+		EnvironmentId: "ns0",
+		FeatureId:     "feature-id",
+		ScheduledAt:   time.Now().Add(time.Hour).Unix(),
+		Timezone:      "UTC",
+		Payload:       &featureproto.ScheduledChangePayload{Enabled: wrapperspb.Bool(true)},
+		Comment:       "Enable flag in 1 hour",
+	})
+	assert.Equal(t, statusInternal.Err(), err)
+	assert.Nil(t, resp)
+}
+
+func TestUpdateScheduledFlagChange_PublishFailureReturnsError(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	service := createFeatureServiceWithGetAccountByEnvironmentMock(
+		ctrl,
+		accountproto.AccountV2_Role_Organization_MEMBER,
+		accountproto.AccountV2_Role_Environment_EDITOR,
+	)
+
+	dbClient := service.dbClient.(*databasemock.MockClient)
+	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
+	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
+	domainPublisher := service.domainPublisher.(*publishermock.MockPublisher)
+
+	sfc := &domain.ScheduledFlagChange{
+		ScheduledFlagChange: &featureproto.ScheduledFlagChange{
+			Id:            "sfc-id",
+			FeatureId:     "feature-id",
+			EnvironmentId: "ns0",
+			ScheduledAt:   time.Now().Add(time.Hour).Unix(),
+			Status:        featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+			Payload:       &featureproto.ScheduledChangePayload{Enabled: wrapperspb.Bool(true)},
+			Comment:       "original comment",
+		},
+	}
+	feature := &domain.Feature{
+		Feature: &featureproto.Feature{
+			Id:      "feature-id",
+			Name:    "Test Feature",
+			Version: 1,
+		},
+	}
+
+	dbClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, f func(context.Context) error) error {
+			return f(ctx)
+		},
+	)
+	scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc-id", "ns0").Return(sfc, nil)
+	featureStorage.EXPECT().GetFeature(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
+	// The update is committed before the event is published.
+	scheduledStorage.EXPECT().UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).Return(nil)
+	// Conflict detection against the other schedules of the flag.
+	scheduledStorage.EXPECT().ListScheduledFlagChanges(gomock.Any(), gomock.Any()).
+		Return([]*featureproto.ScheduledFlagChange{}, 0, int64(0), nil)
+	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(errors.New("publish failed"))
+
+	resp, err := service.UpdateScheduledFlagChange(createContextWithToken(), &featureproto.UpdateScheduledFlagChangeRequest{
+		EnvironmentId: "ns0",
+		Id:            "sfc-id",
+		Comment:       wrapperspb.String("updated comment"),
+	})
+	assert.Equal(t, statusInternal.Err(), err)
+	assert.Nil(t, resp)
+}
+
+func TestDeleteScheduledFlagChange_PublishFailureReturnsError(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	service := createFeatureServiceWithGetAccountByEnvironmentMock(
+		ctrl,
+		accountproto.AccountV2_Role_Organization_MEMBER,
+		accountproto.AccountV2_Role_Environment_EDITOR,
+	)
+
+	dbClient := service.dbClient.(*databasemock.MockClient)
+	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
+	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
+	domainPublisher := service.domainPublisher.(*publishermock.MockPublisher)
+
+	sfc := &domain.ScheduledFlagChange{
+		ScheduledFlagChange: &featureproto.ScheduledFlagChange{
+			Id:            "sfc-id",
+			FeatureId:     "feature-id",
+			EnvironmentId: "ns0",
+			Status:        featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+		},
+	}
+	feature := &domain.Feature{
+		Feature: &featureproto.Feature{
+			Id:   "feature-id",
+			Name: "Test Feature",
+		},
+	}
+
+	dbClient.EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, f func(context.Context) error) error {
+			return f(ctx)
+		},
+	)
+	scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc-id", "ns0").Return(sfc, nil)
+	featureStorage.EXPECT().GetFeature(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
+	// The cancellation is committed before the event is published.
+	scheduledStorage.EXPECT().UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, updated *domain.ScheduledFlagChange) error {
+			assert.Equal(
+				t,
+				featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_CANCELLED,
+				updated.Status,
+			)
+			return nil
+		})
+	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(errors.New("publish failed"))
+
+	resp, err := service.DeleteScheduledFlagChange(createContextWithToken(), &featureproto.DeleteScheduledFlagChangeRequest{
+		EnvironmentId: "ns0",
+		Id:            "sfc-id",
+	})
+	assert.Equal(t, statusInternal.Err(), err)
+	assert.Nil(t, resp)
+}
+
+func TestExecuteScheduledFlagChange_PublishFailureReturnsError(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	service := createFeatureServiceNew(ctrl)
+	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
+	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
+
+	flag := func() *domain.Feature {
+		return &domain.Feature{Feature: &featureproto.Feature{
+			Id:            "feature-id",
+			Name:          "flag",
+			Version:       1,
+			Enabled:       false,
+			VariationType: featureproto.Feature_BOOLEAN,
+			Variations: []*featureproto.Variation{
+				{Id: "var-true", Value: "true", Name: "true"},
+				{Id: "var-false", Value: "false", Name: "false"},
+			},
+			OffVariation: "var-false",
+			DefaultStrategy: &featureproto.Strategy{
+				Type:          featureproto.Strategy_FIXED,
+				FixedStrategy: &featureproto.FixedStrategy{Variation: "var-true"},
+			},
+		}}
+	}
+	schedule := func() *domain.ScheduledFlagChange {
+		return &domain.ScheduledFlagChange{ScheduledFlagChange: &featureproto.ScheduledFlagChange{
+			Id:            "sfc-id",
+			FeatureId:     "feature-id",
+			EnvironmentId: "ns0",
+			ScheduledAt:   time.Now().Add(-time.Minute).Unix(),
+			Status:        featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_PENDING,
+			Payload:       &featureproto.ScheduledChangePayload{Enabled: wrapperspb.Bool(true)},
+			Comment:       "enable for the launch",
+		}}
+	}
+
+	service.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
+			return fn(ctx)
+		})
+	scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc-id", "ns0").Return(schedule(), nil)
+	scheduledStorage.EXPECT().GetScheduledFlagChangeForUpdate(gomock.Any(), "sfc-id", "ns0").Return(schedule(), nil)
+	expectNoExperiments(service)
+	service.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(gomock.Any(), gomock.Any()).
+		Return(&envproto.GetEnvironmentV2Response{Environment: &envproto.EnvironmentV2{Id: "ns0"}}, nil)
+	// Once by the executor, once by updateFeatureWithinTransaction.
+	featureStorage.EXPECT().GetFeatureForUpdate(gomock.Any(), "feature-id", "ns0").
+		DoAndReturn(func(context.Context, string, string) (*domain.Feature, error) {
+			return flag(), nil
+		}).Times(2)
+	featureStorage.EXPECT().ListFeatures(gomock.Any(), gomock.Any()).
+		Return([]*featureproto.Feature{flag().Feature}, 0, int64(0), nil)
+	featureStorage.EXPECT().UpdateFeature(gomock.Any(), gomock.Any(), "ns0").Return(nil)
+	// The flag change and the EXECUTED status are committed before the event is
+	// published. The publish failure must neither mark the schedule FAILED (the
+	// change was applied) nor leave it PENDING (it would be applied twice), so
+	// this is the only write to the schedule.
+	scheduledStorage.EXPECT().UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, updated *domain.ScheduledFlagChange) error {
+			assert.Equal(
+				t,
+				featureproto.ScheduledFlagChangeStatus_SCHEDULED_FLAG_CHANGE_STATUS_EXECUTED,
+				updated.Status,
+			)
+			return nil
+		}).Times(1)
+	service.domainPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).
+		Return(map[string]error{"event-id": errors.New("publish failed")})
+
+	resp, err := service.ExecuteScheduledFlagChange(
+		createContextWithToken(),
+		&featureproto.ExecuteScheduledFlagChangeRequest{Id: "sfc-id", EnvironmentId: "ns0"},
+	)
+	assert.Equal(t, statusInternal.Err(), err)
+	assert.Nil(t, resp)
 }
