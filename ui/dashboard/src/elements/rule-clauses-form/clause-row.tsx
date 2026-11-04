@@ -450,6 +450,7 @@ const ClauseRow = ({
                           />
                         ) : (
                           <CreatableSelect
+                            collapseOverflow
                             value={value?.map((item: string) => ({
                               label: item,
                               value: item
