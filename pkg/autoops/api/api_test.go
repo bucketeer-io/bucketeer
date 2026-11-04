@@ -1513,17 +1513,63 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().UpdateAutoOpsRule(
 					gomock.Any(), gomock.Any(), "ns0",
 				).Return(nil)
-				// The first publish fails, so the rule event is never published
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
-					gomock.Any(), eventOfType(eventproto.Event_FEATURE_ENABLED),
-				).Return(errPublish).Times(1)
+				// The feature publish fails, but the rule event is still attempted
+				// because both changes are already committed.
+				gomock.InOrder(
+					s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+						gomock.Any(), eventOfType(eventproto.Event_FEATURE_ENABLED),
+					).Return(errPublish).Times(1),
+					s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+						gomock.Any(), eventOfType(eventproto.Event_AUTOOPS_RULE_OPS_STATUS_CHANGED),
+					).Return(nil).Times(1),
+				)
 			},
 			req: &autoopsproto.ExecuteAutoOpsRequest{
 				Id:            "aid1",
 				EnvironmentId: "ns0",
 				ClauseId:      "testClauseId",
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: errors.Join(api.NewGRPCStatus(errPublish).Err()),
+		},
+		{
+			desc: "err: every publish fails after commit, all errors are returned",
+			setup: func(s *AutoOpsService) {
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(newExecutableEnableRule(), nil).AnyTimes()
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.featureStorage.(*mockFeatureStorage.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+					gomock.Any(), "fid", "ns0",
+				).Return(newDisabledFeature(), nil)
+				s.featureStorage.(*mockFeatureStorage.MockFeatureStorage).EXPECT().UpdateFeature(
+					gomock.Any(), gomock.Any(), "ns0",
+				).Return(nil)
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().UpdateAutoOpsRule(
+					gomock.Any(), gomock.Any(), "ns0",
+				).Return(nil)
+				// Both publishes fail; both errors are logged and returned together.
+				gomock.InOrder(
+					s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+						gomock.Any(), eventOfType(eventproto.Event_FEATURE_ENABLED),
+					).Return(errPublish).Times(1),
+					s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+						gomock.Any(), eventOfType(eventproto.Event_AUTOOPS_RULE_OPS_STATUS_CHANGED),
+					).Return(errPublish).Times(1),
+				)
+			},
+			req: &autoopsproto.ExecuteAutoOpsRequest{
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+				ClauseId:      "testClauseId",
+			},
+			expectedErr: errors.Join(
+				api.NewGRPCStatus(errPublish).Err(),
+				api.NewGRPCStatus(errPublish).Err(),
+			),
 		},
 		{
 			desc: "success: feature event and rule event are published after commit",

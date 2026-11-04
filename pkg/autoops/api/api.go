@@ -1068,19 +1068,23 @@ func (s *AutoOpsService) ExecuteAutoOps(
 // publishDomainEvents publishes the given events in order after the
 // transaction has committed, skipping nil entries (events that were not
 // produced because nothing changed).
+// Every event is attempted even if an earlier one fails, because all of them
+// describe changes that are already committed. The errors of all failed
+// publishes are joined and returned together.
 func (s *AutoOpsService) publishDomainEvents(
 	ctx context.Context,
 	events ...*eventproto.Event,
 ) error {
+	var errs []error
 	for _, event := range events {
 		if event == nil {
 			continue
 		}
 		if err := s.publishDomainEvent(ctx, event); err != nil {
-			return err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
 // publishDomainEvent publishes a domain event after the transaction that
