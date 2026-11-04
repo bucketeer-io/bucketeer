@@ -9,6 +9,9 @@ export type APIKeyRole =
 export interface APIKey {
   id: string;
   apiKey: string;
+  // First characters of the key, kept for display. Empty for keys created
+  // before the prefix was stored.
+  apiKeyPrefix: string;
   name: string;
   role: APIKeyRole;
   disabled: true;

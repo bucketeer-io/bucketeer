@@ -459,6 +459,11 @@
                 "id": 11,
                 "name": "last_used_at",
                 "type": "int64"
+              },
+              {
+                "id": 12,
+                "name": "api_key_prefix",
+                "type": "string"
               }
             ]
           },

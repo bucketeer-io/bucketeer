@@ -55,30 +55,30 @@ func (mr *MockEnvironmentAPIKeyCacheMockRecorder) Evict(apiKey any) *gomock.Call
 }
 
 // Get mocks base method.
-func (m *MockEnvironmentAPIKeyCache) Get(arg0 string) (*account.EnvironmentAPIKey, error) {
+func (m *MockEnvironmentAPIKeyCache) Get(apiKey string) (*account.EnvironmentAPIKey, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", arg0)
+	ret := m.ctrl.Call(m, "Get", apiKey)
 	ret0, _ := ret[0].(*account.EnvironmentAPIKey)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockEnvironmentAPIKeyCacheMockRecorder) Get(arg0 any) *gomock.Call {
+func (mr *MockEnvironmentAPIKeyCacheMockRecorder) Get(apiKey any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockEnvironmentAPIKeyCache)(nil).Get), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockEnvironmentAPIKeyCache)(nil).Get), apiKey)
 }
 
 // Put mocks base method.
-func (m *MockEnvironmentAPIKeyCache) Put(arg0 *account.EnvironmentAPIKey) error {
+func (m *MockEnvironmentAPIKeyCache) Put(apiKey string, environmentAPIKey *account.EnvironmentAPIKey) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", arg0)
+	ret := m.ctrl.Call(m, "Put", apiKey, environmentAPIKey)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockEnvironmentAPIKeyCacheMockRecorder) Put(arg0 any) *gomock.Call {
+func (mr *MockEnvironmentAPIKeyCacheMockRecorder) Put(apiKey, environmentAPIKey any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockEnvironmentAPIKeyCache)(nil).Put), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockEnvironmentAPIKeyCache)(nil).Put), apiKey, environmentAPIKey)
 }
