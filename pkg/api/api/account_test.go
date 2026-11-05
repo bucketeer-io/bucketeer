@@ -36,7 +36,7 @@ func TestGrpcCreateAccountV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK_CLIENT,
@@ -52,7 +52,7 @@ func TestGrpcCreateAccountV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
@@ -70,7 +70,7 @@ func TestGrpcCreateAccountV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
@@ -131,7 +131,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK_CLIENT,
@@ -148,7 +148,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
@@ -167,7 +167,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
@@ -186,7 +186,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
@@ -209,7 +209,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
@@ -244,7 +244,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
@@ -279,7 +279,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
@@ -904,14 +904,106 @@ func TestGrpcGetAccountV2ByEnvironmentIDOrganizationScope(t *testing.T) {
 	}
 }
 
+func TestGrpcAccountWritesOrganizationScope(t *testing.T) {
+	t.Parallel()
+
+	for _, method := range []string{"create", "update", "delete"} {
+		for _, tc := range []struct {
+			name              string
+			organizationID    string
+			keyOrganizationID string
+			wantErr           error
+		}{
+			{name: "same organization", organizationID: "org-a", keyOrganizationID: "org-a"},
+			{name: "omitted organization", keyOrganizationID: "org-a"},
+			{name: "other organization even when maintainer can write it", organizationID: "org-b", keyOrganizationID: "org-a", wantErr: ErrNotFound},
+			{name: "key without organization", wantErr: ErrInvalidAPIKey},
+		} {
+			t.Run(method+"/"+tc.name, func(t *testing.T) {
+				t.Parallel()
+				gs, ctx := newAccountWriteGateway(t, tc.keyOrganizationID)
+				account := &accountproto.AccountV2{Email: "member@example.com", OrganizationId: "org-a"}
+				client := gs.accountClient.(*accountclientmock.MockClient)
+				switch method {
+				case "create":
+					if tc.wantErr == nil {
+						client.EXPECT().CreateAccountV2(accountWriteMetadataMatcher(), &accountproto.CreateAccountV2Request{
+							Email: account.Email, OrganizationId: "org-a",
+							OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						}).Return(&accountproto.CreateAccountV2Response{Account: account}, nil)
+					}
+					res, err := gs.CreateAccountV2(ctx, &gwproto.CreateAccountV2Request{
+						Email: account.Email, OrganizationId: tc.organizationID,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					})
+					require.Equal(t, tc.wantErr, err)
+					if tc.wantErr != nil {
+						require.Nil(t, res)
+						return
+					}
+					require.Equal(t, account, res.Account)
+				case "update":
+					if tc.wantErr == nil {
+						client.EXPECT().UpdateAccountV2(accountWriteMetadataMatcher(), &accountproto.UpdateAccountV2Request{
+							Email: account.Email, OrganizationId: "org-a", Name: wrapperspb.String("renamed"),
+						}).Return(&accountproto.UpdateAccountV2Response{Account: account}, nil)
+					}
+					res, err := gs.UpdateAccountV2(ctx, &gwproto.UpdateAccountV2Request{
+						Email: account.Email, OrganizationId: tc.organizationID, Name: wrapperspb.String("renamed"),
+					})
+					require.Equal(t, tc.wantErr, err)
+					if tc.wantErr != nil {
+						require.Nil(t, res)
+						return
+					}
+					require.Equal(t, account, res.Account)
+				case "delete":
+					if tc.wantErr == nil {
+						client.EXPECT().DeleteAccountV2(accountWriteMetadataMatcher(), &accountproto.DeleteAccountV2Request{
+							Email: account.Email, OrganizationId: "org-a",
+						}).Return(&accountproto.DeleteAccountV2Response{}, nil)
+					}
+					res, err := gs.UpdateAccountV2(ctx, &gwproto.UpdateAccountV2Request{
+						Email: account.Email, OrganizationId: tc.organizationID, Deleted: wrapperspb.Bool(true),
+					})
+					require.Equal(t, tc.wantErr, err)
+					if tc.wantErr != nil {
+						require.Nil(t, res)
+						return
+					}
+					require.Equal(t, &gwproto.UpdateAccountV2Response{}, res)
+				}
+			})
+		}
+	}
+}
+
 func newAccountReadGateway(t *testing.T, organizationID string) (*grpcGatewayService, context.Context) {
+	t.Helper()
+	return newAccountGateway(t, organizationID, accountproto.APIKey_PUBLIC_API_READ_ONLY, "read-only-key")
+}
+
+func newAccountWriteGateway(t *testing.T, organizationID string) (*grpcGatewayService, context.Context) {
+	t.Helper()
+	return newAccountGateway(t, organizationID, accountproto.APIKey_PUBLIC_API_WRITE, "write-key")
+}
+
+// newAccountGateway returns a gateway whose cached key has the given role and
+// belongs to the given organization, and a request context authenticated
+// with that key.
+func newAccountGateway(
+	t *testing.T,
+	organizationID string,
+	keyRole accountproto.APIKey_Role,
+	keyName string,
+) (*grpcGatewayService, context.Context) {
 	t.Helper()
 	gs := newGrpcGatewayServiceWithMock(t, gomock.NewController(t))
 	key := &accountproto.EnvironmentAPIKey{
 		Environment: &environmentproto.EnvironmentV2{Id: "env-a", OrganizationId: organizationID},
 		ApiKey: &accountproto.APIKey{
-			Id: "key-a", ApiKey: "0123456789abcdef0123456789abcdef", Name: "read-only-key",
-			Role: accountproto.APIKey_PUBLIC_API_READ_ONLY, Maintainer: "maintainer@example.com",
+			Id: "key-a", ApiKey: "0123456789abcdef0123456789abcdef", Name: keyName,
+			Role: keyRole, Maintainer: "maintainer@example.com",
 		},
 	}
 	gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(key.ApiKey.ApiKey).Return(key, nil)
@@ -922,11 +1014,21 @@ func newAccountReadGateway(t *testing.T, organizationID string) (*grpcGatewaySer
 }
 
 func accountReadMetadataMatcher() gomock.Matcher {
+	return accountMetadataMatcher("read-only-key")
+}
+
+func accountWriteMetadataMatcher() gomock.Matcher {
+	return accountMetadataMatcher("write-key")
+}
+
+// accountMetadataMatcher matches a context carrying the verified key's editor
+// metadata for the key with the given name.
+func accountMetadataMatcher(keyName string) gomock.Matcher {
 	return gomock.Cond(func(ctx context.Context) bool {
 		md, ok := metadata.FromOutgoingContext(ctx)
 		return ok &&
 			len(md.Get(role.APIKeyTokenMDKey)) == 1 && md.Get(role.APIKeyTokenMDKey)[0] == "0123....cdef" &&
 			len(md.Get(role.APIKeyMaintainerMDKey)) == 1 && md.Get(role.APIKeyMaintainerMDKey)[0] == "maintainer@example.com" &&
-			len(md.Get(role.APIKeyNameMDKey)) == 1 && md.Get(role.APIKeyNameMDKey)[0] == "read-only-key"
+			len(md.Get(role.APIKeyNameMDKey)) == 1 && md.Get(role.APIKeyNameMDKey)[0] == keyName
 	})
 }
