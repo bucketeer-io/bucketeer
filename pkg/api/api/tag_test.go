@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
@@ -291,6 +292,47 @@ func TestGrpcGatewayService_ListTags(t *testing.T) {
 			actual, err := gs.ListTags(ctx, &gwproto.ListTagsRequest{})
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
+	}
+}
+
+func TestGrpcGatewayService_ListTagsOrganizationScope(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name              string
+		organizationID    string
+		keyOrganizationID string
+		wantErr           error
+	}{
+		{name: "same organization", organizationID: "org-a", keyOrganizationID: "org-a"},
+		{name: "omitted organization", keyOrganizationID: "org-a"},
+		{name: "other organization", organizationID: "org-b", keyOrganizationID: "org-a", wantErr: ErrNotFound},
+		// A key without organization scope keeps the environment-scoped list.
+		{name: "key without organization"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			gs, ctx := newAccountReadGateway(t, tc.keyOrganizationID)
+			tag := &tagproto.Tag{Id: "tag-a", Name: "tag-a", EnvironmentId: "env-a"}
+			if tc.wantErr == nil {
+				// The environment is always the key's, the organization is the
+				// key's own and the maintainer metadata is attached.
+				gs.tagClient.(*tagclientmock.MockClient).EXPECT().ListTags(
+					accountReadMetadataMatcher(), &tagproto.ListTagsRequest{
+						EnvironmentId: "env-a", OrganizationId: tc.keyOrganizationID, PageSize: 10,
+					},
+				).Return(&tagproto.ListTagsResponse{Tags: []*tagproto.Tag{tag}, Cursor: "1", TotalCount: 1}, nil)
+			}
+			res, err := gs.ListTags(ctx, &gwproto.ListTagsRequest{OrganizationId: tc.organizationID, PageSize: 10})
+			require.Equal(t, tc.wantErr, err)
+			if tc.wantErr != nil {
+				require.Nil(t, res)
+				return
+			}
+			require.Equal(t, []*tagproto.Tag{tag}, res.Tags)
+			require.Equal(t, "1", res.Cursor)
+			require.Equal(t, int64(1), res.TotalCount)
 		})
 	}
 }
