@@ -308,10 +308,19 @@ func (s *grpcGatewayService) GetMe(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetMe, "").Inc()
 
+	// The account service lists every project and environment of the requested
+	// organization, so the request must stay within the key's organization.
+	if envAPIKey.Environment.OrganizationId == "" {
+		return nil, ErrInvalidAPIKey
+	}
+	if request.OrganizationId != "" && request.OrganizationId != envAPIKey.Environment.OrganizationId {
+		return nil, ErrNotFound
+	}
+	ctx = metadata.NewOutgoingContext(ctx, publicAPIEditorMetadata(envAPIKey))
 	res, err := s.accountClient.GetMe(
 		ctx,
 		&accountproto.GetMeRequest{
-			OrganizationId: request.OrganizationId,
+			OrganizationId: envAPIKey.Environment.OrganizationId,
 		},
 	)
 	if err != nil {

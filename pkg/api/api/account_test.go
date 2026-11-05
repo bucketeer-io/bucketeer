@@ -564,7 +564,7 @@ func TestGrpcGetMe(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK_CLIENT,
@@ -580,7 +580,7 @@ func TestGrpcGetMe(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -598,7 +598,7 @@ func TestGrpcGetMe(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -616,7 +616,7 @@ func TestGrpcGetMe(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -651,6 +651,40 @@ func TestGrpcGetMe(t *testing.T) {
 			actual, err := gs.GetMe(ctx, &gwproto.GetMeRequest{})
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
+	}
+}
+
+func TestGrpcGetMeOrganizationScope(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name              string
+		organizationID    string
+		keyOrganizationID string
+		wantErr           error
+	}{
+		{name: "same organization", organizationID: "org-a", keyOrganizationID: "org-a"},
+		{name: "omitted organization", keyOrganizationID: "org-a"},
+		{name: "other organization", organizationID: "org-b", keyOrganizationID: "org-a", wantErr: ErrNotFound},
+		{name: "key without organization", wantErr: ErrInvalidAPIKey},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			gs, ctx := newAccountReadGateway(t, tc.keyOrganizationID)
+			account := &accountproto.ConsoleAccount{Email: "member@example.com", Name: "member"}
+			if tc.wantErr == nil {
+				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetMe(
+					accountReadMetadataMatcher(), &accountproto.GetMeRequest{OrganizationId: "org-a"},
+				).Return(&accountproto.GetMeResponse{Account: account}, nil)
+			}
+			res, err := gs.GetMe(ctx, &gwproto.GetMeRequest{OrganizationId: tc.organizationID})
+			require.Equal(t, tc.wantErr, err)
+			if tc.wantErr != nil {
+				require.Nil(t, res)
+				return
+			}
+			require.Equal(t, account, res.Account)
 		})
 	}
 }
