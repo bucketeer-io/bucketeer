@@ -275,8 +275,13 @@ func TestGrpcGatewayService_StopProgressiveRollout(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
+				// The stop reason must reach the backend, which rejects an unknown one.
 				gs.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().StopProgressiveRollout(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), &autoopsproto.StopProgressiveRolloutRequest{
+						EnvironmentId: "ns0",
+						Id:            "pr-0",
+						StoppedBy:     autoopsproto.ProgressiveRollout_USER,
+					},
 				).Return(&autoopsproto.StopProgressiveRolloutResponse{}, nil)
 			},
 			expected:    &gwproto.StopProgressiveRolloutResponse{},
@@ -291,7 +296,10 @@ func TestGrpcGatewayService_StopProgressiveRollout(t *testing.T) {
 			ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
 				"authorization": []string{"test-key"},
 			})
-			actual, err := gs.StopProgressiveRollout(ctx, &gwproto.StopProgressiveRolloutRequest{})
+			actual, err := gs.StopProgressiveRollout(ctx, &gwproto.StopProgressiveRolloutRequest{
+				Id:        "pr-0",
+				StoppedBy: autoopsproto.ProgressiveRollout_USER,
+			})
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
@@ -529,8 +537,13 @@ func TestGrpcGatewayService_ExecuteProgressiveRollout(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
+				// The schedule ID must reach the backend, which requires it.
 				gs.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ExecuteProgressiveRollout(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), &autoopsproto.ExecuteProgressiveRolloutRequest{
+						EnvironmentId: "ns0",
+						Id:            "pr-0",
+						ScheduleId:    "schedule-0",
+					},
 				).Return(&autoopsproto.ExecuteProgressiveRolloutResponse{}, nil)
 			},
 			expected:    &gwproto.ExecuteProgressiveRolloutResponse{},
@@ -545,7 +558,10 @@ func TestGrpcGatewayService_ExecuteProgressiveRollout(t *testing.T) {
 			ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
 				"authorization": []string{"test-key"},
 			})
-			actual, err := gs.ExecuteProgressiveRollout(ctx, &gwproto.ExecuteProgressiveRolloutRequest{})
+			actual, err := gs.ExecuteProgressiveRollout(ctx, &gwproto.ExecuteProgressiveRolloutRequest{
+				Id:         "pr-0",
+				ScheduleId: "schedule-0",
+			})
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
