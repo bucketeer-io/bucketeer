@@ -419,7 +419,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				UrlCode:   "url-code",
 				ProjectId: "project-id",
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success: require comment is true",
@@ -647,7 +647,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 				Name:        wrapperspb.String("name-1"),
 				Description: wrapperspb.String("desc-1"),
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success",
