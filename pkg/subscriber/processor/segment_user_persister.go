@@ -457,7 +457,8 @@ func (p *segmentUserPersister) updateSegmentStatus(
 	state featureproto.SegmentUser_State,
 	status featureproto.Segment_Status,
 ) error {
-	return p.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	var e *domainproto.Event
+	err := p.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		segment, _, err := p.segmentStorage.GetSegment(contextWithTx, segmentID, environmentId)
 		if err != nil {
 			return err
@@ -470,7 +471,7 @@ func (p *segmentUserPersister) updateSegmentStatus(
 		if state == featureproto.SegmentUser_INCLUDED {
 			segment.SetIncludedUserCount(cnt)
 		}
-		e, err := domainevent.NewEvent(
+		e, err = domainevent.NewEvent(
 			editor,
 			domainproto.Event_SEGMENT,
 			segment.Id,
@@ -494,15 +495,6 @@ func (p *segmentUserPersister) updateSegmentStatus(
 			)
 			return err
 		}
-		if err := p.domainPublisher.Publish(ctx, e); err != nil {
-			p.logger.Error(
-				"failed to publish event",
-				zap.Error(err),
-				zap.String("segmentId", segment.Id),
-				zap.String("environmentId", environmentId),
-			)
-			return err
-		}
 		err = p.segmentStorage.UpdateSegment(contextWithTx, segment, environmentId)
 		if err != nil {
 			p.logger.Error(
@@ -514,6 +506,22 @@ func (p *segmentUserPersister) updateSegmentStatus(
 		}
 		return err
 	})
+	if err != nil {
+		return err
+	}
+	// Publish only after the transaction has committed, so that a rolled-back
+	// status update never emits an event. A publish failure is returned so the
+	// message is nacked and retried, which re-applies the same status update.
+	if err := p.domainPublisher.Publish(ctx, e); err != nil {
+		p.logger.Error(
+			"failed to publish event",
+			zap.Error(err),
+			zap.String("segmentId", segmentID),
+			zap.String("environmentId", environmentId),
+		)
+		return err
+	}
+	return nil
 }
 
 // Even if the update request fails, the cronjob will keep trying
