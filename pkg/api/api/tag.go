@@ -145,6 +145,14 @@ func (s *grpcGatewayService) ListTags(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListTags, "").Inc()
 
+	// The list is always filtered by the key's environment; the organization
+	// is pinned to the key's as well instead of trusting the caller's.
+	if req.OrganizationId != "" && req.OrganizationId != envAPIKey.Environment.OrganizationId {
+		return nil, ErrNotFound
+	}
+	// Act as the key's maintainer so the backend applies its role checks
+	// instead of the gateway's service token access.
+	ctx = metadata.NewOutgoingContext(ctx, publicAPIEditorMetadata(envAPIKey))
 	res, err := s.tagClient.ListTags(
 		ctx,
 		&tagproto.ListTagsRequest{
@@ -154,7 +162,7 @@ func (s *grpcGatewayService) ListTags(
 			OrderBy:        req.OrderBy,
 			OrderDirection: req.OrderDirection,
 			SearchKeyword:  req.SearchKeyword,
-			OrganizationId: req.OrganizationId,
+			OrganizationId: envAPIKey.Environment.OrganizationId,
 		},
 	)
 	if err != nil {
