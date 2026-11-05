@@ -202,6 +202,7 @@ func (s *experimentService) CreateExperiment(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
+	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		for _, gid := range req.GoalIds {
 			goal, err := s.getGoalMySQL(ctxWithTx, gid, req.EnvironmentId)
@@ -212,7 +213,8 @@ func (s *experimentService) CreateExperiment(
 				return statusGoalTypeMismatch.Err()
 			}
 		}
-		e, err := domainevent.NewEvent(
+		var err error
+		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_EXPERIMENT,
 			experiment.Id,
@@ -239,10 +241,6 @@ func (s *experimentService) CreateExperiment(
 		if err != nil {
 			return err
 		}
-		err = s.publisher.Publish(ctx, e)
-		if err != nil {
-			return err
-		}
 		return s.experimentStorage.CreateExperiment(ctxWithTx, experiment, req.EnvironmentId)
 	})
 	if err != nil {
@@ -263,6 +261,9 @@ func (s *experimentService) CreateExperiment(
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err := s.publishDomainEvent(ctx, event); err != nil {
+		return nil, err
 	}
 	return &proto.CreateExperimentResponse{
 		Experiment: experiment.Experiment,
@@ -323,6 +324,7 @@ func (s *experimentService) UpdateExperiment(
 	}
 
 	var experimentPb *proto.Experiment
+	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		experiment, err := s.experimentStorage.GetExperiment(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -358,7 +360,7 @@ func (s *experimentService) UpdateExperiment(
 				Status:      updated.Status,
 			}
 		}
-		event, err := domainevent.NewEvent(
+		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_EXPERIMENT,
 			experiment.Id,
@@ -369,9 +371,6 @@ func (s *experimentService) UpdateExperiment(
 			experiment,
 		)
 		if err != nil {
-			return err
-		}
-		if err := s.publisher.Publish(ctxWithTx, event); err != nil {
 			return err
 		}
 		experimentPb = updated.Experiment
@@ -389,6 +388,9 @@ func (s *experimentService) UpdateExperiment(
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err := s.publishDomainEvent(ctx, event); err != nil {
+		return nil, err
 	}
 	return &proto.UpdateExperimentResponse{
 		Experiment: experimentPb,

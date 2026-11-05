@@ -20,6 +20,8 @@ import (
 )
 
 var (
+	statusInternal = api.NewGRPCStatus(
+		pkgErr.NewErrorInternal(pkgErr.ExperimentPackageName, "internal"))
 	statusInvalidCursor = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.ExperimentPackageName, "cursor is invalid", "Cursor"))
 	statusFeatureIDRequired = api.NewGRPCStatus(

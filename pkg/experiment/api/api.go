@@ -25,6 +25,7 @@ import (
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	storage "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
@@ -115,4 +116,28 @@ func (s *experimentService) checkEnvironmentRole(
 		statusPermissionDenied.Err(),
 		func(err error) error { return api.NewGRPCStatus(err).Err() },
 	)
+}
+
+// publishDomainEvent publishes a domain event after the transaction that
+// produced it has committed. Publishing inside the transaction would emit the
+// event even when the transaction is rolled back afterwards.
+// On failure it logs the publisher error and returns statusInternal, so the
+// caller does not receive a success response for a committed change whose
+// event was never published, and the publisher's error text does not leak
+// into the response.
+func (s *experimentService) publishDomainEvent(
+	ctx context.Context,
+	event *eventproto.Event,
+) error {
+	if err := s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish domain event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", event.EnvironmentId),
+			)...,
+		)
+		return statusInternal.Err()
+	}
+	return nil
 }

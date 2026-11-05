@@ -23,10 +23,12 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/mock"
+	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
@@ -229,16 +231,84 @@ func TestCreateGoalMySQL(t *testing.T) {
 			expectedErr: statusAlreadyExists.Err(),
 		},
 		{
+			desc: "error: storage write fails, event is not published",
+			setup: func(s *experimentService) {
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().CreateGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errStorage)
+				// Publish must not be called because the transaction is rolled back
+			},
+			req: &experimentproto.CreateGoalRequest{
+				Id:            "Bucketeer-id-2020",
+				Name:          "name-1",
+				EnvironmentId: "ns0",
+			},
+			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "error: commit fails, event is not published",
+			setup: func(s *experimentService) {
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().CreateGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				// Publish must not be called because the commit failed
+			},
+			req: &experimentproto.CreateGoalRequest{
+				Id:            "Bucketeer-id-2020",
+				Name:          "name-1",
+				EnvironmentId: "ns0",
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
+		},
+		{
+			desc: "error: publish fails after commit",
+			setup: func(s *experimentService) {
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().CreateGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(errPublish).Times(1)
+			},
+			req: &experimentproto.CreateGoalRequest{
+				Id:            "Bucketeer-id-2020",
+				Name:          "name-1",
+				EnvironmentId: "ns0",
+			},
+			expectedErr: statusInternal.Err(),
+		},
+		{
 			desc: "success",
 			setup: func(s *experimentService) {
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
-					_ = fn(ctx)
-				}).Return(nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
 				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().CreateGoal(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil).Times(1)
 			},
 			req: &experimentproto.CreateGoalRequest{
 				Id:            "Bucketeer-id-2020",
@@ -306,6 +376,95 @@ func TestUpdateGoalMySQL(t *testing.T) {
 			expectedErr: statusGoalNotFound.Err(),
 		},
 		{
+			desc: "error: storage write fails, event is not published",
+			setup: func(s *experimentService) {
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{
+						Id: "id-1",
+					},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().UpdateGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errStorage)
+				// Publish must not be called because the transaction is rolled back
+			},
+			req: &experimentproto.UpdateGoalRequest{
+				Id:            "id-1",
+				Name:          wrapperspb.String("name-0"),
+				Description:   wrapperspb.String("description-0"),
+				EnvironmentId: "ns0",
+			},
+			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "error: commit fails, event is not published",
+			setup: func(s *experimentService) {
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{
+						Id: "id-1",
+					},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().UpdateGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				// Publish must not be called because the commit failed
+			},
+			req: &experimentproto.UpdateGoalRequest{
+				Id:            "id-1",
+				Name:          wrapperspb.String("name-0"),
+				Description:   wrapperspb.String("description-0"),
+				EnvironmentId: "ns0",
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
+		},
+		{
+			desc: "error: publish fails after commit",
+			setup: func(s *experimentService) {
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{
+						Id: "id-1",
+					},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().UpdateGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(errPublish).Times(1)
+			},
+			req: &experimentproto.UpdateGoalRequest{
+				Id:            "id-1",
+				Name:          wrapperspb.String("name-0"),
+				Description:   wrapperspb.String("description-0"),
+				EnvironmentId: "ns0",
+			},
+			expectedErr: statusInternal.Err(),
+		},
+		{
 			desc: "success",
 			setup: func(s *experimentService) {
 				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
@@ -317,12 +476,15 @@ func TestUpdateGoalMySQL(t *testing.T) {
 				}, nil)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
-					_ = fn(ctx)
-				}).Return(nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
 				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().UpdateGoal(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil).Times(1)
 			},
 			req: &experimentproto.UpdateGoalRequest{
 				Id:            "id-1",
@@ -344,12 +506,15 @@ func TestUpdateGoalMySQL(t *testing.T) {
 				}, nil)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
-					_ = fn(ctx)
-				}).Return(nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
 				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().UpdateGoal(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil).Times(1)
 			},
 			req: &experimentproto.UpdateGoalRequest{
 				Id:            "id-1",
@@ -379,11 +544,13 @@ func TestDeleteGoalMySQL(t *testing.T) {
 	})
 
 	patterns := []struct {
+		desc        string
 		setup       func(*experimentService)
 		req         *experimentproto.DeleteGoalRequest
 		expectedErr error
 	}{
 		{
+			desc:  "error: missing Id",
 			setup: nil,
 			req: &experimentproto.DeleteGoalRequest{
 				EnvironmentId: "ns0",
@@ -391,6 +558,7 @@ func TestDeleteGoalMySQL(t *testing.T) {
 			expectedErr: statusGoalIDRequired.Err(),
 		},
 		{
+			desc: "error: not found",
 			setup: func(s *experimentService) {
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -403,6 +571,7 @@ func TestDeleteGoalMySQL(t *testing.T) {
 			expectedErr: statusGoalNotFound.Err(),
 		},
 		{
+			desc: "error: storage write fails, event is not published",
 			setup: func(s *experimentService) {
 				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -413,12 +582,98 @@ func TestDeleteGoalMySQL(t *testing.T) {
 				}, nil)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
-					_ = fn(ctx)
-				}).Return(nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().DeleteGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errStorage)
+				// Publish must not be called because the transaction is rolled back
+			},
+			req: &experimentproto.DeleteGoalRequest{
+				Id:            "id-1",
+				EnvironmentId: "ns0",
+			},
+			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "error: commit fails, event is not published",
+			setup: func(s *experimentService) {
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{
+						Id: "id-1",
+					},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
 				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().DeleteGoal(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
+				// Publish must not be called because the commit failed
+			},
+			req: &experimentproto.DeleteGoalRequest{
+				Id:            "id-1",
+				EnvironmentId: "ns0",
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
+		},
+		{
+			desc: "error: publish fails after commit",
+			setup: func(s *experimentService) {
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{
+						Id: "id-1",
+					},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().DeleteGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(errPublish).Times(1)
+			},
+			req: &experimentproto.DeleteGoalRequest{
+				Id:            "id-1",
+				EnvironmentId: "ns0",
+			},
+			expectedErr: statusInternal.Err(),
+		},
+		{
+			desc: "success",
+			setup: func(s *experimentService) {
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{
+						Id: "id-1",
+					},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().DeleteGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil).Times(1)
 			},
 			req: &experimentproto.DeleteGoalRequest{
 				Id:            "id-1",
@@ -433,7 +688,7 @@ func TestDeleteGoalMySQL(t *testing.T) {
 			p.setup(service)
 		}
 		_, err := service.DeleteGoal(ctx, p.req)
-		assert.Equal(t, p.expectedErr, err)
+		assert.Equal(t, p.expectedErr, err, p.desc)
 	}
 }
 
