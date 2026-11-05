@@ -49,12 +49,18 @@ func (s *grpcGatewayService) CreateAccountV2(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateAccountV2, "").Inc()
 
+	if envAPIKey.Environment.OrganizationId == "" {
+		return nil, ErrInvalidAPIKey
+	}
+	if request.OrganizationId != "" && request.OrganizationId != envAPIKey.Environment.OrganizationId {
+		return nil, ErrNotFound
+	}
 	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 	res, err := s.accountClient.CreateAccountV2(
 		ctx,
 		&accountproto.CreateAccountV2Request{
-			OrganizationId:   request.OrganizationId,
+			OrganizationId:   envAPIKey.Environment.OrganizationId,
 			Email:            request.Email,
 			Name:             request.Name,
 			AvatarImageUrl:   request.AvatarImageUrl,
@@ -108,6 +114,12 @@ func (s *grpcGatewayService) UpdateAccountV2(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodUpdateAccountV2, "").Inc()
 
+	if envAPIKey.Environment.OrganizationId == "" {
+		return nil, ErrInvalidAPIKey
+	}
+	if request.OrganizationId != "" && request.OrganizationId != envAPIKey.Environment.OrganizationId {
+		return nil, ErrNotFound
+	}
 	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 
@@ -117,7 +129,7 @@ func (s *grpcGatewayService) UpdateAccountV2(
 			ctx,
 			&accountproto.DeleteAccountV2Request{
 				Email:          request.Email,
-				OrganizationId: request.OrganizationId,
+				OrganizationId: envAPIKey.Environment.OrganizationId,
 			},
 		)
 		if err != nil {
@@ -130,7 +142,7 @@ func (s *grpcGatewayService) UpdateAccountV2(
 	res, err := s.accountClient.UpdateAccountV2(
 		ctx,
 		&accountproto.UpdateAccountV2Request{
-			OrganizationId:   request.OrganizationId,
+			OrganizationId:   envAPIKey.Environment.OrganizationId,
 			Email:            request.Email,
 			Name:             request.Name,
 			AvatarImageUrl:   request.AvatarImageUrl,
