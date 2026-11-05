@@ -101,6 +101,9 @@ func (p *ProgressiveRollout) addManualScheduleClause(
 			return err
 		}
 		s.ScheduleId = id.String()
+		// The schedule has not run yet. A client-supplied value would make the
+		// scheduler skip it, see AlreadyTriggered.
+		s.TriggeredAt = 0
 	}
 	return p.setClause(c)
 }
@@ -115,6 +118,7 @@ func (p *ProgressiveRollout) addTemplatelScheduleClause(
 			return err
 		}
 		s.ScheduleId = id.String()
+		s.TriggeredAt = 0
 	}
 	return p.setClause(c)
 }
