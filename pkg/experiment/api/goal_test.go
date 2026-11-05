@@ -293,7 +293,7 @@ func TestCreateGoalMySQL(t *testing.T) {
 				Name:          "name-1",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success",
@@ -462,7 +462,7 @@ func TestUpdateGoalMySQL(t *testing.T) {
 				Description:   wrapperspb.String("description-0"),
 				EnvironmentId: "ns0",
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success",
@@ -651,7 +651,7 @@ func TestDeleteGoalMySQL(t *testing.T) {
 				Id:            "id-1",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success",

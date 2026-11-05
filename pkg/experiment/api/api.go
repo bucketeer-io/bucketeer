@@ -121,8 +121,10 @@ func (s *experimentService) checkEnvironmentRole(
 // publishDomainEvent publishes a domain event after the transaction that
 // produced it has committed. Publishing inside the transaction would emit the
 // event even when the transaction is rolled back afterwards.
-// On failure it logs and returns a gRPC error so the caller does not receive a
-// success response for a committed change whose event was never published.
+// On failure it logs the publisher error and returns statusInternal, so the
+// caller does not receive a success response for a committed change whose
+// event was never published, and the publisher's error text does not leak
+// into the response.
 func (s *experimentService) publishDomainEvent(
 	ctx context.Context,
 	event *eventproto.Event,
@@ -135,7 +137,7 @@ func (s *experimentService) publishDomainEvent(
 				zap.String("environmentId", event.EnvironmentId),
 			)...,
 		)
-		return api.NewGRPCStatus(err).Err()
+		return statusInternal.Err()
 	}
 	return nil
 }

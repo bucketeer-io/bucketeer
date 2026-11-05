@@ -282,7 +282,7 @@ func TestCreateExperimentMySQL(t *testing.T) {
 				EnvironmentId:   "ns0",
 				BaseVariationId: "variation-b-id",
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success",
@@ -453,7 +453,7 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 				StopAt:        wrapperspb.Int64(time.Now().AddDate(0, 0, 1).Unix()),
 				EnvironmentId: "ns0",
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success",
