@@ -174,14 +174,7 @@ func (s *PushService) CreatePush(
 			push.WithoutFCMServiceAccount(),
 			nil,
 		)
-		if err != nil {
-			return err
-		}
-		if err = s.publisher.Publish(ctx, event); err != nil {
-			return err
-		}
-
-		return nil
+		return err
 	})
 	if err != nil {
 		if errors.Is(err, v2ps.ErrPushAlreadyExists) {
@@ -196,6 +189,9 @@ func (s *PushService) CreatePush(
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err := s.publishDomainEvent(ctx, event); err != nil {
+		return nil, err
 	}
 
 	// For security reasons we remove the service account from the API response
@@ -258,9 +254,6 @@ func (s *PushService) UpdatePush(
 		if err != nil {
 			return err
 		}
-		if err = s.publisher.Publish(ctx, updatePushEvent); err != nil {
-			return err
-		}
 		updatedPushPb = updated.Push
 
 		return s.pushStorage.UpdatePush(contextWithTx, updated, req.EnvironmentId)
@@ -287,6 +280,9 @@ func (s *PushService) UpdatePush(
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err := s.publishDomainEvent(ctx, updatePushEvent); err != nil {
+		return nil, err
 	}
 
 	if updatedPushPb != nil {
@@ -345,9 +341,6 @@ func (s *PushService) DeletePush(
 		if err != nil {
 			return err
 		}
-		if err = s.publisher.Publish(ctx, event); err != nil {
-			return err
-		}
 		return s.pushStorage.DeletePush(contextWithTx, push.Id, req.EnvironmentId)
 	})
 	if err != nil {
@@ -367,7 +360,34 @@ func (s *PushService) DeletePush(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
+	if err := s.publishDomainEvent(ctx, event); err != nil {
+		return nil, err
+	}
 	return &pushproto.DeletePushResponse{}, nil
+}
+
+// publishDomainEvent publishes a domain event after the transaction that
+// produced it has committed. Publishing inside the transaction would emit the
+// event even when the transaction is rolled back afterwards.
+// On failure it logs the publisher error and returns statusInternal, so the
+// caller does not receive a success response for a committed change whose
+// event was never published, and the publisher's error text does not leak
+// into the response.
+func (s *PushService) publishDomainEvent(
+	ctx context.Context,
+	event *eventproto.Event,
+) error {
+	if err := s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish domain event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", event.EnvironmentId),
+			)...,
+		)
+		return statusInternal.Err()
+	}
+	return nil
 }
 
 func (s *PushService) GetPush(
