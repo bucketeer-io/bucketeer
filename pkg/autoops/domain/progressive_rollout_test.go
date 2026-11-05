@@ -87,6 +87,57 @@ func createProgressiveRollout(t *testing.T) *ProgressiveRollout {
 	return aor
 }
 
+func TestNewProgressiveRolloutResetsSchedules(t *testing.T) {
+	t.Parallel()
+	schedules := func() []*autoopsproto.ProgressiveRolloutSchedule {
+		return []*autoopsproto.ProgressiveRolloutSchedule{
+			{ScheduleId: "client-sid-0", ExecuteAt: 1, Weight: 20, TriggeredAt: 9999999999},
+			{ScheduleId: "client-sid-1", ExecuteAt: 2, Weight: 100, TriggeredAt: 1},
+		}
+	}
+	patterns := []struct {
+		desc     string
+		manual   *autoopsproto.ProgressiveRolloutManualScheduleClause
+		template *autoopsproto.ProgressiveRolloutTemplateScheduleClause
+	}{
+		{
+			desc:   "manual schedule",
+			manual: &autoopsproto.ProgressiveRolloutManualScheduleClause{Schedules: schedules(), VariationId: "vid-1"},
+		},
+		{
+			desc: "template schedule",
+			template: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+				Schedules:   schedules(),
+				Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+				Increments:  80,
+				VariationId: "vid-1",
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			pro, err := NewProgressiveRollout("feature-id", p.manual, p.template)
+			require.NoError(t, err)
+			actual, err := pro.ExtractSchedules()
+			require.NoError(t, err)
+			require.Len(t, actual, 2)
+			for i, s := range actual {
+				// The server owns the schedule ID and the trigger time, so the
+				// client-supplied values must not be persisted.
+				assert.NotEqual(t, schedules()[i].ScheduleId, s.ScheduleId)
+				assert.NotEmpty(t, s.ScheduleId)
+				assert.Zero(t, s.TriggeredAt)
+				assert.Equal(t, schedules()[i].ExecuteAt, s.ExecuteAt)
+				assert.Equal(t, schedules()[i].Weight, s.Weight)
+				triggered, err := pro.AlreadyTriggered(s.ScheduleId)
+				require.NoError(t, err)
+				assert.False(t, triggered)
+			}
+		})
+	}
+}
+
 func TestAlreadyTriggered(t *testing.T) {
 	patterns := []struct {
 		desc                   string
