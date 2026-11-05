@@ -48,12 +48,18 @@ func (s *grpcGatewayService) CreateTeam(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodCreateTeam, "").Inc()
 
+	if envAPIKey.Environment.OrganizationId == "" {
+		return nil, ErrInvalidAPIKey
+	}
+	if req.OrganizationId != "" && req.OrganizationId != envAPIKey.Environment.OrganizationId {
+		return nil, ErrNotFound
+	}
 	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 	res, err := s.teamClient.CreateTeam(
 		ctx,
 		&teamproto.CreateTeamRequest{
-			OrganizationId: req.OrganizationId,
+			OrganizationId: envAPIKey.Environment.OrganizationId,
 			Name:           req.Name,
 			Description:    req.Description,
 		},
@@ -102,12 +108,18 @@ func (s *grpcGatewayService) DeleteTeam(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodDeleteTeam, "").Inc()
 
+	if envAPIKey.Environment.OrganizationId == "" {
+		return nil, ErrInvalidAPIKey
+	}
+	if req.OrganizationId != "" && req.OrganizationId != envAPIKey.Environment.OrganizationId {
+		return nil, ErrNotFound
+	}
 	headerMetaData := publicAPIEditorMetadata(envAPIKey)
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 	_, err = s.teamClient.DeleteTeam(
 		ctx,
 		&teamproto.DeleteTeamRequest{
-			OrganizationId: req.OrganizationId,
+			OrganizationId: envAPIKey.Environment.OrganizationId,
 			Id:             req.Id,
 		},
 	)
@@ -145,6 +157,15 @@ func (s *grpcGatewayService) ListTeams(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListTeams, "").Inc()
 
+	if envAPIKey.Environment.OrganizationId == "" {
+		return nil, ErrInvalidAPIKey
+	}
+	if req.OrganizationId != "" && req.OrganizationId != envAPIKey.Environment.OrganizationId {
+		return nil, ErrNotFound
+	}
+	// Act as the key's maintainer so the backend applies its membership check
+	// instead of the gateway's service token access.
+	ctx = metadata.NewOutgoingContext(ctx, publicAPIEditorMetadata(envAPIKey))
 	res, err := s.teamClient.ListTeams(
 		ctx,
 		&teamproto.ListTeamsRequest{
@@ -153,7 +174,7 @@ func (s *grpcGatewayService) ListTeams(
 			OrderBy:        req.OrderBy,
 			OrderDirection: req.OrderDirection,
 			SearchKeyword:  req.SearchKeyword,
-			OrganizationId: req.OrganizationId,
+			OrganizationId: envAPIKey.Environment.OrganizationId,
 		},
 	)
 	if err != nil {
