@@ -616,12 +616,10 @@ func (s *EnvironmentService) UpdateOrganization(
 
 // checkOrganizationOwner authorizes the organization owner, which is the account
 // holding the OWNER role or the account referenced by the organization's owner
-// email. Accounts created before the owner account's role was protected may be
-// referenced by the owner email without holding the OWNER role, and since that
-// role can no longer be changed through the account update, the owner email
-// account must still be able to update the organization and transfer ownership.
-// The owner email is stored as it was typed when ownership was set, so it is
-// resolved to its account and the stored emails of the two accounts are compared.
+// email. The owner email account may have been demoted below OWNER before its
+// role was protected, and since that role can no longer be changed through the
+// account update, it must still be able to update the organization and transfer
+// ownership.
 func (s *EnvironmentService) checkOrganizationOwner(
 	ctx context.Context,
 	organizationID string,
@@ -641,21 +639,11 @@ func (s *EnvironmentService) checkOrganizationOwner(
 		}
 		return nil, s.reportCheckOrganizationOwnerError(ctx, organizationID, orgErr)
 	}
-	owner, ownerErr := s.accountStorage.GetAccountV2(ctx, organization.OwnerEmail, organizationID)
-	if ownerErr != nil {
-		if errors.Is(ownerErr, v2acc.ErrAccountNotFound) {
-			return nil, err
-		}
-		return nil, s.reportCheckOrganizationOwnerError(ctx, organizationID, ownerErr)
-	}
-	caller, callerErr := s.accountStorage.GetAccountV2(ctx, token.Email, organizationID)
+	caller, callerErr := s.getOrganizationOwnerAccount(ctx, organization, token.Email)
 	if callerErr != nil {
-		if errors.Is(callerErr, v2acc.ErrAccountNotFound) {
-			return nil, err
-		}
 		return nil, s.reportCheckOrganizationOwnerError(ctx, organizationID, callerErr)
 	}
-	if caller.Email != owner.Email || caller.Disabled {
+	if caller == nil || caller.Disabled {
 		return nil, err
 	}
 	s.logger.Warn(
@@ -673,6 +661,36 @@ func (s *EnvironmentService) checkOrganizationOwner(
 		EnvironmentRoles: caller.EnvironmentRoles,
 		OrganizationRole: caller.OrganizationRole,
 	}, nil
+}
+
+// getOrganizationOwnerAccount returns the account of email when it is the account
+// referenced by the organization's owner email, or nil otherwise.
+// The owner email is stored as it was typed when ownership was set, and account
+// lookups follow the database's matching rules (e.g. case-insensitive collation),
+// so both emails are resolved to their accounts and the stored emails are compared.
+func (s *EnvironmentService) getOrganizationOwnerAccount(
+	ctx context.Context,
+	organization *domain.Organization,
+	email string,
+) (*accdomain.AccountV2, error) {
+	owner, err := s.accountStorage.GetAccountV2(ctx, organization.OwnerEmail, organization.Id)
+	if err != nil {
+		if errors.Is(err, v2acc.ErrAccountNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	account, err := s.accountStorage.GetAccountV2(ctx, email, organization.Id)
+	if err != nil {
+		if errors.Is(err, v2acc.ErrAccountNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	if account.Email != owner.Email {
+		return nil, nil
+	}
+	return account, nil
 }
 
 func (s *EnvironmentService) reportCheckOrganizationOwnerError(
@@ -752,7 +770,13 @@ func (s *EnvironmentService) validateOwnershipTransfer(
 
 	// If not system admin, ensure current user is actually the current owner
 	if !editor.IsAdmin && editor.Email != organization.OwnerEmail {
-		return statusPermissionDenied.Err()
+		owner, err := s.getOrganizationOwnerAccount(ctx, organization, editor.Email)
+		if err != nil {
+			return api.NewGRPCStatus(err).Err()
+		}
+		if owner == nil {
+			return statusPermissionDenied.Err()
+		}
 	}
 
 	// New owner must exist and be a member of the organization

@@ -1087,6 +1087,16 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 						OwnerEmail: "current-owner@example.com", // Different from token email
 					},
 				}, nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), "current-owner@example.com", "org-1",
+				).Return(&accountdomain.AccountV2{
+					AccountV2: &accountproto.AccountV2{Email: "current-owner@example.com"},
+				}, nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), "email", "org-1",
+				).Return(&accountdomain.AccountV2{
+					AccountV2: &accountproto.AccountV2{Email: "email"},
+				}, nil)
 			},
 			req: &proto.UpdateOrganizationRequest{
 				Id:         "org-1",
@@ -1272,6 +1282,30 @@ func TestUpdateOrganizationOwnerEmailAccountWithoutOwnerRole(t *testing.T) {
 			req: &proto.UpdateOrganizationRequest{
 				Id:          "org-1",
 				Description: wrapperspb.String("new description"),
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: owner email account transfers ownership",
+			setup: func(s *EnvironmentService) {
+				mockAdminRoleAuth(s)
+				// checkOrganizationOwner
+				mockOrganization(s, "Email")
+				mockAccount(s, "Email", "email", false)
+				mockAccount(s, "email", "email", false)
+				// validateOwnershipTransfer
+				mockOrganization(s, "Email")
+				mockAccount(s, "Email", "email", false)
+				mockAccount(s, "email", "email", false)
+				mockAccount(s, "new-owner@example.com", "new-owner@example.com", false)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			req: &proto.UpdateOrganizationRequest{
+				Id:         "org-1",
+				OwnerEmail: wrapperspb.String("new-owner@example.com"),
 			},
 			expectedErr: nil,
 		},
