@@ -221,7 +221,7 @@ func TestCreatePushMySQL(t *testing.T) {
 				Tags:              []string{"tag-0"},
 				Name:              "name-1",
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success: with tags",
@@ -407,7 +407,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 				Id:            "key-0",
 				Name:          wrapperspb.String("name-1"),
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success: no rows affected, event is not published",
@@ -719,7 +719,7 @@ func TestDeletePushMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				Id:            "key-0",
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success: no rows affected, event is not published",
