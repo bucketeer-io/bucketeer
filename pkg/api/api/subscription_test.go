@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
@@ -168,7 +169,7 @@ func TestGrpcGatewayService_ListSubscriptions(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK_SERVER,
@@ -184,7 +185,7 @@ func TestGrpcGatewayService_ListSubscriptions(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -203,7 +204,7 @@ func TestGrpcGatewayService_ListSubscriptions(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -274,6 +275,51 @@ func TestGrpcGatewayService_ListSubscriptions(t *testing.T) {
 			actual, err := gs.ListSubscriptions(ctx, &gwproto.ListSubscriptionsRequest{})
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
+	}
+}
+
+func TestGrpcGatewayService_ListSubscriptionsOrganizationScope(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name              string
+		organizationID    string
+		keyOrganizationID string
+		wantErr           error
+	}{
+		{name: "same organization", organizationID: "org-a", keyOrganizationID: "org-a"},
+		{name: "omitted organization", keyOrganizationID: "org-a"},
+		{name: "other organization", organizationID: "org-b", keyOrganizationID: "org-a", wantErr: ErrNotFound},
+		{name: "key without organization", wantErr: ErrInvalidAPIKey},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			gs, ctx := newAccountReadGateway(t, tc.keyOrganizationID)
+			environmentIDs := []string{"env-a", "env-b"}
+			sub := &subscription.Subscription{Id: "sub-a", Name: "sub-a", EnvironmentId: "env-a"}
+			if tc.wantErr == nil {
+				// The requested environments are forwarded, the organization is
+				// always the key's own and the maintainer metadata is attached.
+				gs.subscriptionClient.(*mocksubscriptionclient.MockClient).EXPECT().ListSubscriptions(
+					accountReadMetadataMatcher(), &subscription.ListSubscriptionsRequest{
+						OrganizationId: "org-a", EnvironmentIds: environmentIDs, PageSize: 10,
+					},
+				).Return(&subscription.ListSubscriptionsResponse{
+					Subscriptions: []*subscription.Subscription{sub}, Cursor: "1", TotalCount: 1,
+				}, nil)
+			}
+			res, err := gs.ListSubscriptions(ctx, &gwproto.ListSubscriptionsRequest{
+				OrganizationId: tc.organizationID, EnvironmentIds: environmentIDs, PageSize: 10,
+			})
+			require.Equal(t, tc.wantErr, err)
+			if tc.wantErr != nil {
+				require.Nil(t, res)
+				return
+			}
+			require.Equal(t, []*subscription.Subscription{sub}, res.Subscriptions)
+			require.Equal(t, "1", res.Cursor)
+			require.Equal(t, int64(1), res.TotalCount)
 		})
 	}
 }
