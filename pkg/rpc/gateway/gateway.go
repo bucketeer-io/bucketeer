@@ -383,7 +383,7 @@ func (g *Gateway) Start(ctx context.Context,
 	// the decoder fail and the connection is closed instead of being drained.
 	g.httpServer = &http.Server{
 		Addr:         g.restAddr,
-		Handler:      http.MaxBytesHandler(mux, g.opts.maxRequestBodyBytes),
+		Handler:      securityHeadersMiddleware(http.MaxBytesHandler(mux, g.opts.maxRequestBodyBytes)),
 		ReadTimeout:  g.opts.httpReadTimeout,
 		WriteTimeout: g.opts.httpWriteTimeout,
 		IdleTimeout:  g.opts.httpIdleTimeout,
