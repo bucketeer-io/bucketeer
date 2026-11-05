@@ -24,6 +24,7 @@ import (
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	pb "google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
@@ -548,17 +549,30 @@ func (s *FeatureService) updateEnableFeature(
 			return err
 		}
 
-		if enabled {
-			err = feature.Enable()
-		} else {
-			err = feature.Disable()
-		}
+		updated, err := feature.Update(
+			nil,                      // name
+			nil,                      // description
+			nil,                      // tags
+			wrapperspb.Bool(enabled), // enabled
+			nil,                      // archived
+			nil,                      // defaultStrategy
+			nil,                      // offVariation
+			false,                    // resetSamplingSeed
+			nil,                      // prerequisiteChanges
+			nil,                      // targetChanges
+			nil,                      // ruleChanges
+			nil,                      // variationChanges
+			nil,                      // tagChanges
+			nil,                      // maintainer
+			nil,                      // ruleOrder
+			nil,                      // variationValueSchemaUpdate
+		)
 		if err != nil {
 			return err
 		}
-		prev := &domain.Feature{}
-		if err := copier.Copy(prev, feature); err != nil {
-			return err
+		// Only update storage if there were actual changes
+		if updated.Version == feature.Version {
+			return nil
 		}
 		eventType := eventproto.Event_FEATURE_DISABLED
 		var eventData pb.Message = &eventproto.FeatureDisabledEvent{Id: featureId}
@@ -573,8 +587,9 @@ func (s *FeatureService) updateEnableFeature(
 			eventType,
 			eventData,
 			environmentId,
+			updated.Feature,
 			feature.Feature,
-			prev,
+			domainevent.WithNewVersion(updated.Version),
 		)
 		if err != nil {
 			s.logger.Error(
@@ -583,7 +598,7 @@ func (s *FeatureService) updateEnableFeature(
 			)
 			return err
 		}
-		return s.featureStorage.UpdateFeature(contextWithTx, feature, environmentId)
+		return s.featureStorage.UpdateFeature(contextWithTx, updated, environmentId)
 	})
 	if err != nil {
 		s.logger.Error(
@@ -594,6 +609,9 @@ func (s *FeatureService) updateEnableFeature(
 			)...,
 		)
 		return err
+	}
+	if event == nil {
+		return nil
 	}
 	err = s.domainPublisher.Publish(ctx, event)
 	if err != nil {

@@ -17,6 +17,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -27,6 +28,7 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
@@ -524,6 +526,186 @@ func TestFlagTriggerWebhook(t *testing.T) {
 			if err == nil {
 				assert.NotNil(t, resp)
 			}
+		})
+	}
+}
+
+func TestUpdateEnableFeature(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := metadata.NewIncomingContext(
+		createContextWithToken(),
+		metadata.MD{"accept-language": []string{"ja"}},
+	)
+	const (
+		featureID = "feature-id"
+		envID     = "env-id"
+	)
+	errStorage := pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "storage")
+	errPublish := pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "publish")
+	newFeature := func(enabled bool) *domain.Feature {
+		f := makeFeature(featureID)
+		f.Version = 3
+		f.Enabled = enabled
+		return f
+	}
+	runTx := func(s *FeatureService) {
+		s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+			gomock.Any(), gomock.Any(),
+		).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+			return fn(ctx)
+		})
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(s *FeatureService, stored **domain.Feature, published **eventproto.Event)
+		enabled     bool
+		expectedErr error
+	}{
+		{
+			desc: "err: get feature fails, nothing is written or published",
+			setup: func(s *FeatureService, stored **domain.Feature, published **eventproto.Event) {
+				runTx(s)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+					gomock.Any(), featureID, envID,
+				).Return(nil, errStorage)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().UpdateFeature(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Times(0)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Times(0)
+			},
+			enabled:     true,
+			expectedErr: errStorage,
+		},
+		{
+			desc: "err: update feature fails, event is not published",
+			setup: func(s *FeatureService, stored **domain.Feature, published **eventproto.Event) {
+				runTx(s)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+					gomock.Any(), featureID, envID,
+				).Return(newFeature(false), nil)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().UpdateFeature(
+					gomock.Any(), gomock.Any(), envID,
+				).Return(errStorage)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Times(0)
+			},
+			enabled:     true,
+			expectedErr: errStorage,
+		},
+		{
+			desc: "err: publish fails after commit",
+			setup: func(s *FeatureService, stored **domain.Feature, published **eventproto.Event) {
+				runTx(s)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+					gomock.Any(), featureID, envID,
+				).Return(newFeature(false), nil)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().UpdateFeature(
+					gomock.Any(), gomock.Any(), envID,
+				).Return(nil)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(errPublish)
+			},
+			enabled:     true,
+			expectedErr: errPublish,
+		},
+		{
+			desc: "success: no change, nothing is written or published",
+			setup: func(s *FeatureService, stored **domain.Feature, published **eventproto.Event) {
+				runTx(s)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+					gomock.Any(), featureID, envID,
+				).Return(newFeature(true), nil)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().UpdateFeature(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Times(0)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Times(0)
+			},
+			enabled:     true,
+			expectedErr: nil,
+		},
+		{
+			desc: "success: enable increments the version and publishes the event",
+			setup: func(s *FeatureService, stored **domain.Feature, published **eventproto.Event) {
+				runTx(s)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+					gomock.Any(), featureID, envID,
+				).Return(newFeature(false), nil)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().UpdateFeature(
+					gomock.Any(), gomock.Any(), envID,
+				).DoAndReturn(func(ctx context.Context, f *domain.Feature, envID string) error {
+					*stored = f
+					return nil
+				})
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, e *eventproto.Event) error {
+					*published = e
+					return nil
+				})
+			},
+			enabled:     true,
+			expectedErr: nil,
+		},
+		{
+			desc: "success: disable increments the version and publishes the event",
+			setup: func(s *FeatureService, stored **domain.Feature, published **eventproto.Event) {
+				runTx(s)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
+					gomock.Any(), featureID, envID,
+				).Return(newFeature(true), nil)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().UpdateFeature(
+					gomock.Any(), gomock.Any(), envID,
+				).DoAndReturn(func(ctx context.Context, f *domain.Feature, envID string) error {
+					*stored = f
+					return nil
+				})
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, e *eventproto.Event) error {
+					*published = e
+					return nil
+				})
+			},
+			enabled:     false,
+			expectedErr: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createFeatureServiceNew(mockController)
+			var stored *domain.Feature
+			var published *eventproto.Event
+			p.setup(s, &stored, &published)
+			err := s.updateEnableFeature(ctx, featureID, envID, p.enabled)
+			assert.Equal(t, p.expectedErr, err)
+			if stored == nil {
+				return
+			}
+			// The written flag has the requested state and an incremented version.
+			assert.Equal(t, p.enabled, stored.Enabled)
+			assert.Equal(t, int32(4), stored.Version)
+			// The event carries the new version and a previous state that differs
+			// from the current one.
+			require.NotNil(t, published)
+			assert.Equal(t, int32(4), published.Options.NewVersion)
+			var entity, prevEntity proto.Feature
+			require.NoError(t, json.Unmarshal([]byte(published.EntityData), &entity))
+			require.NoError(t, json.Unmarshal([]byte(published.PreviousEntityData), &prevEntity))
+			assert.Equal(t, p.enabled, entity.Enabled)
+			assert.Equal(t, !p.enabled, prevEntity.Enabled)
+			assert.Equal(t, int32(4), entity.Version)
+			assert.Equal(t, int32(3), prevEntity.Version)
 		})
 	}
 }

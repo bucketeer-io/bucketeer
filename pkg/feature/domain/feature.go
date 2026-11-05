@@ -314,30 +314,6 @@ func (f *Feature) RemoveTag(tag string) error {
 	return nil
 }
 
-func (f *Feature) Enable() error {
-	f.Enabled = true
-	f.UpdatedAt = time.Now().Unix()
-	return nil
-}
-
-func (f *Feature) Disable() error {
-	f.Enabled = false
-	f.UpdatedAt = time.Now().Unix()
-	return nil
-}
-
-func (f *Feature) Archive() error {
-	f.Archived = true
-	f.UpdatedAt = time.Now().Unix()
-	return nil
-}
-
-func (f *Feature) Unarchive() error {
-	f.Archived = false
-	f.UpdatedAt = time.Now().Unix()
-	return nil
-}
-
 func (f *Feature) Delete() error {
 	f.Deleted = true
 	f.UpdatedAt = time.Now().Unix()

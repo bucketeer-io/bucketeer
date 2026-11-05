@@ -690,7 +690,7 @@ func TestUpdateEnableFeatureLocksFlagRow(t *testing.T) {
 	// The whole-row save reads the flag with a row lock, never a plain read.
 	service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().GetFeatureForUpdate(
 		gomock.Any(), "fid", "ns0",
-	).Return(&featuredomain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil)
+	).Return(makeFeature("fid"), nil)
 	service.featureStorage.(*featurestoragemock.MockFeatureStorage).EXPECT().UpdateFeature(
 		gomock.Any(), gomock.Any(), "ns0",
 	).Return(nil)
