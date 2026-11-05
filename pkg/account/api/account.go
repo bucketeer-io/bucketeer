@@ -699,12 +699,13 @@ func (s *AccountService) DeleteAccountV2(
 	if err := s.checkNotOrganizationOwner(ctx, req.OrganizationId, target); err != nil {
 		return nil, err
 	}
+	var deleteAccountV2Event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		account, err := s.accountStorage.GetAccountV2(contextWithTx, req.Email, req.OrganizationId)
 		if err != nil {
 			return err
 		}
-		deleteAccountV2Event, err := domainevent.NewAdminEvent(
+		deleteAccountV2Event, err = domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_ACCOUNT,
 			account.Email,
@@ -718,9 +719,6 @@ func (s *AccountService) DeleteAccountV2(
 			account, // Previous state: what was deleted
 		)
 		if err != nil {
-			return err
-		}
-		if err = s.publisher.Publish(ctx, deleteAccountV2Event); err != nil {
 			return err
 		}
 		return s.accountStorage.DeleteAccountV2(contextWithTx, account)
@@ -738,6 +736,17 @@ func (s *AccountService) DeleteAccountV2(
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err = s.publisher.Publish(ctx, deleteAccountV2Event); err != nil {
+		s.logger.Error(
+			"Failed to publish delete account event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		return nil, statusInternal.Err()
 	}
 	return &accountproto.DeleteAccountV2Response{}, nil
 }

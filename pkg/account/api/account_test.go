@@ -867,6 +867,40 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 	}
 }
 
+var (
+	errStorage = pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "storage error")
+	errCommit  = pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "commit error")
+	errPublish = pkgErr.NewErrorInternal(pkgErr.AccountPackageName, "publish error")
+)
+
+// deleteAccountV2Mocks registers the lookups DeleteAccountV2 performs before
+// and inside its transaction: the organization owner, the editor, the target
+// and the account read again inside the callback.
+func deleteAccountV2Mocks(s *AccountService) {
+	// Organization owner account lookup (declared first so it takes the owner email call)
+	s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+		gomock.Any(), "owner@example.com", gomock.Any(),
+	).Return(nil, v2as.ErrAccountNotFound)
+	// Editor lookup, target account lookup, and the lookup inside the transaction
+	s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+		gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(&domain.AccountV2{
+		AccountV2: &accountproto.AccountV2{
+			Email:            "bucketeer@example.com",
+			FirstName:        "Test",
+			LastName:         "User",
+			OrganizationId:   "org0",
+			Language:         "en",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+		},
+	}, nil).Times(3)
+	s.environmentClient.(*ecmock.MockClient).EXPECT().GetOrganization(
+		gomock.Any(), gomock.Any(),
+	).Return(&environmentproto.GetOrganizationResponse{
+		Organization: &environmentproto.Organization{Id: "org0", OwnerEmail: "owner@example.com"},
+	}, nil)
+}
+
 func TestDeleteAccountV2MySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -1002,42 +1036,111 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal("account", "test")).Err(),
 		},
 		{
-			desc: "success",
+			desc: "err: storage delete fails, event is not published",
 			setup: func(s *AccountService) {
-				// Organization owner account lookup (declared first so it takes the owner email call)
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), "owner@example.com", gomock.Any(),
-				).Return(nil, v2as.ErrAccountNotFound)
-				// Editor lookup, target account lookup, and the lookup inside the transaction
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AccountV2{
-					AccountV2: &accountproto.AccountV2{
-						Email:            "bucketeer@example.com",
-						FirstName:        "Test",
-						LastName:         "User",
-						OrganizationId:   "org0",
-						Language:         "en",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-					},
-				}, nil).Times(3)
-
-				s.environmentClient.(*ecmock.MockClient).EXPECT().GetOrganization(
-					gomock.Any(), gomock.Any(),
-				).Return(&environmentproto.GetOrganizationResponse{
-					Organization: &environmentproto.Organization{Id: "org0", OwnerEmail: "owner@example.com"},
-				}, nil)
-
+				deleteAccountV2Mocks(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
-					err := fn(ctx)
-					require.NoError(t, err)
-				}).Return(nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().DeleteAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errStorage)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Times(0)
+			},
+			req: &accountproto.DeleteAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+			},
+			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "err: no rows affected, event is not published",
+			setup: func(s *AccountService) {
+				deleteAccountV2Mocks(s)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().DeleteAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(v2as.ErrAccountUnexpectedAffectedRows)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Times(0)
+			},
+			req: &accountproto.DeleteAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+			},
+			expectedErr: statusAccountNotFound.Err(),
+		},
+		{
+			desc: "err: commit fails, event is not published",
+			setup: func(s *AccountService) {
+				deleteAccountV2Mocks(s)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().DeleteAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Times(0)
+			},
+			req: &accountproto.DeleteAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+			},
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
+		},
+		{
+			desc: "err: publish fails after commit",
+			setup: func(s *AccountService) {
+				deleteAccountV2Mocks(s)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().DeleteAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(errPublish).Times(1)
+			},
+			req: &accountproto.DeleteAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+			},
+			expectedErr: statusInternal.Err(),
+		},
+		{
+			desc: "success",
+			setup: func(s *AccountService) {
+				deleteAccountV2Mocks(s)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().DeleteAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil).Times(1)
 			},
 			req: &accountproto.DeleteAccountV2Request{
 				Email:          "bucketeer@example.com",
