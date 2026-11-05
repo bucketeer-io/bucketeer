@@ -110,29 +110,34 @@ func TestServingBasic(t *testing.T) {
 	assert.False(t, hasHoldoutReason(other.Evaluations.Evaluations))
 
 	t.Run("REST", func(t *testing.T) {
-		resp := util.GetEvaluationsRaw(t, restEvaluationsBody(s.tag, s.heldOut, "", 0), *gatewayAddr, holdoutEnv.clientKeyPath)
-		requireHoldoutEvaluation(t, resp.Evaluations.Evaluations, s.flag.Id, s.holdoutVariation(), s.group.Id)
-		assert.Equal(t, held.UserEvaluationsId, resp.UserEvaluationsID, "REST and gRPC agree on the UEID")
-		resp = util.GetEvaluationsRaw(t, restEvaluationsBody(s.tag, s.notHeldOut, "", 0), *gatewayAddr, holdoutEnv.clientKeyPath)
-		requireNormalEvaluation(t, resp.Evaluations.Evaluations, s.flag.Id, s.onVariation(), featureproto.Reason_DEFAULT)
+		heldEvals, heldUEID := waitForHoldoutRESTGetEvaluations(t, s.tag, s.heldOut, s.flag.Id, s.holdoutVariation(), s.group.Id)
+		requireHoldoutEvaluation(t, heldEvals, s.flag.Id, s.holdoutVariation(), s.group.Id)
+		assert.Equal(t, held.UserEvaluationsId, heldUEID, "REST and gRPC agree on the UEID")
+		otherEvals := waitForNormalRESTGetEvaluations(t, s.tag, s.notHeldOut, s.flag.Id, s.onVariation(), featureproto.Reason_DEFAULT)
+		requireNormalEvaluation(t, otherEvals, s.flag.Id, s.onVariation(), featureproto.Reason_DEFAULT)
 	})
 	t.Run("SSE initial put", func(t *testing.T) {
-		stream := util.ConnectStream(t, *gatewayAddr, holdoutEnv.clientKeyPath, util.StreamBody(s.tag, s.heldOut))
-		put := stream.WaitForEvent(t, util.SSEEventPut, timeout, nil)
+		var put *gatewayproto.StreamEvaluationsEvent
+		require.Eventually(t, func() bool {
+			stream := util.ConnectStream(t, *gatewayAddr, holdoutEnv.clientKeyPath, util.StreamBody(s.tag, s.heldOut))
+			put = stream.WaitForEvent(t, util.SSEEventPut, timeout, nil)
+			stream.Close()
+			e := findEvaluation(put.Evaluations.Evaluations, s.flag.Id)
+			return holdoutEvaluationVisible(e, s.flag.Id, s.holdoutVariation(), s.group.Id)
+		}, cachePropagationTimeout, pollInterval, "holdout for %s never reached SSE initial put", s.flag.Id)
 		requireHoldoutEvaluation(t, put.Evaluations.Evaluations, s.flag.Id, s.holdoutVariation(), s.group.Id)
 		// The stream hashes the unfiltered flag list into its ID (see
 		// evaluateFeaturesForStream), so it is not compared with the poll ID.
 		assert.NotEmpty(t, put.UserEvaluationsId)
-		stream.Close()
 	})
 	t.Run("GetEvaluation single flag", func(t *testing.T) {
 		// RFC §4.3.1 B8: the single-flag path shares the evaluator.
-		resp := grpcGetEvaluation(t, s.tag, s.flag.Id, s.heldOut)
+		resp := waitForHoldoutGRPCGetEvaluation(t, s.tag, s.flag.Id, s.heldOut, s.holdoutVariation(), s.group.Id)
 		requireHoldoutEvaluation(t, []*featureproto.Evaluation{resp.Evaluation}, s.flag.Id, s.holdoutVariation(), s.group.Id)
 		resp = grpcGetEvaluation(t, s.tag, s.flag.Id, s.notHeldOut)
 		requireNormalEvaluation(t, []*featureproto.Evaluation{resp.Evaluation}, s.flag.Id, s.onVariation(), featureproto.Reason_DEFAULT)
-		rest := util.GetEvaluation(t, s.tag, s.flag.Id, s.heldOut, *gatewayAddr, holdoutEnv.clientKeyPath)
-		requireHoldoutEvaluation(t, []*featureproto.Evaluation{rest.Evaluation}, s.flag.Id, s.holdoutVariation(), s.group.Id)
+		restEval := waitForHoldoutRESTGetEvaluation(t, s.tag, s.flag.Id, s.heldOut, s.holdoutVariation(), s.group.Id)
+		requireHoldoutEvaluation(t, []*featureproto.Evaluation{restEval}, s.flag.Id, s.holdoutVariation(), s.group.Id)
 	})
 
 	cleared := s.stop(t, client)
