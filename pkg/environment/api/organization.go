@@ -761,10 +761,13 @@ func (s *EnvironmentService) validateOwnershipTransfer(
 
 	// An unchanged owner email is not an ownership transfer, so it is accepted
 	// alongside other changes and only rejected when nothing else changes.
+	// It is dropped from the update so that it cannot write back an owner that a
+	// concurrent ownership transfer has replaced.
 	if newOwnerEmail == organization.OwnerEmail {
 		if req.Name == nil && req.Description == nil {
 			return statusNoCommand.Err()
 		}
+		req.OwnerEmail = nil
 		return nil
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,7 +22,10 @@ import (
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
@@ -1057,7 +1061,25 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 				}, nil)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				// Ownership is transferred concurrently before the transaction starts.
+				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
+					gomock.Any(), "org-1",
+				).Return(&domain.Organization{
+					Organization: &proto.Organization{
+						Id:         "org-1",
+						OwnerEmail: "new-owner@example.com",
+					},
+				}, nil)
+				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().UpdateOrganization(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(_ context.Context, org *domain.Organization) error {
+					assert.Equal(t, "new-owner@example.com", org.OwnerEmail)
+					assert.Equal(t, "new description", org.Description)
+					return nil
+				})
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &proto.UpdateOrganizationRequest{
@@ -1387,4 +1409,43 @@ func TestUpdateOrganizationOwnerEmailAccountWithoutOwnerRole(t *testing.T) {
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
+}
+
+func TestUpdateOrganizationServiceTokenMaintainerWithoutOwnerRole(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := context.WithValue(context.TODO(), rpc.AccessTokenKey, &token.AccessToken{
+		Issuer:         "issuer",
+		Audience:       "audience",
+		Expiry:         time.Now().AddDate(100, 0, 0),
+		IssuedAt:       time.Now(),
+		Email:          "service@example.com",
+		IsSystemAdmin:  true,
+		IsServiceToken: true,
+	})
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		role.APIKeyTokenMDKey:      []string{"api-key-token"},
+		role.APIKeyMaintainerMDKey: []string{"owner@example.com"},
+		role.APIKeyNameMDKey:       []string{"api-key-name"},
+	})
+
+	// Owner email lookups and writes are not expected, so the mocks fail the
+	// test if the owner email fallback runs for the API key maintainer.
+	s := newEnvironmentService(t, mockController, nil)
+	s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+		gomock.Any(), gomock.Any(),
+	).Return(&accountproto.GetAccountV2Response{
+		Account: &accountproto.AccountV2{
+			Email:            "owner@example.com",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+		},
+	}, nil)
+
+	_, err := s.UpdateOrganization(ctx, &proto.UpdateOrganizationRequest{
+		Id:          "org-1",
+		Description: wrapperspb.String("new description"),
+	})
+	assert.Equal(t, statusPermissionDenied.Err(), err)
 }
