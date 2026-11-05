@@ -23,6 +23,8 @@ import (
 
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	accdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	v2acc "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
@@ -528,7 +530,7 @@ func (s *EnvironmentService) UpdateOrganization(
 	ctx context.Context,
 	req *environmentproto.UpdateOrganizationRequest,
 ) (*environmentproto.UpdateOrganizationResponse, error) {
-	editor, err := s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_OWNER)
+	editor, err := s.checkOrganizationOwner(ctx, req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -612,6 +614,82 @@ func (s *EnvironmentService) UpdateOrganization(
 	return &environmentproto.UpdateOrganizationResponse{}, nil
 }
 
+// checkOrganizationOwner authorizes the organization owner, which is the account
+// holding the OWNER role or the account referenced by the organization's owner
+// email. Accounts created before the owner account's role was protected may be
+// referenced by the owner email without holding the OWNER role, and since that
+// role can no longer be changed through the account update, the owner email
+// account must still be able to update the organization and transfer ownership.
+// The owner email is stored as it was typed when ownership was set, so it is
+// resolved to its account and the stored emails of the two accounts are compared.
+func (s *EnvironmentService) checkOrganizationOwner(
+	ctx context.Context,
+	organizationID string,
+) (*eventproto.Editor, error) {
+	editor, err := s.checkOrganizationRole(ctx, organizationID, accountproto.AccountV2_Role_Organization_OWNER)
+	if status.Code(err) != codes.PermissionDenied {
+		return editor, err
+	}
+	token, ok := rpc.GetAccessToken(ctx)
+	if !ok || token.IsServiceToken {
+		return nil, err
+	}
+	organization, orgErr := s.orgStorage.GetOrganization(ctx, organizationID)
+	if orgErr != nil {
+		if errors.Is(orgErr, v2es.ErrOrganizationNotFound) {
+			return nil, err
+		}
+		return nil, s.reportCheckOrganizationOwnerError(ctx, organizationID, orgErr)
+	}
+	owner, ownerErr := s.accountStorage.GetAccountV2(ctx, organization.OwnerEmail, organizationID)
+	if ownerErr != nil {
+		if errors.Is(ownerErr, v2acc.ErrAccountNotFound) {
+			return nil, err
+		}
+		return nil, s.reportCheckOrganizationOwnerError(ctx, organizationID, ownerErr)
+	}
+	caller, callerErr := s.accountStorage.GetAccountV2(ctx, token.Email, organizationID)
+	if callerErr != nil {
+		if errors.Is(callerErr, v2acc.ErrAccountNotFound) {
+			return nil, err
+		}
+		return nil, s.reportCheckOrganizationOwnerError(ctx, organizationID, callerErr)
+	}
+	if caller.Email != owner.Email || caller.Disabled {
+		return nil, err
+	}
+	s.logger.Warn(
+		"Authorized the organization owner email account without the OWNER role",
+		log.FieldsFromIncomingContext(ctx).AddFields(
+			zap.String("organizationId", organizationID),
+			zap.String("email", caller.Email),
+			zap.String("organizationRole", caller.OrganizationRole.String()),
+		)...,
+	)
+	return &eventproto.Editor{
+		Email:            token.Email,
+		Name:             token.Name,
+		IsAdmin:          token.IsSystemAdmin,
+		EnvironmentRoles: caller.EnvironmentRoles,
+		OrganizationRole: caller.OrganizationRole,
+	}, nil
+}
+
+func (s *EnvironmentService) reportCheckOrganizationOwnerError(
+	ctx context.Context,
+	organizationID string,
+	err error,
+) error {
+	s.logger.Error(
+		"Failed to check the organization owner",
+		log.FieldsFromIncomingContext(ctx).AddFields(
+			zap.Error(err),
+			zap.String("organizationId", organizationID),
+		)...,
+	)
+	return api.NewGRPCStatus(err).Err()
+}
+
 func (s *EnvironmentService) reportUpdateOrganizationError(
 	ctx context.Context,
 	err error,
@@ -663,9 +741,13 @@ func (s *EnvironmentService) validateOwnershipTransfer(
 
 	newOwnerEmail := req.OwnerEmail.Value
 
-	// Don't allow no-op updates (setting same owner)
+	// An unchanged owner email is not an ownership transfer, so it is accepted
+	// alongside other changes and only rejected when nothing else changes.
 	if newOwnerEmail == organization.OwnerEmail {
-		return statusNoCommand.Err()
+		if req.Name == nil && req.Description == nil {
+			return statusNoCommand.Err()
+		}
+		return nil
 	}
 
 	// If not system admin, ensure current user is actually the current owner
