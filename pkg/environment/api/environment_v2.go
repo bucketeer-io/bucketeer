@@ -169,8 +169,10 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 		return nil, err
 	}
 
+	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
-		e, err := domainevent.NewAdminEvent(
+		var err error
+		event, err = domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_ENVIRONMENT,
 			newEnvironment.Id,
@@ -193,9 +195,6 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 		if err != nil {
 			return err
 		}
-		if err := s.publisher.Publish(ctx, e); err != nil {
-			return err
-		}
 		return s.environmentStorage.CreateEnvironmentV2(ctxWithTx, newEnvironment)
 	})
 	if err != nil {
@@ -207,6 +206,9 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err := s.publishDomainEvent(ctx, event); err != nil {
+		return nil, err
 	}
 	return &environmentproto.CreateEnvironmentV2Response{
 		Environment: newEnvironment.EnvironmentV2,
@@ -264,6 +266,7 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 		return nil, err
 	}
 
+	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		environment, err := s.environmentStorage.GetEnvironmentV2(ctxWithTx, req.Id)
 		if err != nil {
@@ -281,7 +284,7 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 		if err != nil {
 			return err
 		}
-		event, err := domainevent.NewAdminEvent(
+		event, err = domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_ENVIRONMENT,
 			environment.Id,
@@ -297,9 +300,6 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 			environment,
 		)
 		if err != nil {
-			return err
-		}
-		if err := s.publisher.Publish(ctx, event); err != nil {
 			return err
 		}
 		return s.environmentStorage.UpdateEnvironmentV2(ctxWithTx, updated)
@@ -333,6 +333,9 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 			log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err := s.publishDomainEvent(ctx, event); err != nil {
+		return nil, err
 	}
 	return &environmentproto.UpdateEnvironmentV2Response{}, nil
 }
