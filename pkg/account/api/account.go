@@ -746,7 +746,7 @@ func (s *AccountService) DeleteAccountV2(
 				zap.String("email", req.Email),
 			)...,
 		)
-		return nil, api.NewGRPCStatus(err).Err()
+		return nil, statusInternal.Err()
 	}
 	return &accountproto.DeleteAccountV2Response{}, nil
 }

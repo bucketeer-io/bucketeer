@@ -1124,7 +1124,7 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success",
