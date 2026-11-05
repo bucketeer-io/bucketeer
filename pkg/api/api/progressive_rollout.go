@@ -162,6 +162,7 @@ func (s *grpcGatewayService) StopProgressiveRollout(
 		&autoops.StopProgressiveRolloutRequest{
 			EnvironmentId: envAPIKey.Environment.Id,
 			Id:            req.Id,
+			StoppedBy:     req.StoppedBy,
 		},
 	)
 	if err != nil {
@@ -302,6 +303,7 @@ func (s *grpcGatewayService) ExecuteProgressiveRollout(
 		&autoops.ExecuteProgressiveRolloutRequest{
 			EnvironmentId: envAPIKey.Environment.Id,
 			Id:            req.Id,
+			ScheduleId:    req.ScheduleId,
 		},
 	)
 	if err != nil {
