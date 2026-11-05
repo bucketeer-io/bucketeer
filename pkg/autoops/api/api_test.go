@@ -412,7 +412,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
 				},
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success event rate",
@@ -793,7 +793,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				},
 			},
 			expected:    nil,
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success",
@@ -1001,7 +1001,7 @@ func TestStopAutoOpsRuleMySQL(t *testing.T) {
 				Id:            "aid1",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success",
@@ -1134,7 +1134,7 @@ func TestDeleteAutoOpsRuleMySQL(t *testing.T) {
 				Id:            "aid1",
 				EnvironmentId: "ns0",
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success",
@@ -1529,7 +1529,7 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				ClauseId:      "testClauseId",
 			},
-			expectedErr: errors.Join(api.NewGRPCStatus(errPublish).Err()),
+			expectedErr: errors.Join(statusInternal.Err()),
 		},
 		{
 			desc: "err: every publish fails after commit, all errors are returned",
@@ -1567,8 +1567,8 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				ClauseId:      "testClauseId",
 			},
 			expectedErr: errors.Join(
-				api.NewGRPCStatus(errPublish).Err(),
-				api.NewGRPCStatus(errPublish).Err(),
+				statusInternal.Err(),
+				statusInternal.Err(),
 			),
 		},
 		{

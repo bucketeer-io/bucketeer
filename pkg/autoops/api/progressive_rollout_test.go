@@ -877,7 +877,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					Increments:         2,
 				},
 			},
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success",
