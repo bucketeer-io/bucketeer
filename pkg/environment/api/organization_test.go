@@ -1300,8 +1300,34 @@ func TestUpdateOrganizationOwnerEmailAccountWithoutOwnerRole(t *testing.T) {
 				mockAccount(s, "new-owner@example.com", "new-owner@example.com", false)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				mockOrganization(s, "Email")
+				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().UpdateOrganization(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(_ context.Context, org *domain.Organization) error {
+					assert.Equal(t, "new-owner@example.com", org.OwnerEmail)
+					return nil
+				})
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+				// updateOwnerRole
+				mockAccount(s, "Email", "email", false)
+				mockAccount(s, "new-owner@example.com", "new-owner@example.com", false)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(_ context.Context, acc *accountdomain.AccountV2) error {
+					assert.Equal(t, "email", acc.Email)
+					assert.Equal(t, accountproto.AccountV2_Role_Organization_ADMIN, acc.OrganizationRole)
+					return nil
+				})
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(_ context.Context, acc *accountdomain.AccountV2) error {
+					assert.Equal(t, "new-owner@example.com", acc.Email)
+					assert.Equal(t, accountproto.AccountV2_Role_Organization_OWNER, acc.OrganizationRole)
+					return nil
+				})
 			},
 			req: &proto.UpdateOrganizationRequest{
 				Id:         "org-1",
