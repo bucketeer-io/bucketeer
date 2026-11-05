@@ -62,6 +62,21 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 			expectedErr: statusSourceTypesRequired.Err(),
 		},
 		{
+			desc: "err: ErrUnknownSourceType",
+			input: &proto.CreateSubscriptionRequest{
+				Name: "sname",
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_FEATURE,
+					proto.Subscription_SourceType(999),
+				},
+				Recipient: &proto.Recipient{
+					Type:                  proto.Recipient_SlackChannel,
+					SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: slackWebhookURL},
+				},
+			},
+			expectedErr: statusUnknownSourceType.Err(),
+		},
+		{
 			desc: "err: ErrRecipientRequired",
 			input: &proto.CreateSubscriptionRequest{
 				Name: "sname",
@@ -212,6 +227,17 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 			desc:        "err: ErrIDRequired",
 			input:       &proto.UpdateSubscriptionRequest{},
 			expectedErr: statusIDRequired.Err(),
+		},
+		{
+			desc: "err: ErrUnknownSourceType",
+			input: &proto.UpdateSubscriptionRequest{
+				Id: "key-1",
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_FEATURE,
+					proto.Subscription_SourceType(-1),
+				},
+			},
+			expectedErr: statusUnknownSourceType.Err(),
 		},
 		{
 			desc: "err: ErrNotFound",

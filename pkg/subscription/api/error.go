@@ -31,6 +31,11 @@ var (
 		"notification types must be specified",
 		"NotificationType",
 	))
+	statusUnknownSourceType = api.NewGRPCStatus(err.NewErrorInvalidArgUnknown(
+		err.SubscriptionPackageName,
+		"unknown notification type",
+		"NotificationType",
+	))
 	statusUnknownRecipient = api.NewGRPCStatus(
 		err.NewErrorInvalidArgUnknown(err.SubscriptionPackageName, "unknown recipient", "NotificationRecipient"),
 	)

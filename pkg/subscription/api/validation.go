@@ -47,6 +47,9 @@ func (s *SubscriptionService) validateCreateSubscriptionRequest(
 	if len(req.SourceTypes) == 0 {
 		return statusSourceTypesRequired.Err()
 	}
+	if err := validateSourceTypes(req.SourceTypes); err != nil {
+		return err
+	}
 	// We should only save the tags if the Feature source type is in the list
 	if req.FeatureFlagTags != nil {
 		var found bool
@@ -103,6 +106,21 @@ func (s *SubscriptionService) validateUpdateSubscriptionRequest(
 	}
 	if req.Name != nil && req.Name.Value == "" {
 		return statusNameRequired.Err()
+	}
+	if err := validateSourceTypes(req.SourceTypes); err != nil {
+		return err
+	}
+	return nil
+}
+
+// validateSourceTypes rejects notification types that are not defined in the
+// enum. The JSON decoder accepts any integer for an enum field, and an
+// undefined type would be stored but never match an event.
+func validateSourceTypes(sourceTypes []subscriptionproto.Subscription_SourceType) error {
+	for _, sourceType := range sourceTypes {
+		if _, ok := subscriptionproto.Subscription_SourceType_name[int32(sourceType)]; !ok {
+			return statusUnknownSourceType.Err()
+		}
 	}
 	return nil
 }
