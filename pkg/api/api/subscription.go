@@ -96,6 +96,18 @@ func (s *grpcGatewayService) ListSubscriptions(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListSubscriptions, "").Inc()
 
+	// The list is scoped to the key's organization. Without it the backend
+	// falls back to an environment lookup with an empty ID, and a caller-supplied
+	// organization would be trusted as-is.
+	if envAPIKey.Environment.OrganizationId == "" {
+		return nil, ErrInvalidAPIKey
+	}
+	if req.OrganizationId != "" && req.OrganizationId != envAPIKey.Environment.OrganizationId {
+		return nil, ErrNotFound
+	}
+	// Act as the key's maintainer so the backend applies its membership and
+	// environment role checks instead of the gateway's service token access.
+	ctx = metadata.NewOutgoingContext(ctx, publicAPIEditorMetadata(envAPIKey))
 	res, err := s.subscriptionClient.ListSubscriptions(ctx, &subscription.ListSubscriptionsRequest{
 		PageSize:       req.PageSize,
 		Cursor:         req.Cursor,
@@ -105,7 +117,7 @@ func (s *grpcGatewayService) ListSubscriptions(
 		SearchKeyword:  req.SearchKeyword,
 		Disabled:       req.Disabled,
 		EnvironmentIds: req.EnvironmentIds,
-		OrganizationId: req.OrganizationId,
+		OrganizationId: envAPIKey.Environment.OrganizationId,
 	})
 	if err != nil {
 		s.logger.Error("Failed to list subscriptions",
