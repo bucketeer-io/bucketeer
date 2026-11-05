@@ -280,6 +280,10 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	// Create feature
 	req := newCreateFeatureReq(newFeatureID(t))
 	createFeature(t, client, req)
+	createdFeature := getFeature(t, req.Id, client)
+	if createdFeature.Enabled {
+		t.Fatalf("unexpected enabled: %v", createdFeature.Enabled)
+	}
 	// Create Enable flag triggers
 	enableTrigger, err := client.CreateFlagTrigger(context.Background(), newCreateFlagTriggerReq(
 		req.Id,
@@ -301,6 +305,10 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	enabledFeature := getFeature(t, req.Id, client)
 	if enabledFeature.Enabled != true {
 		t.Fatalf("unexpected enabled: %v", enabledFeature.Enabled)
+	}
+	if enabledFeature.Version != createdFeature.Version+1 {
+		t.Fatalf("unexpected version after enable: %d, expected: %d",
+			enabledFeature.Version, createdFeature.Version+1)
 	}
 	enabledTrigger := getFeatureFlagTrigger(t, client, &featureproto.GetFlagTriggerRequest{
 		Id:            enableTrigger.FlagTrigger.Id,
@@ -333,6 +341,10 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	disabledFeature := getFeature(t, req.Id, client)
 	if disabledFeature.Enabled != false {
 		t.Fatalf("unexpected enabled: %v", disabledFeature.Enabled)
+	}
+	if disabledFeature.Version != enabledFeature.Version+1 {
+		t.Fatalf("unexpected version after disable: %d, expected: %d",
+			disabledFeature.Version, enabledFeature.Version+1)
 	}
 	disabledTrigger := getFeatureFlagTrigger(t, client, &featureproto.GetFlagTriggerRequest{
 		Id:            disableTrigger.FlagTrigger.Id,
