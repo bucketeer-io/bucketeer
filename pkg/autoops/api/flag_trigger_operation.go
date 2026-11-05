@@ -17,50 +17,44 @@ package api
 import (
 	"context"
 
-	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
+// executeAutoOpsRuleOperation applies the action to the feature inside the
+// caller's transaction and returns the feature domain event describing the
+// change. The event is nil when the feature was already in the requested
+// state. The caller must publish the event after the transaction commits.
 func executeAutoOpsRuleOperation(
 	ctx context.Context,
 	ftStorage ftstorage.FeatureStorage,
 	environmentId string,
 	actionType autoopsproto.ActionType,
 	feature *ftdomain.Feature,
-	logger *zap.Logger,
-	publisher publisher.Publisher,
 	editor *eventproto.Editor,
-) error {
+) (*eventproto.Event, error) {
 	switch actionType {
 	case autoopsproto.ActionType_ENABLE:
-		return enableFeature(ctx, ftStorage, environmentId, feature, logger, publisher, editor)
+		return enableFeature(ctx, ftStorage, environmentId, feature, editor)
 	case autoopsproto.ActionType_DISABLE:
-		return disableFeature(ctx, ftStorage, environmentId, feature, logger, publisher, editor)
+		return disableFeature(ctx, ftStorage, environmentId, feature, editor)
 	}
-	return statusUnknownOpsType.Err()
+	return nil, statusUnknownOpsType.Err()
 }
 
-// If the flag is already enabled, we only print an error log.
-// Otherwise, the Operation state won't change to TRIGGERED, keeping in an infinite loop
-// trying to enable the flag.
 func enableFeature(
 	ctx context.Context,
 	ftStorage ftstorage.FeatureStorage,
 	environmentId string,
 	feature *ftdomain.Feature,
-	logger *zap.Logger,
-	publisher publisher.Publisher,
 	editor *eventproto.Editor,
-) error {
-	// Use domain layer Update method which handles validation and version incrementing
+) (*eventproto.Event, error) {
 	updatedFeature, err := feature.Update(
 		nil,                                // name
 		nil,                                // description
@@ -80,47 +74,34 @@ func enableFeature(
 		nil,                                // variationValueSchemaUpdate
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Only update storage if there were actual changes
-	if updatedFeature.Version > feature.Version {
-		// Update storage first
-		if err := ftStorage.UpdateFeature(ctx, updatedFeature, environmentId); err != nil {
-			return err
-		}
-
-		// Publish feature domain event
-		publishFeatureEvent(
-			ctx,
-			publisher,
-			editor,
-			feature,
-			environmentId,
-			updatedFeature,
-			eventproto.Event_FEATURE_ENABLED,
-			&eventproto.FeatureEnabledEvent{Id: feature.Id},
-			"Enabled by auto operation",
-			logger,
-		)
+	if updatedFeature.Version <= feature.Version {
+		return nil, nil
 	}
-
-	return nil
+	if err := ftStorage.UpdateFeature(ctx, updatedFeature, environmentId); err != nil {
+		return nil, err
+	}
+	return newFeatureEvent(
+		editor,
+		feature,
+		environmentId,
+		updatedFeature,
+		eventproto.Event_FEATURE_ENABLED,
+		&eventproto.FeatureEnabledEvent{Id: feature.Id},
+		"Enabled by auto operation",
+	)
 }
 
-// If the flag is already disabled, we only print an error log.
-// Otherwise, the Operation state won't change to TRIGGERED, keeping in an infinite loop
-// trying to disable the flag.
 func disableFeature(
 	ctx context.Context,
 	ftStorage ftstorage.FeatureStorage,
 	environmentId string,
 	feature *ftdomain.Feature,
-	logger *zap.Logger,
-	publisher publisher.Publisher,
 	editor *eventproto.Editor,
-) error {
-	// Use domain layer Update method which handles validation and version incrementing
+) (*eventproto.Event, error) {
 	updatedFeature, err := feature.Update(
 		nil,                                 // name
 		nil,                                 // description
@@ -140,37 +121,28 @@ func disableFeature(
 		nil,                                 // variationValueSchemaUpdate
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Only update storage if there were actual changes
-	if updatedFeature.Version > feature.Version {
-		// Update storage first
-		if err := ftStorage.UpdateFeature(ctx, updatedFeature, environmentId); err != nil {
-			return err
-		}
-
-		// Publish feature domain event
-		publishFeatureEvent(
-			ctx,
-			publisher,
-			editor,
-			feature,
-			environmentId,
-			updatedFeature,
-			eventproto.Event_FEATURE_DISABLED,
-			&eventproto.FeatureDisabledEvent{Id: feature.Id},
-			"Disabled by auto operation",
-			logger,
-		)
+	if updatedFeature.Version <= feature.Version {
+		return nil, nil
 	}
-
-	return nil
+	if err := ftStorage.UpdateFeature(ctx, updatedFeature, environmentId); err != nil {
+		return nil, err
+	}
+	return newFeatureEvent(
+		editor,
+		feature,
+		environmentId,
+		updatedFeature,
+		eventproto.Event_FEATURE_DISABLED,
+		&eventproto.FeatureDisabledEvent{Id: feature.Id},
+		"Disabled by auto operation",
+	)
 }
 
-func publishFeatureEvent(
-	ctx context.Context,
-	publisher publisher.Publisher,
+func newFeatureEvent(
 	editor *eventproto.Editor,
 	feature *ftdomain.Feature,
 	environmentId string,
@@ -178,9 +150,8 @@ func publishFeatureEvent(
 	eventType eventproto.Event_Type,
 	eventData proto.Message,
 	comment string,
-	logger *zap.Logger,
-) {
-	featureEvent, err := domainevent.NewEvent(
+) (*eventproto.Event, error) {
+	return domainevent.NewEvent(
 		editor,
 		eventproto.Event_FEATURE,
 		feature.Id,
@@ -192,14 +163,4 @@ func publishFeatureEvent(
 		domainevent.WithComment(comment),
 		domainevent.WithNewVersion(updatedFeature.Version),
 	)
-	if err != nil {
-		logger.Error("Failed to create feature domain event", zap.Error(err))
-		// Don't return error to avoid breaking auto ops execution
-	} else {
-		// Publish feature domain event
-		if err := publisher.Publish(ctx, featureEvent); err != nil {
-			logger.Error("Failed to publish feature domain event", zap.Error(err))
-			// Don't return error to avoid breaking auto ops execution
-		}
-	}
 }

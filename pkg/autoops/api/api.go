@@ -170,8 +170,10 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 		}
 	}
 
+	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
-		e, err := domainevent.NewEvent(
+		var err error
+		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_AUTOOPS_RULE,
 			autoOpsRule.Id,
@@ -191,9 +193,6 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 		if err != nil {
 			return err
 		}
-		if err := s.publisher.Publish(ctx, e); err != nil {
-			return err
-		}
 		return s.autoOpsStorage.CreateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
 	})
 	if err != nil {
@@ -208,6 +207,9 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 			)...,
 		)
 		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err := s.publishDomainEvent(ctx, event); err != nil {
+		return nil, err
 	}
 	return &autoopsproto.CreateAutoOpsRuleResponse{
 		AutoOpsRule: autoOpsRule.AutoOpsRule,
@@ -469,6 +471,7 @@ func (s *AutoOpsService) StopAutoOpsRule(
 		return nil, err
 	}
 
+	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -482,7 +485,7 @@ func (s *AutoOpsService) StopAutoOpsRule(
 		if err != nil {
 			return err
 		}
-		event, err := domainevent.NewEvent(
+		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_AUTOOPS_RULE,
 			autoOpsRule.Id,
@@ -497,13 +500,13 @@ func (s *AutoOpsService) StopAutoOpsRule(
 		if err != nil {
 			return err
 		}
-		if err := s.publisher.Publish(ctx, event); err != nil {
-			return err
-		}
 		return s.autoOpsStorage.UpdateAutoOpsRule(contextWithTx, updated, req.EnvironmentId)
 	})
 
 	if err != nil {
+		return nil, err
+	}
+	if err := s.publishDomainEvent(ctx, event); err != nil {
 		return nil, err
 	}
 	return &autoopsproto.StopAutoOpsRuleResponse{}, nil
@@ -530,13 +533,14 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 		return nil, err
 	}
 
+	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
 		autoOpsRule.SetDeleted()
-		e, err := domainevent.NewEvent(
+		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_AUTOOPS_RULE,
 			autoOpsRule.Id,
@@ -547,9 +551,6 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 			autoOpsRule.AutoOpsRule, // Previous state: what was deleted
 		)
 		if err != nil {
-			return err
-		}
-		if err := s.publisher.Publish(ctx, e); err != nil {
 			return err
 		}
 		return s.autoOpsStorage.UpdateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
@@ -565,7 +566,10 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-
+		return nil, api.NewGRPCStatus(err).Err()
+	}
+	if err := s.publishDomainEvent(ctx, event); err != nil {
+		return nil, err
 	}
 	return &autoopsproto.DeleteAutoOpsRuleResponse{}, nil
 }
@@ -724,24 +728,13 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 		if err != nil {
 			return err
 		}
-		if err := s.publisher.Publish(ctx, event); err != nil {
-			return err
-		}
 		return s.autoOpsStorage.UpdateAutoOpsRule(contextWithTx, updated, req.EnvironmentId)
 	})
 	if err != nil {
 		return nil, s.returnUpdateAutoOpsRuleError(ctx, req, err)
 	}
-	err = s.publisher.Publish(ctx, event)
-	if err != nil {
-		s.logger.Error(
-			"Failed to publish event",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
+	if err := s.publishDomainEvent(ctx, event); err != nil {
+		return nil, err
 	}
 	return &autoopsproto.UpdateAutoOpsRuleResponse{}, nil
 }
@@ -938,6 +931,9 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: true}, nil
 	}
 
+	// featureEvent is nil when the flag was already in the requested state.
+	// event is nil when the rule row was not updated (no rows affected).
+	var event, featureEvent *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -976,16 +972,15 @@ func (s *AutoOpsService) ExecuteAutoOps(
 				return err
 			}
 		}
-		if err := executeAutoOpsRuleOperation(
+		featureEvent, err = executeAutoOpsRuleOperation(
 			contextWithTx,
 			s.featureStorage,
 			req.EnvironmentId,
 			executeClause.ActionType,
 			feature,
-			s.logger,
-			s.publisher,
 			editor,
-		); err != nil {
+		)
+		if err != nil {
 			s.logger.Error(
 				"Failed to execute auto ops rule operation",
 				log.FieldsFromIncomingContext(ctx).AddFields(
@@ -1015,26 +1010,6 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if err != nil {
 			return err
 		}
-
-		event, err := domainevent.NewEvent(
-			editor,
-			eventproto.Event_AUTOOPS_RULE,
-			autoOpsRule.Id,
-			eventproto.Event_AUTOOPS_RULE_OPS_STATUS_CHANGED,
-			&eventproto.AutoOpsRuleOpsStatusChangedEvent{
-				OpsStatus: opsStatus,
-			},
-			req.EnvironmentId,
-			autoOpsRule,
-			autoOpsRule,
-		)
-		if err != nil {
-			return err
-		}
-		if err := s.publisher.Publish(ctx, event); err != nil {
-			return err
-		}
-
 		if err = s.autoOpsStorage.UpdateAutoOpsRule(contextWithTx, updated, req.EnvironmentId); err != nil {
 			if errors.Is(err, v2as.ErrAutoOpsRuleUnexpectedAffectedRows) {
 				s.logger.Warn(
@@ -1049,7 +1024,19 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			}
 			return err
 		}
-		return nil
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_AUTOOPS_RULE,
+			autoOpsRule.Id,
+			eventproto.Event_AUTOOPS_RULE_OPS_STATUS_CHANGED,
+			&eventproto.AutoOpsRuleOpsStatusChangedEvent{
+				OpsStatus: opsStatus,
+			},
+			req.EnvironmentId,
+			autoOpsRule,
+			autoOpsRule,
+		)
+		return err
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAutoOpsRuleNotFound) {
@@ -1072,7 +1059,56 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
+	if err := s.publishDomainEvents(ctx, featureEvent, event); err != nil {
+		return nil, err
+	}
 	return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: false}, nil
+}
+
+// publishDomainEvents publishes the given events in order after the
+// transaction has committed, skipping nil entries (events that were not
+// produced because nothing changed).
+// Every event is attempted even if an earlier one fails, because all of them
+// describe changes that are already committed. The errors of all failed
+// publishes are joined and returned together.
+func (s *AutoOpsService) publishDomainEvents(
+	ctx context.Context,
+	events ...*eventproto.Event,
+) error {
+	var errs []error
+	for _, event := range events {
+		if event == nil {
+			continue
+		}
+		if err := s.publishDomainEvent(ctx, event); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
+}
+
+// publishDomainEvent publishes a domain event after the transaction that
+// produced it has committed. Publishing inside the transaction would emit the
+// event even when the transaction is rolled back afterwards.
+// On failure it logs the publisher error and returns statusInternal, so the
+// caller does not receive a success response for a committed change whose
+// event was never published, and the publisher's error text does not leak
+// into the response.
+func (s *AutoOpsService) publishDomainEvent(
+	ctx context.Context,
+	event *eventproto.Event,
+) error {
+	if err := s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish domain event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", event.EnvironmentId),
+			)...,
+		)
+		return statusInternal.Err()
+	}
+	return nil
 }
 
 func (s *AutoOpsService) stopProgressiveRollout(
