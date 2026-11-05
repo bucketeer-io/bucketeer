@@ -260,6 +260,7 @@ func (s *TeamService) DeleteTeam(
 		)
 		return nil, err
 	}
+	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		team, err := s.teamStorage.GetTeam(ctxWithTx, req.Id, req.OrganizationId)
 		if err != nil {
@@ -292,7 +293,7 @@ func (s *TeamService) DeleteTeam(
 		if err := s.teamStorage.DeleteTeam(ctxWithTx, req.Id); err != nil {
 			return err
 		}
-		event, err := domainevent.NewAdminEvent(
+		event, err = domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_TEAM,
 			req.Id,
@@ -305,10 +306,7 @@ func (s *TeamService) DeleteTeam(
 			nil,  // Current state: entity no longer exists
 			team, // Previous state: what was deleted
 		)
-		if err != nil {
-			return err
-		}
-		return s.publisher.Publish(ctx, event)
+		return err
 	})
 	if err != nil {
 		if errors.Is(err, statusTeamInUsed.Err()) {
@@ -317,6 +315,9 @@ func (s *TeamService) DeleteTeam(
 		if errors.Is(err, storage.ErrTeamNotFound) {
 			return nil, statusTeamNotFound.Err()
 		}
+		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId)
+	}
+	if err := s.publisher.Publish(ctx, event); err != nil {
 		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId)
 	}
 	return &proto.DeleteTeamResponse{}, nil

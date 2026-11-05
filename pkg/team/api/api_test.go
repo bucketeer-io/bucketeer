@@ -25,6 +25,8 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
@@ -277,6 +279,12 @@ func TestTeamService_ListTeams(t *testing.T) {
 	}
 }
 
+var (
+	errStorage = bkterr.NewErrorInternal(bkterr.TeamPackageName, "storage error")
+	errCommit  = bkterr.NewErrorInternal(bkterr.TeamPackageName, "commit error")
+	errPublish = bkterr.NewErrorInternal(bkterr.TeamPackageName, "publish error")
+)
+
 func TestTeamService_DeleteTeam(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -369,6 +377,111 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 			expectedErr: statusTeamInUsed.Err(),
 		},
 		{
+			desc: "err: storage delete fails, event is not published",
+			ctx:  ctx,
+			setup: func(s *TeamService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().GetTeam(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Team{
+					Team: &proto.Team{
+						Id:             "team1",
+						OrganizationId: "ns0",
+					},
+				}, nil)
+				s.accountClient.(*accountclientmock.MockClient).EXPECT().ListAccountsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&accountproto.ListAccountsV2Response{}, nil)
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().DeleteTeam(
+					gomock.Any(), gomock.Any(),
+				).Return(errStorage)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Times(0)
+			},
+			req: &proto.DeleteTeamRequest{
+				OrganizationId: "ns0",
+				Id:             "team1",
+			},
+			expectedRes: nil,
+			expectedErr: api.NewGRPCStatus(errStorage).Err(),
+		},
+		{
+			desc: "err: commit fails, event is not published",
+			ctx:  ctx,
+			setup: func(s *TeamService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					if err := fn(ctx); err != nil {
+						return err
+					}
+					return errCommit
+				})
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().GetTeam(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Team{
+					Team: &proto.Team{
+						Id:             "team1",
+						OrganizationId: "ns0",
+					},
+				}, nil)
+				s.accountClient.(*accountclientmock.MockClient).EXPECT().ListAccountsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&accountproto.ListAccountsV2Response{}, nil)
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().DeleteTeam(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Times(0)
+			},
+			req: &proto.DeleteTeamRequest{
+				OrganizationId: "ns0",
+				Id:             "team1",
+			},
+			expectedRes: nil,
+			expectedErr: api.NewGRPCStatus(errCommit).Err(),
+		},
+		{
+			desc: "err: publish fails after commit",
+			ctx:  ctx,
+			setup: func(s *TeamService) {
+				s.dbClient.(*databasemock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().GetTeam(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Team{
+					Team: &proto.Team{
+						Id:             "team1",
+						OrganizationId: "ns0",
+					},
+				}, nil)
+				s.accountClient.(*accountclientmock.MockClient).EXPECT().ListAccountsV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&accountproto.ListAccountsV2Response{}, nil)
+				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().DeleteTeam(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(errPublish).Times(1)
+			},
+			req: &proto.DeleteTeamRequest{
+				OrganizationId: "ns0",
+				Id:             "team1",
+			},
+			expectedRes: nil,
+			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+		},
+		{
 			desc: "success",
 			ctx:  ctx,
 			setup: func(s *TeamService) {
@@ -393,7 +506,7 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Return(nil).Times(1)
 			},
 			req: &proto.DeleteTeamRequest{
 				OrganizationId: "ns0",
