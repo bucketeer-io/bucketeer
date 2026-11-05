@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,7 +22,10 @@ import (
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
@@ -1043,6 +1047,49 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 			expectedErr: statusNoCommand.Err(),
 		},
 		{
+			desc: "success: unchanged owner email with a description change",
+			ctx:  ctxAdmin,
+			setup: func(s *EnvironmentService) {
+				mockAdminOrgAuth(s)
+				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
+					gomock.Any(), "org-1",
+				).Return(&domain.Organization{
+					Organization: &proto.Organization{
+						Id:         "org-1",
+						OwnerEmail: "current-owner@example.com",
+					},
+				}, nil)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				// Ownership is transferred concurrently before the transaction starts.
+				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
+					gomock.Any(), "org-1",
+				).Return(&domain.Organization{
+					Organization: &proto.Organization{
+						Id:         "org-1",
+						OwnerEmail: "new-owner@example.com",
+					},
+				}, nil)
+				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().UpdateOrganization(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(_ context.Context, org *domain.Organization) error {
+					assert.Equal(t, "new-owner@example.com", org.OwnerEmail)
+					assert.Equal(t, "new description", org.Description)
+					return nil
+				})
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			req: &proto.UpdateOrganizationRequest{
+				Id:          "org-1",
+				Description: wrapperspb.String("new description"),
+				OwnerEmail:  wrapperspb.String("current-owner@example.com"),
+			},
+			expectedErr: nil,
+		},
+		{
 			desc: "err: non-owner trying to transfer ownership",
 			ctx:  ctxOwner,
 			setup: func(s *EnvironmentService) {
@@ -1061,6 +1108,16 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 						Id:         "org-1",
 						OwnerEmail: "current-owner@example.com", // Different from token email
 					},
+				}, nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), "current-owner@example.com", "org-1",
+				).Return(&accountdomain.AccountV2{
+					AccountV2: &accountproto.AccountV2{Email: "current-owner@example.com"},
+				}, nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), "email", "org-1",
+				).Return(&accountdomain.AccountV2{
+					AccountV2: &accountproto.AccountV2{Email: "email"},
 				}, nil)
 			},
 			req: &proto.UpdateOrganizationRequest{
@@ -1182,4 +1239,213 @@ func TestValidateOwnershipTransfer(t *testing.T) {
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
+}
+
+func TestUpdateOrganizationOwnerEmailAccountWithoutOwnerRole(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithTokenRoleUnassigned(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+
+	mockAdminRoleAuth := func(s *EnvironmentService) {
+		s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+			gomock.Any(), gomock.Any(),
+		).Return(&accountproto.GetAccountV2Response{
+			Account: &accountproto.AccountV2{
+				Email:            "email",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			},
+		}, nil)
+	}
+	mockOrganization := func(s *EnvironmentService, ownerEmail string) {
+		s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().GetOrganization(
+			gomock.Any(), "org-1",
+		).Return(&domain.Organization{
+			Organization: &proto.Organization{
+				Id:         "org-1",
+				OwnerEmail: ownerEmail,
+			},
+		}, nil)
+	}
+	mockAccount := func(s *EnvironmentService, lookupEmail, storedEmail string, disabled bool) {
+		s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+			gomock.Any(), lookupEmail, "org-1",
+		).Return(&accountdomain.AccountV2{
+			AccountV2: &accountproto.AccountV2{
+				Email:            storedEmail,
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+				Disabled:         disabled,
+			},
+		}, nil)
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*EnvironmentService)
+		req         *proto.UpdateOrganizationRequest
+		expectedErr error
+	}{
+		{
+			desc: "success: owner email account updates the description",
+			setup: func(s *EnvironmentService) {
+				mockAdminRoleAuth(s)
+				mockOrganization(s, "Email")
+				mockAccount(s, "Email", "email", false)
+				mockAccount(s, "email", "email", false)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			req: &proto.UpdateOrganizationRequest{
+				Id:          "org-1",
+				Description: wrapperspb.String("new description"),
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: owner email account transfers ownership",
+			setup: func(s *EnvironmentService) {
+				mockAdminRoleAuth(s)
+				// checkOrganizationOwner
+				mockOrganization(s, "Email")
+				mockAccount(s, "Email", "email", false)
+				mockAccount(s, "email", "email", false)
+				// validateOwnershipTransfer
+				mockOrganization(s, "Email")
+				mockAccount(s, "Email", "email", false)
+				mockAccount(s, "email", "email", false)
+				mockAccount(s, "new-owner@example.com", "new-owner@example.com", false)
+				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+					return fn(ctx)
+				})
+				mockOrganization(s, "Email")
+				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().UpdateOrganization(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(_ context.Context, org *domain.Organization) error {
+					assert.Equal(t, "new-owner@example.com", org.OwnerEmail)
+					return nil
+				})
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+				// updateOwnerRole
+				mockAccount(s, "Email", "email", false)
+				mockAccount(s, "new-owner@example.com", "new-owner@example.com", false)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(_ context.Context, acc *accountdomain.AccountV2) error {
+					assert.Equal(t, "email", acc.Email)
+					assert.Equal(t, accountproto.AccountV2_Role_Organization_ADMIN, acc.OrganizationRole)
+					return nil
+				})
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(_ context.Context, acc *accountdomain.AccountV2) error {
+					assert.Equal(t, "new-owner@example.com", acc.Email)
+					assert.Equal(t, accountproto.AccountV2_Role_Organization_OWNER, acc.OrganizationRole)
+					return nil
+				})
+			},
+			req: &proto.UpdateOrganizationRequest{
+				Id:         "org-1",
+				OwnerEmail: wrapperspb.String("new-owner@example.com"),
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "err: admin that is not the owner email account",
+			setup: func(s *EnvironmentService) {
+				mockAdminRoleAuth(s)
+				mockOrganization(s, "owner@example.com")
+				mockAccount(s, "owner@example.com", "owner@example.com", false)
+				mockAccount(s, "email", "email", false)
+			},
+			req: &proto.UpdateOrganizationRequest{
+				Id:          "org-1",
+				Description: wrapperspb.String("new description"),
+			},
+			expectedErr: statusPermissionDenied.Err(),
+		},
+		{
+			desc: "err: owner email does not reference an account",
+			setup: func(s *EnvironmentService) {
+				mockAdminRoleAuth(s)
+				mockOrganization(s, "owner@example.com")
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), "owner@example.com", "org-1",
+				).Return(nil, v2as.ErrAccountNotFound)
+			},
+			req: &proto.UpdateOrganizationRequest{
+				Id:          "org-1",
+				Description: wrapperspb.String("new description"),
+			},
+			expectedErr: statusPermissionDenied.Err(),
+		},
+		{
+			desc: "err: owner email account is disabled",
+			setup: func(s *EnvironmentService) {
+				mockAdminRoleAuth(s)
+				mockOrganization(s, "email")
+				mockAccount(s, "email", "email", true)
+				mockAccount(s, "email", "email", true)
+			},
+			req: &proto.UpdateOrganizationRequest{
+				Id:          "org-1",
+				Description: wrapperspb.String("new description"),
+			},
+			expectedErr: statusPermissionDenied.Err(),
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := newEnvironmentService(t, mockController, nil)
+			p.setup(s)
+			_, err := s.UpdateOrganization(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestUpdateOrganizationServiceTokenMaintainerWithoutOwnerRole(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := context.WithValue(context.TODO(), rpc.AccessTokenKey, &token.AccessToken{
+		Issuer:         "issuer",
+		Audience:       "audience",
+		Expiry:         time.Now().AddDate(100, 0, 0),
+		IssuedAt:       time.Now(),
+		Email:          "service@example.com",
+		IsSystemAdmin:  true,
+		IsServiceToken: true,
+	})
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		role.APIKeyTokenMDKey:      []string{"api-key-token"},
+		role.APIKeyMaintainerMDKey: []string{"owner@example.com"},
+		role.APIKeyNameMDKey:       []string{"api-key-name"},
+	})
+
+	// Owner email lookups and writes are not expected, so the mocks fail the
+	// test if the owner email fallback runs for the API key maintainer.
+	s := newEnvironmentService(t, mockController, nil)
+	s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+		gomock.Any(), gomock.Any(),
+	).Return(&accountproto.GetAccountV2Response{
+		Account: &accountproto.AccountV2{
+			Email:            "owner@example.com",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+		},
+	}, nil)
+
+	_, err := s.UpdateOrganization(ctx, &proto.UpdateOrganizationRequest{
+		Id:          "org-1",
+		Description: wrapperspb.String("new description"),
+	})
+	assert.Equal(t, statusPermissionDenied.Err(), err)
 }
