@@ -41,6 +41,8 @@ import (
 )
 
 var (
+	statusInternal = api.NewGRPCStatus(
+		bkterr.NewErrorInternal(bkterr.TeamPackageName, "internal"))
 	statusNameRequired = api.NewGRPCStatus(
 		bkterr.NewErrorInvalidArgEmpty(bkterr.TeamPackageName, "name must be specified", "Name"))
 	statusTeamIDRequired = api.NewGRPCStatus(
@@ -318,7 +320,15 @@ func (s *TeamService) DeleteTeam(
 		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId)
 	}
 	if err := s.publisher.Publish(ctx, event); err != nil {
-		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId)
+		s.logger.Error(
+			"Failed to publish domain event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationId", req.OrganizationId),
+				zap.String("teamId", req.Id),
+			)...,
+		)
+		return nil, statusInternal.Err()
 	}
 	return &proto.DeleteTeamResponse{}, nil
 }

@@ -479,7 +479,7 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 				Id:             "team1",
 			},
 			expectedRes: nil,
-			expectedErr: api.NewGRPCStatus(errPublish).Err(),
+			expectedErr: statusInternal.Err(),
 		},
 		{
 			desc: "success",
