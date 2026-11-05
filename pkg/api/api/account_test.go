@@ -5,12 +5,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	environmentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
@@ -341,7 +344,7 @@ func TestGrpcGetAccountV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK_CLIENT,
@@ -357,7 +360,7 @@ func TestGrpcGetAccountV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -375,7 +378,7 @@ func TestGrpcGetAccountV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -393,7 +396,7 @@ func TestGrpcGetAccountV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -451,7 +454,7 @@ func TestGrpcGetAccountV2ByEnvironmentID(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK_CLIENT,
@@ -467,7 +470,7 @@ func TestGrpcGetAccountV2ByEnvironmentID(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -485,7 +488,7 @@ func TestGrpcGetAccountV2ByEnvironmentID(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -503,7 +506,7 @@ func TestGrpcGetAccountV2ByEnvironmentID(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -537,7 +540,7 @@ func TestGrpcGetAccountV2ByEnvironmentID(t *testing.T) {
 			ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
 				"authorization": []string{"test-key"},
 			})
-			actual, err := gs.GetAccountV2ByEnvironmentID(ctx, &gwproto.GetAccountV2ByEnvironmentIDRequest{})
+			actual, err := gs.GetAccountV2ByEnvironmentID(ctx, &gwproto.GetAccountV2ByEnvironmentIDRequest{EnvironmentId: "ns0"})
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
@@ -669,7 +672,7 @@ func TestGrpcListAccountsV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_SDK_CLIENT,
@@ -685,7 +688,7 @@ func TestGrpcListAccountsV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -703,7 +706,7 @@ func TestGrpcListAccountsV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -721,7 +724,7 @@ func TestGrpcListAccountsV2(t *testing.T) {
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -780,4 +783,150 @@ func TestGrpcListAccountsV2(t *testing.T) {
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
 	}
+}
+
+func TestGrpcAccountReadsOrganizationScope(t *testing.T) {
+	t.Parallel()
+
+	for _, method := range []string{"get", "list"} {
+		for _, tc := range []struct {
+			name              string
+			organizationID    string
+			keyOrganizationID string
+			wantErr           error
+		}{
+			{name: "same organization", organizationID: "org-a", keyOrganizationID: "org-a"},
+			{name: "omitted organization", keyOrganizationID: "org-a"},
+			{name: "other organization", organizationID: "org-b", keyOrganizationID: "org-a", wantErr: ErrNotFound},
+			{name: "key without organization", wantErr: ErrInvalidAPIKey},
+		} {
+			t.Run(method+"/"+tc.name, func(t *testing.T) {
+				t.Parallel()
+				gs, ctx := newAccountReadGateway(t, tc.keyOrganizationID)
+				account := &accountproto.AccountV2{Email: "member@example.com", OrganizationId: "org-a"}
+				client := gs.accountClient.(*accountclientmock.MockClient)
+				if method == "get" {
+					if tc.wantErr == nil {
+						client.EXPECT().GetAccountV2(accountReadMetadataMatcher(), &accountproto.GetAccountV2Request{
+							Email: account.Email, OrganizationId: "org-a",
+						}).Return(&accountproto.GetAccountV2Response{Account: account}, nil)
+					}
+					res, err := gs.GetAccountV2(ctx, &gwproto.GetAccountV2Request{
+						Email: account.Email, OrganizationId: tc.organizationID,
+					})
+					require.Equal(t, tc.wantErr, err)
+					if tc.wantErr != nil {
+						require.Nil(t, res)
+						return
+					}
+					require.Equal(t, account, res.Account)
+				} else {
+					if tc.wantErr == nil {
+						client.EXPECT().ListAccountsV2(accountReadMetadataMatcher(), &accountproto.ListAccountsV2Request{
+							OrganizationId: "org-a", PageSize: 10,
+						}).Return(&accountproto.ListAccountsV2Response{
+							Accounts: []*accountproto.AccountV2{account}, Cursor: "1", TotalCount: 1,
+						}, nil)
+					}
+					res, err := gs.ListAccountsV2(ctx, &gwproto.ListAccountsV2Request{
+						OrganizationId: tc.organizationID, PageSize: 10,
+					})
+					require.Equal(t, tc.wantErr, err)
+					if tc.wantErr != nil {
+						require.Nil(t, res)
+						return
+					}
+					require.Equal(t, []*accountproto.AccountV2{account}, res.Accounts)
+					require.Equal(t, "1", res.Cursor)
+					require.Equal(t, int64(1), res.TotalCount)
+				}
+			})
+		}
+	}
+}
+
+func TestGrpcGetAccountV2ByEnvironmentIDOrganizationScope(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name              string
+		environmentID     string
+		keyOrganizationID string
+		environment       *environmentproto.GetEnvironmentV2Response
+		environmentErr    error
+		wantErr           error
+	}{
+		{name: "key environment", environmentID: "env-a", keyOrganizationID: "org-a"},
+		{
+			name: "another environment in same organization", environmentID: "env-a2", keyOrganizationID: "org-a",
+			environment: &environmentproto.GetEnvironmentV2Response{
+				Environment: &environmentproto.EnvironmentV2{Id: "env-a2", OrganizationId: "org-a"},
+			},
+		},
+		{
+			name: "other organization even when maintainer can read it", environmentID: "env-b", keyOrganizationID: "org-a",
+			environment: &environmentproto.GetEnvironmentV2Response{
+				Environment: &environmentproto.EnvironmentV2{Id: "env-b", OrganizationId: "org-b"},
+			},
+			wantErr: ErrNotFound,
+		},
+		{name: "environment lookup error", environmentID: "env-b", keyOrganizationID: "org-a", environmentErr: ErrNotFound, wantErr: ErrNotFound},
+		{name: "nil environment response", environmentID: "env-b", keyOrganizationID: "org-a", wantErr: ErrInternal},
+		{name: "nil environment", environmentID: "env-b", keyOrganizationID: "org-a", environment: &environmentproto.GetEnvironmentV2Response{}, wantErr: ErrInternal},
+		{name: "key without organization", environmentID: "env-a", wantErr: ErrInvalidAPIKey},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			gs, ctx := newAccountReadGateway(t, tc.keyOrganizationID)
+			if tc.keyOrganizationID != "" && tc.environmentID != "env-a" {
+				gs.environmentClient.(*environmentclientmock.MockClient).EXPECT().GetEnvironmentV2(
+					accountReadMetadataMatcher(), &environmentproto.GetEnvironmentV2Request{Id: tc.environmentID},
+				).Return(tc.environment, tc.environmentErr)
+			}
+			account := &accountproto.AccountV2{Email: "member@example.com", OrganizationId: "org-a"}
+			if tc.wantErr == nil {
+				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2ByEnvironmentID(
+					accountReadMetadataMatcher(), &accountproto.GetAccountV2ByEnvironmentIDRequest{
+						Email: account.Email, EnvironmentId: tc.environmentID,
+					},
+				).Return(&accountproto.GetAccountV2ByEnvironmentIDResponse{Account: account}, nil)
+			}
+			res, err := gs.GetAccountV2ByEnvironmentID(ctx, &gwproto.GetAccountV2ByEnvironmentIDRequest{
+				Email: account.Email, EnvironmentId: tc.environmentID,
+			})
+			require.Equal(t, tc.wantErr, err)
+			if tc.wantErr != nil {
+				require.Nil(t, res)
+				return
+			}
+			require.Equal(t, account, res.Account)
+		})
+	}
+}
+
+func newAccountReadGateway(t *testing.T, organizationID string) (*grpcGatewayService, context.Context) {
+	t.Helper()
+	gs := newGrpcGatewayServiceWithMock(t, gomock.NewController(t))
+	key := &accountproto.EnvironmentAPIKey{
+		Environment: &environmentproto.EnvironmentV2{Id: "env-a", OrganizationId: organizationID},
+		ApiKey: &accountproto.APIKey{
+			Id: "key-a", ApiKey: "0123456789abcdef0123456789abcdef", Name: "read-only-key",
+			Role: accountproto.APIKey_PUBLIC_API_READ_ONLY, Maintainer: "maintainer@example.com",
+		},
+	}
+	gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(key.ApiKey.ApiKey).Return(key, nil)
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("authorization", key.ApiKey.ApiKey))
+	// Caller-supplied editor metadata must not replace the verified key's maintainer.
+	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(role.APIKeyMaintainerMDKey, "other-org-admin@example.com"))
+	return gs, ctx
+}
+
+func accountReadMetadataMatcher() gomock.Matcher {
+	return gomock.Cond(func(ctx context.Context) bool {
+		md, ok := metadata.FromOutgoingContext(ctx)
+		return ok &&
+			len(md.Get(role.APIKeyTokenMDKey)) == 1 && md.Get(role.APIKeyTokenMDKey)[0] == "0123....cdef" &&
+			len(md.Get(role.APIKeyMaintainerMDKey)) == 1 && md.Get(role.APIKeyMaintainerMDKey)[0] == "maintainer@example.com" &&
+			len(md.Get(role.APIKeyNameMDKey)) == 1 && md.Get(role.APIKeyNameMDKey)[0] == "read-only-key"
+	})
 }

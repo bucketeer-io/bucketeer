@@ -22,6 +22,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
@@ -186,11 +187,18 @@ func (s *grpcGatewayService) GetAccountV2(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetAccountV2, "").Inc()
 
+	if envAPIKey.Environment.OrganizationId == "" {
+		return nil, ErrInvalidAPIKey
+	}
+	if request.OrganizationId != "" && request.OrganizationId != envAPIKey.Environment.OrganizationId {
+		return nil, ErrNotFound
+	}
+	ctx = metadata.NewOutgoingContext(ctx, publicAPIEditorMetadata(envAPIKey))
 	res, err := s.accountClient.GetAccountV2(
 		ctx,
 		&accountproto.GetAccountV2Request{
 			Email:          request.Email,
-			OrganizationId: request.OrganizationId,
+			OrganizationId: envAPIKey.Environment.OrganizationId,
 		},
 	)
 	if err != nil {
@@ -235,6 +243,24 @@ func (s *grpcGatewayService) GetAccountV2ByEnvironmentID(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetAccountV2ByEnvironmentID, "").Inc()
 
+	if envAPIKey.Environment.OrganizationId == "" {
+		return nil, ErrInvalidAPIKey
+	}
+	ctx = metadata.NewOutgoingContext(ctx, publicAPIEditorMetadata(envAPIKey))
+	if request.EnvironmentId != envAPIKey.Environment.Id {
+		environment, err := s.environmentClient.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{
+			Id: request.EnvironmentId,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if environment == nil || environment.Environment == nil {
+			return nil, ErrInternal
+		}
+		if environment.Environment.OrganizationId != envAPIKey.Environment.OrganizationId {
+			return nil, ErrNotFound
+		}
+	}
 	res, err := s.accountClient.GetAccountV2ByEnvironmentID(
 		ctx,
 		&accountproto.GetAccountV2ByEnvironmentIDRequest{
@@ -327,12 +353,19 @@ func (s *grpcGatewayService) ListAccountsV2(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodListAccountsV2, "").Inc()
 
+	if envAPIKey.Environment.OrganizationId == "" {
+		return nil, ErrInvalidAPIKey
+	}
+	if request.OrganizationId != "" && request.OrganizationId != envAPIKey.Environment.OrganizationId {
+		return nil, ErrNotFound
+	}
+	ctx = metadata.NewOutgoingContext(ctx, publicAPIEditorMetadata(envAPIKey))
 	res, err := s.accountClient.ListAccountsV2(
 		ctx,
 		&accountproto.ListAccountsV2Request{
 			PageSize:         request.PageSize,
 			Cursor:           request.Cursor,
-			OrganizationId:   request.OrganizationId,
+			OrganizationId:   envAPIKey.Environment.OrganizationId,
 			OrderBy:          request.OrderBy,
 			OrderDirection:   request.OrderDirection,
 			SearchKeyword:    request.SearchKeyword,
