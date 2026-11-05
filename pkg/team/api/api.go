@@ -41,6 +41,8 @@ import (
 )
 
 var (
+	statusInternal = api.NewGRPCStatus(
+		bkterr.NewErrorInternal(bkterr.TeamPackageName, "internal"))
 	statusNameRequired = api.NewGRPCStatus(
 		bkterr.NewErrorInvalidArgEmpty(bkterr.TeamPackageName, "name must be specified", "Name"))
 	statusTeamIDRequired = api.NewGRPCStatus(
@@ -260,6 +262,7 @@ func (s *TeamService) DeleteTeam(
 		)
 		return nil, err
 	}
+	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		team, err := s.teamStorage.GetTeam(ctxWithTx, req.Id, req.OrganizationId)
 		if err != nil {
@@ -292,7 +295,7 @@ func (s *TeamService) DeleteTeam(
 		if err := s.teamStorage.DeleteTeam(ctxWithTx, req.Id); err != nil {
 			return err
 		}
-		event, err := domainevent.NewAdminEvent(
+		event, err = domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_TEAM,
 			req.Id,
@@ -305,10 +308,7 @@ func (s *TeamService) DeleteTeam(
 			nil,  // Current state: entity no longer exists
 			team, // Previous state: what was deleted
 		)
-		if err != nil {
-			return err
-		}
-		return s.publisher.Publish(ctx, event)
+		return err
 	})
 	if err != nil {
 		if errors.Is(err, statusTeamInUsed.Err()) {
@@ -318,6 +318,17 @@ func (s *TeamService) DeleteTeam(
 			return nil, statusTeamNotFound.Err()
 		}
 		return nil, s.reportInternalServerError(ctx, err, req.OrganizationId)
+	}
+	if err := s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish domain event",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationId", req.OrganizationId),
+				zap.String("teamId", req.Id),
+			)...,
+		)
+		return nil, statusInternal.Err()
 	}
 	return &proto.DeleteTeamResponse{}, nil
 }
