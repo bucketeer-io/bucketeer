@@ -1348,3 +1348,21 @@ func TestGetAPIKeyEditor(t *testing.T) {
 		})
 	}
 }
+
+func TestEnvironmentAccessHelpers(t *testing.T) {
+	t.Parallel()
+	editor := &eventproto.Editor{
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{EnvironmentId: "env-a", Role: accountproto.AccountV2_Role_Environment_VIEWER},
+			{EnvironmentId: "env-b", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+			// Stored but granting nothing.
+			{EnvironmentId: "env-c", Role: accountproto.AccountV2_Role_Environment_UNASSIGNED},
+		},
+	}
+	assert.True(t, HasEnvironmentAccess(editor, "env-a"))
+	assert.True(t, HasEnvironmentAccess(editor, "env-b"))
+	assert.False(t, HasEnvironmentAccess(editor, "env-c"))
+	assert.False(t, HasEnvironmentAccess(editor, "env-d"))
+	assert.Equal(t, []string{"env-a", "env-b"}, AccessibleEnvironmentIDs(editor))
+	assert.Empty(t, AccessibleEnvironmentIDs(&eventproto.Editor{}))
+}

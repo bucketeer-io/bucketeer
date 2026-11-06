@@ -59,6 +59,23 @@ func TestListPushesMemberEnvironmentScope(t *testing.T) {
 		wantErr         error
 	}{
 		{
+			// An UNASSIGNED entry grants no access to its environment.
+			name: "member's unassigned environment entry is not an accessible environment",
+			account: &accountproto.AccountV2{
+				Email:            "email",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "env0", Role: accountproto.AccountV2_Role_Environment_VIEWER},
+					{EnvironmentId: "env2", Role: accountproto.AccountV2_Role_Environment_UNASSIGNED},
+				},
+			},
+			req: &pushproto.ListPushesRequest{
+				OrganizationId: "org0",
+				EnvironmentIds: []string{"env2"},
+				PageSize:       10,
+			},
+		},
+		{
 			name:    "member requesting only environments outside their roles gets an empty page",
 			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
 			req: &pushproto.ListPushesRequest{

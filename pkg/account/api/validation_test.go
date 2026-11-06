@@ -86,6 +86,18 @@ func TestValidateCreateAccountV2Request(t *testing.T) {
 			expectedErr: statusInvalidEnvironmentRole.Err(),
 		},
 		{
+			desc: "err: unassigned environment role",
+			req: &accountproto.CreateAccountV2Request{
+				OrganizationId:   "org-1",
+				Email:            "test@example.com",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "env-1", Role: accountproto.AccountV2_Role_Environment_UNASSIGNED},
+				},
+			},
+			expectedErr: statusInvalidEnvironmentRole.Err(),
+		},
+		{
 			desc: "success: admin role without environment roles",
 			req: &accountproto.CreateAccountV2Request{
 				OrganizationId:   "org-id",

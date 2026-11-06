@@ -399,6 +399,30 @@ func checkOrganizationRoleWithLog(
 	return editor, nil
 }
 
+// HasEnvironmentAccess reports whether the editor holds a role granting
+// access to the environment. An UNASSIGNED entry grants none.
+func HasEnvironmentAccess(editor *eventproto.Editor, environmentID string) bool {
+	for _, role := range editor.EnvironmentRoles {
+		if role.EnvironmentId == environmentID &&
+			role.Role != accountproto.AccountV2_Role_Environment_UNASSIGNED {
+			return true
+		}
+	}
+	return false
+}
+
+// AccessibleEnvironmentIDs returns the IDs of the environments the editor
+// holds a role granting access in, leaving out UNASSIGNED entries.
+func AccessibleEnvironmentIDs(editor *eventproto.Editor) []string {
+	ids := make([]string, 0, len(editor.EnvironmentRoles))
+	for _, role := range editor.EnvironmentRoles {
+		if role.Role != accountproto.AccountV2_Role_Environment_UNASSIGNED {
+			ids = append(ids, role.EnvironmentId)
+		}
+	}
+	return ids
+}
+
 func getAPIKeyEditor(ctx context.Context) *eventproto.Editor_PublicAPIEditor {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {

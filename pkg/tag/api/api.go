@@ -499,17 +499,12 @@ func (s *TagService) getAllowedEnvironments(
 		// only show API keys in allowed environments for member.
 		if len(reqEnvironmentIDs) > 0 {
 			for _, id := range reqEnvironmentIDs {
-				for _, e := range editor.EnvironmentRoles {
-					if e.EnvironmentId == id {
-						filterEnvironmentIDs = append(filterEnvironmentIDs, id)
-						break
-					}
+				if role.HasEnvironmentAccess(editor, id) {
+					filterEnvironmentIDs = append(filterEnvironmentIDs, id)
 				}
 			}
 		} else {
-			for _, e := range editor.EnvironmentRoles {
-				filterEnvironmentIDs = append(filterEnvironmentIDs, e.EnvironmentId)
-			}
+			filterEnvironmentIDs = append(filterEnvironmentIDs, role.AccessibleEnvironmentIDs(editor)...)
 		}
 		return filterEnvironmentIDs, len(filterEnvironmentIDs) > 0
 	}
