@@ -389,7 +389,7 @@ func TestGrpcGetAccountV2(t *testing.T) {
 			expectedErr: ErrBadRole,
 		},
 		{
-			desc: "Internal account grpc error",
+			desc: "fails: read-only key cannot read accounts",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -397,6 +397,22 @@ func TestGrpcGetAccountV2(t *testing.T) {
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Disabled: false,
+						},
+					}, nil)
+			},
+			expected:    nil,
+			expectedErr: ErrBadRole,
+		},
+		{
+			desc: "Internal account grpc error",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -414,7 +430,7 @@ func TestGrpcGetAccountV2(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -432,7 +448,7 @@ func TestGrpcGetAccountV2(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -499,7 +515,7 @@ func TestGrpcGetAccountV2ByEnvironmentID(t *testing.T) {
 			expectedErr: ErrBadRole,
 		},
 		{
-			desc: "Internal account grpc error",
+			desc: "fails: read-only key cannot read accounts",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -507,6 +523,22 @@ func TestGrpcGetAccountV2ByEnvironmentID(t *testing.T) {
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Disabled: false,
+						},
+					}, nil)
+			},
+			expected:    nil,
+			expectedErr: ErrBadRole,
+		},
+		{
+			desc: "Internal account grpc error",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -524,7 +556,7 @@ func TestGrpcGetAccountV2ByEnvironmentID(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -542,7 +574,7 @@ func TestGrpcGetAccountV2ByEnvironmentID(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -751,7 +783,7 @@ func TestGrpcListAccountsV2(t *testing.T) {
 			expectedErr: ErrBadRole,
 		},
 		{
-			desc: "Internal account grpc error",
+			desc: "fails: read-only key cannot read accounts",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -759,6 +791,22 @@ func TestGrpcListAccountsV2(t *testing.T) {
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Disabled: false,
+						},
+					}, nil)
+			},
+			expected:    nil,
+			expectedErr: ErrBadRole,
+		},
+		{
+			desc: "Internal account grpc error",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -776,7 +824,7 @@ func TestGrpcListAccountsV2(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -794,7 +842,7 @@ func TestGrpcListAccountsV2(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -869,12 +917,12 @@ func TestGrpcAccountReadsOrganizationScope(t *testing.T) {
 		} {
 			t.Run(method+"/"+tc.name, func(t *testing.T) {
 				t.Parallel()
-				gs, ctx := newAccountReadGateway(t, tc.keyOrganizationID)
+				gs, ctx := newAccountAdminGateway(t, tc.keyOrganizationID)
 				account := &accountproto.AccountV2{Email: "member@example.com", OrganizationId: "org-a"}
 				client := gs.accountClient.(*accountclientmock.MockClient)
 				if method == "get" {
 					if tc.wantErr == nil {
-						client.EXPECT().GetAccountV2(accountReadMetadataMatcher(), &accountproto.GetAccountV2Request{
+						client.EXPECT().GetAccountV2(accountAdminMetadataMatcher(), &accountproto.GetAccountV2Request{
 							Email: account.Email, OrganizationId: "org-a",
 						}).Return(&accountproto.GetAccountV2Response{Account: account}, nil)
 					}
@@ -889,7 +937,7 @@ func TestGrpcAccountReadsOrganizationScope(t *testing.T) {
 					require.Equal(t, account, res.Account)
 				} else {
 					if tc.wantErr == nil {
-						client.EXPECT().ListAccountsV2(accountReadMetadataMatcher(), &accountproto.ListAccountsV2Request{
+						client.EXPECT().ListAccountsV2(accountAdminMetadataMatcher(), &accountproto.ListAccountsV2Request{
 							OrganizationId: "org-a", PageSize: 10,
 						}).Return(&accountproto.ListAccountsV2Response{
 							Accounts: []*accountproto.AccountV2{account}, Cursor: "1", TotalCount: 1,
@@ -944,16 +992,16 @@ func TestGrpcGetAccountV2ByEnvironmentIDOrganizationScope(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			gs, ctx := newAccountReadGateway(t, tc.keyOrganizationID)
+			gs, ctx := newAccountAdminGateway(t, tc.keyOrganizationID)
 			if tc.keyOrganizationID != "" && tc.environmentID != "env-a" {
 				gs.environmentClient.(*environmentclientmock.MockClient).EXPECT().GetEnvironmentV2(
-					accountReadMetadataMatcher(), &environmentproto.GetEnvironmentV2Request{Id: tc.environmentID},
+					accountAdminMetadataMatcher(), &environmentproto.GetEnvironmentV2Request{Id: tc.environmentID},
 				).Return(tc.environment, tc.environmentErr)
 			}
 			account := &accountproto.AccountV2{Email: "member@example.com", OrganizationId: "org-a"}
 			if tc.wantErr == nil {
 				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2ByEnvironmentID(
-					accountReadMetadataMatcher(), &accountproto.GetAccountV2ByEnvironmentIDRequest{
+					accountAdminMetadataMatcher(), &accountproto.GetAccountV2ByEnvironmentIDRequest{
 						Email: account.Email, EnvironmentId: tc.environmentID,
 					},
 				).Return(&accountproto.GetAccountV2ByEnvironmentIDResponse{Account: account}, nil)

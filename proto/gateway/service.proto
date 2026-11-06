@@ -1405,7 +1405,7 @@ service Gateway {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get by Organization ID",
-      description: "Get an Account. To call this API, you need a `READ` API Key role.",
+      description: "Get an Account. To call this API, you need an `ADMIN` API Key role.",
       tags: "Account",
       operation_id: "api.gateway.v1.account.get"
     };
@@ -1417,7 +1417,7 @@ service Gateway {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get by Environment ID",
-      description: "Get an Account by Environment ID. To call this API, you need a `READ` API Key role.",
+      description: "Get an Account by Environment ID. To call this API, you need an `ADMIN` API Key role.",
       tags: "Account",
       operation_id: "api.gateway.v1.account.get_by_environment_id"
     };
@@ -1439,7 +1439,7 @@ service Gateway {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List",
-      description: "Get list Accounts. To call this API, you need a `READ` API Key role.",
+      description: "Get list Accounts. To call this API, you need an `ADMIN` API Key role.",
       tags: "Account",
       operation_id: "api.gateway.v1.account.list"
     };

@@ -179,9 +179,9 @@ func (s *grpcGatewayService) GetAccountV2(
 	ctx context.Context,
 	request *gwproto.GetAccountV2Request,
 ) (*gwproto.GetAccountV2Response, error) {
+	// Accounts carry personal data and organization roles, so reading them
+	// needs the key role meant for sensitive data, like changing them.
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
-		accountproto.APIKey_PUBLIC_API_READ_ONLY,
-		accountproto.APIKey_PUBLIC_API_WRITE,
 		accountproto.APIKey_PUBLIC_API_ADMIN,
 	})
 	if err != nil {
@@ -236,8 +236,6 @@ func (s *grpcGatewayService) GetAccountV2ByEnvironmentID(
 	request *gwproto.GetAccountV2ByEnvironmentIDRequest,
 ) (*gwproto.GetAccountV2ByEnvironmentIDResponse, error) {
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
-		accountproto.APIKey_PUBLIC_API_READ_ONLY,
-		accountproto.APIKey_PUBLIC_API_WRITE,
 		accountproto.APIKey_PUBLIC_API_ADMIN,
 	})
 	if err != nil {
@@ -357,8 +355,6 @@ func (s *grpcGatewayService) ListAccountsV2(
 	request *gwproto.ListAccountsV2Request,
 ) (*gwproto.ListAccountsV2Response, error) {
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
-		accountproto.APIKey_PUBLIC_API_READ_ONLY,
-		accountproto.APIKey_PUBLIC_API_WRITE,
 		accountproto.APIKey_PUBLIC_API_ADMIN,
 	})
 	if err != nil {

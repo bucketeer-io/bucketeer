@@ -43556,7 +43556,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Get an Account. To call this API, you need a `READ` API Key role."
+                        "value": "Get an Account. To call this API, you need an `ADMIN` API Key role."
                       },
                       {
                         "name": "tags",
@@ -43593,7 +43593,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Get an Account by Environment ID. To call this API, you need a `READ` API Key role."
+                        "value": "Get an Account by Environment ID. To call this API, you need an `ADMIN` API Key role."
                       },
                       {
                         "name": "tags",
@@ -43667,7 +43667,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Get list Accounts. To call this API, you need a `READ` API Key role."
+                        "value": "Get list Accounts. To call this API, you need an `ADMIN` API Key role."
                       },
                       {
                         "name": "tags",

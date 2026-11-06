@@ -372,7 +372,7 @@ paths:
   /v1/account:
     get:
       summary: Get by Organization ID
-      description: Get an Account. To call this API, you need a `READ` API Key role.
+      description: Get an Account. To call this API, you need an `ADMIN` API Key role.
       operationId: api.gateway.v1.account.get
       responses:
         "200":
@@ -520,7 +520,7 @@ paths:
   /v1/account/get_account_by_environment:
     get:
       summary: Get by Environment ID
-      description: Get an Account by Environment ID. To call this API, you need a `READ` API Key role.
+      description: Get an Account by Environment ID. To call this API, you need an `ADMIN` API Key role.
       operationId: api.gateway.v1.account.get_by_environment_id
       responses:
         "200":
@@ -620,7 +620,7 @@ paths:
   /v1/accounts:
     get:
       summary: List
-      description: Get list Accounts. To call this API, you need a `READ` API Key role.
+      description: Get list Accounts. To call this API, you need an `ADMIN` API Key role.
       operationId: api.gateway.v1.account.list
       responses:
         "200":
