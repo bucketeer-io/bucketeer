@@ -71,6 +71,9 @@ func (s *AccountService) CreateAccountV2(
 	); err != nil {
 		return nil, err
 	}
+	if err := s.checkEnvironmentRolesInOrganization(ctx, req.OrganizationId, req.EnvironmentRoles); err != nil {
+		return nil, err
+	}
 	account := domain.NewAccountV2(
 		req.Email,
 		req.Name,
@@ -324,6 +327,9 @@ func (s *AccountService) UpdateAccountV2(
 			if err := s.checkNotOrganizationOwner(ctx, req.OrganizationId, existing); err != nil {
 				return nil, err
 			}
+		}
+		if err := s.checkEnvironmentRolesInOrganization(ctx, req.OrganizationId, environmentRoles); err != nil {
+			return nil, err
 		}
 	}
 	updatedAccountPb, err := s.updateAccountV2NoCommandMysql(
@@ -1118,4 +1124,48 @@ func environmentRolesEqual(
 		}
 	}
 	return true
+}
+
+// checkEnvironmentRolesInOrganization rejects environment roles that refer to
+// environments outside the organization. Such a role never grants access,
+// because environment access is resolved through the environment's own
+// organization, but it would be stored and shown as if it did. Archived
+// environments are accepted so existing roles can be kept on update.
+func (s *AccountService) checkEnvironmentRolesInOrganization(
+	ctx context.Context,
+	organizationID string,
+	environmentRoles []*accountproto.AccountV2_EnvironmentRole,
+) error {
+	if len(environmentRoles) == 0 {
+		return nil
+	}
+	environments, err := s.listEnvironmentsByOrganizationIDWithArchived(ctx, organizationID, nil)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list the organization's environments",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", organizationID),
+			)...,
+		)
+		return api.NewGRPCStatus(err).Err()
+	}
+	environmentIDs := make(map[string]struct{}, len(environments))
+	for _, environment := range environments {
+		environmentIDs[environment.Id] = struct{}{}
+	}
+	for _, environmentRole := range environmentRoles {
+		if _, ok := environmentIDs[environmentRole.EnvironmentId]; ok {
+			continue
+		}
+		s.logger.Warn(
+			"Rejected an environment role for an environment outside the organization",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.String("organizationID", organizationID),
+				zap.String("environmentID", environmentRole.EnvironmentId),
+			)...,
+		)
+		return statusEnvRoleOutsideOrganization.Err()
+	}
+	return nil
 }

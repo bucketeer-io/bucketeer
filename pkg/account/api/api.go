@@ -147,6 +147,16 @@ func (s *AccountService) listEnvironmentsByOrganizationID(
 	ctx context.Context,
 	organizationID string,
 ) ([]*environmentproto.EnvironmentV2, error) {
+	return s.listEnvironmentsByOrganizationIDWithArchived(ctx, organizationID, wrapperspb.Bool(false))
+}
+
+// listEnvironmentsByOrganizationIDWithArchived lists the organization's
+// environments. A nil archived filter lists archived environments as well.
+func (s *AccountService) listEnvironmentsByOrganizationIDWithArchived(
+	ctx context.Context,
+	organizationID string,
+	archived *wrapperspb.BoolValue,
+) ([]*environmentproto.EnvironmentV2, error) {
 	var environments []*environmentproto.EnvironmentV2
 	cursor := ""
 	for {
@@ -154,7 +164,7 @@ func (s *AccountService) listEnvironmentsByOrganizationID(
 			PageSize:       listRequestPageSize,
 			Cursor:         cursor,
 			OrganizationId: organizationID,
-			Archived:       wrapperspb.Bool(false),
+			Archived:       archived,
 		})
 		if err != nil {
 			return nil, err

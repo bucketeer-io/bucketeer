@@ -99,6 +99,14 @@ func setupHierarchyLookups(service *AccountService, ownerEmail string, opts ...f
 			return nil, v2as.ErrAccountNotFound
 		}).AnyTimes()
 	service.environmentClient.(*ecmock.MockClient).EXPECT().
+		ListEnvironmentsV2(gomock.Any(), &environmentproto.ListEnvironmentsV2Request{
+			PageSize:       listRequestPageSize,
+			OrganizationId: hierarchyOrgID,
+		}).
+		Return(&environmentproto.ListEnvironmentsV2Response{
+			Environments: []*environmentproto.EnvironmentV2{{Id: "env0", OrganizationId: hierarchyOrgID}},
+		}, nil).AnyTimes()
+	service.environmentClient.(*ecmock.MockClient).EXPECT().
 		GetOrganization(gomock.Any(), gomock.Any()).
 		Return(&environmentproto.GetOrganizationResponse{
 			Organization: &environmentproto.Organization{

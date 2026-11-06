@@ -35,6 +35,7 @@ var (
 	statusLanguageIsEmpty                  = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "language is empty", "MemberLanguage"))
 	statusInvalidOrganizationRole          = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "invalid organization roles", "MemberOrganizationRole"))
 	statusInvalidEnvironmentRole           = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "environment role must be specified", "MemberEnvironmentRoles"))
+	statusEnvRoleOutsideOrganization       = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgUnknown(pkgErr.AccountPackageName, "environment role refers to an environment outside the organization", "MemberEnvironmentRoles"))
 	statusMissingAPIKeyID                  = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "apikey id must be specified", "APIKey"))
 	statusMissingAPIKeyName                = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgEmpty(pkgErr.AccountPackageName, "apikey name must be not empty", "APIKey"))
 	statusInvalidOrderBy                   = api.NewGRPCStatus(pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.AccountPackageName, "order_by is invalid", "OrderBy"))
