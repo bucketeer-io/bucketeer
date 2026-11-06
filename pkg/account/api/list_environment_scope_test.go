@@ -61,6 +61,24 @@ func TestListAPIKeysMemberEnvironmentScope(t *testing.T) {
 		wantErr         error
 	}{
 		{
+			// An UNASSIGNED entry grants no access to its environment.
+			name: "member's unassigned environment entry is not an accessible environment",
+			account: &domain.AccountV2{AccountV2: &accountproto.AccountV2{
+				Email:            "bucketeer@example.com",
+				OrganizationId:   "org0",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "env0", Role: accountproto.AccountV2_Role_Environment_VIEWER},
+					{EnvironmentId: "env2", Role: accountproto.AccountV2_Role_Environment_UNASSIGNED},
+				},
+			}},
+			req: &accountproto.ListAPIKeysRequest{
+				OrganizationId: "org0",
+				EnvironmentIds: []string{"env2"},
+				PageSize:       10,
+			},
+		},
+		{
 			name:    "member requesting only environments outside their roles gets an empty page",
 			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
 			req: &accountproto.ListAPIKeysRequest{

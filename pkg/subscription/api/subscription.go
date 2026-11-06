@@ -25,6 +25,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
 	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2"
@@ -437,17 +438,12 @@ func (s *SubscriptionService) getAllowedEnvironments(
 		// only show API keys in allowed environments for member.
 		if len(reqEnvironmentIDs) > 0 {
 			for _, id := range reqEnvironmentIDs {
-				for _, e := range editor.EnvironmentRoles {
-					if e.EnvironmentId == id {
-						filterEnvironmentIDs = append(filterEnvironmentIDs, id)
-						break
-					}
+				if role.HasEnvironmentAccess(editor, id) {
+					filterEnvironmentIDs = append(filterEnvironmentIDs, id)
 				}
 			}
 		} else {
-			for _, e := range editor.EnvironmentRoles {
-				filterEnvironmentIDs = append(filterEnvironmentIDs, e.EnvironmentId)
-			}
+			filterEnvironmentIDs = append(filterEnvironmentIDs, role.AccessibleEnvironmentIDs(editor)...)
 		}
 		return filterEnvironmentIDs, len(filterEnvironmentIDs) > 0
 	}

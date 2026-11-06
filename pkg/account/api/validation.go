@@ -80,6 +80,12 @@ func validateCreateAccountV2Request(
 			return statusInvalidEnvironmentRole.Err()
 		}
 	}
+	// An UNASSIGNED role grants nothing and is rejected on update already.
+	for _, r := range req.EnvironmentRoles {
+		if r.Role == accountproto.AccountV2_Role_Environment_UNASSIGNED {
+			return statusInvalidEnvironmentRole.Err()
+		}
+	}
 	return nil
 }
 
