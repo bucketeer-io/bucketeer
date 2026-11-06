@@ -64,6 +64,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				OrganizationId: "org0",
 			},
 			setup: func(s *AccountService) {
+				expectOrganizationEnvironments(s, "org0", "test")
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.AccountV2{
@@ -85,6 +86,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				OrganizationId: "org0",
 			},
 			setup: func(s *AccountService) {
+				expectOrganizationEnvironments(s, "org0", "test")
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.AccountV2{
@@ -116,6 +118,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				},
 			},
 			setup: func(s *AccountService) {
+				expectOrganizationEnvironments(s, "org0", "test")
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.AccountV2{
@@ -150,6 +153,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				},
 			},
 			setup: func(s *AccountService) {
+				expectOrganizationEnvironments(s, "org0", "test")
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.AccountV2{
@@ -169,6 +173,40 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal("account", "test")).Err(),
 		},
 		{
+			desc: "errEnvironmentRoleOutsideOrganization",
+			req: &accountproto.CreateAccountV2Request{
+				Email:            "bucketeer@example.com",
+				FirstName:        "Test",
+				LastName:         "User",
+				Language:         "en",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				OrganizationId:   "org0",
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						EnvironmentId: "test",
+					},
+					{
+						// An environment of another organization.
+						Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+						EnvironmentId: "other-org-env",
+					},
+				},
+			},
+			setup: func(s *AccountService) {
+				expectOrganizationEnvironments(s, "org0", "test")
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
+			expectedErr: statusEnvRoleOutsideOrganization.Err(),
+		},
+		{
 			desc: "success",
 			req: &accountproto.CreateAccountV2Request{
 				Email:            "bucketeer@example.com",
@@ -185,6 +223,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				},
 			},
 			setup: func(s *AccountService) {
+				expectOrganizationEnvironments(s, "org0", "test")
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.AccountV2{
@@ -388,7 +427,8 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 				},
 				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 					{
-						Role: accountproto.AccountV2_Role_Environment_EDITOR,
+						Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+						EnvironmentId: "test",
 					},
 				},
 			},
@@ -397,6 +437,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(s *AccountService) {
+				expectOrganizationEnvironments(s, "org0", "test")
 				// Editor and target account lookups
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -421,15 +462,44 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 				LastName:       wrapperspb.String("newLastName"),
 				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 					{
-						Role: accountproto.AccountV2_Role_Environment_EDITOR,
+						Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+						EnvironmentId: "test",
 					},
 				},
 			},
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal("account", "test")).Err(),
 		},
 		{
+			desc: "errEnvironmentRoleOutsideOrganization",
+			setup: func(s *AccountService) {
+				expectOrganizationEnvironments(s, "org0", "test")
+				// Editor and target account lookups
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil).Times(2)
+			},
+			req: &accountproto.UpdateAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						// An environment of another organization.
+						Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+						EnvironmentId: "other-org-env",
+					},
+				},
+			},
+			expectedErr: statusEnvRoleOutsideOrganization.Err(),
+		},
+		{
 			desc: "success",
 			setup: func(s *AccountService) {
+				expectOrganizationEnvironments(s, "org0", "test")
 				// Editor lookup, target account lookup, and the lookup inside the transaction
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -470,7 +540,8 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 				LastName:       wrapperspb.String("newLastName"),
 				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 					{
-						Role: accountproto.AccountV2_Role_Environment_EDITOR,
+						Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+						EnvironmentId: "test",
 					},
 				},
 			},
@@ -1424,4 +1495,17 @@ func setToken(ctx context.Context, isSystemAdmin bool) context.Context {
 		IsSystemAdmin: isSystemAdmin,
 	}
 	return context.WithValue(ctx, rpc.AccessTokenKey, t)
+}
+
+// expectOrganizationEnvironments stubs the organization's environment list
+// used to check that environment roles refer to the organization's own
+// environments.
+func expectOrganizationEnvironments(s *AccountService, organizationID string, environmentIDs ...string) {
+	environments := make([]*environmentproto.EnvironmentV2, 0, len(environmentIDs))
+	for _, id := range environmentIDs {
+		environments = append(environments, &environmentproto.EnvironmentV2{Id: id, OrganizationId: organizationID})
+	}
+	s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+		gomock.Any(), gomock.Any(),
+	).Return(&environmentproto.ListEnvironmentsV2Response{Environments: environments}, nil).AnyTimes()
 }
