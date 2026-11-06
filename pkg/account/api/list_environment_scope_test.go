@@ -219,7 +219,9 @@ func TestListAccountsV2MemberEnvironmentScope(t *testing.T) {
 			},
 		},
 		{
-			name:    "member requesting a role they do not hold in the environment gets an empty page",
+			// The member only holds VIEWER in env0; the filter applies to the
+			// listed accounts, not to the member's own role.
+			name:    "member requesting a role filter in their environment is scoped to it with the role",
 			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
 			req: &accountproto.ListAccountsV2Request{
 				OrganizationId:  "org0",
@@ -227,6 +229,19 @@ func TestListAccountsV2MemberEnvironmentScope(t *testing.T) {
 				EnvironmentRole: wrapperspb.Int32(int32(accountproto.AccountV2_Role_Environment_EDITOR)),
 				PageSize:        10,
 			},
+			wantEnvRoles:    []string{"env0:Environment_EDITOR"},
+			wantStorageCall: true,
+		},
+		{
+			name:    "member requesting a role filter without an environment gets it on all of their environments",
+			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
+			req: &accountproto.ListAccountsV2Request{
+				OrganizationId:  "org0",
+				EnvironmentRole: wrapperspb.Int32(int32(accountproto.AccountV2_Role_Environment_VIEWER)),
+				PageSize:        10,
+			},
+			wantEnvRoles:    []string{"env0:Environment_VIEWER", "env1:Environment_VIEWER"},
+			wantStorageCall: true,
 		},
 		{
 			name: "member without any environment role gets an empty page",
@@ -265,14 +280,14 @@ func TestListAccountsV2MemberEnvironmentScope(t *testing.T) {
 				EnvironmentId:  wrapperspb.String("env1"),
 				PageSize:       10,
 			},
-			wantEnvRoles:    []string{"env1"},
+			wantEnvRoles:    []string{"env1:any"},
 			wantStorageCall: true,
 		},
 		{
 			name:            "member without an environment filter lists all of their environments",
 			account:         listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
 			req:             &accountproto.ListAccountsV2Request{OrganizationId: "org0", PageSize: 10},
-			wantEnvRoles:    []string{"env0", "env1"},
+			wantEnvRoles:    []string{"env0:any", "env1:any"},
 			wantStorageCall: true,
 		},
 		{
@@ -331,11 +346,17 @@ func TestListAccountsV2MemberEnvironmentScope(t *testing.T) {
 			}
 			require.NotNil(t, listed)
 			assert.Equal(t, "org0", listed.OrganizationID)
-			envIDs := make([]string, 0, len(listed.EnvironmentRoles))
+			// Each forwarded filter is "environment:role", where "any" is the
+			// UNASSIGNED role matching every role in the environment.
+			envRoles := make([]string, 0, len(listed.EnvironmentRoles))
 			for _, r := range listed.EnvironmentRoles {
-				envIDs = append(envIDs, r.EnvironmentId)
+				role := "any"
+				if r.Role != accountproto.AccountV2_Role_Environment_UNASSIGNED {
+					role = r.Role.String()
+				}
+				envRoles = append(envRoles, r.EnvironmentId+":"+role)
 			}
-			assert.Equal(t, tc.wantEnvRoles, envIDs)
+			assert.Equal(t, tc.wantEnvRoles, envRoles)
 			require.Len(t, resp.Accounts, 1)
 			assert.Equal(t, "other@example.com", resp.Accounts[0].Email)
 			assert.Equal(t, int64(1), resp.TotalCount)

@@ -489,3 +489,76 @@ func newAccountStorageWithMock(t *testing.T, mockController *gomock.Controller) 
 	t.Helper()
 	return &accountStorage{qe: pgmock.NewMockQueryExecer(mockController)}
 }
+
+// TestListAccountsV2OptionsEnvironmentRoleFilters pins the JSON containment
+// candidates built for the environment_roles column: a member filter matches
+// the environment only unless a role is requested, and a nil role is never
+// serialized as null, which would match nothing.
+func TestListAccountsV2OptionsEnvironmentRoleFilters(t *testing.T) {
+	t.Parallel()
+
+	jsonValues := func(parts []postgres.WherePart) []string {
+		values := make([]string, 0, len(parts))
+		for _, part := range parts {
+			if f, ok := part.(*postgres.JSONFilter); ok {
+				values = append(values, f.Values[0].(string))
+			}
+		}
+		return values
+	}
+	cases := []struct {
+		desc         string
+		params       v2as.ListAccountsV2Params
+		wantMember   []string // candidates OR-ed for a member filter
+		wantAdminEnv string   // candidate of the admin environment filter
+	}{
+		{
+			desc: "member filter matches the environment with any role",
+			params: v2as.ListAccountsV2Params{
+				OrganizationID: "org-1", PageSize: 10, Cursor: "0",
+				EnvironmentRoles: []*proto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "env-a", Role: proto.AccountV2_Role_Environment_UNASSIGNED},
+					{EnvironmentId: "env-b", Role: proto.AccountV2_Role_Environment_UNASSIGNED},
+				},
+			},
+			wantMember: []string{`{"environment_id":"env-a"}`, `{"environment_id":"env-b"}`},
+		},
+		{
+			desc: "member filter with a requested role matches that role",
+			params: v2as.ListAccountsV2Params{
+				OrganizationID: "org-1", PageSize: 10, Cursor: "0",
+				EnvironmentRoles: []*proto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "env-a", Role: proto.AccountV2_Role_Environment_EDITOR},
+				},
+			},
+			wantMember: []string{`{"environment_id":"env-a","role":2}`},
+		},
+		{
+			desc: "admin environment filter without a role matches any role",
+			params: v2as.ListAccountsV2Params{
+				OrganizationID: "org-1", PageSize: 10, Cursor: "0",
+				EnvironmentID: ptr("env-a"),
+			},
+			wantAdminEnv: `{"environment_id":"env-a"}`,
+		},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			options, err := listAccountsV2OptionsFromParams(tc.params)
+			assert.NoError(t, err)
+			if tc.wantMember != nil {
+				if assert.Len(t, options.OrFilters, 1) {
+					assert.Equal(t, tc.wantMember, jsonValues(options.OrFilters[0].Queries))
+				}
+				return
+			}
+			if assert.Len(t, options.JSONFilters, 1) {
+				assert.Equal(t, tc.wantAdminEnv, options.JSONFilters[0].Values[0])
+			}
+		})
+	}
+}
+
+func ptr[T any](v T) *T { return &v }
