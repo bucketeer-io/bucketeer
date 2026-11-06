@@ -30,8 +30,9 @@ func (s *grpcGatewayService) CreateAccountV2(
 	ctx context.Context,
 	request *gwproto.CreateAccountV2Request,
 ) (*gwproto.CreateAccountV2Response, error) {
+	// Accounts carry organization roles and personal data, so only the key
+	// role meant for sensitive data may manage them.
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
-		accountproto.APIKey_PUBLIC_API_WRITE,
 		accountproto.APIKey_PUBLIC_API_ADMIN,
 	})
 	if err != nil {
@@ -96,7 +97,6 @@ func (s *grpcGatewayService) UpdateAccountV2(
 	request *gwproto.UpdateAccountV2Request,
 ) (*gwproto.UpdateAccountV2Response, error) {
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
-		accountproto.APIKey_PUBLIC_API_WRITE,
 		accountproto.APIKey_PUBLIC_API_ADMIN,
 	})
 	if err != nil {

@@ -1381,7 +1381,7 @@ service Gateway {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Create",
-      description: "Create a new Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      description: "Create a new Account. To call this API, you need an `ADMIN` API Key role. The `Organization_OWNER` role cannot be assigned with an API key.",
       tags: "Account",
       operation_id: "api.gateway.v1.account.create"
     };
@@ -1394,7 +1394,7 @@ service Gateway {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Update",
-      description: "Update an Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      description: "Update an Account. To call this API, you need an `ADMIN` API Key role. Accounts with the `Organization_OWNER` role, and that role itself, cannot be changed with an API key.",
       tags: "Account",
       operation_id: "api.gateway.v1.account.update"
     };

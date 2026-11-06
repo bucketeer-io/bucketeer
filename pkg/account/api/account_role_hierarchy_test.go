@@ -18,6 +18,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,7 +32,10 @@ import (
 	alstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -104,6 +108,27 @@ func setupHierarchyLookups(service *AccountService, ownerEmail string, opts ...f
 		}, nil).AnyTimes()
 }
 
+// createContextWithAPIKeyMaintainer returns the context the public API gateway
+// relays: the gateway's service token plus the metadata identifying the API
+// key and its maintainer.
+func createContextWithAPIKeyMaintainer(t *testing.T, maintainer string) context.Context {
+	t.Helper()
+	ctx := context.WithValue(context.TODO(), rpc.AccessTokenKey, &token.AccessToken{
+		Issuer:         "issuer",
+		Audience:       "audience",
+		Expiry:         time.Now().AddDate(100, 0, 0),
+		IssuedAt:       time.Now(),
+		Email:          "service@example.com",
+		IsSystemAdmin:  true,
+		IsServiceToken: true,
+	})
+	return metadata.NewIncomingContext(ctx, metadata.Pairs(
+		role.APIKeyTokenMDKey, "0123456789abcdef0123456789abcdef",
+		role.APIKeyMaintainerMDKey, maintainer,
+		role.APIKeyNameMDKey, "admin-key",
+	))
+}
+
 func TestCreateAccountV2OrganizationRoleHierarchy(t *testing.T) {
 	t.Parallel()
 
@@ -111,14 +136,28 @@ func TestCreateAccountV2OrganizationRoleHierarchy(t *testing.T) {
 		name          string
 		editorEmail   string
 		isSystemAdmin bool
-		role          accountproto.AccountV2_Role_Organization
-		wantErr       error
+		// apiKeyMaintainer makes the request come from the public API gateway
+		// with an API key maintained by that account.
+		apiKeyMaintainer string
+		role             accountproto.AccountV2_Role_Organization
+		wantErr          error
 	}{
 		{
 			name:        "admin cannot create an owner",
 			editorEmail: hierarchyAdminEmail,
 			role:        accountproto.AccountV2_Role_Organization_OWNER,
 			wantErr:     statusPermissionDenied.Err(),
+		},
+		{
+			name:             "API key of an owner cannot create an owner",
+			apiKeyMaintainer: hierarchyOwnerEmail,
+			role:             accountproto.AccountV2_Role_Organization_OWNER,
+			wantErr:          statusPermissionDenied.Err(),
+		},
+		{
+			name:             "API key of an owner can create an admin",
+			apiKeyMaintainer: hierarchyOwnerEmail,
+			role:             accountproto.AccountV2_Role_Organization_ADMIN,
 		},
 		{
 			name:        "admin can create an admin",
@@ -150,8 +189,13 @@ func TestCreateAccountV2OrganizationRoleHierarchy(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			ctx := createContextWithEmailToken(t, tc.editorEmail, tc.isSystemAdmin)
-			ctx = metadata.NewIncomingContext(ctx, metadata.MD{})
+			var ctx context.Context
+			if tc.apiKeyMaintainer != "" {
+				ctx = createContextWithAPIKeyMaintainer(t, tc.apiKeyMaintainer)
+			} else {
+				ctx = createContextWithEmailToken(t, tc.editorEmail, tc.isSystemAdmin)
+				ctx = metadata.NewIncomingContext(ctx, metadata.MD{})
+			}
 
 			service := createAccountService(t, mockController, nil)
 			setupHierarchyLookups(service, "")
@@ -757,6 +801,33 @@ func TestCanManageOrganizationRole(t *testing.T) {
 			editor: &eventproto.Editor{IsAdmin: true},
 			role:   accountproto.AccountV2_Role_Organization_OWNER,
 			want:   true,
+		},
+		{
+			name: "public API key of an owner manages admin",
+			editor: &eventproto.Editor{
+				OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
+				PublicApiEditor:  &eventproto.Editor_PublicAPIEditor{Token: "0123....cdef"},
+			},
+			role: accountproto.AccountV2_Role_Organization_ADMIN,
+			want: true,
+		},
+		{
+			name: "public API key of an owner does not manage owner",
+			editor: &eventproto.Editor{
+				OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
+				PublicApiEditor:  &eventproto.Editor_PublicAPIEditor{Token: "0123....cdef"},
+			},
+			role: accountproto.AccountV2_Role_Organization_OWNER,
+			want: false,
+		},
+		{
+			name: "public API key of a system admin does not manage owner",
+			editor: &eventproto.Editor{
+				IsAdmin:         true,
+				PublicApiEditor: &eventproto.Editor_PublicAPIEditor{Token: "0123....cdef"},
+			},
+			role: accountproto.AccountV2_Role_Organization_OWNER,
+			want: false,
 		},
 	}
 

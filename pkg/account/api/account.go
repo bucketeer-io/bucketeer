@@ -989,10 +989,16 @@ func (s *AccountService) constructEnvironmentRoles(
 // ordered MEMBER < ADMIN < OWNER and an editor may only manage roles up to
 // their own, so an admin cannot create, promote, disable or delete an owner.
 // System admins are not bound by the hierarchy.
+// A public API key acts as its maintainer but does not inherit the
+// maintainer's ownership: the owner role can neither be granted nor acted on
+// with an API key, whatever the maintainer's role is.
 func canManageOrganizationRole(
 	editor *eventproto.Editor,
 	role accountproto.AccountV2_Role_Organization,
 ) bool {
+	if editor.PublicApiEditor != nil && role == accountproto.AccountV2_Role_Organization_OWNER {
+		return false
+	}
 	if editor.IsAdmin {
 		return true
 	}

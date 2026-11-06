@@ -43478,7 +43478,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Create a new Account. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                        "value": "Create a new Account. To call this API, you need an `ADMIN` API Key role. The `Organization_OWNER` role cannot be assigned with an API key."
                       },
                       {
                         "name": "tags",
@@ -43519,7 +43519,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Update an Account. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                        "value": "Update an Account. To call this API, you need an `ADMIN` API Key role. Accounts with the `Organization_OWNER` role, and that role itself, cannot be changed with an API key."
                       },
                       {
                         "name": "tags",

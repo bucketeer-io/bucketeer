@@ -48,7 +48,7 @@ func TestGrpcCreateAccountV2(t *testing.T) {
 			expectedErr: ErrBadRole,
 		},
 		{
-			desc: "Internal account grpc error",
+			desc: "fails: write key cannot manage accounts",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -56,6 +56,22 @@ func TestGrpcCreateAccountV2(t *testing.T) {
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
+							Disabled: false,
+						},
+					}, nil)
+			},
+			expected:    nil,
+			expectedErr: ErrBadRole,
+		},
+		{
+			desc: "Internal account grpc error",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -73,7 +89,7 @@ func TestGrpcCreateAccountV2(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -144,7 +160,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 			expectedErr: ErrBadRole,
 		},
 		{
-			desc: "Internal account grpc error",
+			desc: "fails: write key cannot manage accounts",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -152,6 +168,23 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
 							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
+							Disabled: false,
+						},
+					}, nil)
+			},
+			req:         &gwproto.UpdateAccountV2Request{},
+			expected:    nil,
+			expectedErr: ErrBadRole,
+		},
+		{
+			desc: "Internal account grpc error",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -170,7 +203,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -189,7 +222,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -212,7 +245,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -247,7 +280,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -282,7 +315,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
 							Disabled: false,
 						},
 					}, nil)
@@ -955,13 +988,13 @@ func TestGrpcAccountWritesOrganizationScope(t *testing.T) {
 		} {
 			t.Run(method+"/"+tc.name, func(t *testing.T) {
 				t.Parallel()
-				gs, ctx := newAccountWriteGateway(t, tc.keyOrganizationID)
+				gs, ctx := newAccountAdminGateway(t, tc.keyOrganizationID)
 				account := &accountproto.AccountV2{Email: "member@example.com", OrganizationId: "org-a"}
 				client := gs.accountClient.(*accountclientmock.MockClient)
 				switch method {
 				case "create":
 					if tc.wantErr == nil {
-						client.EXPECT().CreateAccountV2(accountWriteMetadataMatcher(), &accountproto.CreateAccountV2Request{
+						client.EXPECT().CreateAccountV2(accountAdminMetadataMatcher(), &accountproto.CreateAccountV2Request{
 							Email: account.Email, OrganizationId: "org-a",
 							OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						}).Return(&accountproto.CreateAccountV2Response{Account: account}, nil)
@@ -978,7 +1011,7 @@ func TestGrpcAccountWritesOrganizationScope(t *testing.T) {
 					require.Equal(t, account, res.Account)
 				case "update":
 					if tc.wantErr == nil {
-						client.EXPECT().UpdateAccountV2(accountWriteMetadataMatcher(), &accountproto.UpdateAccountV2Request{
+						client.EXPECT().UpdateAccountV2(accountAdminMetadataMatcher(), &accountproto.UpdateAccountV2Request{
 							Email: account.Email, OrganizationId: "org-a", Name: wrapperspb.String("renamed"),
 						}).Return(&accountproto.UpdateAccountV2Response{Account: account}, nil)
 					}
@@ -993,7 +1026,7 @@ func TestGrpcAccountWritesOrganizationScope(t *testing.T) {
 					require.Equal(t, account, res.Account)
 				case "delete":
 					if tc.wantErr == nil {
-						client.EXPECT().DeleteAccountV2(accountWriteMetadataMatcher(), &accountproto.DeleteAccountV2Request{
+						client.EXPECT().DeleteAccountV2(accountAdminMetadataMatcher(), &accountproto.DeleteAccountV2Request{
 							Email: account.Email, OrganizationId: "org-a",
 						}).Return(&accountproto.DeleteAccountV2Response{}, nil)
 					}
@@ -1017,9 +1050,9 @@ func newAccountReadGateway(t *testing.T, organizationID string) (*grpcGatewaySer
 	return newAccountGateway(t, organizationID, accountproto.APIKey_PUBLIC_API_READ_ONLY, "read-only-key")
 }
 
-func newAccountWriteGateway(t *testing.T, organizationID string) (*grpcGatewayService, context.Context) {
+func newAccountAdminGateway(t *testing.T, organizationID string) (*grpcGatewayService, context.Context) {
 	t.Helper()
-	return newAccountGateway(t, organizationID, accountproto.APIKey_PUBLIC_API_WRITE, "write-key")
+	return newAccountGateway(t, organizationID, accountproto.APIKey_PUBLIC_API_ADMIN, "admin-key")
 }
 
 // newAccountGateway returns a gateway whose cached key has the given role and
@@ -1051,8 +1084,8 @@ func accountReadMetadataMatcher() gomock.Matcher {
 	return accountMetadataMatcher("read-only-key")
 }
 
-func accountWriteMetadataMatcher() gomock.Matcher {
-	return accountMetadataMatcher("write-key")
+func accountAdminMetadataMatcher() gomock.Matcher {
+	return accountMetadataMatcher("admin-key")
 }
 
 // accountMetadataMatcher matches a context carrying the verified key's editor
