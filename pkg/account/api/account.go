@@ -903,6 +903,11 @@ func canReadAccount(editor *eventproto.Editor, account *accountproto.AccountV2) 
 		return true
 	}
 	for _, accountRole := range account.EnvironmentRoles {
+		// The account must hold access to the shared environment as well; an
+		// UNASSIGNED entry on it grants none.
+		if accountRole.Role == accountproto.AccountV2_Role_Environment_UNASSIGNED {
+			continue
+		}
 		if hasEnvironmentAccess(editor, accountRole.EnvironmentId) {
 			return true
 		}

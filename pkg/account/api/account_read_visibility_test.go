@@ -231,6 +231,20 @@ func TestCanReadAccount(t *testing.T) {
 			},
 			account: accounts[visibilityOtherEmail].AccountV2, want: false,
 		},
+		{
+			// The target's UNASSIGNED entry in the member's environment is not shared access.
+			name:   "member does not see an account whose only entry in the shared environment is unassigned",
+			editor: member,
+			account: &accountproto.AccountV2{
+				Email:            visibilityOtherEmail,
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "env-a", Role: accountproto.AccountV2_Role_Environment_UNASSIGNED},
+					{EnvironmentId: "env-b", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+				},
+			},
+			want: false,
+		},
 		{name: "organization admin sees everyone", editor: &eventproto.Editor{OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN}, account: accounts[visibilityOtherEmail].AccountV2, want: true},
 		{name: "system admin sees everyone", editor: &eventproto.Editor{IsAdmin: true}, account: accounts[visibilityOtherEmail].AccountV2, want: true},
 	}
