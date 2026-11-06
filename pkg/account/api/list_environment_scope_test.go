@@ -284,6 +284,36 @@ func TestListAccountsV2MemberEnvironmentScope(t *testing.T) {
 			wantStorageCall: true,
 		},
 		{
+			// An UNASSIGNED entry grants no access, so it is not listed and cannot be requested.
+			name: "member's unassigned environment entry is not an accessible environment",
+			account: &domain.AccountV2{AccountV2: &accountproto.AccountV2{
+				Email:            "bucketeer@example.com",
+				OrganizationId:   "org0",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "env0", Role: accountproto.AccountV2_Role_Environment_VIEWER},
+					{EnvironmentId: "env2", Role: accountproto.AccountV2_Role_Environment_UNASSIGNED},
+				},
+			}},
+			req:             &accountproto.ListAccountsV2Request{OrganizationId: "org0", PageSize: 10},
+			wantEnvRoles:    []string{"env0:any"},
+			wantStorageCall: true,
+		},
+		{
+			name: "member requesting their unassigned environment gets an empty page",
+			account: &domain.AccountV2{AccountV2: &accountproto.AccountV2{
+				Email:            "bucketeer@example.com",
+				OrganizationId:   "org0",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "env2", Role: accountproto.AccountV2_Role_Environment_UNASSIGNED},
+				},
+			}},
+			req: &accountproto.ListAccountsV2Request{
+				OrganizationId: "org0", EnvironmentId: wrapperspb.String("env2"), PageSize: 10,
+			},
+		},
+		{
 			name:            "member without an environment filter lists all of their environments",
 			account:         listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
 			req:             &accountproto.ListAccountsV2Request{OrganizationId: "org0", PageSize: 10},
