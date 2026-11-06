@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -89,13 +90,14 @@ func visibilityAccounts() map[string]*domain.AccountV2 {
 }
 
 // setupVisibilityLookups serves the editor and target lookups of both reads
-// from visibilityAccounts, by exact email like a case-sensitive store, within
-// the organization.
-func setupVisibilityLookups(service *AccountService) {
-	accounts := visibilityAccounts()
+// from the given accounts within the organization. Emails are matched exactly
+// like on a case-sensitive store, or ignoring case like on MySQL.
+func setupVisibilityLookups(service *AccountService, accounts map[string]*domain.AccountV2, ignoreCase bool) {
 	lookup := func(email string) (*domain.AccountV2, error) {
-		if account, ok := accounts[email]; ok {
-			return account, nil
+		for storedEmail, account := range accounts {
+			if storedEmail == email || (ignoreCase && strings.EqualFold(storedEmail, email)) {
+				return account, nil
+			}
 		}
 		return nil, v2as.ErrAccountNotFound
 	}
@@ -145,7 +147,7 @@ func TestGetAccountV2MemberVisibility(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 			service := createAccountService(t, mockController, nil)
-			setupVisibilityLookups(service)
+			setupVisibilityLookups(service, visibilityAccounts(), false)
 			ctx := metadata.NewIncomingContext(createContextWithEmailToken(t, tc.editorEmail, false), metadata.MD{})
 
 			res, err := service.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
@@ -193,7 +195,7 @@ func TestGetAccountV2ByEnvironmentIDMemberVisibility(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 			service := createAccountService(t, mockController, nil)
-			setupVisibilityLookups(service)
+			setupVisibilityLookups(service, visibilityAccounts(), false)
 			ctx := metadata.NewIncomingContext(createContextWithEmailToken(t, tc.editorEmail, false), metadata.MD{})
 
 			res, err := service.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
@@ -209,6 +211,40 @@ func TestGetAccountV2ByEnvironmentIDMemberVisibility(t *testing.T) {
 			assert.Equal(t, tc.target, res.Account.Email)
 		})
 	}
+}
+
+// TestGetAccountV2OwnAccountCaseInsensitiveStore covers a member without any
+// environment role whose token spells the email differently from the stored
+// account, as MySQL's case-insensitive lookup allows: the stored emails are
+// compared, so the member still reads their own account.
+func TestGetAccountV2OwnAccountCaseInsensitiveStore(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	service := createAccountService(t, mockController, nil)
+	accounts := map[string]*domain.AccountV2{
+		visibilityMemberEmail: {AccountV2: &accountproto.AccountV2{
+			Email:            visibilityMemberEmail,
+			OrganizationId:   visibilityOrgID,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		}},
+	}
+	setupVisibilityLookups(service, accounts, true)
+	ctx := metadata.NewIncomingContext(createContextWithEmailToken(t, "Member@Example.com", false), metadata.MD{})
+
+	res, err := service.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email: visibilityMemberEmail, OrganizationId: visibilityOrgID,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, visibilityMemberEmail, res.Account.Email)
+
+	resByEnv, err := service.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
+		Email: visibilityMemberEmail, EnvironmentId: "env-a",
+	})
+	// Without a role in env-a the member cannot look up through it, even for themselves.
+	require.Error(t, err)
+	assert.Equal(t, statusAccountNotFound.Err().Error(), err.Error())
+	assert.Nil(t, resByEnv)
 }
 
 func TestCanReadAccount(t *testing.T) {
@@ -228,7 +264,6 @@ func TestCanReadAccount(t *testing.T) {
 		account *accountproto.AccountV2
 		want    bool
 	}{
-		{name: "member sees self", editor: member, account: accounts[visibilityMemberEmail].AccountV2, want: true},
 		{name: "member does not see a case-distinct account without shared access", editor: member, account: &accountproto.AccountV2{Email: visibilityCaseTwin}, want: false},
 		{name: "member sees organization admin", editor: member, account: accounts[visibilityAdminEmail].AccountV2, want: true},
 		{name: "member sees peer sharing an environment", editor: member, account: accounts[visibilityPeerEmail].AccountV2, want: true},

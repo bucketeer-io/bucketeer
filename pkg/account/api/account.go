@@ -778,7 +778,10 @@ func (s *AccountService) GetAccountV2(
 	if err != nil {
 		return nil, err
 	}
-	if !canReadAccount(editor, account.AccountV2) {
+	if !canReadAccount(editor, account.AccountV2) &&
+		!s.isOwnAccount(ctx, account.AccountV2, func() (*domain.AccountV2, error) {
+			return s.accountStorage.GetAccountV2(ctx, editor.Email, req.OrganizationId)
+		}) {
 		return nil, s.accountNotVisible(ctx, editor, req.OrganizationId, req.Email)
 	}
 	return &accountproto.GetAccountV2Response{Account: account.AccountV2}, nil
@@ -838,10 +841,36 @@ func (s *AccountService) GetAccountV2ByEnvironmentID(
 	if err != nil {
 		return nil, err
 	}
-	if !canReadAccount(editor, account.AccountV2) {
+	if !canReadAccount(editor, account.AccountV2) &&
+		!s.isOwnAccount(ctx, account.AccountV2, func() (*domain.AccountV2, error) {
+			return s.accountStorage.GetAccountV2ByEnvironmentID(ctx, editor.Email, req.EnvironmentId)
+		}) {
 		return nil, s.accountNotVisible(ctx, editor, req.EnvironmentId, req.Email)
 	}
 	return &accountproto.GetAccountV2ByEnvironmentIDResponse{Account: account.AccountV2}, nil
+}
+
+// isOwnAccount reports whether the account is the caller's own. The caller's
+// stored account is resolved with the given lookup and the stored emails are
+// compared exactly: the token's spelling does not matter on a case-insensitive
+// store, and two accounts differing only by case stay apart on a
+// case-sensitive one.
+func (s *AccountService) isOwnAccount(
+	ctx context.Context,
+	account *accountproto.AccountV2,
+	lookupSelf func() (*domain.AccountV2, error),
+) bool {
+	self, err := lookupSelf()
+	if err != nil {
+		if !errors.Is(err, v2as.ErrAccountNotFound) {
+			s.logger.Error(
+				"Failed to get the caller's account",
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+		}
+		return false
+	}
+	return self.Email == account.Email
 }
 
 // accountNotVisible logs a read of an account the editor may not see and
@@ -887,18 +916,14 @@ func canReadAccountsInEnvironment(editor *eventproto.Editor, environmentID strin
 	return canReadAllAccounts(editor) || hasEnvironmentAccess(editor, environmentID)
 }
 
-// canReadAccount reports whether the editor may read a single account. This
-// is the read policy for organization members: they may read their own
-// account, the organization's admins and owners, and any account holding a
-// role in an environment they have access to, whatever that role is. Admins,
-// owners and system admins may read every account.
+// canReadAccount reports whether the editor may read a single account other
+// than their own, which isOwnAccount covers. This is the read policy for
+// organization members: they may read the organization's admins and owners,
+// and any account holding a role in an environment they have access to,
+// whatever that role is. Admins, owners and system admins may read every
+// account.
 func canReadAccount(editor *eventproto.Editor, account *accountproto.AccountV2) bool {
 	if canReadAllAccounts(editor) {
-		return true
-	}
-	// Exact match: on a case-sensitive store two accounts may differ only by
-	// the case of their email and must not be treated as the same identity.
-	if editor.Email == account.Email {
 		return true
 	}
 	if account.OrganizationRole >= accountproto.AccountV2_Role_Organization_ADMIN {
