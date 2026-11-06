@@ -921,8 +921,10 @@ func TestGrpcGetAccountV2ByEnvironmentIDOrganizationScope(t *testing.T) {
 			t.Parallel()
 			gs, ctx := newAccountReadGateway(t, tc.keyOrganizationID)
 			if tc.keyOrganizationID != "" && tc.environmentID != "env-a" {
+				// The environment lookup runs with the gateway's own access, so
+				// neither the key's nor a caller-supplied editor identity is sent.
 				gs.environmentClient.(*environmentclientmock.MockClient).EXPECT().GetEnvironmentV2(
-					accountReadMetadataMatcher(), &environmentproto.GetEnvironmentV2Request{Id: tc.environmentID},
+					noEditorMetadataMatcher(), &environmentproto.GetEnvironmentV2Request{Id: tc.environmentID},
 				).Return(tc.environment, tc.environmentErr)
 			}
 			account := &accountproto.AccountV2{Email: "member@example.com", OrganizationId: "org-a"}
@@ -1053,6 +1055,17 @@ func newAccountGateway(
 	// Caller-supplied editor metadata must not replace the verified key's maintainer.
 	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs(role.APIKeyMaintainerMDKey, "other-org-admin@example.com"))
 	return gs, ctx
+}
+
+// noEditorMetadataMatcher matches a context that carries no API key editor
+// metadata, i.e. a call made with the gateway's own access.
+func noEditorMetadataMatcher() gomock.Matcher {
+	return gomock.Cond(func(ctx context.Context) bool {
+		md, ok := metadata.FromOutgoingContext(ctx)
+		return !ok || (len(md.Get(role.APIKeyTokenMDKey)) == 0 &&
+			len(md.Get(role.APIKeyMaintainerMDKey)) == 0 &&
+			len(md.Get(role.APIKeyNameMDKey)) == 0)
+	})
 }
 
 func accountReadMetadataMatcher() gomock.Matcher {
