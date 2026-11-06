@@ -56,7 +56,7 @@ func (s *grpcGatewayService) GetEnvironmentV2(
 				zap.String("environmentId", req.Id),
 			)...,
 		)
-		return nil, err
+		return nil, maskNotFound(err)
 	}
 
 	if resp == nil {
@@ -169,7 +169,7 @@ func (s *grpcGatewayService) GetProject(
 				zap.String("projectId", req.Id),
 			)...,
 		)
-		return nil, err
+		return nil, maskNotFound(err)
 	}
 	if resp == nil {
 		s.logger.Error("Project resp is nil",

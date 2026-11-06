@@ -264,7 +264,7 @@ func (s *grpcGatewayService) GetAccountV2ByEnvironmentID(
 			Id: request.EnvironmentId,
 		})
 		if err != nil {
-			return nil, err
+			return nil, maskNotFound(err)
 		}
 		if environment == nil || environment.Environment == nil {
 			return nil, ErrInternal

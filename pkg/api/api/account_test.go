@@ -7,7 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
@@ -905,6 +907,12 @@ func TestGrpcGetAccountV2ByEnvironmentIDOrganizationScope(t *testing.T) {
 			wantErr: ErrNotFound,
 		},
 		{name: "environment lookup error", environmentID: "env-b", keyOrganizationID: "org-a", environmentErr: ErrNotFound, wantErr: ErrNotFound},
+		{
+			// An unknown environment is reported exactly like one in another organization.
+			name: "unknown environment", environmentID: "env-b", keyOrganizationID: "org-a",
+			environmentErr: status.Error(codes.NotFound, "environment: not found"), wantErr: ErrNotFound,
+		},
+		{name: "environment lookup internal error", environmentID: "env-b", keyOrganizationID: "org-a", environmentErr: ErrInternal, wantErr: ErrInternal},
 		{name: "nil environment response", environmentID: "env-b", keyOrganizationID: "org-a", wantErr: ErrInternal},
 		{name: "nil environment", environmentID: "env-b", keyOrganizationID: "org-a", environment: &environmentproto.GetEnvironmentV2Response{}, wantErr: ErrInternal},
 		{name: "key without organization", environmentID: "env-a", wantErr: ErrInvalidAPIKey},
