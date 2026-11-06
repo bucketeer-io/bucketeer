@@ -162,7 +162,7 @@ func TestFailedDeleteTeam(t *testing.T) {
 		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 			{
-				EnvironmentId: "test",
+				EnvironmentId: *environmentID,
 				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 			},
 		},
