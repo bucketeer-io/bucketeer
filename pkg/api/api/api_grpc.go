@@ -1932,6 +1932,17 @@ func (s *grpcGatewayService) checkTrackRequest(
 
 // publicAPIEditorMetadata identifies the API key to the services, which record it as the editor.
 // The key itself is never relayed: only its obfuscated form may reach the audit log.
+// maskNotFound replaces a backend not-found error with the gateway's own, so
+// the response for an ID that does not exist is the same as the one for a
+// resource outside the key's organization, which the handlers also report as
+// not found. Otherwise the difference would reveal which IDs exist elsewhere.
+func maskNotFound(err error) error {
+	if status.Code(err) == codes.NotFound {
+		return ErrNotFound
+	}
+	return err
+}
+
 func publicAPIEditorMetadata(envAPIKey *accountproto.EnvironmentAPIKey) gmetadata.MD {
 	return gmetadata.New(map[string]string{
 		role.APIKeyTokenMDKey:      accountdomain.ObfuscateAPIKey(envAPIKey.ApiKey.ApiKey),

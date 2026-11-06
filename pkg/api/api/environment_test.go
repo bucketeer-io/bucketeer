@@ -6,7 +6,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	environmentclient "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
@@ -61,6 +63,27 @@ func TestGrpcGatewayService_GetEnvironmentV2(t *testing.T) {
 			},
 			expected:    nil,
 			expectedErr: ErrInternal,
+		},
+		{
+			desc: "fails: unknown environment is reported like a foreign one",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-id"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Disabled: false,
+						},
+					}, nil)
+				// The backend error must not reach the caller: it would tell an ID
+				// that does not exist apart from one in another organization.
+				gs.environmentClient.(*environmentclient.MockClient).EXPECT().GetEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, status.Error(codes.NotFound, "environment: not found"))
+			},
+			expected:    nil,
+			expectedErr: ErrNotFound,
 		},
 		{
 			desc: "fails: environment is not in the same organization",
@@ -288,6 +311,27 @@ func TestGrpcGatewayService_GetProject(t *testing.T) {
 			},
 			expected:    nil,
 			expectedErr: ErrInternal,
+		},
+		{
+			desc: "fails: unknown project is reported like a foreign one",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0", OrganizationId: "org-id"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Disabled: false,
+						},
+					}, nil)
+				// The backend error must not reach the caller: it would tell an ID
+				// that does not exist apart from one in another organization.
+				gs.environmentClient.(*environmentclient.MockClient).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, status.Error(codes.NotFound, "environment: not found"))
+			},
+			expected:    nil,
+			expectedErr: ErrNotFound,
 		},
 		{
 			desc: "fails: project is not in the same organization",

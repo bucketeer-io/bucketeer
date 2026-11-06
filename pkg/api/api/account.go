@@ -258,13 +258,19 @@ func (s *grpcGatewayService) GetAccountV2ByEnvironmentID(
 	if envAPIKey.Environment.OrganizationId == "" {
 		return nil, ErrInvalidAPIKey
 	}
-	ctx = metadata.NewOutgoingContext(ctx, publicAPIEditorMetadata(envAPIKey))
 	if request.EnvironmentId != envAPIKey.Environment.Id {
-		environment, err := s.environmentClient.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{
-			Id: request.EnvironmentId,
-		})
+		// The environment is looked up with the gateway's own access, without
+		// the maintainer metadata, because the lookup only serves the
+		// organization check below. As the maintainer, the environment service
+		// would answer an unknown environment with an authentication error but
+		// a foreign one the maintainer can read with the environment itself,
+		// and the two would stay distinguishable after masking.
+		environment, err := s.environmentClient.GetEnvironmentV2(
+			metadata.NewOutgoingContext(ctx, metadata.MD{}),
+			&environmentproto.GetEnvironmentV2Request{Id: request.EnvironmentId},
+		)
 		if err != nil {
-			return nil, err
+			return nil, maskNotFound(err)
 		}
 		if environment == nil || environment.Environment == nil {
 			return nil, ErrInternal
@@ -273,6 +279,7 @@ func (s *grpcGatewayService) GetAccountV2ByEnvironmentID(
 			return nil, ErrNotFound
 		}
 	}
+	ctx = metadata.NewOutgoingContext(ctx, publicAPIEditorMetadata(envAPIKey))
 	res, err := s.accountClient.GetAccountV2ByEnvironmentID(
 		ctx,
 		&accountproto.GetAccountV2ByEnvironmentIDRequest{
