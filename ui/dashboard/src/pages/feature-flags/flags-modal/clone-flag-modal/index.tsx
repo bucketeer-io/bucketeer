@@ -25,10 +25,10 @@ import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Dropdown, { DropdownValue } from 'components/dropdown';
 import Form from 'components/form';
-import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import EnvironmentEditorList from 'elements/environment-editor-list';
 import FormLoading from 'elements/form-loading';
+import InputWithTooltip from 'elements/input-with-tooltip';
 
 interface CloneFlagModalProps {
   flagId: string;
@@ -219,7 +219,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
                   <Form.Item>
                     <Form.Label required>{t('name')}</Form.Label>
                     <Form.Control>
-                      <Input
+                      <InputWithTooltip
                         {...field}
                         placeholder={`${t('form:placeholder-name')}`}
                         disabled

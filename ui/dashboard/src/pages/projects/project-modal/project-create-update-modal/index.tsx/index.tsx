@@ -17,12 +17,12 @@ import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
+import InputWithTooltip from 'elements/input-with-tooltip';
 
 interface ProjectCreateUpdateModalProps {
   isOpen: boolean;
@@ -168,7 +168,7 @@ const ProjectCreateUpdateModal = ({
                   <Form.Item>
                     <Form.Label required>{t('name')}</Form.Label>
                     <Form.Control>
-                      <Input
+                      <InputWithTooltip
                         disabled={disabled}
                         placeholder={`${t('form:placeholder-name')}`}
                         {...field}
@@ -212,7 +212,7 @@ const ProjectCreateUpdateModal = ({
                       />
                     </Form.Label>
                     <Form.Control>
-                      <Input
+                      <InputWithTooltip
                         {...field}
                         value={field.value}
                         placeholder={`${t('form:placeholder-code')}`}

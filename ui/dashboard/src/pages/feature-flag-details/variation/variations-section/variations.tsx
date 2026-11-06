@@ -22,8 +22,8 @@ import ReactCodeEditorModal from 'components/code-editor/code-editor-mode';
 import Dropdown from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import { Tooltip } from 'components/tooltip';
+import InputWithTooltip from 'elements/input-with-tooltip';
 import { VariationForm } from '../form-schema';
 
 const VariationLabel = ({
@@ -326,7 +326,7 @@ const Variations = ({
                                 placeholder={t('form:feature-flags.value')}
                               />
                             ) : (
-                              <Input
+                              <InputWithTooltip
                                 {...field}
                                 onChange={value => {
                                   field.onChange(value);
@@ -354,7 +354,7 @@ const Variations = ({
                     <Form.Item className={cn(formItemClassName)}>
                       <Form.Label required>{t('name')}</Form.Label>
                       <Form.Control>
-                        <Input
+                        <InputWithTooltip
                           {...field}
                           placeholder={t('name')}
                           disabled={isRunningExperiment || !editable}
@@ -371,7 +371,7 @@ const Variations = ({
                     <Form.Item className={cn(formItemClassName)}>
                       <Form.Label>{t('form:description')}</Form.Label>
                       <Form.Control>
-                        <Input
+                        <InputWithTooltip
                           {...field}
                           placeholder={t('form:description')}
                           disabled={isRunningExperiment || !editable}

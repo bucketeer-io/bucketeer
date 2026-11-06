@@ -13,7 +13,7 @@ import ReactCodeEditor from 'components/code-editor';
 import ReactCodeEditorModal from 'components/code-editor/code-editor-mode';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
+import InputWithTooltip from 'elements/input-with-tooltip';
 
 const Variations = () => {
   const { t } = useTranslation(['form', 'common', 'table']);
@@ -91,7 +91,10 @@ const Variations = () => {
                     <Form.Item className="w-full py-0">
                       <Form.Label required>{t('common:name')}</Form.Label>
                       <Form.Control>
-                        <Input {...field} placeholder={t('placeholder-name')} />
+                        <InputWithTooltip
+                          {...field}
+                          placeholder={t('placeholder-name')}
+                        />
                       </Form.Control>
                       <Form.Message />
                     </Form.Item>
@@ -150,7 +153,7 @@ const Variations = () => {
                             />
                           </div>
                         ) : (
-                          <Input
+                          <InputWithTooltip
                             {...field}
                             onChange={value => {
                               field.onChange(value);

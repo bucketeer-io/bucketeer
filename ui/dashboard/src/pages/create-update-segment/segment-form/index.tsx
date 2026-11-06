@@ -35,11 +35,11 @@ import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 import Upload from 'components/upload-files';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import InputWithTooltip from 'elements/input-with-tooltip';
 import ConfirmRulesImpactModal from './confirm-rules-impact-modal';
 import SegmentRules from './segment-rules';
 
@@ -262,7 +262,7 @@ const SegmentForm = ({
                 <Form.Item className="py-0">
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       placeholder={`${t('form:placeholder-name')}`}
                       disabled={isDisabled}
                       {...field}

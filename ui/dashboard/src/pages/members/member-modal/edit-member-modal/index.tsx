@@ -34,9 +34,9 @@ import Divider from 'components/divider';
 import Dropdown, { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { Tooltip } from 'components/tooltip';
+import InputWithTooltip from 'elements/input-with-tooltip';
 import SelectMenu from 'elements/select-menu';
 import { defaultEnvironmentRole, languageList } from '../add-member-modal';
 import EnvironmentRoles from '../add-member-modal/environment-roles';
@@ -233,7 +233,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                 <Form.Item>
                   <Form.Label required>{t('first-name')}</Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       placeholder={`${t('form:enter-first-name')}`}
                       autoComplete="given-name"
                       {...field}
@@ -251,7 +251,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                 <Form.Item>
                   <Form.Label required>{t('last-name')}</Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       placeholder={`${t('form:enter-last-name')}`}
                       autoComplete="family-name"
                       {...field}
@@ -265,7 +265,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
             <Form.Item>
               <Form.Label required>{t('email')}</Form.Label>
               <Form.Control>
-                <Input
+                <InputWithTooltip
                   disabled
                   value={member.email}
                   placeholder={t('form:placeholder-email')}

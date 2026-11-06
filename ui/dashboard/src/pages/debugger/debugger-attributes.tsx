@@ -4,7 +4,7 @@ import { IconPlus, IconTrash } from '@icons';
 import Button from 'components/button';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
+import InputWithTooltip from 'elements/input-with-tooltip';
 import { AddDebuggerFormType } from './form-schema';
 
 const DebuggerAttributes = () => {
@@ -41,7 +41,7 @@ const DebuggerAttributes = () => {
                 <Form.Item className="py-0 flex-1">
                   <Form.Label>{t('form:key')}</Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       {...field}
                       name="debugger-attribute-key"
                       onKeyDown={e => {
@@ -60,7 +60,7 @@ const DebuggerAttributes = () => {
                 <Form.Item className="py-0 flex-1">
                   <Form.Label>{t('form:feature-flags.value')}</Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       {...field}
                       name="debugger-attribute-value"
                       onKeyDown={e => {

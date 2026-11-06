@@ -15,6 +15,7 @@ export type TooltipProps = {
   triggerCls?: string;
   side?: 'top' | 'right' | 'bottom' | 'left';
   showArrow?: boolean;
+  disableHoverableContent?: boolean;
 };
 
 const TooltipProvider = TooltipPrimitive.Provider;
@@ -57,13 +58,14 @@ const Tooltip = forwardRef(
       sideOffset = 5,
       triggerCls,
       side = 'top',
-      showArrow = true
+      showArrow = true,
+      disableHoverableContent
     }: TooltipProps,
     ref: Ref<HTMLDivElement>
   ) => {
     return (
       <TooltipProvider delayDuration={delayDuration}>
-        <TooltipRoot>
+        <TooltipRoot disableHoverableContent={disableHoverableContent}>
           <TooltipTrigger
             type="button"
             asChild={asChild}
