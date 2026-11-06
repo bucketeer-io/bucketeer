@@ -64,6 +64,7 @@ var (
 )
 
 func TestGetAccount(t *testing.T) {
+	e2eEnvID := e2eOrgEnvironmentID(t)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
@@ -82,7 +83,7 @@ func TestGetAccount(t *testing.T) {
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 			{
 				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-				EnvironmentId: "test",
+				EnvironmentId: e2eEnvID,
 			},
 		},
 	})
@@ -105,6 +106,7 @@ func TestGetAccount(t *testing.T) {
 }
 
 func TestCreateAccountV2(t *testing.T) {
+	e2eEnvID := e2eOrgEnvironmentID(t)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
@@ -117,7 +119,7 @@ func TestCreateAccountV2(t *testing.T) {
 	tags := []string{fmt.Sprintf("tag-%d", time.Now().Unix())}
 	envRole := &accountproto.AccountV2_EnvironmentRole{
 		Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-		EnvironmentId: "test",
+		EnvironmentId: e2eEnvID,
 	}
 	resp, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
 		OrganizationId:   defaultOrganizationID,
@@ -179,6 +181,7 @@ func TestCreateAccountV2(t *testing.T) {
 }
 
 func TestCreateAccountV2Admin(t *testing.T) {
+	e2eEnvID := e2eOrgEnvironmentID(t)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
@@ -191,7 +194,7 @@ func TestCreateAccountV2Admin(t *testing.T) {
 	tags := []string{fmt.Sprintf("tag-%d", time.Now().Unix())}
 	envRole := &accountproto.AccountV2_EnvironmentRole{
 		Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-		EnvironmentId: "test",
+		EnvironmentId: e2eEnvID,
 	}
 	resp, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
 		OrganizationId:   defaultOrganizationID,
@@ -223,6 +226,7 @@ func TestCreateAccountV2Admin(t *testing.T) {
 }
 
 func TestListAccounts(t *testing.T) {
+	e2eEnvID := e2eOrgEnvironmentID(t)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
@@ -241,7 +245,7 @@ func TestListAccounts(t *testing.T) {
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 			{
 				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-				EnvironmentId: "test",
+				EnvironmentId: e2eEnvID,
 			},
 		},
 	})
@@ -263,6 +267,7 @@ func TestListAccounts(t *testing.T) {
 }
 
 func TestUpdateAccountThenDeleteAccount(t *testing.T) {
+	e2eEnvID := e2eOrgEnvironmentID(t)
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -280,7 +285,7 @@ func TestUpdateAccountThenDeleteAccount(t *testing.T) {
 		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 			{
-				EnvironmentId: "test",
+				EnvironmentId: e2eEnvID,
 				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 			},
 		},
@@ -301,7 +306,7 @@ func TestUpdateAccountThenDeleteAccount(t *testing.T) {
 		AvatarImageUrl: wrapperspb.String(newAvatarURL),
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 			{
-				EnvironmentId: "test",
+				EnvironmentId: e2eEnvID,
 				Role:          accountproto.AccountV2_Role_Environment_EDITOR,
 			},
 		},
@@ -390,6 +395,7 @@ func TestUpdateAccountThenDeleteAccount(t *testing.T) {
 }
 
 func TestCreateUpdateAccountTeams(t *testing.T) {
+	e2eEnvID := e2eOrgEnvironmentID(t)
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -409,7 +415,7 @@ func TestCreateUpdateAccountTeams(t *testing.T) {
 		Teams:            []string{"team-id-1", "team-id-2"},
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 			{
-				EnvironmentId: "test",
+				EnvironmentId: e2eEnvID,
 				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 			},
 		},
@@ -434,7 +440,7 @@ func TestCreateUpdateAccountTeams(t *testing.T) {
 		},
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 			{
-				EnvironmentId: "test",
+				EnvironmentId: e2eEnvID,
 				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 			},
 		},
@@ -465,6 +471,7 @@ func TestCreateUpdateAccountTeams(t *testing.T) {
 }
 
 func TestEnableAndDisableAccount(t *testing.T) {
+	e2eEnvID := e2eOrgEnvironmentID(t)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
@@ -483,7 +490,7 @@ func TestEnableAndDisableAccount(t *testing.T) {
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 			{
 				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-				EnvironmentId: "test",
+				EnvironmentId: e2eEnvID,
 			},
 		},
 	})
@@ -530,6 +537,7 @@ func TestEnableAndDisableAccount(t *testing.T) {
 }
 
 func TestDeleteAccount(t *testing.T) {
+	e2eEnvID := e2eOrgEnvironmentID(t)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	c := newAccountClient(t, orgOwnerE2EAccessTokenPath)
@@ -548,7 +556,7 @@ func TestDeleteAccount(t *testing.T) {
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 			{
 				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-				EnvironmentId: "test",
+				EnvironmentId: e2eEnvID,
 			},
 		},
 	})
