@@ -385,9 +385,12 @@ func (s *accountStorage) ListAccountsV2(
 	return accounts, nextOffset, totalCount, nil
 }
 
+// environmentRole is the JSON containment candidate matched against the
+// environment_roles column. A field left nil is omitted so it matches any
+// value; serialized as null it would match nothing.
 type environmentRole struct {
-	EnvironmentID *string `json:"environment_id"`
-	Role          *int32  `json:"role"`
+	EnvironmentID *string `json:"environment_id,omitempty"`
+	Role          *int32  `json:"role,omitempty"`
 }
 
 func listAccountsV2OptionsFromParams(p v2as.ListAccountsV2Params) (*mysqlstorage.ListOptions, error) {
@@ -464,10 +467,11 @@ func listAccountsV2OptionsFromParams(p v2as.ListAccountsV2Params) (*mysqlstorage
 		// Member user filtering: build OR filter for each environment role + org_role >= admin
 		orWhereParts := make([]mysqlstorage.WherePart, 0)
 		for _, r := range p.EnvironmentRoles {
-			role := int32(r.Role)
-			envRole := &environmentRole{
-				EnvironmentID: &r.EnvironmentId,
-				Role:          &role,
+			// An UNASSIGNED role means any role in the environment.
+			envRole := &environmentRole{EnvironmentID: &r.EnvironmentId}
+			if r.Role != proto.AccountV2_Role_Environment_UNASSIGNED {
+				role := int32(r.Role)
+				envRole.Role = &role
 			}
 			jsonValues, err := json.Marshal(envRole)
 			if err != nil {

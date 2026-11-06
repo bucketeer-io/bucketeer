@@ -1068,6 +1068,12 @@ func (s *AccountService) ListAccountsV2(
 	}, nil
 }
 
+// constructEnvironmentRoles returns the environment filter a member's list is
+// scoped to: one entry per environment the member has a role in, narrowed to
+// the requested environment when one is given. The entry's role is the
+// requested role filter, or UNASSIGNED to match any role, so a member sees
+// every account of their environments and not only the ones holding the
+// member's own role. An empty result means the member has nothing to list.
 func (s *AccountService) constructEnvironmentRoles(
 	req *accountproto.ListAccountsV2Request,
 	editor *eventproto.Editor,
@@ -1077,24 +1083,22 @@ func (s *AccountService) constructEnvironmentRoles(
 	if len(editor.EnvironmentRoles) == 0 {
 		return nil, nil
 	}
-
-	if req.EnvironmentId != nil && req.EnvironmentRole != nil {
-		for _, role := range editor.EnvironmentRoles {
-			if role.EnvironmentId == req.EnvironmentId.Value &&
-				role.Role == accountproto.AccountV2_Role_Environment(req.EnvironmentRole.Value) {
-				requestEnvironmentRoles = append(requestEnvironmentRoles, role)
-				break
-			}
+	roleFilter := accountproto.AccountV2_Role_Environment_UNASSIGNED
+	if req.EnvironmentRole != nil {
+		roleFilter = accountproto.AccountV2_Role_Environment(req.EnvironmentRole.Value)
+	}
+	for _, role := range editor.EnvironmentRoles {
+		// An UNASSIGNED entry grants no access to its environment.
+		if role.Role == accountproto.AccountV2_Role_Environment_UNASSIGNED {
+			continue
 		}
-	} else if req.EnvironmentId != nil && req.EnvironmentRole == nil {
-		for _, role := range editor.EnvironmentRoles {
-			if role.EnvironmentId == req.EnvironmentId.Value {
-				requestEnvironmentRoles = append(requestEnvironmentRoles, role)
-				break
-			}
+		if req.EnvironmentId != nil && role.EnvironmentId != req.EnvironmentId.Value {
+			continue
 		}
-	} else {
-		requestEnvironmentRoles = append(requestEnvironmentRoles, editor.EnvironmentRoles...)
+		requestEnvironmentRoles = append(requestEnvironmentRoles, &accountproto.AccountV2_EnvironmentRole{
+			EnvironmentId: role.EnvironmentId,
+			Role:          roleFilter,
+		})
 	}
 	return requestEnvironmentRoles, nil
 }
