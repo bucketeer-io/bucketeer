@@ -59,10 +59,9 @@ func ensureE2EOrgEnvironment(t *testing.T) (string, error) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	// Listing projects across organizations and creating projects and
-	// environments are administrative operations, so the system admin
-	// token is used for the setup only.
-	c := newEnvironmentClientWithToken(t, *sysAdminAccessTokenPath)
+	// The owner of the e2e organization may list and create its projects and
+	// environments, so the setup needs no other credential than the tests.
+	c := newEnvironmentClientWithToken(t, *orgOwnerE2EAccessTokenPath)
 	defer c.Close()
 
 	projectID, err := findProjectID(ctx, c)
@@ -104,10 +103,10 @@ func ensureE2EOrgEnvironment(t *testing.T) (string, error) {
 // findProjectID returns the ID of the test project of the e2e organization,
 // or an empty string when it does not exist yet.
 func findProjectID(ctx context.Context, c environmentclient.Client) (string, error) {
-	resp, err := c.ListProjects(ctx, &environmentproto.ListProjectsRequest{
-		OrganizationIds: []string{defaultOrganizationID},
-		SearchKeyword:   e2eOrgProjectURLCode,
-		PageSize:        listPageSize,
+	resp, err := c.ListProjectsV2(ctx, &environmentproto.ListProjectsV2Request{
+		OrganizationId: defaultOrganizationID,
+		SearchKeyword:  e2eOrgProjectURLCode,
+		PageSize:       listPageSize,
 	})
 	if err != nil {
 		return "", fmt.Errorf("list projects: %w", err)
