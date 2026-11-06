@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,6 +37,9 @@ const (
 	visibilityPeerEmail   = "peer@example.com"
 	visibilityOtherEmail  = "other@example.com"
 	visibilityUnknown     = "unknown@example.com"
+	// A distinct account whose email differs from the member's only by case,
+	// as a case-sensitive store allows.
+	visibilityCaseTwin = "MEMBER@example.com"
 )
 
 // visibilityAccounts returns an organization where the member only has a role
@@ -75,18 +77,25 @@ func visibilityAccounts() map[string]*domain.AccountV2 {
 				{EnvironmentId: "env-b", Role: accountproto.AccountV2_Role_Environment_EDITOR},
 			},
 		}},
+		visibilityCaseTwin: {AccountV2: &accountproto.AccountV2{
+			Email:            visibilityCaseTwin,
+			OrganizationId:   visibilityOrgID,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{EnvironmentId: "env-b", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+			},
+		}},
 	}
 }
 
 // setupVisibilityLookups serves the editor and target lookups of both reads
-// from visibilityAccounts, by email, within the organization.
+// from visibilityAccounts, by exact email like a case-sensitive store, within
+// the organization.
 func setupVisibilityLookups(service *AccountService) {
 	accounts := visibilityAccounts()
 	lookup := func(email string) (*domain.AccountV2, error) {
-		for storedEmail, account := range accounts {
-			if strings.EqualFold(storedEmail, email) {
-				return account, nil
-			}
+		if account, ok := accounts[email]; ok {
+			return account, nil
 		}
 		return nil, v2as.ErrAccountNotFound
 	}
@@ -121,6 +130,11 @@ func TestGetAccountV2MemberVisibility(t *testing.T) {
 			// The invisible account and an unknown one get the same answer.
 			name: "member reads an unknown account", editorEmail: visibilityMemberEmail,
 			target: visibilityUnknown, wantErr: statusAccountNotFound.Err(),
+		},
+		{
+			// A distinct account differing only by email case is not the member's own.
+			name: "member cannot read a case-distinct account of another environment", editorEmail: visibilityMemberEmail,
+			target: visibilityCaseTwin, wantErr: statusAccountNotFound.Err(),
 		},
 		{name: "admin reads an account of any environment", editorEmail: visibilityAdminEmail, target: visibilityOtherEmail},
 	}
@@ -215,7 +229,7 @@ func TestCanReadAccount(t *testing.T) {
 		want    bool
 	}{
 		{name: "member sees self", editor: member, account: accounts[visibilityMemberEmail].AccountV2, want: true},
-		{name: "member sees self with different email case", editor: member, account: &accountproto.AccountV2{Email: strings.ToUpper(visibilityMemberEmail)}, want: true},
+		{name: "member does not see a case-distinct account without shared access", editor: member, account: &accountproto.AccountV2{Email: visibilityCaseTwin}, want: false},
 		{name: "member sees organization admin", editor: member, account: accounts[visibilityAdminEmail].AccountV2, want: true},
 		{name: "member sees peer sharing an environment", editor: member, account: accounts[visibilityPeerEmail].AccountV2, want: true},
 		{name: "member does not see account of another environment", editor: member, account: accounts[visibilityOtherEmail].AccountV2, want: false},

@@ -896,7 +896,9 @@ func canReadAccount(editor *eventproto.Editor, account *accountproto.AccountV2) 
 	if canReadAllAccounts(editor) {
 		return true
 	}
-	if strings.EqualFold(editor.Email, account.Email) {
+	// Exact match: on a case-sensitive store two accounts may differ only by
+	// the case of their email and must not be treated as the same identity.
+	if editor.Email == account.Email {
 		return true
 	}
 	if account.OrganizationRole >= accountproto.AccountV2_Role_Organization_ADMIN {
