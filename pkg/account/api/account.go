@@ -761,7 +761,7 @@ func (s *AccountService) GetAccountV2(
 	ctx context.Context,
 	req *accountproto.GetAccountV2Request,
 ) (*accountproto.GetAccountV2Response, error) {
-	_, err := s.checkOrganizationRole(
+	editor, err := s.checkOrganizationRole(
 		ctx,
 		accountproto.AccountV2_Role_Organization_MEMBER,
 		req.OrganizationId,
@@ -783,6 +783,12 @@ func (s *AccountService) GetAccountV2(
 	account, err := s.getAccountV2(ctx, req.Email, req.OrganizationId)
 	if err != nil {
 		return nil, err
+	}
+	if !canReadAccount(editor, account.AccountV2) &&
+		!s.isOwnAccount(ctx, account.AccountV2, func() (*domain.AccountV2, error) {
+			return s.accountStorage.GetAccountV2(ctx, editor.Email, req.OrganizationId)
+		}) {
+		return nil, s.accountNotVisible(ctx, editor, req.OrganizationId, req.Email)
 	}
 	return &accountproto.GetAccountV2Response{Account: account.AccountV2}, nil
 }
@@ -813,7 +819,7 @@ func (s *AccountService) GetAccountV2ByEnvironmentID(
 	ctx context.Context,
 	req *accountproto.GetAccountV2ByEnvironmentIDRequest,
 ) (*accountproto.GetAccountV2ByEnvironmentIDResponse, error) {
-	_, err := s.checkOrganizationRoleByEnvironmentID(
+	editor, err := s.checkOrganizationRoleByEnvironmentID(
 		ctx,
 		accountproto.AccountV2_Role_Organization_MEMBER,
 		req.EnvironmentId,
@@ -832,11 +838,114 @@ func (s *AccountService) GetAccountV2ByEnvironmentID(
 		)
 		return nil, err
 	}
+	// A member may only look accounts up through an environment they have
+	// access to.
+	if !canReadAccountsInEnvironment(editor, req.EnvironmentId) {
+		return nil, s.accountNotVisible(ctx, editor, req.EnvironmentId, req.Email)
+	}
 	account, err := s.getAccountV2ByEnvironmentID(ctx, req.Email, req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
+	if !canReadAccount(editor, account.AccountV2) &&
+		!s.isOwnAccount(ctx, account.AccountV2, func() (*domain.AccountV2, error) {
+			return s.accountStorage.GetAccountV2ByEnvironmentID(ctx, editor.Email, req.EnvironmentId)
+		}) {
+		return nil, s.accountNotVisible(ctx, editor, req.EnvironmentId, req.Email)
+	}
 	return &accountproto.GetAccountV2ByEnvironmentIDResponse{Account: account.AccountV2}, nil
+}
+
+// isOwnAccount reports whether the account is the caller's own. The caller's
+// stored account is resolved with the given lookup and the stored emails are
+// compared exactly: the token's spelling does not matter on a case-insensitive
+// store, and two accounts differing only by case stay apart on a
+// case-sensitive one.
+func (s *AccountService) isOwnAccount(
+	ctx context.Context,
+	account *accountproto.AccountV2,
+	lookupSelf func() (*domain.AccountV2, error),
+) bool {
+	self, err := lookupSelf()
+	if err != nil {
+		if !errors.Is(err, v2as.ErrAccountNotFound) {
+			s.logger.Error(
+				"Failed to get the caller's account",
+				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+		}
+		return false
+	}
+	return self.Email == account.Email
+}
+
+// accountNotVisible logs a read of an account the editor may not see and
+// returns the not-found error used for unknown accounts, so the read does not
+// reveal whether the account exists.
+func (s *AccountService) accountNotVisible(
+	ctx context.Context,
+	editor *eventproto.Editor,
+	scope, email string,
+) error {
+	s.logger.Warn(
+		"Rejected a read of an account outside the member's environments",
+		log.FieldsFromIncomingContext(ctx).AddFields(
+			zap.String("editor", editor.Email),
+			zap.String("scope", scope),
+			zap.String("email", email),
+		)...,
+	)
+	return statusAccountNotFound.Err()
+}
+
+// canReadAllAccounts reports whether the editor reads the organization's
+// accounts without restriction: system admins, organization admins and owners.
+func canReadAllAccounts(editor *eventproto.Editor) bool {
+	return editor.IsAdmin || editor.OrganizationRole >= accountproto.AccountV2_Role_Organization_ADMIN
+}
+
+// hasEnvironmentAccess reports whether the editor holds a role granting
+// access to the environment. An UNASSIGNED entry grants none.
+func hasEnvironmentAccess(editor *eventproto.Editor, environmentID string) bool {
+	for _, role := range editor.EnvironmentRoles {
+		if role.EnvironmentId == environmentID &&
+			role.Role != accountproto.AccountV2_Role_Environment_UNASSIGNED {
+			return true
+		}
+	}
+	return false
+}
+
+// canReadAccountsInEnvironment reports whether the editor may read accounts
+// through the given environment. Members need access to it.
+func canReadAccountsInEnvironment(editor *eventproto.Editor, environmentID string) bool {
+	return canReadAllAccounts(editor) || hasEnvironmentAccess(editor, environmentID)
+}
+
+// canReadAccount reports whether the editor may read a single account other
+// than their own, which isOwnAccount covers. This is the read policy for
+// organization members: they may read the organization's admins and owners,
+// and any account holding a role in an environment they have access to,
+// whatever that role is. Admins, owners and system admins may read every
+// account.
+func canReadAccount(editor *eventproto.Editor, account *accountproto.AccountV2) bool {
+	if canReadAllAccounts(editor) {
+		return true
+	}
+	if account.OrganizationRole >= accountproto.AccountV2_Role_Organization_ADMIN {
+		return true
+	}
+	for _, accountRole := range account.EnvironmentRoles {
+		// The account must hold access to the shared environment as well; an
+		// UNASSIGNED entry on it grants none.
+		if accountRole.Role == accountproto.AccountV2_Role_Environment_UNASSIGNED {
+			continue
+		}
+		if hasEnvironmentAccess(editor, accountRole.EnvironmentId) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *AccountService) getAccountV2ByEnvironmentID(
