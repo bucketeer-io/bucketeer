@@ -830,7 +830,7 @@ func (s *AccountService) GetAccountV2ByEnvironmentID(
 		return nil, err
 	}
 	// A member may only look accounts up through an environment they have
-	// access to, like the member list only covers those environments.
+	// access to.
 	if !canReadAccountsInEnvironment(editor, req.EnvironmentId) {
 		return nil, s.accountNotVisible(ctx, editor, req.EnvironmentId, req.Email)
 	}
@@ -869,24 +869,29 @@ func canReadAllAccounts(editor *eventproto.Editor) bool {
 	return editor.IsAdmin || editor.OrganizationRole >= accountproto.AccountV2_Role_Organization_ADMIN
 }
 
-// canReadAccountsInEnvironment reports whether the editor may read accounts
-// through the given environment. Members need a role in it.
-func canReadAccountsInEnvironment(editor *eventproto.Editor, environmentID string) bool {
-	if canReadAllAccounts(editor) {
-		return true
-	}
+// hasEnvironmentAccess reports whether the editor holds a role granting
+// access to the environment. An UNASSIGNED entry grants none.
+func hasEnvironmentAccess(editor *eventproto.Editor, environmentID string) bool {
 	for _, role := range editor.EnvironmentRoles {
-		if role.EnvironmentId == environmentID {
+		if role.EnvironmentId == environmentID &&
+			role.Role != accountproto.AccountV2_Role_Environment_UNASSIGNED {
 			return true
 		}
 	}
 	return false
 }
 
-// canReadAccount reports whether the editor may read the account. Members see
-// what the member list shows them: their own account, the organization's
-// admins and owners, and the accounts holding a role in an environment the
-// member has a role in.
+// canReadAccountsInEnvironment reports whether the editor may read accounts
+// through the given environment. Members need access to it.
+func canReadAccountsInEnvironment(editor *eventproto.Editor, environmentID string) bool {
+	return canReadAllAccounts(editor) || hasEnvironmentAccess(editor, environmentID)
+}
+
+// canReadAccount reports whether the editor may read a single account. This
+// is the read policy for organization members: they may read their own
+// account, the organization's admins and owners, and any account holding a
+// role in an environment they have access to, whatever that role is. Admins,
+// owners and system admins may read every account.
 func canReadAccount(editor *eventproto.Editor, account *accountproto.AccountV2) bool {
 	if canReadAllAccounts(editor) {
 		return true
@@ -897,11 +902,9 @@ func canReadAccount(editor *eventproto.Editor, account *accountproto.AccountV2) 
 	if account.OrganizationRole >= accountproto.AccountV2_Role_Organization_ADMIN {
 		return true
 	}
-	for _, editorRole := range editor.EnvironmentRoles {
-		for _, accountRole := range account.EnvironmentRoles {
-			if editorRole.EnvironmentId == accountRole.EnvironmentId {
-				return true
-			}
+	for _, accountRole := range account.EnvironmentRoles {
+		if hasEnvironmentAccess(editor, accountRole.EnvironmentId) {
+			return true
 		}
 	}
 	return false
