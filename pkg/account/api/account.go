@@ -973,6 +973,10 @@ func (s *AccountService) constructEnvironmentRoles(
 		roleFilter = accountproto.AccountV2_Role_Environment(req.EnvironmentRole.Value)
 	}
 	for _, role := range editor.EnvironmentRoles {
+		// An UNASSIGNED entry grants no access to its environment.
+		if role.Role == accountproto.AccountV2_Role_Environment_UNASSIGNED {
+			continue
+		}
 		if req.EnvironmentId != nil && role.EnvironmentId != req.EnvironmentId.Value {
 			continue
 		}
