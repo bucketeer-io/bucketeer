@@ -1505,7 +1505,12 @@ func expectOrganizationEnvironments(s *AccountService, organizationID string, en
 	for _, id := range environmentIDs {
 		environments = append(environments, &environmentproto.EnvironmentV2{Id: id, OrganizationId: organizationID})
 	}
+	// The check must ask for the organization's environments, archived ones
+	// included, so the request is matched exactly.
 	s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
-		gomock.Any(), gomock.Any(),
+		gomock.Any(), &environmentproto.ListEnvironmentsV2Request{
+			PageSize:       listRequestPageSize,
+			OrganizationId: organizationID,
+		},
 	).Return(&environmentproto.ListEnvironmentsV2Response{Environments: environments}, nil).AnyTimes()
 }
