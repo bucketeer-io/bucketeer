@@ -544,7 +544,14 @@ func (s *grpcGatewayService) GetEvaluations(
 		return nil, err
 	}
 	features := f.([]*featureproto.Feature)
-	filteredByTag := s.filterByTag(features, req.Tag)
+	// An empty tag means all flags, as the evaluator and GetFeatureFlags treat it.
+	// UserEvaluationsID sorts in place, so hash a copy to leave the cached slice alone.
+	var filteredByTag []*featureproto.Feature
+	if req.Tag == "" {
+		filteredByTag = append([]*featureproto.Feature(nil), features...)
+	} else {
+		filteredByTag = s.filterByTag(features, req.Tag)
+	}
 
 	if len(features) == 0 {
 		evaluationsCounter.WithLabelValues(
