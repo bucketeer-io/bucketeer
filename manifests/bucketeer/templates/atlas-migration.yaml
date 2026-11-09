@@ -26,7 +26,7 @@ spec:
             - apply
             {{- with .Values.migration.revisionsSchema }}
             - --revisions-schema
-            - {{ . }}
+            - {{ . | quote }}
             {{- end }}
             - --baseline
             - "{{ .Values.migration.dbBaseline }}"
