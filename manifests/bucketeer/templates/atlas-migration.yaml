@@ -24,8 +24,10 @@ spec:
           args:
             - migrate
             - apply
+            {{- with .Values.migration.revisionsSchema }}
             - --revisions-schema
-            - public
+            - {{ . | quote }}
+            {{- end }}
             - --baseline
             - "{{ .Values.migration.dbBaseline }}"
             - -u

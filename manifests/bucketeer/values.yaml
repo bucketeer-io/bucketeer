@@ -188,6 +188,9 @@ migration:
   # E.g. mysql://user:password@host:port/db_name
   dbUrl:
 
+  # Schema holding the atlas revision history. Leave empty to use atlas' default (atlas_schema_revisions).
+  revisionsSchema: public
+
   # The migration baseline
   # First revision
   dbBaseline: "20240626022133" # mysql
