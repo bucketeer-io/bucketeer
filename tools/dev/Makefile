@@ -65,23 +65,22 @@ service-cert-secret: ensure-tls-certificate
 	kubectl delete secret bucketeer-service-cert --namespace $(NAMESPACE) --ignore-not-found
 	kubectl create secret tls bucketeer-service-cert --key ${CURDIR}/cert/tls.key --cert ${CURDIR}/cert/tls.crt --namespace $(NAMESPACE)
 
-# Replaces the Secret when the certificate differs from the one it holds and then
-# restarts a running localenv PostgreSQL: the StatefulSet copies the Secret into
-# an emptyDir at startup, while the clients mount the Secret directly and verify
-# it with sslmode=verify-full, so a server left on the old pair would fail every
-# new connection. An unchanged certificate leaves both untouched.
+# Recreates the Secret, then reconciles a running localenv PostgreSQL with it: the
+# StatefulSet copies the Secret into an emptyDir at startup, while the clients
+# mount the Secret directly and verify it with sslmode=verify-full, so a server
+# still serving an old pair would fail every new connection. The check reads the
+# certificate the pod actually serves, so it does not depend on whether this run
+# changed the Secret: a restart that failed earlier is retried, and a pod that is
+# not running yet is left alone because it copies the new Secret when it starts.
 postgres-cert-secret: ensure-postgres-tls-certificate
 	kubectl config use-context minikube
-	@if kubectl get secret bucketeer-postgres-cert --namespace $(NAMESPACE) -o go-template='{{index .data "tls.crt" | base64decode}}' 2>/dev/null | cmp -s - $(CURDIR)/cert/postgres-tls.crt; then \
-		echo "PostgreSQL certificate secret is up to date"; \
-	else \
-		kubectl delete secret bucketeer-postgres-cert --namespace $(NAMESPACE) --ignore-not-found && \
-		kubectl create secret tls bucketeer-postgres-cert --key $(CURDIR)/cert/postgres-tls.key --cert $(CURDIR)/cert/postgres-tls.crt --namespace $(NAMESPACE) && \
-		if kubectl get statefulset localenv-postgresql --namespace $(NAMESPACE) >/dev/null 2>&1; then \
-			echo "PostgreSQL certificate changed; restarting PostgreSQL so it serves the new one..."; \
-			kubectl rollout restart statefulset/localenv-postgresql --namespace $(NAMESPACE) && \
-			kubectl rollout status statefulset/localenv-postgresql --namespace $(NAMESPACE) --timeout=5m; \
-		fi; \
+	kubectl delete secret bucketeer-postgres-cert --namespace $(NAMESPACE) --ignore-not-found
+	kubectl create secret tls bucketeer-postgres-cert --key ${CURDIR}/cert/postgres-tls.key --cert ${CURDIR}/cert/postgres-tls.crt --namespace $(NAMESPACE)
+	@if [ "$$(kubectl get pod localenv-postgresql-0 --namespace $(NAMESPACE) -o jsonpath='{.status.phase}' 2>/dev/null)" = "Running" ] && \
+		! kubectl exec localenv-postgresql-0 --namespace $(NAMESPACE) -c postgresql -- cat /usr/local/certs/postgres/tls.crt 2>/dev/null | cmp -s - $(CURDIR)/cert/postgres-tls.crt; then \
+		echo "PostgreSQL is serving an old certificate; restarting it so verify-full clients can connect..."; \
+		kubectl rollout restart statefulset/localenv-postgresql --namespace $(NAMESPACE) && \
+		kubectl rollout status statefulset/localenv-postgresql --namespace $(NAMESPACE) --timeout=5m; \
 	fi
 
 service-token-secret:
