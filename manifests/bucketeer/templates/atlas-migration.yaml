@@ -1,3 +1,4 @@
+{{- if .Values.migration.enabled }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -42,3 +43,4 @@ spec:
           secret:
             secretName: {{ .Values.global.operationalDatabase.postgres.sslSecretName }}
       {{- end }}
+{{- end }}
