@@ -30,12 +30,16 @@ generate-postgres-tls-certificate:
 # works without manual steps. The *-cert-secret targets below depend on them
 # and the root Makefile runs them from docker-compose-setup and deploy-bucketeer
 # (ensure-dev-certs). To rotate a pair, delete it and run the setup again.
+# Docker Compose bind-mounts the files individually, so containers created
+# before a pair was (re)generated keep the old one until they are recreated;
+# the notice below says so.
 .PHONY: ensure-tls-certificate
 ensure-tls-certificate:
 	@if [ ! -f $(CURDIR)/cert/tls.key ] || [ ! -f $(CURDIR)/cert/tls.crt ]; then \
 		echo "Generating development service TLS certificate in $(CURDIR)/cert..."; \
 		$(MAKE) generate-tls-certificate || \
 		{ echo "Failed to generate service TLS certificate" >&2; rm -f $(CURDIR)/cert/tls.key $(CURDIR)/cert/tls.crt; exit 1; }; \
+		echo "If a Docker Compose stack is already running, recreate it to pick up the new certificate: make docker-compose-down && make docker-compose-up"; \
 	else \
 		echo "Development service TLS certificate already exists"; \
 	fi
@@ -46,6 +50,7 @@ ensure-postgres-tls-certificate:
 		echo "Generating development PostgreSQL TLS certificate in $(CURDIR)/cert..."; \
 		$(MAKE) generate-postgres-tls-certificate || \
 		{ echo "Failed to generate PostgreSQL TLS certificate" >&2; rm -f $(CURDIR)/cert/postgres-tls.key $(CURDIR)/cert/postgres-tls.crt; exit 1; }; \
+		echo "If a Docker Compose stack is already running, recreate it to pick up the new certificate: make docker-compose-down && make docker-compose-up"; \
 	else \
 		echo "Development PostgreSQL TLS certificate already exists"; \
 	fi
@@ -60,10 +65,24 @@ service-cert-secret: ensure-tls-certificate
 	kubectl delete secret bucketeer-service-cert --namespace $(NAMESPACE) --ignore-not-found
 	kubectl create secret tls bucketeer-service-cert --key ${CURDIR}/cert/tls.key --cert ${CURDIR}/cert/tls.crt --namespace $(NAMESPACE)
 
+# Replaces the Secret when the certificate differs from the one it holds and then
+# restarts a running localenv PostgreSQL: the StatefulSet copies the Secret into
+# an emptyDir at startup, while the clients mount the Secret directly and verify
+# it with sslmode=verify-full, so a server left on the old pair would fail every
+# new connection. An unchanged certificate leaves both untouched.
 postgres-cert-secret: ensure-postgres-tls-certificate
 	kubectl config use-context minikube
-	kubectl delete secret bucketeer-postgres-cert --namespace $(NAMESPACE) --ignore-not-found
-	kubectl create secret tls bucketeer-postgres-cert --key ${CURDIR}/cert/postgres-tls.key --cert ${CURDIR}/cert/postgres-tls.crt --namespace $(NAMESPACE)
+	@if kubectl get secret bucketeer-postgres-cert --namespace $(NAMESPACE) -o go-template='{{index .data "tls.crt" | base64decode}}' 2>/dev/null | cmp -s - $(CURDIR)/cert/postgres-tls.crt; then \
+		echo "PostgreSQL certificate secret is up to date"; \
+	else \
+		kubectl delete secret bucketeer-postgres-cert --namespace $(NAMESPACE) --ignore-not-found && \
+		kubectl create secret tls bucketeer-postgres-cert --key $(CURDIR)/cert/postgres-tls.key --cert $(CURDIR)/cert/postgres-tls.crt --namespace $(NAMESPACE) && \
+		if kubectl get statefulset localenv-postgresql --namespace $(NAMESPACE) >/dev/null 2>&1; then \
+			echo "PostgreSQL certificate changed; restarting PostgreSQL so it serves the new one..."; \
+			kubectl rollout restart statefulset/localenv-postgresql --namespace $(NAMESPACE) && \
+			kubectl rollout status statefulset/localenv-postgresql --namespace $(NAMESPACE) --timeout=5m; \
+		fi; \
+	fi
 
 service-token-secret:
 	kubectl config use-context minikube

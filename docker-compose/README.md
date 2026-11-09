@@ -387,7 +387,7 @@ make e2e
 ### Common Issues
 
 1. **Port conflicts**: Ensure ports 80, 443, 3306, 6379 are available on your host machine.
-2. **Certificate issues**: `make docker-compose-setup` generates the development certificates in `../tools/dev/cert/` (required for web service HTTPS). To regenerate a pair, delete it (`tls.key`/`tls.crt` or `postgres-tls.key`/`postgres-tls.crt`) and run the setup again.
+2. **Certificate issues**: `make docker-compose-setup` generates the development certificates in `../tools/dev/cert/` (required for web service HTTPS). To regenerate a pair, delete it (`tls.key`/`tls.crt` or `postgres-tls.key`/`postgres-tls.crt`) and run the setup again. The files are bind-mounted individually, so containers created before a pair was (re)generated keep serving the old one: recreate the stack with `make docker-compose-down && make docker-compose-up` (volumes and data are kept).
 3. **`/etc/hosts` not configured**: Ensure `web-gateway.bucketeer.test` is mapped to `127.0.0.1`. API service can be accessed via `localhost` without hosts file configuration.
 4. **Service startup order**: Services have dependencies; wait for each tier to be healthy.
 

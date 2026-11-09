@@ -545,6 +545,10 @@ Add monitoring stack to your deployment:
    make -C tools/dev generate-tls-certificate
    make -C tools/dev generate-postgres-tls-certificate
    make -C tools/dev generate-oauth
+
+   # Running containers keep the certificates they were created with
+   # (the files are bind-mounted individually), so recreate the stack
+   make docker-compose-down && make docker-compose-up
    ```
 
 3. **Service Health Issues**
