@@ -108,14 +108,25 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install protoc-gen-go-grpc
         run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
+      # ubuntu-latest moved to Ubuntu 26.04, which dropped the clang-format-14
+      # package. Keep 14: clang-format 15+ reformats
+      # proto/subscription/recipient.proto, and 15 through 22 agree with each
+      # other. The image sets PIPX_HOME=/opt/pipx, so install into the job temp
+      # dir and put that bin dir first, ahead of the image's clang-format 20+.
       - name: Install clang-format
-        run: sudo apt-get update && sudo apt-get install -y clang-format-14
+        run: |
+          export PIPX_HOME="${RUNNER_TEMP}/pipx"
+          export PIPX_BIN_DIR="${RUNNER_TEMP}/pipx-bin"
+          pipx install clang-format==14.0.6
+          echo "${PIPX_BIN_DIR}" >> "${GITHUB_PATH}"
+          "${PIPX_BIN_DIR}/clang-format" --version | grep -F '14.0.6'
       - name: Check proto format
         run: |
           cd proto
+          clang-format --version | grep -F '14.0.6'
           failed=0
           for f in $(find . -name '*.proto' -not -path './external/*'); do
-            if ! clang-format-14 --dry-run --Werror --style=file --fallback-style=llvm "$f"; then
+            if ! clang-format --dry-run --Werror --style=file --fallback-style=llvm "$f"; then
               echo "Failed: $f"
               failed=1
             fi
