@@ -188,11 +188,11 @@ web:
     bucketeerJP:
       secrets:
         - hosts:
-            - web-gateway.bucketeer.io
+            - web-gateway.bucketeer.test
           secretName: bucketeer-service-cert
 
   ingress:
-    host: web-gateway.bucketeer.io
+    host: web-gateway.bucketeer.test
 
   serviceToken:
     secret: bucketeer-service-token
@@ -218,7 +218,7 @@ web:
       environmentId: demo
       isSystemAdmin: true
   webhook:
-    baseURL: https://web-gateway.bucketeer.io
+    baseURL: https://web-gateway.bucketeer.test
 api:
   env:
     logLevel: debug
@@ -272,14 +272,14 @@ api:
     bucketeerJP:
       secrets:
         - hosts:
-            - api-gateway.bucketeer.io
+            - api-gateway.bucketeer.test
           secretName: bucketeer-service-cert
     service:
       secret: bucketeer-service-cert
   serviceToken:
     secret: bucketeer-service-token
   ingress:
-    host: api-gateway.bucketeer.io
+    host: api-gateway.bucketeer.test
 
 batch-server:
   env:

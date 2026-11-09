@@ -2,13 +2,17 @@ NAMESPACE := default
 
 # For minikube image caching documentation, see: MINIKUBE_CACHING.md
 
+# Self-signed certificate for the local services (Docker Compose and minikube).
+# Local development material only: the pair is gitignored and generated on
+# demand by ensure-tls-certificate, never committed.
 generate-tls-certificate:
 	mkdir -p $(CURDIR)/cert
 	openssl req -x509 -nodes -days 36500 -newkey rsa:2048 \
 		-keyout $(CURDIR)/cert/tls.key \
 		-out $(CURDIR)/cert/tls.crt \
-		-subj "/CN=*.bucketeer.io" \
+		-subj "/CN=localhost" \
 		-config service.config
+	chmod 600 $(CURDIR)/cert/tls.key
 
 # Serves TLS from the local PostgreSQL. Self-signed and its own CA, so clients
 # can verify it with sslmode=verify-full.
@@ -21,17 +25,42 @@ generate-postgres-tls-certificate:
 		-config postgres.config
 	chmod 600 $(CURDIR)/cert/postgres-tls.key
 
+# ensure-tls-certificate / ensure-postgres-tls-certificate generate the local
+# development certificate pairs only when they are missing, so a fresh clone
+# works without manual steps. The *-cert-secret targets below depend on them
+# and the root Makefile runs them from docker-compose-setup and deploy-bucketeer
+# (ensure-dev-certs). To rotate a pair, delete it and run the setup again.
+.PHONY: ensure-tls-certificate
+ensure-tls-certificate:
+	@if [ ! -f $(CURDIR)/cert/tls.key ] || [ ! -f $(CURDIR)/cert/tls.crt ]; then \
+		echo "Generating development service TLS certificate in $(CURDIR)/cert..."; \
+		$(MAKE) generate-tls-certificate || \
+		{ echo "Failed to generate service TLS certificate" >&2; rm -f $(CURDIR)/cert/tls.key $(CURDIR)/cert/tls.crt; exit 1; }; \
+	else \
+		echo "Development service TLS certificate already exists"; \
+	fi
+
+.PHONY: ensure-postgres-tls-certificate
+ensure-postgres-tls-certificate:
+	@if [ ! -f $(CURDIR)/cert/postgres-tls.key ] || [ ! -f $(CURDIR)/cert/postgres-tls.crt ]; then \
+		echo "Generating development PostgreSQL TLS certificate in $(CURDIR)/cert..."; \
+		$(MAKE) generate-postgres-tls-certificate || \
+		{ echo "Failed to generate PostgreSQL TLS certificate" >&2; rm -f $(CURDIR)/cert/postgres-tls.key $(CURDIR)/cert/postgres-tls.crt; exit 1; }; \
+	else \
+		echo "Development PostgreSQL TLS certificate already exists"; \
+	fi
+
 generate-oauth:
 	mkdir -p ${CURDIR}/$*
 	openssl genrsa -out ${CURDIR}/cert/oauth-private.pem 4096
 	openssl rsa -in ${CURDIR}/cert/oauth-private.pem -pubout -out ${CURDIR}/cert/oauth-public.pem
 
-service-cert-secret:
+service-cert-secret: ensure-tls-certificate
 	kubectl config use-context minikube
 	kubectl delete secret bucketeer-service-cert --namespace $(NAMESPACE) --ignore-not-found
 	kubectl create secret tls bucketeer-service-cert --key ${CURDIR}/cert/tls.key --cert ${CURDIR}/cert/tls.crt --namespace $(NAMESPACE)
 
-postgres-cert-secret:
+postgres-cert-secret: ensure-postgres-tls-certificate
 	kubectl config use-context minikube
 	kubectl delete secret bucketeer-postgres-cert --namespace $(NAMESPACE) --ignore-not-found
 	kubectl create secret tls bucketeer-postgres-cert --key ${CURDIR}/cert/postgres-tls.key --cert ${CURDIR}/cert/postgres-tls.crt --namespace $(NAMESPACE)

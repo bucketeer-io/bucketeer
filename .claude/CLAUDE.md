@@ -119,8 +119,8 @@ make docker-compose-clean   # Remove all containers, networks, volumes
 
 Add to `/etc/hosts`:
 ```
-127.0.0.1 web-gateway.bucketeer.io
-127.0.0.1 api-gateway.bucketeer.io
+127.0.0.1 web-gateway.bucketeer.test
+127.0.0.1 api-gateway.bucketeer.test
 ```
 
 ### Database migrations

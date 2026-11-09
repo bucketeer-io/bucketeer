@@ -44,8 +44,8 @@ The Docker Compose setup provides an alternative to the Minikube deployment for 
 │              (Reverse Proxy)            │
 │  Ports: 80 (HTTP), 443 (HTTPS)          │
 │                                         │
-│ - web-gateway.bucketeer.io (HTTPS only) │
-│ - api-gateway.bucketeer.io (HTTPS)      │
+│ - web-gateway.bucketeer.test (HTTPS)    │
+│ - api-gateway.bucketeer.test (HTTPS)    │
 │ - localhost (HTTP for API only)         │
 └─────────────────────────────────────────┘
                     │
@@ -75,10 +75,10 @@ The Docker Compose setup provides an alternative to the Minikube deployment for 
 ## Prerequisites
 
 1. **Docker & Docker Compose**: Ensure you have Docker and Docker Compose installed
-2. **Development Certificates**: The setup requires TLS certificates in `../tools/dev/cert/`
+2. **Development Certificates**: `make docker-compose-setup` generates self-signed TLS certificates in `../tools/dev/cert/` on first run (they are gitignored), so no manual step is needed
 3. **Hosts file**: You need to add the following entry to your `/etc/hosts` file:
    ```
-   127.0.0.1 web-gateway.bucketeer.io
+   127.0.0.1 web-gateway.bucketeer.test
    ```
    
    **Note**: The API service also supports access via `localhost` for local development (no hosts file entry needed).
@@ -208,20 +208,20 @@ The services start in the following order:
 
 After starting the services, you can access:
 
-- **Web Dashboard**: https://web-gateway.bucketeer.io
+- **Web Dashboard**: https://web-gateway.bucketeer.test
   - Admin interface for managing feature flags, experiments, etc.
   - Routes internally to Web service gRPC Gateway.
   - **HTTPS only** (requires TLS certificates)
 
 - **API Gateway**: 
-  - **Production/HTTPS**: https://api-gateway.bucketeer.io
-  - **Local Development/HTTP**: http://localhost
+  - **HTTPS**: https://api-gateway.bucketeer.test
+  - **HTTP**: http://localhost
   - SDK and client API endpoints.
   - Routes internally to API service gRPC Gateway.
 
 - **Health Check**:
-  - Web: https://web-gateway.bucketeer.io/health
-  - API: https://api-gateway.bucketeer.io/health or http://localhost/health
+  - Web: https://web-gateway.bucketeer.test/health
+  - API: https://api-gateway.bucketeer.test/health or http://localhost/health
 
 **Note**: All Bucketeer services communicate using HTTPS/TLS internally. Nginx handles SSL termination and routing to the appropriate service ports. For local development, the API service supports HTTP access via localhost to avoid certificate warnings.
 
@@ -245,8 +245,8 @@ The Docker Compose setup uses nginx as a reverse proxy. Internal service archite
 
 **Communication Flow:**
 1. Client/Admin UI → nginx (80/443) via:
-   - Web: `web-gateway.bucketeer.io` (HTTPS only)
-   - API: `api-gateway.bucketeer.io` (HTTPS) or `localhost` (HTTP)
+   - Web: `web-gateway.bucketeer.test` (HTTPS only)
+   - API: `api-gateway.bucketeer.test` (HTTPS) or `localhost` (HTTP)
 2. nginx → API/Web services (gRPC Gateway: 9089, Web health: 8000, API health: 9090)
 3. Services communicate internally via gRPC.
 
@@ -328,7 +328,7 @@ for details and the prebuilt Docker image option.
 
 ### Create API Keys
 ```shell
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+WEB_GATEWAY_URL=web-gateway.bucketeer.test \
 WEB_GATEWAY_PORT=443 \
 WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
@@ -338,7 +338,7 @@ API_KEY_ROLE=SDK_CLIENT \
 ENVIRONMENT_ID=e2e \
 make create-api-key
 
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+WEB_GATEWAY_URL=web-gateway.bucketeer.test \
 WEB_GATEWAY_PORT=443 \
 WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
@@ -353,8 +353,8 @@ make create-api-key
 
 **Using HTTPS (production-like)**:
 ```shell
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
-GATEWAY_URL=api-gateway.bucketeer.io \
+WEB_GATEWAY_URL=web-gateway.bucketeer.test \
+GATEWAY_URL=api-gateway.bucketeer.test \
 WEB_GATEWAY_PORT=443 \
 GATEWAY_PORT=443 \
 WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
@@ -369,7 +369,7 @@ make e2e
 
 **Using HTTP for API (local development, no certificates needed)**:
 ```shell
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+WEB_GATEWAY_URL=web-gateway.bucketeer.test \
 GATEWAY_URL=localhost \
 WEB_GATEWAY_PORT=443 \
 GATEWAY_PORT=80 \
@@ -387,8 +387,8 @@ make e2e
 ### Common Issues
 
 1. **Port conflicts**: Ensure ports 80, 443, 3306, 6379 are available on your host machine.
-2. **Certificate issues**: Make sure development certificates exist in `../tools/dev/cert/` (required for web service HTTPS).
-3. **`/etc/hosts` not configured**: Ensure `web-gateway.bucketeer.io` is mapped to `127.0.0.1`. API service can be accessed via `localhost` without hosts file configuration.
+2. **Certificate issues**: `make docker-compose-setup` generates the development certificates in `../tools/dev/cert/` (required for web service HTTPS). To regenerate a pair, delete it (`tls.key`/`tls.crt` or `postgres-tls.key`/`postgres-tls.crt`) and run the setup again.
+3. **`/etc/hosts` not configured**: Ensure `web-gateway.bucketeer.test` is mapped to `127.0.0.1`. API service can be accessed via `localhost` without hosts file configuration.
 4. **Service startup order**: Services have dependencies; wait for each tier to be healthy.
 
 ### Debugging Commands

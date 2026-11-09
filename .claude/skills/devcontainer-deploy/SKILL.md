@@ -77,10 +77,10 @@ real cluster. `$DEVC status` warns when the active context is not `minikube`.
 
 ```bash
 $DEVC 'kubectl --context minikube get pods'   # everything Running/Completed, restarts not climbing
-$DEVC 'curl -sk https://api-gateway.bucketeer.io/health'   # must run INSIDE the container
+$DEVC 'curl -sk https://api-gateway.bucketeer.test/health'   # must run INSIDE the container
 ```
 
-The `*.bucketeer.io` hosts entries live in the container's `/etc/hosts`
+The `*.bucketeer.test` hosts entries live in the container's `/etc/hosts`
 (pointed at `minikube ip`) — curl from the host proves nothing. For a failing
 pod: `$DEVC 'kubectl --context minikube logs deploy/<name> --tail=100'` and
 `$DEVC 'kubectl --context minikube describe pod <pod>'`.

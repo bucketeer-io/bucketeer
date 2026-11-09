@@ -41,7 +41,7 @@ tls:
   bucketeerJP:
     secrets:
       - hosts:
-          - api-gateway.bucketeer.io
+          - api-gateway.bucketeer.test
         secretName: bucketeer-service-cert
   service:
     secret: bucketeer-service-cert
