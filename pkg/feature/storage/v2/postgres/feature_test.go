@@ -344,6 +344,33 @@ func TestGetFeatureByVersion(t *testing.T) {
 			}},
 			expectedErr: nil,
 		},
+		{
+			desc: "Success with last used at",
+			setup: func(s *featureStorage) {
+				row := pgmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(dest ...interface{}) error {
+						dest[0].(*postgres.JSONObject).Val.(*proto.Feature).Id = "feature-id"
+						*dest[1].(*int64) = 100
+						return nil
+					},
+				)
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			id:      "feature-id",
+			version: 1,
+			expected: &domain.Feature{Feature: &proto.Feature{
+				Id:             "feature-id",
+				AutoOpsSummary: &proto.AutoOpsSummary{},
+				LastUsedInfo: &proto.FeatureLastUsedInfo{
+					FeatureId:  "feature-id",
+					LastUsedAt: 100,
+				},
+			}},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {

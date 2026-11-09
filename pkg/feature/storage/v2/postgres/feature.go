@@ -233,6 +233,7 @@ func (s *featureStorage) GetFeatureByVersion(
 ) (*domain.Feature, error) {
 	feature := proto.Feature{}
 	feature.AutoOpsSummary = &proto.AutoOpsSummary{}
+	var lastUsedAt int64
 	err := s.qe.QueryRowContext(
 		ctx,
 		selectFeatureByVersionSQLQuery,
@@ -241,6 +242,7 @@ func (s *featureStorage) GetFeatureByVersion(
 		version,
 	).Scan(
 		&pgstorage.JSONObject{Val: &feature},
+		&lastUsedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgstorage.ErrNoRows) {
@@ -248,6 +250,7 @@ func (s *featureStorage) GetFeatureByVersion(
 		}
 		return nil, err
 	}
+	feature.LastUsedInfo = newLastUsedInfo(feature.Id, lastUsedAt)
 	return &domain.Feature{Feature: &feature}, nil
 }
 

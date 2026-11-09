@@ -25,6 +25,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -250,6 +251,80 @@ func TestGetFeatureMySQL(t *testing.T) {
 				p.setup(storage)
 			}
 			feature, err := storage.GetFeature(context.Background(), p.featureID, "env")
+			assert.Equal(t, p.expected, feature)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestGetFeatureByVersionMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*featureStorage)
+		expected    *domain.Feature
+		expectedErr error
+	}{
+		{
+			desc: "not found",
+			setup: func(s *featureStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			expected:    nil,
+			expectedErr: v2fs.ErrFeatureNotFound,
+		},
+		{
+			desc: "error",
+			setup: func(s *featureStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("internal"))
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			expected:    nil,
+			expectedErr: errors.New("internal"),
+		},
+		{
+			desc: "success",
+			setup: func(s *featureStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(dest ...interface{}) error {
+						dest[0].(*mysql.JSONObject).Val.(*proto.Feature).Id = "feature-id"
+						*dest[1].(*int64) = 100
+						return nil
+					},
+				)
+				s.qe.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			expected: &domain.Feature{Feature: &proto.Feature{
+				Id:             "feature-id",
+				AutoOpsSummary: &proto.AutoOpsSummary{},
+				LastUsedInfo: &proto.FeatureLastUsedInfo{
+					FeatureId:  "feature-id",
+					LastUsedAt: 100,
+				},
+			}},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := &featureStorage{qe: mock.NewMockClient(mockController)}
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			feature, err := storage.GetFeatureByVersion(context.Background(), "feature-id", 1, "env")
 			assert.Equal(t, p.expected, feature)
 			assert.Equal(t, p.expectedErr, err)
 		})
