@@ -194,3 +194,17 @@ func (mr *MockFeatureStorageMockRecorder) UpdateFeature(ctx, feature, environmen
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFeature", reflect.TypeOf((*MockFeatureStorage)(nil).UpdateFeature), ctx, feature, environmentID)
 }
+
+// UpdateFeatureLastUsedAt mocks base method.
+func (m *MockFeatureStorage) UpdateFeatureLastUsedAt(ctx context.Context, id, environmentID string, lastUsedAt int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateFeatureLastUsedAt", ctx, id, environmentID, lastUsedAt)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateFeatureLastUsedAt indicates an expected call of UpdateFeatureLastUsedAt.
+func (mr *MockFeatureStorageMockRecorder) UpdateFeatureLastUsedAt(ctx, id, environmentID, lastUsedAt any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFeatureLastUsedAt", reflect.TypeOf((*MockFeatureStorage)(nil).UpdateFeatureLastUsedAt), ctx, id, environmentID, lastUsedAt)
+}

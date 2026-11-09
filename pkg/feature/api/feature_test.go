@@ -84,9 +84,6 @@ func TestGetFeatureMySQL(t *testing.T) {
 				).Return(&domain.Feature{Feature: &featureproto.Feature{
 					AutoOpsSummary: &featureproto.AutoOpsSummary{},
 				}}, nil)
-				s.fluiStorage.(*mock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
 			},
 			input: &featureproto.GetFeatureRequest{
 				Id:            "fid",
@@ -106,9 +103,6 @@ func TestGetFeatureMySQL(t *testing.T) {
 				).Return(&domain.Feature{Feature: &featureproto.Feature{
 					AutoOpsSummary: &featureproto.AutoOpsSummary{},
 				}}, nil)
-				s.fluiStorage.(*mock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
 			},
 			input: &featureproto.GetFeatureRequest{
 				Id:            "fid",
@@ -128,9 +122,6 @@ func TestGetFeatureMySQL(t *testing.T) {
 				).Return(&domain.Feature{Feature: &featureproto.Feature{
 					AutoOpsSummary: &featureproto.AutoOpsSummary{},
 				}}, nil)
-				s.fluiStorage.(*mock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
 			},
 			input: &featureproto.GetFeatureRequest{
 				Id:             "fid",
@@ -540,51 +531,6 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			}
 			assert.Equal(t, p.expected, err)
 		})
-	}
-}
-
-func TestSetFeatureToLastUsedInfosByChunk(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	ctx := context.TODO()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	patterns := []struct {
-		setup         func(*FeatureService)
-		input         []*featureproto.Feature
-		environmentId string
-		expected      error
-	}{
-		{
-			setup: func(s *FeatureService) {
-				s.fluiStorage.(*mock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return([]*domain.FeatureLastUsedInfo{
-					{
-						FeatureLastUsedInfo: &featureproto.FeatureLastUsedInfo{
-							FeatureId:  "feature-id-0",
-							LastUsedAt: time.Now().Unix(),
-						},
-					},
-				}, nil)
-			},
-			input: []*featureproto.Feature{
-				{
-					Id:      "feature-id-0",
-					Version: 1,
-				},
-			},
-			environmentId: "ns0",
-			expected:      nil,
-		},
-	}
-	for _, p := range patterns {
-		fs := createFeatureServiceNew(mockController)
-		p.setup(fs)
-		err := fs.setLastUsedInfosToFeatureByChunk(context.Background(), p.input, p.environmentId)
-		assert.Equal(t, p.expected, err)
 	}
 }
 

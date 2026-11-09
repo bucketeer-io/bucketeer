@@ -35,27 +35,12 @@ SELECT
     COALESCE(auto_ops_counts.progressive_rollout_count, 0) AS progressive_rollout_count,
     COALESCE(auto_ops_counts.schedule_count, 0) AS schedule_count,
     COALESCE(auto_ops_counts.kill_switch_count, 0) AS kill_switch_count,
-    COALESCE(feature_last_used_info.feature_id, '') AS feature_id,
-    COALESCE(feature_last_used_info.version, 0) AS version,
-    COALESCE(feature_last_used_info.last_used_at, 0) AS last_used_at,
-    COALESCE(feature_last_used_info.created_at, 0) AS created_at,
-    COALESCE(feature_last_used_info.client_oldest_version, '') AS client_oldest_version,
-    COALESCE(feature_last_used_info.client_latest_version, '') AS client_latest_version
+    feature.last_used_at
 FROM
     feature
 LEFT JOIN auto_ops_counts ON
     feature.id = auto_ops_counts.feature_id AND
     feature.environment_id = auto_ops_counts.environment_id
-LEFT JOIN feature_last_used_info ON
-    feature.id = feature_last_used_info.feature_id AND
-    feature.environment_id = feature_last_used_info.environment_id AND
-    NOT EXISTS (
-        SELECT 1 FROM feature_last_used_info flui2
-        WHERE flui2.feature_id = feature_last_used_info.feature_id
-        AND flui2.environment_id = feature_last_used_info.environment_id
-        AND (flui2.last_used_at > feature_last_used_info.last_used_at
-        OR (flui2.last_used_at = feature_last_used_info.last_used_at AND flui2.version > feature_last_used_info.version))
-    )
 LEFT JOIN LATERAL (
     SELECT e.id
     FROM experiment e

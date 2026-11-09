@@ -158,6 +158,47 @@ func TestUpdateFeatureMySQL(t *testing.T) {
 	}
 }
 
+func TestUpdateFeatureLastUsedAtMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*featureStorage)
+		expectedErr error
+	}{
+		{
+			desc: "error",
+			setup: func(s *featureStorage) {
+				s.qe.(*mock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), int64(100), "feature-id", "env", int64(100),
+				).Return(nil, errors.New("error"))
+			},
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "success",
+			setup: func(s *featureStorage) {
+				s.qe.(*mock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), int64(100), "feature-id", "env", int64(100),
+				).Return(nil, nil)
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := &featureStorage{qe: mock.NewMockClient(mockController)}
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			err := storage.UpdateFeatureLastUsedAt(context.Background(), "feature-id", "env", 100)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestGetFeatureMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

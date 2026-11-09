@@ -20,7 +20,8 @@ SELECT
     tags,
     maintainer,
     sampling_seed,
-    prerequisites
+    prerequisites,
+    last_used_at
 FROM
     feature
 WHERE

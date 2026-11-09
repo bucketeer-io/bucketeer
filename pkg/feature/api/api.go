@@ -54,7 +54,6 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type FeatureService struct {
-	fluiStorage                v2fs.FeatureLastUsedInfoStorage
 	flagTriggerStorage         v2fs.FlagTriggerStorage
 	featureStorage             v2fs.FeatureStorage
 	segmentStorage             v2fs.SegmentStorage
@@ -86,7 +85,6 @@ func NewFeatureService(
 	segmentUserStorage v2fs.SegmentUserStorage,
 	tagStorage v2ts.TagStorage,
 	flagTriggerStorage v2fs.FlagTriggerStorage,
-	fluiStorage v2fs.FeatureLastUsedInfoStorage,
 	scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage,
 	holdoutStorage v2hs.HoldoutStorage,
 	accountClient accountclient.Client,
@@ -107,7 +105,6 @@ func NewFeatureService(
 		opt(dopts)
 	}
 	return &FeatureService{
-		fluiStorage:                fluiStorage,
 		flagTriggerStorage:         flagTriggerStorage,
 		featureStorage:             featureStorage,
 		segmentStorage:             segmentStorage,

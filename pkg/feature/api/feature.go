@@ -127,14 +127,6 @@ func (s *FeatureService) GetFeature(
 			)...,
 		)
 	}
-
-	if err := s.setLastUsedInfosToFeatureByChunk(
-		ctx,
-		[]*featureproto.Feature{feature.Feature},
-		req.EnvironmentId,
-	); err != nil {
-		return nil, err
-	}
 	return &featureproto.GetFeatureResponse{Feature: feature.Feature}, nil
 }
 
@@ -476,9 +468,6 @@ func (s *FeatureService) ListEnabledFeatures(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		return nil, err
-	}
-	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, req.EnvironmentId); err != nil {
 		return nil, err
 	}
 	return &featureproto.ListEnabledFeaturesResponse{
@@ -1318,54 +1307,6 @@ func (s *FeatureService) getSegmentUsers(
 		Rules:     segment.Rules,
 		UpdatedAt: segment.UpdatedAt,
 	}, nil
-}
-
-func (s *FeatureService) setLastUsedInfosToFeatureByChunk(
-	ctx context.Context,
-	features []*featureproto.Feature,
-	EnvironmentId string,
-) error {
-	for i := 0; i < len(features); i += getMultiChunkSize {
-		end := i + getMultiChunkSize
-		if end > len(features) {
-			end = len(features)
-		}
-		if err := s.setLastUsedInfosToFeature(ctx, features[i:end], EnvironmentId); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (s *FeatureService) setLastUsedInfosToFeature(
-	ctx context.Context,
-	features []*featureproto.Feature,
-	EnvironmentId string,
-) error {
-	ids := make([]string, 0, len(features))
-	for _, f := range features {
-		ids = append(ids, domain.FeatureLastUsedInfoID(f.Id, f.Version))
-	}
-	fluiList, err := s.fluiStorage.GetFeatureLastUsedInfos(ctx, ids, EnvironmentId)
-	if err != nil {
-		s.logger.Error(
-			"Failed to get feature last used infos",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", EnvironmentId),
-			)...,
-		)
-		return api.NewGRPCStatus(err).Err()
-	}
-	for _, f := range fluiList {
-		for _, feature := range features {
-			if feature.Id == f.FeatureId {
-				feature.LastUsedInfo = f.FeatureLastUsedInfo
-				break
-			}
-		}
-	}
-	return nil
 }
 
 func (s *FeatureService) EvaluateFeatures(

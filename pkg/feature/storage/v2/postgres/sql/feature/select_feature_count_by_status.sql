@@ -1,23 +1,12 @@
 SELECT
     COUNT(DISTINCT feature.id) AS total_features,
     COUNT(DISTINCT CASE WHEN
-        (SELECT flui.last_used_at
-            FROM feature_last_used_info flui
-            WHERE flui.feature_id = feature.id
-            AND flui.environment_id = feature.environment_id
-            ORDER BY flui.last_used_at DESC, flui.version DESC
-            LIMIT 1)
-        >= EXTRACT(EPOCH FROM NOW())::BIGINT - 604800
+        feature.last_used_at >= EXTRACT(EPOCH FROM NOW())::BIGINT - 604800
         THEN feature.id
     END) AS active,
     COUNT(DISTINCT CASE WHEN
-        (SELECT flui.last_used_at
-            FROM feature_last_used_info flui
-            WHERE flui.feature_id = feature.id
-            AND flui.environment_id = feature.environment_id
-            ORDER BY flui.last_used_at DESC, flui.version DESC
-            LIMIT 1)
-        < EXTRACT(EPOCH FROM NOW())::BIGINT - 604800
+        feature.last_used_at > 0 AND
+        feature.last_used_at < EXTRACT(EPOCH FROM NOW())::BIGINT - 604800
         THEN feature.id
     END) AS inactive
 FROM

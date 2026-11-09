@@ -19,7 +19,6 @@ import (
 
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
-	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	ftstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
@@ -1993,33 +1992,65 @@ func (m *mockPipeClient) Del(keys string) *goredis.IntCmd {
 	return goredis.NewIntCmd(context.Background())
 }
 
+func TestCacheEnvLastUsedInfo(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		events   []*eventproto.EvaluationEvent
+		expected environmentLastUsedInfoCache
+	}{
+		{
+			desc: "keeps the latest timestamp per feature regardless of version",
+			events: []*eventproto.EvaluationEvent{
+				{FeatureId: "feature-1", FeatureVersion: 1, Timestamp: 100},
+				{FeatureId: "feature-1", FeatureVersion: 2, Timestamp: 300},
+				{FeatureId: "feature-1", FeatureVersion: 3, Timestamp: 200},
+				{FeatureId: "feature-2", FeatureVersion: 1, Timestamp: 50},
+			},
+			expected: environmentLastUsedInfoCache{
+				"env-1": lastUsedInfoCache{"feature-1": 300, "feature-2": 50},
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			persister := &evaluationCountEventPersister{
+				envLastUsedCache: make(environmentLastUsedInfoCache),
+				logger:           zap.NewNop(),
+			}
+			for _, e := range p.events {
+				persister.cacheEnvLastUsedInfo(e, "env-1")
+			}
+			assert.Equal(t, p.expected, persister.envLastUsedCache)
+		})
+	}
+}
+
 func TestWriteEnvLastUsedInfoRetainsCacheOnFailure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	storageMock := ftstoragemock.NewMockFeatureLastUsedInfoStorage(ctrl)
+	storageMock := ftstoragemock.NewMockFeatureStorage(ctrl)
 	p := &evaluationCountEventPersister{
-		fluiStorage:      storageMock,
+		featureStorage:   storageMock,
 		envLastUsedCache: make(environmentLastUsedInfoCache),
 		logger:           zap.NewNop(),
 	}
-	info := ftdomain.NewFeatureLastUsedInfo("feature-1", 1, time.Now().Unix(), "1.0.0")
-	p.envLastUsedCache["env-1"] = lastUsedInfoCache{info.ID(): info}
+	lastUsedAt := time.Now().Unix()
+	p.envLastUsedCache["env-1"] = lastUsedInfoCache{"feature-1": lastUsedAt}
 
 	// First cycle: the storage fails (e.g. MySQL deadlock).
 	// The cache must be kept so the info is retried on the next cycle,
 	// because the Pub/Sub messages were already acked.
-	storageMock.EXPECT().GetFeatureLastUsedInfos(gomock.Any(), gomock.Any(), "env-1").
-		Return(nil, errors.New("mysql: deadlock"))
+	storageMock.EXPECT().UpdateFeatureLastUsedAt(gomock.Any(), "feature-1", "env-1", lastUsedAt).
+		Return(errors.New("mysql: deadlock"))
 	p.writeEnvLastUsedInfo()
 	assert.Len(t, p.envLastUsedCache, 1)
 	assert.Contains(t, p.envLastUsedCache, "env-1")
 
 	// Second cycle: the storage recovers. The info must be written
 	// and the environment removed from the cache.
-	storageMock.EXPECT().GetFeatureLastUsedInfos(gomock.Any(), gomock.Any(), "env-1").
-		Return(nil, nil)
-	storageMock.EXPECT().UpsertFeatureLastUsedInfo(gomock.Any(), info, "env-1").Return(nil)
+	storageMock.EXPECT().UpdateFeatureLastUsedAt(gomock.Any(), "feature-1", "env-1", lastUsedAt).Return(nil)
 	p.writeEnvLastUsedInfo()
 	assert.Empty(t, p.envLastUsedCache)
 }
@@ -2028,22 +2059,19 @@ func TestWriteEnvLastUsedInfoRemovesOnlySuccessfulEnvironments(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	storageMock := ftstoragemock.NewMockFeatureLastUsedInfoStorage(ctrl)
+	storageMock := ftstoragemock.NewMockFeatureStorage(ctrl)
 	p := &evaluationCountEventPersister{
-		fluiStorage:      storageMock,
+		featureStorage:   storageMock,
 		envLastUsedCache: make(environmentLastUsedInfoCache),
 		logger:           zap.NewNop(),
 	}
-	infoOK := ftdomain.NewFeatureLastUsedInfo("feature-ok", 1, time.Now().Unix(), "1.0.0")
-	infoNG := ftdomain.NewFeatureLastUsedInfo("feature-ng", 1, time.Now().Unix(), "1.0.0")
-	p.envLastUsedCache["env-ok"] = lastUsedInfoCache{infoOK.ID(): infoOK}
-	p.envLastUsedCache["env-ng"] = lastUsedInfoCache{infoNG.ID(): infoNG}
+	lastUsedAt := time.Now().Unix()
+	p.envLastUsedCache["env-ok"] = lastUsedInfoCache{"feature-ok": lastUsedAt}
+	p.envLastUsedCache["env-ng"] = lastUsedInfoCache{"feature-ng": lastUsedAt}
 
-	storageMock.EXPECT().GetFeatureLastUsedInfos(gomock.Any(), gomock.Any(), "env-ok").
-		Return(nil, nil)
-	storageMock.EXPECT().UpsertFeatureLastUsedInfo(gomock.Any(), infoOK, "env-ok").Return(nil)
-	storageMock.EXPECT().GetFeatureLastUsedInfos(gomock.Any(), gomock.Any(), "env-ng").
-		Return(nil, errors.New("mysql: deadlock"))
+	storageMock.EXPECT().UpdateFeatureLastUsedAt(gomock.Any(), "feature-ok", "env-ok", lastUsedAt).Return(nil)
+	storageMock.EXPECT().UpdateFeatureLastUsedAt(gomock.Any(), "feature-ng", "env-ng", lastUsedAt).
+		Return(errors.New("mysql: deadlock"))
 
 	p.writeEnvLastUsedInfo()
 	assert.Len(t, p.envLastUsedCache, 1)
