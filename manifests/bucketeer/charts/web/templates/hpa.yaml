@@ -6,8 +6,13 @@ metadata:
   namespace: {{ .Values.namespace }}
 spec:
   scaleTargetRef:
+    {{- if (.Values.global.rollouts | default dict).enabled }}
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    {{- else }}
     apiVersion: apps/v1
     kind: Deployment
+    {{- end }}
     name: {{ template "web.fullname" . }}
   minReplicas: {{ .Values.hpa.minReplicas }}
   maxReplicas: {{ .Values.hpa.maxReplicas }}

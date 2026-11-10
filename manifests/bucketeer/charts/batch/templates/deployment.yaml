@@ -1,6 +1,12 @@
 {{- if eq (include "batch.deploy" .) "true" }}
+{{- $rollouts := .Values.global.rollouts | default dict }}
+{{- if $rollouts.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+{{- else }}
 apiVersion: apps/v1
 kind: Deployment
+{{- end }}
 metadata:
   name: {{ template "batch-server.fullname" . }}
   namespace: {{ .Values.namespace }}
@@ -390,6 +396,31 @@ spec:
               scheme: HTTP
           resources:
 {{ toYaml .Values.httpstan.resources | indent 12 }}
+{{- if $rollouts.enabled }}
+  strategy:
+    canary:
+      {{- with .Values.strategy.rollingUpdate }}
+      maxSurge: {{ .maxSurge }}
+      maxUnavailable: {{ .maxUnavailable }}
+      {{- end }}
+      steps:
+        - setWeight: {{ $rollouts.canary.weight }}
+        - pause:
+            duration: {{ $rollouts.canary.pause }}
+        {{- with $rollouts.canary.analysisTemplate }}
+        - analysis:
+            templates:
+              - templateName: {{ . }}
+                clusterScope: true
+            args:
+              - name: service-name
+                value: {{ template "batch-server.fullname" $ }}
+              - name: canary-hash
+                valueFrom:
+                  podTemplateHashValue: Latest
+        {{- end }}
+{{- else }}
   strategy:
 {{ toYaml .Values.strategy | indent 4 }}
+{{- end }}
 {{- end }}

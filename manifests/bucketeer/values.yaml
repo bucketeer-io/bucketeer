@@ -2,6 +2,15 @@ global:
   image:
     tag: v2.3.0 # x-release-please-version
     imagePullSecrets: # Used by all services including migration
+  # Deploy each service as an Argo Rollout (canary) instead of a Deployment. Requires Argo Rollouts in the cluster.
+  rollouts:
+    enabled: false
+    canary:
+      # Share of replicas rolled out as canary (rounded up to a whole pod) before the analysis.
+      weight: 5
+      pause: 30s
+      # ClusterAnalysisTemplate run against the canary pods; empty skips the analysis step.
+      analysisTemplate: grpc-error-rate
   # Global data warehouse configuration
   dataWarehouse:
     # Data warehouse type configuration
