@@ -218,8 +218,8 @@ func (t *teamStorage) ListTeams(
 	return teams, nextOffset, totalCount, nil
 }
 
-func (t *teamStorage) DeleteTeam(ctx context.Context, id string) error {
-	result, err := t.qe.ExecContext(ctx, deleteTeamSQL, id)
+func (t *teamStorage) DeleteTeam(ctx context.Context, id, organizationID string) error {
+	result, err := t.qe.ExecContext(ctx, deleteTeamSQL, id, organizationID)
 	if err != nil {
 		return err
 	}
