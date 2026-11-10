@@ -204,3 +204,117 @@ func TestFeatureChangeWithVariationSchema(t *testing.T) {
 	n.EntityData = featureSnapshot(t, after)
 	assert.Contains(t, featureChangeSummary(n, newTestLocalizer(locale.En)), "Variation value schema:")
 }
+
+func TestFeatureChangeRuleClauseValuesWithRealisticIDs(t *testing.T) {
+	t.Parallel()
+	const (
+		ruleID      = "d48293e5-b591-4e62-a72d-3f61ce371277"
+		clauseID    = "959bcbed-9cfb-48b0-9134-44f743ad2172"
+		variationID = "3749d3ec-6273-428c-8c41-1d5ea0998911"
+	)
+	before := &featureproto.Feature{
+		Id: "flag",
+		Rules: []*featureproto.Rule{{
+			Id: ruleID,
+			Strategy: &featureproto.Strategy{
+				Type:          featureproto.Strategy_FIXED,
+				FixedStrategy: &featureproto.FixedStrategy{Variation: variationID},
+			},
+			Clauses: []*featureproto.Clause{{
+				Id: clauseID, Attribute: "country", Operator: featureproto.Clause_EQUALS, Values: []string{"US"},
+			}},
+		}},
+	}
+	var after featureproto.Feature
+	require.NoError(t, json.Unmarshal([]byte(featureSnapshot(t, before)), &after))
+	after.Rules[0].Clauses[0].Values = []string{"JP"}
+	// The original whole-rule rendering loses the changed values behind UUIDs.
+	assert.Equal(t, featureChangeValue(before.Rules), featureChangeValue(after.Rules))
+	n := &senderproto.DomainEventNotification{
+		EntityId: "flag", PreviousEntityData: featureSnapshot(t, before), EntityData: featureSnapshot(t, &after),
+	}
+	for _, lang := range []string{locale.En, locale.Ja} {
+		summary := featureChangeSummary(n, newTestLocalizer(lang))
+		assert.Contains(t, summary, ruleID)
+		assert.Contains(t, summary, clauseID)
+		assert.Contains(t, summary, `country: ["US"] → ["JP"]`)
+		assert.NotContains(t, summary, variationID)
+		assert.Len(t, strings.Split(summary, "\n"), 1)
+	}
+}
+
+func TestFeatureChangeRulesAndClauses(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name, before, after string
+		contains            []string
+		empty               bool
+	}{
+		{
+			name:   "changed clause fields",
+			before: `[{"id":"rule","clauses":[{"id":"clause","attribute":"country","operator":0,"values":["US"]}]}]`,
+			after:  `[{"id":"rule","clauses":[{"id":"clause","attribute":"region","operator":1,"values":["JP"]}]}]`,
+			contains: []string{`Rule attribute: "country" → "region"`, `Rule operator: "EQUALS" → "IN"`,
+				`region: ["US"] → ["JP"]`},
+		},
+		{
+			name:     "rule added",
+			before:   `[]`,
+			after:    `[{"id":"rule","clauses":[{"id":"clause","attribute":"country","values":["JP"]}]}]`,
+			contains: []string{`Rule: null → "rule"`, `Rule condition: null → "clause"`, `country: null → ["JP"]`},
+		},
+		{
+			name:     "clause removed",
+			before:   `[{"id":"rule","clauses":[{"id":"clause","attribute":"country","values":["US"]}]}]`,
+			after:    `[{"id":"rule"}]`,
+			contains: []string{`Rule condition: "clause" → null`, `country: ["US"] → null`},
+		},
+		{
+			name:     "rule order changed",
+			before:   `[{"id":"first"},{"id":"second"}]`,
+			after:    `[{"id":"second"},{"id":"first"}]`,
+			contains: []string{`Rules order (first): 1 → 2`, `Rules order (second): 2 → 1`},
+		},
+		{
+			name:   "clause and condition value order ignored",
+			before: `[{"id":"rule","clauses":[{"id":"a","values":["US","JP"]},{"id":"b"}]}]`,
+			after:  `[{"id":"rule","clauses":[{"id":"b"},{"id":"a","values":["JP","US"]}]}]`,
+			empty:  true,
+		},
+		{
+			name:     "shared condition values omitted",
+			before:   `[{"id":"rule","clauses":[{"id":"clause","attribute":"country","values":["shared","US"]}]}]`,
+			after:    `[{"id":"rule","clauses":[{"id":"clause","attribute":"country","values":["shared","JP"]}]}]`,
+			contains: []string{`country: ["US"] → ["JP"]`},
+		},
+		{
+			name:   "null entries ignored",
+			before: `[null,{"id":"rule","clauses":[null]}]`,
+			after:  `[{"id":"rule"}]`,
+			empty:  true,
+		},
+		{
+			name:     "rule and attribute escaped",
+			before:   `[{"id":"<!channel>","clauses":[{"id":"<clause>","attribute":"<country>","values":["US"]}]}]`,
+			after:    `[{"id":"<!channel>","clauses":[{"id":"<clause>","attribute":"<country>","values":["JP"]}]}]`,
+			contains: []string{`Rule (&lt;!channel&gt;)`, `Rule condition (&lt;clause&gt;)`, `&lt;country&gt;: ["US"] → ["JP"]`},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := &senderproto.DomainEventNotification{
+				EntityId: "flag", PreviousEntityData: `{"id":"flag","rules":` + tt.before + `}`,
+				EntityData: `{"id":"flag","rules":` + tt.after + `}`,
+			}
+			summary := featureChangeSummary(n, newTestLocalizer(locale.En))
+			if tt.empty {
+				assert.Empty(t, summary)
+			}
+			for _, expected := range tt.contains {
+				assert.Contains(t, summary, expected)
+			}
+			assert.NotContains(t, summary, "shared")
+		})
+	}
+}

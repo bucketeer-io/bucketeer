@@ -70,7 +70,6 @@ func featureChangeSummary(n *senderproto.DomainEventNotification, l locale.Local
 		{locale.OffVariation,
 			variationLabel(&before.Feature, before.OffVariation),
 			variationLabel(&after.Feature, after.OffVariation)},
-		{locale.Rule, before.Rules, after.Rules},
 		{locale.Prerequisite, before.Prerequisites, after.Prerequisites},
 		{locale.NotificationFeatureVariationType, before.VariationType.String(), after.VariationType.String()},
 		{locale.NotificationFeatureVariationSchema, before.VariationValueSchema, after.VariationValueSchema},
@@ -78,6 +77,7 @@ func featureChangeSummary(n *senderproto.DomainEventNotification, l locale.Local
 	for _, field := range fields {
 		add(l.MustLocalize(field.label), field.before, field.after)
 	}
+	addFeatureRuleChanges(before.Rules, after.Rules, l, add)
 	// Match variations by stable ID so adding one does not report unrelated
 	// variations as changed just because their array positions moved.
 	oldVariations, newVariations := variationMap(&before.Feature), variationMap(&after.Feature)
@@ -108,6 +108,100 @@ func featureChangeSummary(n *senderproto.DomainEventNotification, l locale.Local
 		lines = append(lines[:maxFeatureChanges], l.MustLocalize(locale.NotificationFeatureChangesOmitted))
 	}
 	return strings.Join(lines, "\n")
+}
+
+// Compare rules and clauses before shortening values. Serializing a complete
+// rule can otherwise use the entire display budget on unchanged IDs/strategy.
+func addFeatureRuleChanges(
+	before, after []*featureproto.Rule,
+	l locale.Localizer,
+	add func(string, interface{}, interface{}),
+) {
+	oldRules, newRules := featureItemsByID(before), featureItemsByID(after)
+	for _, id := range sortedKeys(oldRules, newRules) {
+		oldRule, newRule := oldRules[id], newRules[id]
+		label := l.MustLocalize(locale.Rule) + " (" + slackEscape(limitChangeValue(id)) + ")"
+		if oldRule == nil || newRule == nil {
+			// Keep the existence change small; configuration details follow in
+			// their own entries instead of one truncated object.
+			add(l.MustLocalize(locale.Rule), featureItemID(oldRule), featureItemID(newRule))
+		}
+		add(label+" / "+l.MustLocalize(locale.RuleStrategy), oldRule.GetStrategy(), newRule.GetStrategy())
+		oldClauses := featureItemsByID(oldRule.GetClauses())
+		newClauses := featureItemsByID(newRule.GetClauses())
+		for _, clauseID := range sortedKeys(oldClauses, newClauses) {
+			oldClause, newClause := oldClauses[clauseID], newClauses[clauseID]
+			clauseLabel := label + " / " + l.MustLocalize(locale.RuleCondition) +
+				" (" + slackEscape(limitChangeValue(clauseID)) + ")"
+			if oldClause == nil || newClause == nil {
+				add(label+" / "+l.MustLocalize(locale.RuleCondition),
+					featureItemID(oldClause), featureItemID(newClause))
+			}
+			add(clauseLabel+" / "+l.MustLocalize(locale.RuleAttribute),
+				oldClause.GetAttribute(), newClause.GetAttribute())
+			add(clauseLabel+" / "+l.MustLocalize(locale.RuleOperator),
+				oldClause.GetOperator().String(), newClause.GetOperator().String())
+			// Values are a set. Omit shared values so a late change in a large
+			// condition remains visible within the per-value display limit.
+			removed := addedUsers(featureValueSet(oldClause.GetValues()), featureValueSet(newClause.GetValues()))
+			added := addedUsers(featureValueSet(newClause.GetValues()), featureValueSet(oldClause.GetValues()))
+			attribute := newClause.GetAttribute()
+			if newClause == nil {
+				attribute = oldClause.GetAttribute()
+			}
+			add(clauseLabel+" / "+slackEscape(limitChangeValue(attribute)), removed, added)
+		}
+	}
+	// Rule priority matters. Report positions independently from configuration
+	// changes, without treating insertion/removal as a reorder of every rule.
+	if len(oldRules) != len(newRules) {
+		return
+	}
+	for id := range oldRules {
+		if newRules[id] == nil {
+			return
+		}
+	}
+	oldPositions, newPositions := featureItemPositions(before), featureItemPositions(after)
+	for _, id := range sortedKeys(oldRules, newRules) {
+		label := l.MustLocalize(locale.RulesOrder) + " (" + slackEscape(limitChangeValue(id)) + ")"
+		add(label, oldPositions[id], newPositions[id])
+	}
+}
+
+func featureItemPositions[T interface{ GetId() string }](items []T) map[string]int {
+	result := make(map[string]int, len(items))
+	for _, item := range items {
+		if id := item.GetId(); id != "" {
+			result[id] = len(result) + 1
+		}
+	}
+	return result
+}
+
+func featureItemsByID[T interface{ GetId() string }](items []T) map[string]T {
+	result := make(map[string]T, len(items))
+	for _, item := range items {
+		if id := item.GetId(); id != "" {
+			result[id] = item
+		}
+	}
+	return result
+}
+
+func featureItemID(item interface{ GetId() string }) interface{} {
+	if id := item.GetId(); id != "" {
+		return id
+	}
+	return nil
+}
+
+func featureValueSet(values []string) map[string]bool {
+	result := make(map[string]bool, len(values))
+	for _, value := range values {
+		result[value] = true
+	}
+	return result
 }
 
 func featureChangeValue(value interface{}) string {
