@@ -71,6 +71,9 @@ type ListFeaturesFilteredByExperimentParams struct {
 type FeatureStorage interface {
 	CreateFeature(ctx context.Context, feature *domain.Feature, environmentID string) error
 	UpdateFeature(ctx context.Context, feature *domain.Feature, environmentID string) error
+	// UpdateFeatureLastUsedAt records the latest evaluation time of the flag.
+	// Older timestamps are ignored so out-of-order writes never move it backwards.
+	UpdateFeatureLastUsedAt(ctx context.Context, id, environmentID string, lastUsedAt int64) error
 	GetFeature(ctx context.Context, id, environmentID string) (*domain.Feature, error)
 	// GetFeatureForUpdate reads the flag with a row lock so whole-row writers and
 	// holdout enrollment serialize on the flag. Call it before any other read in

@@ -45,21 +45,6 @@ SELECT
             ops_type = 3 AND
             aor.deleted = 0
     ) AS kill_switch_count,
-    COALESCE(feature_last_used_info.feature_id, '') AS feature_id,
-    COALESCE(feature_last_used_info.version, 0) AS version,
-    COALESCE(feature_last_used_info.last_used_at, 0) AS last_used_at,
-    COALESCE(feature_last_used_info.created_at, 0) AS created_at,
-    COALESCE(feature_last_used_info.client_oldest_version, '') AS client_oldest_version,
-    COALESCE(feature_last_used_info.client_latest_version, '') AS client_latest_version
+    feature.last_used_at
 FROM
     feature
-LEFT JOIN feature_last_used_info ON
-    feature.id = feature_last_used_info.feature_id AND
-    feature.environment_id = feature_last_used_info.environment_id AND
-    NOT EXISTS (
-        SELECT 1 FROM feature_last_used_info flui2
-        WHERE flui2.feature_id = feature_last_used_info.feature_id
-        AND flui2.environment_id = feature_last_used_info.environment_id
-        AND (flui2.last_used_at > feature_last_used_info.last_used_at
-        OR (flui2.last_used_at = feature_last_used_info.last_used_at AND flui2.version > feature_last_used_info.version))
-    )

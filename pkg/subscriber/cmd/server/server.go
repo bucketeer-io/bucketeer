@@ -388,7 +388,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var pushStorage pushstorage.PushStorage
 	var segmentStorage v2fs.SegmentStorage
 	var segmentUserStorage v2fs.SegmentUserStorage
-	var fluiStorage v2fs.FeatureLastUsedInfoStorage
+	var featureStorage v2fs.FeatureStorage
 	var accountStorage accstorage.AccountStorage
 	var holdoutStorage v2hs.HoldoutStorage
 	var auditLogStorage v2als.AuditLogStorage
@@ -406,7 +406,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		pushStorage = pushstorage.NewPostgresPushStorage(postgresClient)
 		segmentStorage = featurepostgres.NewSegmentStorage(postgresClient)
 		segmentUserStorage = featurepostgres.NewSegmentUserStorage(postgresClient)
-		fluiStorage = featurepostgres.NewFeatureLastUsedInfoStorage(postgresClient)
+		featureStorage = featurepostgres.NewFeatureStorage(postgresClient)
 		accountStorage = accountpostgres.NewAccountStorage(postgresClient)
 		holdoutStorage = holdoutpostgres.NewHoldoutStorage(postgresClient)
 		auditLogStorage = auditlogpostgres.NewAuditLogStorage(postgresClient)
@@ -417,7 +417,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		pushStorage = pushstorage.NewMySQLPushStorage(mysqlClient)
 		segmentStorage = featuremysql.NewSegmentStorage(mysqlClient)
 		segmentUserStorage = featuremysql.NewSegmentUserStorage(mysqlClient)
-		fluiStorage = featuremysql.NewFeatureLastUsedInfoStorage(mysqlClient)
+		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 		holdoutStorage = holdoutmysql.NewHoldoutStorage(mysqlClient)
 		auditLogStorage = auditlogmysql.NewAuditLogStorage(mysqlClient)
@@ -582,7 +582,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		dbClient,
 		segmentStorage,
 		segmentUserStorage,
-		fluiStorage,
+		featureStorage,
 		pushStorage,
 		auditLogStorage,
 		accountStorage,
@@ -1114,7 +1114,7 @@ func (s *server) registerPubSubProcessorMap(
 	dbClient database.Client,
 	segmentStorage v2fs.SegmentStorage,
 	segmentUserStorage v2fs.SegmentUserStorage,
-	fluiStorage v2fs.FeatureLastUsedInfoStorage,
+	featureStorage v2fs.FeatureStorage,
 	pushStorage pushstorage.PushStorage,
 	auditLogStorage v2als.AuditLogStorage,
 	accountStorage accstorage.AccountStorage,
@@ -1237,7 +1237,7 @@ func (s *server) registerPubSubProcessorMap(
 		evaluationCountEventPersister, err := processor.NewEvaluationCountEventPersister(
 			ctx,
 			processorsConfigMap[processor.EvaluationCountEventPersisterName],
-			fluiStorage,
+			featureStorage,
 			redisCache,
 			cachev3.NewUserAttributesCache(redisCache),
 			cachev3.NewDAUCache(redisCache),

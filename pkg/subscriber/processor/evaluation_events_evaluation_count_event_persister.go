@@ -30,7 +30,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
-	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
@@ -44,7 +43,6 @@ const (
 	eventCountKey      = cachev3.EventCountHourKind
 	userCountKey       = cachev3.UserCountHourKind
 	defaultVariationID = "default"
-	userDataAppVersion = "app_version"
 )
 
 // countKindTTLs maps each evaluation count kind to the TTL applied after
@@ -78,7 +76,8 @@ var countKindTiers = []countKindTier{
 	{cachev3.UserCountHourKind, "1h"},
 }
 
-type lastUsedInfoCache map[string]*ftdomain.FeatureLastUsedInfo
+// lastUsedInfoCache holds the latest evaluation time per feature ID.
+type lastUsedInfoCache map[string]int64
 type environmentLastUsedInfoCache map[string]lastUsedInfoCache
 type eventMap map[string]*eventproto.EvaluationEvent
 type environmentEventMap map[string]eventMap
@@ -104,7 +103,7 @@ type EvaluationCountEventPersisterConfig struct {
 
 type evaluationCountEventPersister struct {
 	evaluationCountEventPersisterConfig EvaluationCountEventPersisterConfig
-	fluiStorage                         ftstorage.FeatureLastUsedInfoStorage
+	featureStorage                      ftstorage.FeatureStorage
 	envLastUsedCache                    environmentLastUsedInfoCache
 	evaluationCountCacher               cache.MultiGetDeleteCountCache
 	userAttributesCacher                cachev3.UserAttributesCache
@@ -136,7 +135,7 @@ func (p *evaluationCountEventPersister) timeNow() time.Time {
 func NewEvaluationCountEventPersister(
 	ctx context.Context,
 	config interface{},
-	fluiStorage ftstorage.FeatureLastUsedInfoStorage,
+	featureStorage ftstorage.FeatureStorage,
 	evaluationCountCacher cache.MultiGetDeleteCountCache,
 	userAttributesCacher cachev3.UserAttributesCache,
 	dauCache cachev3.DAUCache,
@@ -160,7 +159,7 @@ func NewEvaluationCountEventPersister(
 	}
 	e := &evaluationCountEventPersister{
 		evaluationCountEventPersisterConfig: evaluationCountEventPersisterConfig,
-		fluiStorage:                         fluiStorage,
+		featureStorage:                      featureStorage,
 		envLastUsedCache:                    make(environmentLastUsedInfoCache),
 		evaluationCountCacher:               evaluationCountCacher,
 		userAttributesCacher:                userAttributesCacher,
@@ -1010,42 +1009,14 @@ func (p *evaluationCountEventPersister) cacheEnvLastUsedInfo(
 ) {
 	p.envLastUsedCacheMutex.Lock()
 	defer p.envLastUsedCacheMutex.Unlock()
-	var clientVersion string
-	if event.User != nil {
-		if version, ok := event.User.Data[userDataAppVersion]; ok {
-			clientVersion = version
-		}
+	cache, ok := p.envLastUsedCache[environmentId]
+	if !ok {
+		cache = lastUsedInfoCache{}
+		p.envLastUsedCache[environmentId] = cache
 	}
-	id := ftdomain.FeatureLastUsedInfoID(event.FeatureId, event.FeatureVersion)
-	if cache, ok := p.envLastUsedCache[environmentId]; ok {
-		if info, ok := cache[id]; ok {
-			info.UsedAt(event.Timestamp)
-			if err := info.SetClientVersion(clientVersion); err != nil {
-				p.logger.Error("Failed to set client version",
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-					zap.String("featureId", info.FeatureId),
-					zap.Int32("featureVersion", info.Version),
-					zap.String("clientVersion", clientVersion))
-			}
-			return
-		}
-		cache[id] = ftdomain.NewFeatureLastUsedInfo(
-			event.FeatureId,
-			event.FeatureVersion,
-			event.Timestamp,
-			clientVersion,
-		)
-		return
+	if cache[event.FeatureId] < event.Timestamp {
+		cache[event.FeatureId] = event.Timestamp
 	}
-	cache := lastUsedInfoCache{}
-	cache[id] = ftdomain.NewFeatureLastUsedInfo(
-		event.FeatureId,
-		event.FeatureVersion,
-		event.Timestamp,
-		clientVersion,
-	)
-	p.envLastUsedCache[environmentId] = cache
 }
 
 // Write the feature flag last-used cache in the database and reset the cache
@@ -1070,11 +1041,7 @@ func (p *evaluationCountEventPersister) writeEnvLastUsedInfo() {
 	defer p.envLastUsedCacheMutex.Unlock()
 
 	for environmentId, cache := range p.envLastUsedCache {
-		info := make([]*ftdomain.FeatureLastUsedInfo, 0, len(cache))
-		for _, v := range cache {
-			info = append(info, v)
-		}
-		if err := p.upsertMultiFeatureLastUsedInfo(context.Background(), info, environmentId); err != nil {
+		if err := p.updateFeatureLastUsedAt(context.Background(), cache, environmentId); err != nil {
 			// Keep the entries so they are retried on the next cycle.
 			// The Pub/Sub messages were already acked when the evaluation counts
 			// were written to Redis, so dropping the entries here would lose the
@@ -1089,71 +1056,20 @@ func (p *evaluationCountEventPersister) writeEnvLastUsedInfo() {
 		delete(p.envLastUsedCache, environmentId)
 		p.logger.Debug("Cache has been written",
 			zap.String("environmentId", environmentId),
-			zap.Int("cacheSize", len(info)),
+			zap.Int("cacheSize", len(cache)),
 		)
 	}
 }
 
-func (p *evaluationCountEventPersister) upsertMultiFeatureLastUsedInfo(
+func (p *evaluationCountEventPersister) updateFeatureLastUsedAt(
 	ctx context.Context,
-	featureLastUsedInfos []*ftdomain.FeatureLastUsedInfo,
+	cache lastUsedInfoCache,
 	environmentId string,
 ) error {
-	ids := make([]string, 0, len(featureLastUsedInfos))
-	for _, f := range featureLastUsedInfos {
-		ids = append(ids, f.ID())
-	}
-	updatedInfo := make([]*ftdomain.FeatureLastUsedInfo, 0, len(ids))
-	currentInfo, err := p.fluiStorage.GetFeatureLastUsedInfos(ctx, ids, environmentId)
-	if err != nil {
-		return err
-	}
-	currentInfoMap := make(map[string]*ftdomain.FeatureLastUsedInfo, len(currentInfo))
-	for _, c := range currentInfo {
-		currentInfoMap[c.ID()] = c
-	}
-	for _, f := range featureLastUsedInfos {
-		v, ok := currentInfoMap[f.ID()]
-		if !ok {
-			updatedInfo = append(updatedInfo, f)
-			continue
-		}
-		var update bool
-		if v.LastUsedAt < f.LastUsedAt {
-			update = true
-			v.LastUsedAt = f.LastUsedAt
-		}
-		if v.ClientOldestVersion != f.ClientOldestVersion {
-			update = true
-			v.ClientOldestVersion = f.ClientOldestVersion
-		}
-		if v.ClientLatestVersion != f.ClientLatestVersion {
-			update = true
-			v.ClientLatestVersion = f.ClientLatestVersion
-		}
-		if update {
-			updatedInfo = append(updatedInfo, v)
-		}
-	}
-	for _, info := range updatedInfo {
-		if err := p.upsertFeatureLastUsedInfo(ctx, info, environmentId); err != nil {
+	for featureID, lastUsedAt := range cache {
+		if err := p.featureStorage.UpdateFeatureLastUsedAt(ctx, featureID, environmentId, lastUsedAt); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func (p *evaluationCountEventPersister) upsertFeatureLastUsedInfo(
-	ctx context.Context,
-	featureLastUsedInfo *ftdomain.FeatureLastUsedInfo,
-	environmentId string,
-) error {
-	if err := p.fluiStorage.UpsertFeatureLastUsedInfo(
-		ctx,
-		featureLastUsedInfo,
-		environmentId,
-	); err != nil {
-		return err
 	}
 	return nil
 }

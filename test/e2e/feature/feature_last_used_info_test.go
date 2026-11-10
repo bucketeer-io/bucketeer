@@ -53,12 +53,6 @@ func TestGprcGetFeatureLastUsedInfo(t *testing.T) {
 			if actual.LastUsedInfo.FeatureId != f.Id {
 				t.Fatalf("feature ID is not correct: expected: %s, actual: %s", f.Id, actual.LastUsedInfo.FeatureId)
 			}
-			if actual.LastUsedInfo.Version != f.Version {
-				t.Fatalf("feature version is not correct: expected: %d, actual: %d", f.Version, actual.LastUsedInfo.Version)
-			}
-			if actual.LastUsedInfo.CreatedAt != lastUsedAt.Unix() {
-				t.Fatalf("created at is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedInfo.CreatedAt)
-			}
 			if actual.LastUsedInfo.LastUsedAt != lastUsedAt.Unix() {
 				t.Fatalf("lastUsedAt at is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedInfo.LastUsedAt)
 			}
@@ -85,12 +79,6 @@ func TestGetFeatureLastUsedInfo(t *testing.T) {
 		if actual.LastUsedInfo != nil {
 			if actual.LastUsedInfo.FeatureId != f.Id {
 				t.Fatalf("feature ID is not correct: expected: %s, actual: %s", f.Id, actual.LastUsedInfo.FeatureId)
-			}
-			if actual.LastUsedInfo.Version != f.Version {
-				t.Fatalf("feature version is not correct: expected: %d, actual: %d", f.Version, actual.LastUsedInfo.Version)
-			}
-			if actual.LastUsedInfo.CreatedAt != lastUsedAt.Unix() {
-				t.Fatalf("created at is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedInfo.CreatedAt)
 			}
 			if actual.LastUsedInfo.LastUsedAt != lastUsedAt.Unix() {
 				t.Fatalf("lastUsedAt at is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedInfo.LastUsedAt)

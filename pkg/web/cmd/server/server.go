@@ -756,7 +756,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	var segmentUserStorage v2fs.SegmentUserStorage
 	var tagStorage tagstorage.TagStorage
 	var flagTriggerStorage v2fs.FlagTriggerStorage
-	var fluiStorage v2fs.FeatureLastUsedInfoStorage
 	var auditLogStorage v2als.AuditLogStorage
 	var postgresClient postgres.Client
 	var accountStorage v2as.AccountStorage
@@ -792,7 +791,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		segmentUserStorage = featurepostgres.NewSegmentUserStorage(postgresClient)
 		tagStorage = tagpostgres.NewTagStorage(postgresClient)
 		flagTriggerStorage = featurepostgres.NewFlagTriggerStorage(postgresClient)
-		fluiStorage = featurepostgres.NewFeatureLastUsedInfoStorage(postgresClient)
 		auditLogStorage = auditlogpostgres.NewAuditLogStorage(postgresClient)
 		accountStorage = accountpostgres.NewAccountStorage(postgresClient)
 		projectStorage = environmentpostgres.NewProjectStorage(postgresClient)
@@ -820,7 +818,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		segmentUserStorage = featuremysql.NewSegmentUserStorage(mysqlClient)
 		tagStorage = tagmysql.NewTagStorage(mysqlClient)
 		flagTriggerStorage = featuremysql.NewFlagTriggerStorage(mysqlClient)
-		fluiStorage = featuremysql.NewFeatureLastUsedInfoStorage(mysqlClient)
 		auditLogStorage = auditlogmysql.NewAuditLogStorage(mysqlClient)
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 		projectStorage = environmentmysql.NewProjectStorage(mysqlClient)
@@ -1164,7 +1161,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		segmentUserStorage,
 		tagStorage,
 		flagTriggerStorage,
-		fluiStorage,
 		scheduledFlagChangeStorage,
 		holdoutStorage,
 		accountClient,
@@ -1758,7 +1754,6 @@ func (s *server) createFeatureService(
 	segmentUserStorage v2fs.SegmentUserStorage,
 	tagStorage tagstorage.TagStorage,
 	flagTriggerStorage v2fs.FlagTriggerStorage,
-	fluiStorage v2fs.FeatureLastUsedInfoStorage,
 	scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage,
 	holdoutStorage v2hs.HoldoutStorage,
 	accountClient accountclient.Client,
@@ -1778,7 +1773,6 @@ func (s *server) createFeatureService(
 		segmentUserStorage,
 		tagStorage,
 		flagTriggerStorage,
-		fluiStorage,
 		scheduledFlagChangeStorage,
 		holdoutStorage,
 		accountClient,

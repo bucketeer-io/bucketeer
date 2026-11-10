@@ -34,6 +34,8 @@ var (
 	createFeatureSQLQuery string
 	//go:embed sql/feature/update_feature.sql
 	updateFeatureSQLQuery string
+	//go:embed sql/feature/update_feature_last_used_at.sql
+	updateFeatureLastUsedAtSQLQuery string
 	//go:embed sql/feature/select_feature.sql
 	selectFeatureSQLQuery string
 	//go:embed sql/feature/select_feature_by_version.sql
@@ -148,6 +150,22 @@ func (s *featureStorage) UpdateFeature(
 	return nil
 }
 
+func (s *featureStorage) UpdateFeatureLastUsedAt(
+	ctx context.Context,
+	id, environmentID string,
+	lastUsedAt int64,
+) error {
+	_, err := s.qe.ExecContext(
+		ctx,
+		updateFeatureLastUsedAtSQLQuery,
+		lastUsedAt,
+		id,
+		environmentID,
+		lastUsedAt,
+	)
+	return err
+}
+
 func (s *featureStorage) GetFeature(
 	ctx context.Context,
 	id, environmentID string,
@@ -168,6 +186,7 @@ func (s *featureStorage) getFeature(
 ) (*domain.Feature, error) {
 	feature := proto.Feature{}
 	feature.AutoOpsSummary = &proto.AutoOpsSummary{}
+	var lastUsedAt int64
 	err := s.qe.QueryRowContext(
 		ctx,
 		query,
@@ -196,6 +215,7 @@ func (s *featureStorage) getFeature(
 		&feature.Maintainer,
 		&feature.SamplingSeed,
 		&pgstorage.JSONObject{Val: &feature.Prerequisites},
+		&lastUsedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgstorage.ErrNoRows) {
@@ -203,6 +223,7 @@ func (s *featureStorage) getFeature(
 		}
 		return nil, err
 	}
+	feature.LastUsedInfo = newLastUsedInfo(feature.Id, lastUsedAt)
 	return &domain.Feature{Feature: &feature}, nil
 }
 
@@ -212,6 +233,7 @@ func (s *featureStorage) GetFeatureByVersion(
 ) (*domain.Feature, error) {
 	feature := proto.Feature{}
 	feature.AutoOpsSummary = &proto.AutoOpsSummary{}
+	var lastUsedAt int64
 	err := s.qe.QueryRowContext(
 		ctx,
 		selectFeatureByVersionSQLQuery,
@@ -220,6 +242,7 @@ func (s *featureStorage) GetFeatureByVersion(
 		version,
 	).Scan(
 		&pgstorage.JSONObject{Val: &feature},
+		&lastUsedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgstorage.ErrNoRows) {
@@ -227,6 +250,7 @@ func (s *featureStorage) GetFeatureByVersion(
 		}
 		return nil, err
 	}
+	feature.LastUsedInfo = newLastUsedInfo(feature.Id, lastUsedAt)
 	return &domain.Feature{Feature: &feature}, nil
 }
 
@@ -303,23 +327,28 @@ func listFeaturesOptionsFromParams(p v2fs.ListFeaturesParams) (*pgstorage.ListOp
 	}
 	existsFilters, orFilters := listFeaturesAutoOpsFilters(p.HasActiveAutoOps, p.HasFinishedAutoOps)
 
-	var nullFilters []*pgstorage.NullFilter
 	switch p.Status {
 	case proto.FeatureLastUsedInfo_UNKNOWN:
 	case proto.FeatureLastUsedInfo_NEW:
-		nullFilters = append(nullFilters, &pgstorage.NullFilter{
-			Column: "feature_last_used_info.id",
-			IsNull: true,
+		filters = append(filters, &pgstorage.Filter{
+			Column:   "feature.last_used_at",
+			Operator: pgstorage.OperatorEqual,
+			Value:    0,
 		})
 	case proto.FeatureLastUsedInfo_ACTIVE:
 		filters = append(filters, &pgstorage.Filter{
-			Column:   "feature_last_used_info.last_used_at",
+			Column:   "feature.last_used_at",
 			Operator: pgstorage.OperatorGreaterThanOrEqual,
 			Value:    time.Now().Add(-activeDays).Unix(),
 		})
 	case proto.FeatureLastUsedInfo_NO_ACTIVITY:
+		// A flag that has never been evaluated is NEW, not NO_ACTIVITY.
 		filters = append(filters, &pgstorage.Filter{
-			Column:   "feature_last_used_info.last_used_at",
+			Column:   "feature.last_used_at",
+			Operator: pgstorage.OperatorGreaterThan,
+			Value:    0,
+		}, &pgstorage.Filter{
+			Column:   "feature.last_used_at",
 			Operator: pgstorage.OperatorLessThan,
 			Value:    time.Now().Add(-activeDays).Unix(),
 		})
@@ -365,7 +394,6 @@ func listFeaturesOptionsFromParams(p v2fs.ListFeaturesParams) (*pgstorage.ListOp
 		Offset:        offset,
 		Filters:       filters,
 		JSONFilters:   jsonFilters,
-		NullFilters:   nullFilters,
 		ExistsFilters: existsFilters,
 		InFilters:     inFilters,
 		OrFilters:     orFilters,
@@ -487,7 +515,7 @@ func (s *featureStorage) ListFeatures(
 	for rows.Next() {
 		feature := proto.Feature{}
 		feature.AutoOpsSummary = &proto.AutoOpsSummary{}
-		lastUsedInfo := proto.FeatureLastUsedInfo{}
+		var lastUsedAt int64
 		err := rows.Scan(
 			&feature.Id,
 			&feature.Name,
@@ -514,19 +542,12 @@ func (s *featureStorage) ListFeatures(
 			&feature.AutoOpsSummary.ProgressiveRolloutCount,
 			&feature.AutoOpsSummary.ScheduleCount,
 			&feature.AutoOpsSummary.KillSwitchCount,
-			&lastUsedInfo.FeatureId,
-			&lastUsedInfo.Version,
-			&lastUsedInfo.LastUsedAt,
-			&lastUsedInfo.CreatedAt,
-			&lastUsedInfo.ClientOldestVersion,
-			&lastUsedInfo.ClientLatestVersion,
+			&lastUsedAt,
 		)
 		if err != nil {
 			return nil, 0, 0, err
 		}
-		if lastUsedInfo.FeatureId != "" {
-			feature.LastUsedInfo = &lastUsedInfo
-		}
+		feature.LastUsedInfo = newLastUsedInfo(feature.Id, lastUsedAt)
 		features = append(features, &feature)
 	}
 	if rows.Err() != nil {
@@ -589,7 +610,7 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 	for rows.Next() {
 		feature := proto.Feature{}
 		feature.AutoOpsSummary = &proto.AutoOpsSummary{}
-		lastUsedInfo := proto.FeatureLastUsedInfo{}
+		var lastUsedAt int64
 		err := rows.Scan(
 			&feature.Id,
 			&feature.Name,
@@ -616,19 +637,12 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 			&feature.AutoOpsSummary.ProgressiveRolloutCount,
 			&feature.AutoOpsSummary.ScheduleCount,
 			&feature.AutoOpsSummary.KillSwitchCount,
-			&lastUsedInfo.FeatureId,
-			&lastUsedInfo.Version,
-			&lastUsedInfo.LastUsedAt,
-			&lastUsedInfo.CreatedAt,
-			&lastUsedInfo.ClientOldestVersion,
-			&lastUsedInfo.ClientLatestVersion,
+			&lastUsedAt,
 		)
 		if err != nil {
 			return nil, 0, 0, err
 		}
-		if lastUsedInfo.FeatureId != "" {
-			feature.LastUsedInfo = &lastUsedInfo
-		}
+		feature.LastUsedInfo = newLastUsedInfo(feature.Id, lastUsedAt)
 		features = append(features, &feature)
 	}
 	if rows.Err() != nil {
@@ -741,4 +755,16 @@ func (s *featureStorage) ListAllEnvironmentFeatures(
 		envFts = append(envFts, envFeature)
 	}
 	return envFts, nil
+}
+
+// newLastUsedInfo returns nil when the flag has never been evaluated,
+// so callers keep treating a nil LastUsedInfo as a new flag.
+func newLastUsedInfo(featureID string, lastUsedAt int64) *proto.FeatureLastUsedInfo {
+	if lastUsedAt == 0 {
+		return nil
+	}
+	return &proto.FeatureLastUsedInfo{
+		FeatureId:  featureID,
+		LastUsedAt: lastUsedAt,
+	}
 }

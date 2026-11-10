@@ -181,6 +181,47 @@ func TestUpdateFeature(t *testing.T) {
 	}
 }
 
+func TestUpdateFeatureLastUsedAt(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		setup       func(*featureStorage)
+		expectedErr error
+	}{
+		{
+			desc: "error",
+			setup: func(s *featureStorage) {
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), int64(100), "feature-id", "env", int64(100),
+				).Return(nil, errors.New("error"))
+			},
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "success",
+			setup: func(s *featureStorage) {
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), int64(100), "feature-id", "env", int64(100),
+				).Return(nil, nil)
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := &featureStorage{qe: pgmock.NewMockQueryExecer(mockController)}
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			err := storage.UpdateFeatureLastUsedAt(context.Background(), "feature-id", "env", 100)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestGetFeature(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -300,6 +341,33 @@ func TestGetFeatureByVersion(t *testing.T) {
 			version: 1,
 			expected: &domain.Feature{Feature: &proto.Feature{
 				AutoOpsSummary: &proto.AutoOpsSummary{},
+			}},
+			expectedErr: nil,
+		},
+		{
+			desc: "Success with last used at",
+			setup: func(s *featureStorage) {
+				row := pgmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(dest ...interface{}) error {
+						dest[0].(*postgres.JSONObject).Val.(*proto.Feature).Id = "feature-id"
+						*dest[1].(*int64) = 100
+						return nil
+					},
+				)
+				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			id:      "feature-id",
+			version: 1,
+			expected: &domain.Feature{Feature: &proto.Feature{
+				Id:             "feature-id",
+				AutoOpsSummary: &proto.AutoOpsSummary{},
+				LastUsedInfo: &proto.FeatureLastUsedInfo{
+					FeatureId:  "feature-id",
+					LastUsedAt: 100,
+				},
 			}},
 			expectedErr: nil,
 		},
