@@ -48,6 +48,7 @@ message DomainEventNotification {
   string environment_name = 7;
   string environment_url_code = 8;
   string entity_data = 9;
+  string previous_entity_data = 10;
 }
 
 message FeatureStaleNotification {

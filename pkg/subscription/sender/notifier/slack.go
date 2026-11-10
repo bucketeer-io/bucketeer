@@ -283,6 +283,11 @@ func (n *slackNotifier) createDomainEventAttachment(
 			"Entity ID: " + notification.EntityId + "\n" +
 			"URL: " + url,
 	}
+	if notification.EntityType == domainproto.Event_FEATURE {
+		if summary := featureChangeSummary(notification, localizer); summary != "" {
+			attachment.Text += "\n\n" + summary
+		}
+	}
 	return attachment, nil
 }
 

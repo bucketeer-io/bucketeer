@@ -50996,6 +50996,11 @@
                 "id": 9,
                 "name": "entity_data",
                 "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "previous_entity_data",
+                "type": "string"
               }
             ],
             "reserved_ids": [
