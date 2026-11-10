@@ -29,14 +29,17 @@ jobs:
 
       - name: Get image tag
         id: tag
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
         run: |
-          # Use input tag if provided, otherwise extract from the Makefile
-          if [ -n "${{ github.event.inputs.tag }}" ]; then
-            TAG="${{ github.event.inputs.tag }}"
+          # Use input tag if provided, otherwise extract from the Makefile.
+          # The input is an environment variable so it is not parsed as shell.
+          if [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
           else
             TAG=$(grep -E '^TAG=' hack/delete-postgres-data-warehouse/Makefile | sed 's/TAG=//')
           fi
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "Using tag: ${TAG}"
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
