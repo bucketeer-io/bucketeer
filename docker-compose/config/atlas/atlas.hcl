@@ -6,7 +6,9 @@
 # compose.yml.
 
 locals {
-  mysql_password = trimspace(file("/run/secrets/mysql_password"))
+  # chomp() removes only the trailing newlines, like the mysql image does when
+  # it reads the same file, so spaces that belong to the password are kept.
+  mysql_password = chomp(file("/run/secrets/mysql_password"))
   # urlescape() encodes a space as "+", which is a literal plus sign in the
   # user-info part of a URL. A real plus sign is already encoded as %2B, so
   # every "+" left after urlescape() stands for a space.
