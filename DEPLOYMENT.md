@@ -233,7 +233,8 @@ container environment values. The exception is the demo sign-in password, which
 `env.js` publishes to the browser by design when the demo sign-in is enabled (see
 above). For the database passwords, the OAuth configuration and the email
 configuration you can also create the Secrets yourself and point the chart at them,
-so those values do not have to appear in a values file:
+so those values do not have to appear in a values file. The same applies to the
+database URL of the migration job:
 - Database passwords: `global.operationalDatabase.mysql.existingSecret` /
   `existingSecretKey` and `global.operationalDatabase.postgres.existingSecret` /
   `existingSecretKey` (each service chart can override them under
@@ -241,6 +242,20 @@ so those values do not have to appear in a values file:
   `secretKeyRef`; when no existing Secret is set, the chart creates
   `<service>-db-credentials` from `pass`, and changing `pass` rolls the pods. Pods do
   not restart on their own when the content of an existing Secret changes.
+- Migration database URL: `migration.existingSecret` / `existingSecretKey`
+  (`existingSecret` / `existingSecretKey` in the standalone `bucketeer-migration`
+  chart), a Secret whose key (`db-url` by default) holds the complete URL, for
+  example `mysql://user:password@host:port/db_name`. Percent-encode special
+  characters in the user name and password. Unlike the passwords above,
+  `migration.dbUrl` is not rendered into a Secret: it is passed to the migration job
+  as a plain argument, so it is readable in the Job and in the Helm release. With
+  `existingSecret` the job reads the URL through a `secretKeyRef` and `dbUrl` is
+  ignored. In the `bucketeer` chart the migration job is a pre-install/pre-upgrade
+  hook, so the Secret must exist in the release namespace before Helm runs:
+  ```shell
+  kubectl create secret generic bucketeer-migration-db-url -n bucketeer \
+    --from-literal db-url='mysql://user:password@host:port/db_name'
+  ```
 - OAuth configuration: `web.oauth.existingSecret`, a Secret with an
   `oauth-config.json` key holding the complete `oauth` block as JSON.
 - Email configuration: `global.email.existingSecret`, a Secret with an

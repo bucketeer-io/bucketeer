@@ -113,13 +113,21 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    command: 
+    # The database URL is built in config/atlas/atlas.hcl from the mysql_password
+    # secret, so the password is not written here.
+    command:
       - migrate
       - apply
-      - -u
-      - mysql://bucketeer:bucketeer@mysql:3306/bucketeer
+      - --config
+      - file:///etc/atlas/atlas.hcl
+      - --env
+      - docker-compose
       - --baseline
       - "20240626022133"
+    secrets:
+      - mysql_password
+    volumes:
+      - ./config/atlas/atlas.hcl:/etc/atlas/atlas.hcl:ro
     networks:
       - bucketeer
     restart: "no"

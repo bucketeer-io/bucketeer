@@ -43,7 +43,8 @@ What it does, so failures are diagnosable: uninstalls the existing `bucketeer`
 helm release → regenerates cert/token/oauth secrets → builds all Go binaries →
 builds docker images with `TAG=localenv` → loads them into minikube → helm
 install/upgrade `localenv` (MySQL, Redis, Pub/Sub emulator, optionally
-Postgres/BigQuery emulator) → helm install `bucketeer` with
+Postgres/BigQuery emulator) → creates the `bucketeer-migration-db-url` Secret
+from the local database password → helm install `bucketeer` with
 `manifests/bucketeer/values.dev.yaml`.
 
 This takes many minutes. Run it with a 600000 timeout or `run_in_background`
@@ -68,6 +69,12 @@ changes instead:
 ```bash
 $DEVC 'helm upgrade bucketeer manifests/bucketeer/ --kube-context minikube --values manifests/bucketeer/values.dev.yaml'
 ```
+
+The migration hook reads its database URL from the `bucketeer-migration-db-url`
+Secret, which `make deploy-bucketeer` creates. On a cluster that does not have
+it yet the hook cannot start and the upgrade hangs until it times out; create it
+with `$DEVC 'make -C tools/dev migration-db-url-secret'` (add
+`OPERATIONAL_DB_TYPE=postgres` when the operational database is PostgreSQL).
 
 Always go through `$DEVC` and always name the context: a bare `helm`/`kubectl`
 runs against whatever context is currently active, which on the host is often a

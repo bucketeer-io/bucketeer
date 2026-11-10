@@ -114,19 +114,23 @@ migration:
   backoffLimit: 0
   ttlSecondsAfterFinished: 86400
 
-  # mysql
   # URL to access the DB to do the migration
   # E.g. mysql://user:password@host:port/db_name
-  dbUrl: mysql://root:bucketeer@localenv-mysql.default.svc:3306/bucketeer
+  # The URL holds the database password, so it is not written in this file.
+  # The migration job reads it from the Secret below, which
+  # `make deploy-bucketeer` creates from the password of the local database
+  # (`make -C tools/dev migration-db-url-secret`).
+  existingSecret: bucketeer-migration-db-url
 
+  # mysql
   # The migration baseline
   # First revision
   dbBaseline: "20240626022133"
   # postgres
-  # Uncomment the following lines to use PostgreSQL instead of MySQL, and set migration.image.repository
+  # Uncomment the following line to use PostgreSQL instead of MySQL, and set migration.image.repository
   # to ghcr.io/bucketeer-io/bucketeer-migration-postgres (image built from migration/Dockerfile.postgres).
+  # The Secret above follows global.operationalDatabase.type, so the URL needs no change here.
   # URL format: postgres://user:password@host:port/db_name?sslmode=disable
-  # dbUrl: postgres://bucketeer:bucketeer@localenv-postgresql-headless.default.svc.cluster.local:5432/bucketeer?sslmode=disable
   # dbBaseline: "20260226174000"
 
 web:

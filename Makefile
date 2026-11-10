@@ -836,6 +836,10 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 		echo "Ensuring PostgreSQL event tables exist..."; \
 		make -C ./ create-postgres-event-tables-minikube; \
 	fi
+	# The migration job reads its database URL from this Secret
+	# (migration.existingSecret in values.dev.yaml). It is built from the
+	# localenv database Secret, so it has to run after localenv is installed.
+	make -C tools/dev migration-db-url-secret OPERATIONAL_DB_TYPE=$(if $(filter postgres,$(ODB_TYPE)),postgres,mysql)
 	@echo "Installing Bucketeer services..."
 	helm install bucketeer manifests/bucketeer/ --values manifests/bucketeer/values.dev.yaml
 

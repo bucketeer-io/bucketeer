@@ -91,6 +91,7 @@ The setup uses Docker Compose secrets to securely manage MySQL passwords instead
 
 - **Root Password**: Stored in `./secrets/mysql_root_password.txt`
 - **User Password**: Stored in `./secrets/mysql_password.txt`
+- **Migration**: The migration service reads the same `mysql_password` secret and builds its database URL from it in `./config/atlas/atlas.hcl`, so the URL is not written in `compose.yml`
 - **Automatic Setup**: The `make docker-compose-setup` command automatically creates these secret files
 - **File Permissions**: Secret files are created with `600` permissions (read/write for owner only)
 - **Git Ignored**: The `secrets/` directory is automatically excluded from version control
@@ -435,6 +436,8 @@ docker-compose/
 │   ├── mysql_root_password.txt
 │   └── mysql_password.txt
 └── config/
+    ├── atlas/                # Migration (Atlas) configuration
+    │   └── atlas.hcl
     ├── nginx/                # Nginx configuration
     │   ├── nginx.conf
     │   └── bucketeer.conf
