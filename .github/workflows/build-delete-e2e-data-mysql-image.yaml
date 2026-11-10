@@ -17,6 +17,12 @@ permissions:
   contents: read
   packages: write
 
+# One run per package. A second run waits, so two checks cannot both
+# publish the same tag.
+concurrency:
+  group: bucketeer-delete-e2e-data-mysql
+  cancel-in-progress: false
+
 env:
   IMAGE_NAME: ghcr.io/bucketeer-io/bucketeer-delete-e2e-data-mysql
 
