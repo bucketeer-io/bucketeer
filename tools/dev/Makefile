@@ -70,13 +70,19 @@ service-cert-secret: ensure-tls-certificate
 # mount the Secret directly and verify it with sslmode=verify-full, so a server
 # still serving an old pair would fail every new connection. The check reads the
 # certificate the pod actually serves, so it does not depend on whether this run
-# changed the Secret: a restart that failed earlier is retried, and a pod that is
-# not running yet is left alone because it copies the new Secret when it starts.
+# changed the Secret: a restart that failed earlier is retried. It only acts on
+# an existing StatefulSet whose pod is running and not terminating. Everything
+# else is left alone because the next pod copies the new Secret when it starts:
+# a fresh cluster, start-minikube having just deleted the StatefulSet (its pod
+# still reports Running while it shuts down), a pod that is still starting. An
+# exec that fails counts as unknown and restarts, so the pod is never silently
+# left on an old pair.
 postgres-cert-secret: ensure-postgres-tls-certificate
 	kubectl config use-context minikube
 	kubectl delete secret bucketeer-postgres-cert --namespace $(NAMESPACE) --ignore-not-found
 	kubectl create secret tls bucketeer-postgres-cert --key ${CURDIR}/cert/postgres-tls.key --cert ${CURDIR}/cert/postgres-tls.crt --namespace $(NAMESPACE)
-	@if [ "$$(kubectl get pod localenv-postgresql-0 --namespace $(NAMESPACE) -o jsonpath='{.status.phase}' 2>/dev/null)" = "Running" ] && \
+	@if kubectl get statefulset localenv-postgresql --namespace $(NAMESPACE) >/dev/null 2>&1 && \
+		[ "$$(kubectl get pod localenv-postgresql-0 --namespace $(NAMESPACE) -o jsonpath='{.status.phase}/{.metadata.deletionTimestamp}' 2>/dev/null)" = "Running/" ] && \
 		! kubectl exec localenv-postgresql-0 --namespace $(NAMESPACE) -c postgresql -- cat /usr/local/certs/postgres/tls.crt 2>/dev/null | cmp -s - $(CURDIR)/cert/postgres-tls.crt; then \
 		echo "PostgreSQL is serving an old certificate; restarting it so verify-full clients can connect..."; \
 		kubectl rollout restart statefulset/localenv-postgresql --namespace $(NAMESPACE) && \
