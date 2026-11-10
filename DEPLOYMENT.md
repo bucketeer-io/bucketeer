@@ -58,10 +58,10 @@ Docker Compose provides the easiest way to deploy Bucketeer for small to medium-
    ```
 
 4. **Access the application**
-   - **Admin Dashboard**: https://web-gateway.bucketeer.io
-   - **API Gateway**: http://localhost (development) or https://api-gateway.bucketeer.io (production)
+   - **Admin Dashboard**: https://web-gateway.bucketeer.test
+   - **API Gateway**: http://localhost or https://api-gateway.bucketeer.test (HTTPS)
    - **Health Checks**:
-     - Web: https://web-gateway.bucketeer.io/health
+     - Web: https://web-gateway.bucketeer.test/health
      - API: http://localhost/health
 
 ### Configuration
@@ -118,12 +118,32 @@ For production deployments, follow these additional steps:
 
 #### 1. Security Configuration
 
-**Set up proper SSL certificates:**
-```bash
-# Replace development certificates with real ones
-cp your-ssl-cert.crt tools/dev/cert/tls.crt
-cp your-ssl-key.key tools/dev/cert/tls.key
-```
+**Use your own TLS certificate:**
+`make docker-compose-up` (and `make deploy-bucketeer` for the minikube/localenv
+cluster) generate self-signed certificates for the local services
+(`tools/dev/cert/tls.key` / `tls.crt`) and the local PostgreSQL
+(`tools/dev/cert/postgres-tls.key` / `postgres-tls.crt`) on first run. These are
+**gitignored** local development material. Do not copy a production certificate or
+key into `tools/dev/cert/`: nothing in that directory must ever be committed, and
+production certificates do not belong in the repository checkout.
+
+For a real deployment, keep the certificate and key outside the repository:
+- Kubernetes: store them in a TLS Secret and point the chart at it instead of the
+  development secrets that `make deploy-bucketeer` creates from `tools/dev/cert`:
+  ```bash
+  kubectl create secret tls bucketeer-service-cert \
+    --cert=your-ssl-cert.crt --key=your-ssl-key.key -n bucketeer
+  ```
+  Set `tls.service.secret` for each service (`web`, `api`, `batch-server` and
+  `subscriber` in the umbrella chart) and the ingress `tls.bucketeerJP.secrets`
+  for `web` and `api` to that Secret.
+- Docker Compose: store them in a directory outside the repository that only the
+  Docker user can read (`chmod 600` on the key) and point every service
+  certificate mount in `docker-compose/compose.yml` at them: the
+  `../tools/dev/cert` directory mount of `nginx` (it reads `tls.crt` / `tls.key`
+  from `/etc/nginx/certs`), the `tls.crt` / `tls.key` file mounts of `web`, `api`,
+  `batch` and `subscriber`, and the `tls.crt` mount of `batch-cron`, which trusts
+  it when calling the batch service.
 
 **Use a dedicated OAuth signing key and service token:**
 For local development, `make docker-compose-up` (and `make deploy-bucketeer` for the
@@ -368,7 +388,7 @@ For E2E testing and SDK integration:
 
 ```bash
 # Create client API key
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+WEB_GATEWAY_URL=web-gateway.bucketeer.test \
 WEB_GATEWAY_PORT=443 \
 WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
@@ -379,7 +399,7 @@ ENVIRONMENT_ID=production \
 make create-api-key
 
 # Create server API key
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+WEB_GATEWAY_URL=web-gateway.bucketeer.test \
 WEB_GATEWAY_PORT=443 \
 WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
@@ -526,7 +546,12 @@ Add monitoring stack to your deployment:
    ```bash
    # Regenerate development certificates
    make -C tools/dev generate-tls-certificate
+   make -C tools/dev generate-postgres-tls-certificate
    make -C tools/dev generate-oauth
+
+   # Running containers keep the certificates they were created with
+   # (the files are bind-mounted individually), so recreate the stack
+   make docker-compose-down && make docker-compose-up
    ```
 
 3. **Service Health Issues**

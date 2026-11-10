@@ -2,13 +2,17 @@ NAMESPACE := default
 
 # For minikube image caching documentation, see: MINIKUBE_CACHING.md
 
+# Self-signed certificate for the local services (Docker Compose and minikube).
+# Local development material only: the pair is gitignored and generated on
+# demand by ensure-tls-certificate, never committed.
 generate-tls-certificate:
 	mkdir -p $(CURDIR)/cert
 	openssl req -x509 -nodes -days 36500 -newkey rsa:2048 \
 		-keyout $(CURDIR)/cert/tls.key \
 		-out $(CURDIR)/cert/tls.crt \
-		-subj "/CN=*.bucketeer.io" \
+		-subj "/CN=localhost" \
 		-config service.config
+	chmod 600 $(CURDIR)/cert/tls.key
 
 # Serves TLS from the local PostgreSQL. Self-signed and its own CA, so clients
 # can verify it with sslmode=verify-full.
@@ -21,20 +25,69 @@ generate-postgres-tls-certificate:
 		-config postgres.config
 	chmod 600 $(CURDIR)/cert/postgres-tls.key
 
+# ensure-tls-certificate / ensure-postgres-tls-certificate generate the local
+# development certificate pairs only when they are missing, so a fresh clone
+# works without manual steps. The *-cert-secret targets below depend on them
+# and the root Makefile runs them from docker-compose-setup and deploy-bucketeer
+# (ensure-dev-certs). To rotate a pair, delete it and run the setup again.
+# Docker Compose bind-mounts the files individually, so containers created
+# before a pair was (re)generated keep the old one until they are recreated;
+# the notice below says so.
+.PHONY: ensure-tls-certificate
+ensure-tls-certificate:
+	@if [ ! -f $(CURDIR)/cert/tls.key ] || [ ! -f $(CURDIR)/cert/tls.crt ]; then \
+		echo "Generating development service TLS certificate in $(CURDIR)/cert..."; \
+		$(MAKE) generate-tls-certificate || \
+		{ echo "Failed to generate service TLS certificate" >&2; rm -f $(CURDIR)/cert/tls.key $(CURDIR)/cert/tls.crt; exit 1; }; \
+		echo "If a Docker Compose stack is already running, recreate it to pick up the new certificate: make docker-compose-down && make docker-compose-up"; \
+	else \
+		echo "Development service TLS certificate already exists"; \
+	fi
+
+.PHONY: ensure-postgres-tls-certificate
+ensure-postgres-tls-certificate:
+	@if [ ! -f $(CURDIR)/cert/postgres-tls.key ] || [ ! -f $(CURDIR)/cert/postgres-tls.crt ]; then \
+		echo "Generating development PostgreSQL TLS certificate in $(CURDIR)/cert..."; \
+		$(MAKE) generate-postgres-tls-certificate || \
+		{ echo "Failed to generate PostgreSQL TLS certificate" >&2; rm -f $(CURDIR)/cert/postgres-tls.key $(CURDIR)/cert/postgres-tls.crt; exit 1; }; \
+		echo "If a Docker Compose stack is already running, recreate it to pick up the new certificate: make docker-compose-down && make docker-compose-up"; \
+	else \
+		echo "Development PostgreSQL TLS certificate already exists"; \
+	fi
+
 generate-oauth:
 	mkdir -p ${CURDIR}/$*
 	openssl genrsa -out ${CURDIR}/cert/oauth-private.pem 4096
 	openssl rsa -in ${CURDIR}/cert/oauth-private.pem -pubout -out ${CURDIR}/cert/oauth-public.pem
 
-service-cert-secret:
+service-cert-secret: ensure-tls-certificate
 	kubectl config use-context minikube
 	kubectl delete secret bucketeer-service-cert --namespace $(NAMESPACE) --ignore-not-found
 	kubectl create secret tls bucketeer-service-cert --key ${CURDIR}/cert/tls.key --cert ${CURDIR}/cert/tls.crt --namespace $(NAMESPACE)
 
-postgres-cert-secret:
+# Recreates the Secret, then reconciles a running localenv PostgreSQL with it: the
+# StatefulSet copies the Secret into an emptyDir at startup, while the clients
+# mount the Secret directly and verify it with sslmode=verify-full, so a server
+# still serving an old pair would fail every new connection. The check reads the
+# certificate the pod actually serves, so it does not depend on whether this run
+# changed the Secret: a restart that failed earlier is retried. It only acts on
+# an existing StatefulSet whose pod is running and not terminating. Everything
+# else is left alone because the next pod copies the new Secret when it starts:
+# a fresh cluster, start-minikube having just deleted the StatefulSet (its pod
+# still reports Running while it shuts down), a pod that is still starting. An
+# exec that fails counts as unknown and restarts, so the pod is never silently
+# left on an old pair.
+postgres-cert-secret: ensure-postgres-tls-certificate
 	kubectl config use-context minikube
 	kubectl delete secret bucketeer-postgres-cert --namespace $(NAMESPACE) --ignore-not-found
 	kubectl create secret tls bucketeer-postgres-cert --key ${CURDIR}/cert/postgres-tls.key --cert ${CURDIR}/cert/postgres-tls.crt --namespace $(NAMESPACE)
+	@if kubectl get statefulset localenv-postgresql --namespace $(NAMESPACE) >/dev/null 2>&1 && \
+		[ "$$(kubectl get pod localenv-postgresql-0 --namespace $(NAMESPACE) -o jsonpath='{.status.phase}/{.metadata.deletionTimestamp}' 2>/dev/null)" = "Running/" ] && \
+		! kubectl exec localenv-postgresql-0 --namespace $(NAMESPACE) -c postgresql -- cat /usr/local/certs/postgres/tls.crt 2>/dev/null | cmp -s - $(CURDIR)/cert/postgres-tls.crt; then \
+		echo "PostgreSQL is serving an old certificate; restarting it so verify-full clients can connect..."; \
+		kubectl rollout restart statefulset/localenv-postgresql --namespace $(NAMESPACE) && \
+		kubectl rollout status statefulset/localenv-postgresql --namespace $(NAMESPACE) --timeout=5m; \
+	fi
 
 service-token-secret:
 	kubectl config use-context minikube

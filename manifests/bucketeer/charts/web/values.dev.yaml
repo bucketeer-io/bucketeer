@@ -64,4 +64,4 @@ oauth:
     redirectUrls:
 
 webhook:
-  baseURL: https://web-gateway.bucketeer.io
+  baseURL: https://web-gateway.bucketeer.test

@@ -72,7 +72,7 @@ and let them choose, because host tool versions (especially protoc) may differ.
   directly (the make target restores the cluster config and localenv services).
   Note: `make start-minikube` intentionally **exits 1 if minikube is already
   running** — check `minikube status` first instead of treating that as failure.
-- `web-gateway.bucketeer.io` / `api-gateway.bucketeer.io` resolve via the
+- `web-gateway.bucketeer.test` / `api-gateway.bucketeer.test` resolve via the
   container's own `/etc/hosts` (pointed at `minikube ip`). Health checks with
   curl against those hosts must run *inside* the container, not on the host.
 - If go-tools are missing or permissions look broken, the fix is the setup

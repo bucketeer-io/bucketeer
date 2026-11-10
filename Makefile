@@ -438,6 +438,16 @@ ensure-encryption-key:
 		echo "Development encryption key already exists"; \
 	fi
 
+# ensure-dev-certs generates the self-signed TLS pairs for the local services
+# (tls.key / tls.crt) and the local PostgreSQL (postgres-tls.key /
+# postgres-tls.crt) in tools/dev/cert when they are missing. Like the OAuth key,
+# they are gitignored local development material created on demand by
+# docker-compose-setup and deploy-bucketeer; the tools/dev *-cert-secret targets
+# run the same checks so make start-minikube works on a fresh clone too.
+.PHONY: ensure-dev-certs
+ensure-dev-certs:
+	@$(MAKE) -C tools/dev ensure-tls-certificate ensure-postgres-tls-certificate
+
 .PHONY: create-api-key
 create-api-key:
 	go run ./hack/create-api-key create \
@@ -603,11 +613,13 @@ start-minikube:
 	make -C ./ modify-hosts
 	make -C ./ setup-localenv
 
-# modify hosts file to access api-gateway and web-gateway
+# modify hosts file to access api-gateway and web-gateway. The local gateways
+# use the reserved .test TLD (RFC 2606) so local development never names the
+# production domain.
 modify-hosts:
 	$(eval MINIKUBE_IP := $(shell minikube ip))
-	echo "$(MINIKUBE_IP)   web-gateway.bucketeer.io" | sudo tee -a /etc/hosts
-	echo "$(MINIKUBE_IP)   api-gateway.bucketeer.io" | sudo tee -a /etc/hosts
+	echo "$(MINIKUBE_IP)   web-gateway.bucketeer.test" | sudo tee -a /etc/hosts
+	echo "$(MINIKUBE_IP)   api-gateway.bucketeer.test" | sudo tee -a /etc/hosts
 
 # enable vault transit secret engine
 enable-vault-transit:
@@ -791,6 +803,7 @@ setup-aichat-secret:
 deploy-bucketeer: delete-bucketeer-from-minikube
 	make ensure-service-token
 	make ensure-encryption-key
+	make ensure-dev-certs
 	make -C tools/dev service-cert-secret
 	make -C tools/dev service-token-secret
 	make -C tools/dev oauth-key-secret
@@ -851,7 +864,7 @@ define detect_docker_compose
 endef
 
 .PHONY: docker-compose-setup
-docker-compose-setup: ensure-service-token ensure-encryption-key
+docker-compose-setup: ensure-service-token ensure-encryption-key ensure-dev-certs
 	$(call detect_docker_compose)
 	@echo "Setting up Docker Compose environment..."
 	@if [ ! -d "docker-compose/init-db" ]; then \
@@ -873,12 +886,6 @@ docker-compose-setup: ensure-service-token ensure-encryption-key
 		echo "PostgresQL secrets created"; \
 	else \
 		echo "docker-compose/secrets directory already exists"; \
-	fi
-	@if [ ! -f "$(CERT_DIR)/postgres-tls.key" ]; then \
-		echo "Generating PostgreSQL TLS certificate..."; \
-		make -C tools/dev generate-postgres-tls-certificate; \
-	else \
-		echo "PostgreSQL TLS certificate already exists"; \
 	fi
 	@echo "Docker Compose setup complete"
 

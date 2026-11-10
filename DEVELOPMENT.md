@@ -30,7 +30,7 @@ If you edit code on the host (or drive the repo with tools running on the host),
 
 - **kubectl / helm**: the host's kubectl context may point at a completely different cluster (e.g. a real remote cluster) instead of the minikube instance inside the container. Always run cluster commands inside the container.
 - **Code generation**: generated `.pb.go` files record the protoc version and must be produced with exactly protoc v23.4, which the dev container guarantees. A different host protoc rewrites the header of every generated file and makes the diff unreviewable.
-- **Gateway health checks**: `web-gateway.bucketeer.io` / `api-gateway.bucketeer.io` are resolved by the *container's* `/etc/hosts` (pointing at `minikube ip`), so `curl` checks against those hosts only work inside the container.
+- **Gateway health checks**: `web-gateway.bucketeer.test` / `api-gateway.bucketeer.test` are resolved by the *container's* `/etc/hosts` (pointing at `minikube ip`), so `curl` checks against those hosts only work inside the container.
 
 For Claude Code users, the project ships skills that automate this: `.claude/skills/devcontainer-run` detects the running dev container (local or Codespace) and runs commands inside it — `bash .claude/skills/devcontainer-run/scripts/exec.sh status` shows where it is and whether it's healthy. `devcontainer-generate` and `devcontainer-deploy` build on it for codegen and minikube deploys.
 
@@ -71,8 +71,12 @@ make start-minikube
 
 It will add 2 hosts to `/etc/hosts` that point to the minikube IP address:
 
-* `api-gateway.bucketeer.io` for API Gateway Service
-* `web-gateway.bucketeer.io` for Web Gateway Service
+* `api-gateway.bucketeer.test` for API Gateway Service
+* `web-gateway.bucketeer.test` for Web Gateway Service
+
+If minikube was already running when you pulled a change to these host names,
+run `make modify-hosts` once to add the new entries (only `make start-minikube`
+adds them, and it does not run on an already running cluster).
 
 Additionally, this command will:
 
@@ -121,8 +125,8 @@ All Docker Compose related files are organized in the `docker-compose/` director
 - Git repository cloned
 - `/etc/hosts` file updated with the following entries:
   ```
-  127.0.0.1 web-gateway.bucketeer.io
-  127.0.0.1 api-gateway.bucketeer.io
+  127.0.0.1 web-gateway.bucketeer.test
+  127.0.0.1 api-gateway.bucketeer.test
   ```
 
 ### Quick Start with Docker Compose
@@ -177,8 +181,8 @@ The Docker Compose setup includes:
 - **PostgresQL**: Port 5432 (datawarehouse option)
 - **Redis**: Port 6379 (Cache and pub/sub)
 - **Nginx**: Ports 80 (HTTP) & 443 (HTTPS) for routing to:
-  - **Web Service**: Admin UI and internal APIs via `web-gateway.bucketeer.io`
-  - **API Gateway**: SDK endpoints via `api-gateway.bucketeer.io`
+  - **Web Service**: Admin UI and internal APIs via `web-gateway.bucketeer.test`
+  - **API Gateway**: SDK endpoints via `api-gateway.bucketeer.test`
 - **Batch Service**: Background processing (internal service)
 - **Subscriber Service**: Event processing (internal service)
 
@@ -269,7 +273,7 @@ or against a cluster where the init SQL never ran).
 ### Create API keys
 
 ```shell
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+WEB_GATEWAY_URL=web-gateway.bucketeer.test \
 WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
 API_KEY_NAME="e2e-test-$(date +%s)-client" \
@@ -280,7 +284,7 @@ make create-api-key
 ```
 
 ```shell
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+WEB_GATEWAY_URL=web-gateway.bucketeer.test \
 WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
 API_KEY_NAME="e2e-test-$(date +%s)-server" \
@@ -297,8 +301,8 @@ The tests authenticate with the four access tokens written by
 longer take a service token. Point the run at those token files:
 
 ```shell
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
-GATEWAY_URL=api-gateway.bucketeer.io \
+WEB_GATEWAY_URL=web-gateway.bucketeer.test \
+GATEWAY_URL=api-gateway.bucketeer.test \
 WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_client \
@@ -358,7 +362,7 @@ for details and the prebuilt Docker image option.
 ### Create API Keys for Docker Compose
 
 ```shell
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+WEB_GATEWAY_URL=web-gateway.bucketeer.test \
 WEB_GATEWAY_PORT=443 \
 WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
 GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
@@ -371,7 +375,7 @@ make create-api-key
 ```
 
 ```shell
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+WEB_GATEWAY_URL=web-gateway.bucketeer.test \
 WEB_GATEWAY_PORT=443 \
 WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
@@ -389,8 +393,8 @@ The tests authenticate with the four access tokens written by
 longer take a service token. Point the run at those token files:
 
 ```shell
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
-GATEWAY_URL=api-gateway.bucketeer.io \
+WEB_GATEWAY_URL=web-gateway.bucketeer.test \
+GATEWAY_URL=api-gateway.bucketeer.test \
 WEB_GATEWAY_PORT=443 \
 GATEWAY_PORT=443 \
 WEB_GATEWAY_CERT_PATH=$PWD/tools/dev/cert/tls.crt \

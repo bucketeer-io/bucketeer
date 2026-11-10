@@ -230,11 +230,11 @@ This will start all services including MySQL, Redis, and the Bucketeer platform.
 
 **Important:** Add the following to your `/etc/hosts` file to access the dashboard:
 ```
-127.0.0.1 web-gateway.bucketeer.io
-127.0.0.1 api-gateway.bucketeer.io
+127.0.0.1 web-gateway.bucketeer.test
+127.0.0.1 api-gateway.bucketeer.test
 ```
 
-Then access the admin dashboard at `https://web-gateway.bucketeer.io`.
+Then access the admin dashboard at `https://web-gateway.bucketeer.test`.
 
 For detailed deployment instructions, configuration options, and production setup, see [Docker Compose Deployment](DEPLOYMENT.md#docker-compose-deployment).
 
