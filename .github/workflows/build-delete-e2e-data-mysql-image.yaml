@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'hack/delete-e2e-data-mysql/**'
-  # Builds on pull requests so the workflow can be verified before merge.
-  # PR runs publish a pr-<number> tag and do not overwrite the Makefile tag.
-  pull_request:
+      # Temporary: exercise the same token a main push uses, without
+      # overwriting the Makefile tag. Removed after the run succeeds.
+      - ci/build-delete-data-images
     paths:
       - 'hack/delete-e2e-data-mysql/**'
       - '.github/workflows/build-delete-e2e-data-mysql-image.yaml'
@@ -37,11 +35,11 @@ jobs:
         id: tag
         run: |
           # Use input tag if provided, otherwise extract from the Makefile.
-          # Pull requests publish a distinct tag so they cannot overwrite a release.
+          # Pushes that are not main publish ci-test so a release tag is not overwritten.
           if [ -n "${{ github.event.inputs.tag }}" ]; then
             TAG="${{ github.event.inputs.tag }}"
-          elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            TAG="pr-${{ github.event.pull_request.number }}"
+          elif [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            TAG="ci-test"
           else
             TAG=$(grep -E '^TAG=' hack/delete-e2e-data-mysql/Makefile | sed 's/TAG=//')
           fi
