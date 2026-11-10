@@ -1,1 +1,1 @@
-DELETE FROM segment WHERE id = $1
+DELETE FROM segment WHERE id = $1 AND environment_id = $2

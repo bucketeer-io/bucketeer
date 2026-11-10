@@ -330,8 +330,8 @@ func (s *segmentStorage) ListSegments(
 	return segments, nextOffset, totalCount, featureIDsMap, nil
 }
 
-func (s *segmentStorage) DeleteSegment(ctx context.Context, id string) error {
-	result, err := s.qe.ExecContext(ctx, deleteSegmentSQLQuery, id)
+func (s *segmentStorage) DeleteSegment(ctx context.Context, id, environmentId string) error {
+	result, err := s.qe.ExecContext(ctx, deleteSegmentSQLQuery, id, environmentId)
 	if err != nil {
 		return err
 	}

@@ -156,7 +156,7 @@ func (e *scheduledFlagChangeExecutor) executeOne(
 	schedule *featureproto.ScheduledFlagChange,
 ) error {
 	// Acquire lock to prevent concurrent execution
-	locked, err := e.sfcStorage.TryLock(ctx, schedule.Id, executorLockID)
+	locked, err := e.sfcStorage.TryLock(ctx, schedule.Id, schedule.EnvironmentId, executorLockID)
 	if err != nil {
 		return fmt.Errorf("failed to acquire lock for schedule %s: %w", schedule.Id, err)
 	}
@@ -176,7 +176,7 @@ func (e *scheduledFlagChangeExecutor) executeOne(
 		)
 		defer unlockCancel()
 		if unlockErr := e.sfcStorage.Unlock(
-			unlockCtx, schedule.Id, executorLockID,
+			unlockCtx, schedule.Id, schedule.EnvironmentId, executorLockID,
 		); unlockErr != nil {
 			e.logger.Error("Failed to release lock",
 				zap.String("id", schedule.Id),

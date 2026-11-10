@@ -85,7 +85,7 @@ type ScheduledFlagChangeStorage interface {
 	// ListDueScheduledFlagChanges lists scheduled flag changes that are due for execution
 	ListDueScheduledFlagChanges(ctx context.Context, now int64, limit int) ([]*proto.ScheduledFlagChange, error)
 	// TryLock attempts to acquire a lock on a scheduled flag change for execution
-	TryLock(ctx context.Context, id, lockedBy string) (bool, error)
+	TryLock(ctx context.Context, id, environmentID, lockedBy string) (bool, error)
 	// Unlock releases the lock on a scheduled flag change (only if locked by the same executor)
-	Unlock(ctx context.Context, id, lockedBy string) error
+	Unlock(ctx context.Context, id, environmentID, lockedBy string) error
 }

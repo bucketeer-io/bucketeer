@@ -92,10 +92,10 @@ func TestExecuteDueSchedules_ExecutesPendingSchedule(t *testing.T) {
 
 	// Lock/Unlock
 	mockStorage.EXPECT().
-		TryLock(gomock.Any(), "sfc-1", executorLockID).
+		TryLock(gomock.Any(), "sfc-1", "env-1", executorLockID).
 		Return(true, nil)
 	mockStorage.EXPECT().
-		Unlock(gomock.Any(), "sfc-1", executorLockID).
+		Unlock(gomock.Any(), "sfc-1", "env-1", executorLockID).
 		Return(nil)
 
 	// Execute via feature client
@@ -144,10 +144,10 @@ func TestExecuteDueSchedules_FailedExecution(t *testing.T) {
 		Return([]*featureproto.ScheduledFlagChange{schedule}, nil)
 
 	mockStorage.EXPECT().
-		TryLock(gomock.Any(), "sfc-1", executorLockID).
+		TryLock(gomock.Any(), "sfc-1", "env-1", executorLockID).
 		Return(true, nil)
 	mockStorage.EXPECT().
-		Unlock(gomock.Any(), "sfc-1", executorLockID).
+		Unlock(gomock.Any(), "sfc-1", "env-1", executorLockID).
 		Return(nil)
 
 	// Execute fails
@@ -190,15 +190,15 @@ func TestExecuteOne_UnlockUsesDetachedContext(t *testing.T) {
 	cancel()
 
 	mockStorage.EXPECT().
-		TryLock(gomock.Any(), "sfc-1", executorLockID).
+		TryLock(gomock.Any(), "sfc-1", "env-1", executorLockID).
 		Return(true, nil)
 
 	// Verify Unlock receives a non-cancelled context.
 	// If the code used the parent ctx, Err() would be non-nil.
 	mockStorage.EXPECT().
-		Unlock(gomock.Any(), "sfc-1", executorLockID).
+		Unlock(gomock.Any(), "sfc-1", "env-1", executorLockID).
 		DoAndReturn(func(
-			ctx context.Context, _ string, _ string,
+			ctx context.Context, _ string, _ string, _ string,
 		) error {
 			assert.NoError(t, ctx.Err(),
 				"Unlock should receive a live context, "+
@@ -240,7 +240,7 @@ func TestExecuteOne_LockAlreadyHeld(t *testing.T) {
 
 	// TryLock returns false (already locked)
 	mockStorage.EXPECT().
-		TryLock(gomock.Any(), "sfc-1", executorLockID).
+		TryLock(gomock.Any(), "sfc-1", "env-1", executorLockID).
 		Return(false, nil)
 
 	err := executor.executeOne(context.Background(), schedule)
@@ -363,10 +363,10 @@ func TestExecuteDueSchedules_MultipleSchedules(t *testing.T) {
 		Return(schedules, nil)
 
 	// Both get locked and unlocked
-	mockStorage.EXPECT().TryLock(gomock.Any(), "sfc-1", executorLockID).Return(true, nil)
-	mockStorage.EXPECT().Unlock(gomock.Any(), "sfc-1", executorLockID).Return(nil)
-	mockStorage.EXPECT().TryLock(gomock.Any(), "sfc-2", executorLockID).Return(true, nil)
-	mockStorage.EXPECT().Unlock(gomock.Any(), "sfc-2", executorLockID).Return(nil)
+	mockStorage.EXPECT().TryLock(gomock.Any(), "sfc-1", "env-1", executorLockID).Return(true, nil)
+	mockStorage.EXPECT().Unlock(gomock.Any(), "sfc-1", "env-1", executorLockID).Return(nil)
+	mockStorage.EXPECT().TryLock(gomock.Any(), "sfc-2", "env-1", executorLockID).Return(true, nil)
+	mockStorage.EXPECT().Unlock(gomock.Any(), "sfc-2", "env-1", executorLockID).Return(nil)
 
 	// First succeeds, second fails
 	mockClient.EXPECT().

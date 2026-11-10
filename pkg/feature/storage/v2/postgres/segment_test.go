@@ -311,7 +311,7 @@ func TestDeleteSegment(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.DeleteSegment(context.Background(), "segment-id")
+			err := storage.DeleteSegment(context.Background(), "segment-id", "environment-id")
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

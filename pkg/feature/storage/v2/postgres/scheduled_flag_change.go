@@ -387,7 +387,7 @@ func (s *scheduledFlagChangeStorage) ListDueScheduledFlagChanges(
 
 func (s *scheduledFlagChangeStorage) TryLock(
 	ctx context.Context,
-	id, lockedBy string,
+	id, environmentID, lockedBy string,
 ) (bool, error) {
 	now := time.Now().Unix()
 	lockExpiredAt := now - int64(v2fs.LockExpiration.Seconds())
@@ -398,6 +398,7 @@ func (s *scheduledFlagChangeStorage) TryLock(
 		now,
 		lockedBy,
 		id,
+		environmentID,
 		lockExpiredAt,
 	)
 	if err != nil {
@@ -413,12 +414,13 @@ func (s *scheduledFlagChangeStorage) TryLock(
 
 func (s *scheduledFlagChangeStorage) Unlock(
 	ctx context.Context,
-	id, lockedBy string,
+	id, environmentID, lockedBy string,
 ) error {
 	_, err := s.qe.ExecContext(
 		ctx,
 		unlockScheduledFlagChangeSQL,
 		id,
+		environmentID,
 		lockedBy,
 	)
 	return err
