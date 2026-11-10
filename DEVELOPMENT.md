@@ -74,6 +74,10 @@ It will add 2 hosts to `/etc/hosts` that point to the minikube IP address:
 * `api-gateway.bucketeer.test` for API Gateway Service
 * `web-gateway.bucketeer.test` for Web Gateway Service
 
+`make deploy-bucketeer` runs the same `make modify-hosts` step, so an already running
+cluster picks up a changed minikube IP or renamed gateway hosts on the next deploy;
+entries for the former `*.bucketeer.io` names are replaced at the same time.
+
 Additionally, this command will:
 
 - Create tables for MySQL

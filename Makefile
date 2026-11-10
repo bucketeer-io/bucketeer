@@ -613,13 +613,31 @@ start-minikube:
 	make -C ./ modify-hosts
 	make -C ./ setup-localenv
 
-# modify hosts file to access api-gateway and web-gateway. The local gateways
-# use the reserved .test TLD (RFC 2606) so local development never names the
-# production domain.
+# modify-hosts points the local gateway names at the minikube node so the
+# browser and the e2e tools can reach the ingresses. The local gateways use the
+# reserved .test TLD (RFC 2606) so local development never names the production
+# domain. Idempotent, so deploy-bucketeer runs it on every deploy and an
+# existing dev container picks up renamed hosts or a new minikube IP without a
+# restart: when the entries already hold the current IP nothing happens (and
+# sudo is not invoked); otherwise the lines naming a local gateway, including
+# the former *.bucketeer.io names that nothing local answers to anymore, are
+# replaced in one write. The file content is computed first and written back
+# through tee because /etc/hosts is a bind mount inside the dev container, which
+# sed -i cannot replace.
+.PHONY: modify-hosts
 modify-hosts:
-	$(eval MINIKUBE_IP := $(shell minikube ip))
-	echo "$(MINIKUBE_IP)   web-gateway.bucketeer.test" | sudo tee -a /etc/hosts
-	echo "$(MINIKUBE_IP)   api-gateway.bucketeer.test" | sudo tee -a /etc/hosts
+	@ip="$$(minikube ip)" && [ -n "$$ip" ] || { echo "minikube ip failed: is minikube running?" >&2; exit 1; }; \
+	managed='^[^#]*[[:space:]](web|api)-gateway\.bucketeer\.(test|io)([[:space:]]|$$)'; \
+	want="$$(printf '%s   web-gateway.bucketeer.test\n%s   api-gateway.bucketeer.test' "$$ip" "$$ip")"; \
+	have="$$(grep -E "$$managed" /etc/hosts || true)"; \
+	if [ "$$have" = "$$want" ]; then \
+		echo "/etc/hosts already maps the local gateways to $$ip"; \
+	else \
+		rest="$$(grep -vE "$$managed" /etc/hosts || true)"; \
+		if [ -n "$$have" ]; then echo "/etc/hosts: replacing local gateway entries:"; echo "$$have" | sed 's/^/  /'; fi; \
+		echo "/etc/hosts: mapping web-gateway.bucketeer.test and api-gateway.bucketeer.test to $$ip"; \
+		printf '%s\n%s\n' "$$rest" "$$want" | sudo tee /etc/hosts >/dev/null; \
+	fi
 
 # enable vault transit secret engine
 enable-vault-transit:
@@ -801,6 +819,7 @@ setup-aichat-secret:
 
 # Bucketeer deployment
 deploy-bucketeer: delete-bucketeer-from-minikube
+	make modify-hosts
 	make ensure-service-token
 	make ensure-encryption-key
 	make ensure-dev-certs
