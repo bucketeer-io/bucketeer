@@ -1671,9 +1671,7 @@ func TestIsStale(t *testing.T) {
 		{
 			desc: "false",
 			feature: &Feature{Feature: &ftproto.Feature{
-				LastUsedInfo: &ftproto.FeatureLastUsedInfo{
-					LastUsedAt: t1.Unix(),
-				},
+				LastUsedAt: t1.Unix(),
 			}},
 			input:    t2,
 			expected: false,
@@ -1681,9 +1679,7 @@ func TestIsStale(t *testing.T) {
 		{
 			desc: "true",
 			feature: &Feature{Feature: &ftproto.Feature{
-				LastUsedInfo: &ftproto.FeatureLastUsedInfo{
-					LastUsedAt: t1.Unix(),
-				},
+				LastUsedAt: t1.Unix(),
 			}},
 			input:    t3,
 			expected: true,

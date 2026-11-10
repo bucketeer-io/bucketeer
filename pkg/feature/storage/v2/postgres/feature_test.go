@@ -364,6 +364,7 @@ func TestGetFeatureByVersion(t *testing.T) {
 			expected: &domain.Feature{Feature: &proto.Feature{
 				Id:             "feature-id",
 				AutoOpsSummary: &proto.AutoOpsSummary{},
+				LastUsedAt:     100,
 				LastUsedInfo: &proto.FeatureLastUsedInfo{
 					FeatureId:  "feature-id",
 					LastUsedAt: 100,

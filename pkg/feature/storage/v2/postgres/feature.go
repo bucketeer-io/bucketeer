@@ -223,6 +223,7 @@ func (s *featureStorage) getFeature(
 		}
 		return nil, err
 	}
+	feature.LastUsedAt = lastUsedAt
 	feature.LastUsedInfo = newLastUsedInfo(feature.Id, lastUsedAt)
 	return &domain.Feature{Feature: &feature}, nil
 }
@@ -250,6 +251,7 @@ func (s *featureStorage) GetFeatureByVersion(
 		}
 		return nil, err
 	}
+	feature.LastUsedAt = lastUsedAt
 	feature.LastUsedInfo = newLastUsedInfo(feature.Id, lastUsedAt)
 	return &domain.Feature{Feature: &feature}, nil
 }
@@ -547,6 +549,7 @@ func (s *featureStorage) ListFeatures(
 		if err != nil {
 			return nil, 0, 0, err
 		}
+		feature.LastUsedAt = lastUsedAt
 		feature.LastUsedInfo = newLastUsedInfo(feature.Id, lastUsedAt)
 		features = append(features, &feature)
 	}
@@ -642,6 +645,7 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 		if err != nil {
 			return nil, 0, 0, err
 		}
+		feature.LastUsedAt = lastUsedAt
 		feature.LastUsedInfo = newLastUsedInfo(feature.Id, lastUsedAt)
 		features = append(features, &feature)
 	}

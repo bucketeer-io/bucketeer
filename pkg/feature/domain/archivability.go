@@ -33,7 +33,7 @@ const (
 	BlockingReasonNotUnusedLongEnough = "not_unused_long_enough"
 	// BlockingReasonHasCodeReferences indicates the feature has code references.
 	BlockingReasonHasCodeReferences = "has_code_references"
-	// BlockingReasonNeverUsed indicates the feature has never been used (no LastUsedInfo).
+	// BlockingReasonNeverUsed indicates the feature has never been used (last_used_at is 0).
 	BlockingReasonNeverUsed = "never_used"
 )
 
@@ -210,12 +210,12 @@ func evaluateSingleFeature(
 	}
 
 	// Check if feature has never been used
-	if f.LastUsedInfo == nil || f.LastUsedInfo.LastUsedAt == 0 {
+	if f.LastUsedAt == 0 {
 		result.IsArchivable = false
 		result.BlockingReasons = append(result.BlockingReasons, BlockingReasonNeverUsed)
 	} else {
 		// Calculate unused days
-		result.UnusedDays = CalculateUnusedDays(f.LastUsedInfo.LastUsedAt)
+		result.UnusedDays = CalculateUnusedDays(f.LastUsedAt)
 
 		// Check if not unused long enough
 		if result.UnusedDays < criteria.UnusedDaysThreshold {

@@ -7899,6 +7899,9 @@ definitions:
         $ref: '#/definitions/featureAutoOpsSummary'
       variationValueSchema:
         $ref: '#/definitions/featureVariationValueSchema'
+      lastUsedAt:
+        type: string
+        format: int64
   featureFeatureLastUsedInfo:
     type: object
     properties:

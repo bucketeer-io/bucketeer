@@ -1,6 +1,5 @@
 import { FEATURE_RECENT_TRAFFIC_DAYS } from 'constants/feature-flag';
 import dayjs from 'dayjs';
-import isNumber from 'lodash/isNumber';
 import { Feature, FeatureVariationType } from '@types';
 import {
   IconFlagJSON,
@@ -20,19 +19,17 @@ export const getDataTypeIcon = (type: FeatureVariationType) => {
 };
 
 export function getFlagStatus(feature: Feature): FeatureActivityStatus {
-  if (!feature.lastUsedInfo) {
+  const lastUsedAt = Number(feature.lastUsedAt);
+  if (!lastUsedAt) {
     return FeatureActivityStatus.NEVER_USED;
   }
 
-  const { lastUsedAt } = feature?.lastUsedInfo || {};
-
-  if (lastUsedAt && isNumber(+lastUsedAt)) {
-    const _lastUsedAt = new Date(+lastUsedAt * 1000);
-    const daysDifference = dayjs(_lastUsedAt).diff(dayjs(), 'day');
-
-    if (daysDifference > -FEATURE_RECENT_TRAFFIC_DAYS) {
-      return FeatureActivityStatus.RECEIVING_TRAFFIC;
-    }
+  const daysDifference = dayjs(new Date(lastUsedAt * 1000)).diff(
+    dayjs(),
+    'day'
+  );
+  if (daysDifference > -FEATURE_RECENT_TRAFFIC_DAYS) {
+    return FeatureActivityStatus.RECEIVING_TRAFFIC;
   }
   return FeatureActivityStatus.NO_RECENT_TRAFFIC;
 }
