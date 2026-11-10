@@ -39,6 +39,10 @@ authenticates to ghcr.io with the built-in `GITHUB_TOKEN` (no PAT needed).
 3. The workflow can also be run manually via `workflow_dispatch`, optionally
    overriding the tag.
 
+These packages were first published with a personal access token, so grant
+this repository Write under each package's **Manage Actions access** once.
+Until that is set, the workflow builds the image and ghcr.io denies the push.
+
 For a local build without pushing (e.g. to verify the Dockerfile), run
 `make deps docker-build`. The `deps` target is required: the Docker build
 context is this directory only, and `go.mod` replaces `bucketeer/v2` with

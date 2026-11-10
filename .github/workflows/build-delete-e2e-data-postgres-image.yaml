@@ -4,12 +4,8 @@ on:
   push:
     branches:
       - main
-      # Temporary: exercise the same token a main push uses, without
-      # overwriting the Makefile tag. Removed after the run succeeds.
-      - ci/build-delete-data-images
     paths:
       - 'hack/delete-e2e-data-postgres/**'
-      - '.github/workflows/build-delete-e2e-data-postgres-image.yaml'
   workflow_dispatch:
     inputs:
       tag:
@@ -34,12 +30,9 @@ jobs:
       - name: Get image tag
         id: tag
         run: |
-          # Use input tag if provided, otherwise extract from the Makefile.
-          # Pushes that are not main publish ci-test so a release tag is not overwritten.
+          # Use input tag if provided, otherwise extract from the Makefile
           if [ -n "${{ github.event.inputs.tag }}" ]; then
             TAG="${{ github.event.inputs.tag }}"
-          elif [ "${{ github.ref }}" != "refs/heads/main" ]; then
-            TAG="ci-test"
           else
             TAG=$(grep -E '^TAG=' hack/delete-e2e-data-postgres/Makefile | sed 's/TAG=//')
           fi
