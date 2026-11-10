@@ -613,15 +613,13 @@ start-minikube:
 	make -C ./ modify-hosts
 	make -C ./ setup-localenv
 
-# modify-hosts points the local gateway names (web-gateway.bucketeer.test and
-# api-gateway.bucketeer.test) at the minikube node so the browser and the e2e
-# tools can reach the ingresses. Idempotent and only touches the gateway
-# hostname tokens, so deploy-bucketeer runs it on every deploy; see
-# tools/dev/modify-hosts.sh for the details.
-.PHONY: modify-hosts
+# modify hosts file to access api-gateway and web-gateway. The local gateways
+# use the reserved .test TLD (RFC 2606) so local development never names the
+# production domain.
 modify-hosts:
-	@ip="$$(minikube ip)" && [ -n "$$ip" ] || { echo "minikube ip failed: is minikube running?" >&2; exit 1; }; \
-	tools/dev/modify-hosts.sh "$$ip"
+	$(eval MINIKUBE_IP := $(shell minikube ip))
+	echo "$(MINIKUBE_IP)   web-gateway.bucketeer.test" | sudo tee -a /etc/hosts
+	echo "$(MINIKUBE_IP)   api-gateway.bucketeer.test" | sudo tee -a /etc/hosts
 
 # enable vault transit secret engine
 enable-vault-transit:
@@ -803,7 +801,6 @@ setup-aichat-secret:
 
 # Bucketeer deployment
 deploy-bucketeer: delete-bucketeer-from-minikube
-	make modify-hosts
 	make ensure-service-token
 	make ensure-encryption-key
 	make ensure-dev-certs
