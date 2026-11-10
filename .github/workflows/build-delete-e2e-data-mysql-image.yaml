@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Image tag (leave empty to use the Makefile TAG)"
+        description: "Image tag (leave empty to use the Makefile TAG). Published only when it is newer than the tag already in the registry."
         type: string
         required: false
 
@@ -27,22 +27,61 @@ jobs:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - name: Get image tag
+      - name: Decide whether to publish
         id: tag
         env:
+          GH_TOKEN: ${{ github.token }}
           INPUT_TAG: ${{ github.event.inputs.tag }}
+          PACKAGE_NAME: bucketeer-delete-e2e-data-mysql
         run: |
-          # Use input tag if provided, otherwise extract from the Makefile.
+          set -euo pipefail
           # The input is an environment variable so it is not parsed as shell.
           if [ -n "$INPUT_TAG" ]; then
             TAG="$INPUT_TAG"
           else
-            TAG=$(grep -E '^TAG=' hack/delete-e2e-data-mysql/Makefile | sed 's/TAG=//')
+            TAG=$(grep -E '^TAG=' hack/delete-e2e-data-mysql/Makefile | sed 's/^TAG=//')
+          fi
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag must look like v1.2.3, got: ${TAG}" >&2
+            exit 1
+          fi
+
+          err=$(mktemp)
+          set +e
+          published=$(gh api --paginate \
+            "/orgs/${GITHUB_REPOSITORY_OWNER}/packages/container/${PACKAGE_NAME}/versions" \
+            --jq '.[] | .metadata.container.tags[]?' 2>"$err")
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            if grep -q 'HTTP 404' "$err"; then
+              published=""
+            else
+              cat "$err" >&2
+              exit 1
+            fi
+          fi
+          latest=$(printf '%s\n' "$published" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
+
+          push=true
+          if [ -z "$latest" ]; then
+            echo "No published release tag. Publishing ${TAG}."
+          elif [ "$TAG" = "$latest" ]; then
+            echo "Published tag ${latest} matches ${TAG}. Leaving the image unchanged."
+            push=false
+          else
+            newer=$(printf '%s\n%s\n' "$latest" "$TAG" | sort -V | tail -n 1)
+            if [ "$newer" != "$TAG" ]; then
+              echo "Tag ${TAG} is older than the published tag ${latest}." >&2
+              exit 1
+            fi
+            echo "Tag ${TAG} is newer than the published tag ${latest}."
           fi
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-          echo "Using tag: ${TAG}"
+          echo "push=${push}" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        if: steps.tag.outputs.push == 'true'
         with:
           go-version-file: hack/delete-e2e-data-mysql/go.mod
 
@@ -53,20 +92,24 @@ jobs:
       # dependencies since the last committed go.mod/go.sum doesn't fail the
       # build (bare `go mod vendor` errors with "updates to go.mod needed").
       - name: Vendor dependencies
+        if: steps.tag.outputs.push == 'true'
         working-directory: hack/delete-e2e-data-mysql
         run: make deps
 
       - name: Set up QEMU for ARM64 builds
+        if: steps.tag.outputs.push == 'true'
         uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
         with:
           platforms: linux/arm64
 
       - name: Setup Docker buildx
+        if: steps.tag.outputs.push == 'true'
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
         with:
           use: true
 
       - name: Login to GitHub Container Registry
+        if: steps.tag.outputs.push == 'true'
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ghcr.io
@@ -74,12 +117,15 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push multi-arch image
+        if: steps.tag.outputs.push == 'true'
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: ./hack/delete-e2e-data-mysql
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
           cache-from: type=gha,scope=delete-e2e-data-mysql
           cache-to: type=gha,mode=max,scope=delete-e2e-data-mysql
           provenance: false
