@@ -1,7 +1,7 @@
 -- The last evaluation time of a flag is stored on the feature row itself.
 -- The latest value across every version in feature_last_used_info is copied over
 -- so existing flags keep their status; that table is dropped in a later migration.
-ALTER TABLE `feature` ADD COLUMN `last_used_at` bigint NOT NULL DEFAULT 0;
+ALTER TABLE `feature` ADD COLUMN `last_used_at` bigint NOT NULL DEFAULT 0, ALGORITHM=INSTANT;
 UPDATE `feature` f
 JOIN (
     SELECT feature_id, environment_id, MAX(last_used_at) AS last_used_at

@@ -1,3 +1,5 @@
+-- atlas:txmode none
+
 -- The last evaluation time of a flag is stored on the feature row itself.
 -- The latest value across every version in feature_last_used_info is copied over
 -- so existing flags keep their status; that table is dropped in a later migration.
