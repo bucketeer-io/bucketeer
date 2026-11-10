@@ -31,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/ratelimit"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	tokentesting "github.com/bucketeer-io/bucketeer/v2/pkg/token/testing"
 	acproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
@@ -213,7 +214,8 @@ func TestAuthService_ExchangeToken_RateLimit(t *testing.T) {
 			defer mockController.Finish()
 			authenticator := &fakeAuthenticator{userInfo: &auth.UserInfo{Email: email}}
 			service := newAuthTypeTestService(t, authenticator)
-			signer, err := token.NewSigner("../../token/testdata/valid-private.pem")
+			privateKeyPath, _ := tokentesting.WriteKeyPair(t)
+			signer, err := token.NewSigner(privateKeyPath)
 			require.NoError(t, err)
 			service.signer = signer
 			service.opts.tokenRateLimiter = p.limiter(t)
@@ -335,9 +337,10 @@ func TestAuthService_RefreshToken_RateLimit(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
-			signer, err := token.NewSigner("../../token/testdata/valid-private.pem")
+			privateKeyPath, publicKeyPath := tokentesting.WriteKeyPair(t)
+			signer, err := token.NewSigner(privateKeyPath)
 			require.NoError(t, err)
-			verifier, err := token.NewVerifier("../../token/testdata/valid-public.pem", "test-issuer", "test-audience")
+			verifier, err := token.NewVerifier(publicKeyPath, "test-issuer", "test-audience")
 			require.NoError(t, err)
 			now := time.Now()
 			refreshToken, err := signer.SignRefreshToken(&token.RefreshToken{

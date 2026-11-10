@@ -15,13 +15,21 @@
 package rest
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
+	"math/big"
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -32,13 +40,19 @@ import (
 )
 
 const (
-	certPath = "testdata/server.crt"
-	keyPath  = "testdata/server.key"
-	timeout  = 10 * time.Second
-	port     = 9222
+	timeout = 10 * time.Second
+	port    = 9222
 	// Ports of the servers started by individual tests with custom timeouts.
 	slowHeadersPort = 9223
 	streamingPort   = 9224
+)
+
+// certPath and keyPath are the certificate of the server that testMain starts
+// and its private key. testMain generates them for every run of the test
+// binary. A test that starts its own server gets its own pair from startServer.
+var (
+	certPath string
+	keyPath  string
 )
 
 type dummyService struct{}
@@ -93,6 +107,19 @@ func TestMain(m *testing.M) {
 }
 
 func testMain(m *testing.M) int {
+	// This server outlives every single test, so its certificate cannot live
+	// in the t.TempDir() of one of them, and testing.M has no TempDir.
+	dir, err := os.MkdirTemp("", "rest-server-test-")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "failed to create the certificate directory:", err)
+		return 1
+	}
+	defer os.RemoveAll(dir)
+	certPath, keyPath, err = writeSelfSignedCert(dir)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "failed to generate the server certificate:", err)
+		return 1
+	}
 	server := newServer()
 	defer server.Stop(time.Second)
 	go server.Run()
@@ -118,11 +145,55 @@ func waitForServer() {
 	}
 }
 
-// startServer runs a server on its own port for the duration of the test.
+// writeSelfSignedCert generates a private key and a self-signed certificate
+// for localhost that is valid for one hour, writes them as PEM files into
+// dir, and returns their paths. Do not commit a server key to the repository
+// instead, not even one that is only used by tests.
+func writeSelfSignedCert(dir string) (certFile, keyFile string, err error) {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return "", "", err
+	}
+	now := time.Now()
+	template := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		Subject:               pkix.Name{CommonName: "localhost"},
+		NotBefore:             now.Add(-time.Minute),
+		NotAfter:              now.Add(time.Hour),
+		KeyUsage:              x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		DNSNames:              []string{"localhost"},
+	}
+	certDER, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
+	if err != nil {
+		return "", "", err
+	}
+	keyDER, err := x509.MarshalPKCS8PrivateKey(key)
+	if err != nil {
+		return "", "", err
+	}
+	certFile = filepath.Join(dir, "server.crt")
+	keyFile = filepath.Join(dir, "server.key")
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
+	if err := os.WriteFile(certFile, certPEM, 0o644); err != nil {
+		return "", "", err
+	}
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: keyDER})
+	if err := os.WriteFile(keyFile, keyPEM, 0o600); err != nil {
+		return "", "", err
+	}
+	return certFile, keyFile, nil
+}
+
+// startServer runs a server on its own port, with its own certificate, for
+// the duration of the test.
 func startServer(t *testing.T, serverPort int, opts ...Option) {
 	t.Helper()
+	certFile, keyFile, err := writeSelfSignedCert(t.TempDir())
+	require.NoError(t, err)
 	opts = append([]Option{WithLogger(zap.NewNop()), WithPort(serverPort)}, opts...)
-	server := NewServer(certPath, keyPath, opts...)
+	server := NewServer(certFile, keyFile, opts...)
 	go server.Run()
 	client := newHTTPClient()
 	require.Eventually(t, func() bool {

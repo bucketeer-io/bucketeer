@@ -27,15 +27,18 @@ import (
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	tokentesting "github.com/bucketeer-io/bucketeer/v2/pkg/token/testing"
 )
 
 func TestNewVerifier(t *testing.T) {
 	t.Parallel()
+	_, publicKeyPath := tokentesting.WriteKeyPair(t)
 	testcases := []struct {
 		path string
 		ok   bool
 	}{
-		{"testdata/valid-public.pem", true},
+		{publicKeyPath, true},
 		{"testdata/invalid-public.pem", false},
 	}
 	for i, tc := range testcases {
@@ -50,7 +53,8 @@ func TestVerify(t *testing.T) {
 	t.Parallel()
 	issuer := "test_issuer"
 	audience := "test_audience"
-	signer, err := NewSigner("testdata/valid-private.pem")
+	privateKeyPath, publicKeyPath := tokentesting.WriteKeyPair(t)
+	signer, err := NewSigner(privateKeyPath)
 	require.NoError(t, err)
 	accessToken := &AccessToken{
 		Issuer:   issuer,
@@ -79,7 +83,7 @@ func TestVerify(t *testing.T) {
 			valid:          true,
 		},
 	}
-	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, audience)
+	verifier, err := NewVerifier(publicKeyPath, issuer, audience)
 	require.NoError(t, err)
 	for _, p := range testcases {
 		t.Run(p.desc, func(t *testing.T) {
@@ -116,7 +120,8 @@ func TestVerifyDemoCreationToken(t *testing.T) {
 	t.Parallel()
 	issuer := "test_issuer"
 	audience := "test_audience"
-	signer, err := NewSigner("testdata/valid-private.pem")
+	privateKeyPath, publicKeyPath := tokentesting.WriteKeyPair(t)
+	signer, err := NewSigner(privateKeyPath)
 	require.NoError(t, err)
 	demoToken := &DemoCreationToken{
 		Issuer:   issuer,
@@ -146,7 +151,7 @@ func TestVerifyDemoCreationToken(t *testing.T) {
 			valid:        true,
 		},
 	}
-	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, audience)
+	verifier, err := NewVerifier(publicKeyPath, issuer, audience)
 	require.NoError(t, err)
 	for _, p := range testcases {
 		t.Run(p.desc, func(t *testing.T) {
@@ -167,9 +172,10 @@ func TestVerifyDemoCreationTokenValidation(t *testing.T) {
 	t.Parallel()
 	issuer := "test_issuer"
 	audience := "test_audience"
-	signer, err := NewSigner("testdata/valid-private.pem")
+	privateKeyPath, publicKeyPath := tokentesting.WriteKeyPair(t)
+	signer, err := NewSigner(privateKeyPath)
 	require.NoError(t, err)
-	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, audience)
+	verifier, err := NewVerifier(publicKeyPath, issuer, audience)
 	require.NoError(t, err)
 
 	testcases := []struct {
@@ -296,9 +302,10 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 	issuer := "test_issuer"
 	audience := "test_audience"
 	email := "user@example.com"
-	signer, err := NewSigner("testdata/valid-private.pem")
+	privateKeyPath, publicKeyPath := tokentesting.WriteKeyPair(t)
+	signer, err := NewSigner(privateKeyPath)
 	require.NoError(t, err)
-	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, audience)
+	verifier, err := NewVerifier(publicKeyPath, issuer, audience)
 	require.NoError(t, err)
 
 	now := time.Now()
@@ -329,14 +336,14 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 		IssuedAt: now,
 	})
 	require.NoError(t, err)
-	refreshWithIss := signRawClaims(t, &RefreshToken{
+	refreshWithIss := signRawClaims(t, privateKeyPath, &RefreshToken{
 		Issuer:   issuer,
 		Email:    email,
 		Expiry:   now.Add(time.Hour),
 		IssuedAt: now,
 		TokenUse: TokenUseRefresh,
 	})
-	refreshWithAud := signRawClaims(t, &RefreshToken{
+	refreshWithAud := signRawClaims(t, privateKeyPath, &RefreshToken{
 		Audience: audience,
 		Email:    email,
 		Expiry:   now.Add(time.Hour),
@@ -359,7 +366,7 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	legacyAccess := signRawClaims(t, &legacyAccessToken{
+	legacyAccess := signRawClaims(t, privateKeyPath, &legacyAccessToken{
 		Issuer:        issuer,
 		Audience:      audience,
 		Email:         email,
@@ -367,7 +374,7 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 		IssuedAt:      now,
 		IsSystemAdmin: true,
 	})
-	legacyRefresh := signRawClaims(t, &legacyRefreshToken{
+	legacyRefresh := signRawClaims(t, privateKeyPath, &legacyRefreshToken{
 		Email:          email,
 		Expiry:         now.Add(time.Hour),
 		IssuedAt:       now,
@@ -539,9 +546,11 @@ func assertRefreshTokenOmitsIssuerAudience(t *testing.T, raw string) {
 	assert.Equal(t, TokenUseRefresh, claims["token_use"])
 }
 
-func signRawClaims(t *testing.T, claims any) string {
+// signRawClaims signs claims as they are, without the token_use that the
+// Signer adds. privateKeyPath must be the key of the verifier under test.
+func signRawClaims(t *testing.T, privateKeyPath string, claims any) string {
 	t.Helper()
-	data, err := os.ReadFile("testdata/valid-private.pem")
+	data, err := os.ReadFile(privateKeyPath)
 	require.NoError(t, err)
 	key, err := parseRSAPrivateKey(data)
 	require.NoError(t, err)

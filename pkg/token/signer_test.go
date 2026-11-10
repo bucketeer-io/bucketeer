@@ -21,14 +21,17 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	tokentesting "github.com/bucketeer-io/bucketeer/v2/pkg/token/testing"
 )
 
 func TestNewSigner(t *testing.T) {
+	privateKeyPath, _ := tokentesting.WriteKeyPair(t)
 	testcases := []struct {
 		path string
 		ok   bool
 	}{
-		{"testdata/valid-private.pem", true},
+		{privateKeyPath, true},
 		{"testdata/invalid-private.pem", false},
 	}
 	for i, tc := range testcases {
@@ -42,9 +45,10 @@ func TestNewSigner(t *testing.T) {
 func TestSign(t *testing.T) {
 	issuer := "test_issuer"
 	audience := "test_client_id"
-	signer, err := NewSigner("testdata/valid-private.pem")
+	privateKeyPath, publicKeyPath := tokentesting.WriteKeyPair(t)
+	signer, err := NewSigner(privateKeyPath)
 	require.NoError(t, err)
-	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, audience)
+	verifier, err := NewVerifier(publicKeyPath, issuer, audience)
 	require.NoError(t, err)
 	testcases := []struct {
 		token *AccessToken
@@ -102,9 +106,10 @@ func TestSignDemoCreationToken(t *testing.T) {
 	t.Parallel()
 	issuer := "test_issuer"
 	audience := "test_client_id"
-	signer, err := NewSigner("testdata/valid-private.pem")
+	privateKeyPath, publicKeyPath := tokentesting.WriteKeyPair(t)
+	signer, err := NewSigner(privateKeyPath)
 	require.NoError(t, err)
-	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, audience)
+	verifier, err := NewVerifier(publicKeyPath, issuer, audience)
 	require.NoError(t, err)
 	testcases := []struct {
 		desc  string
