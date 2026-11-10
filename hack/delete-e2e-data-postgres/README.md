@@ -32,16 +32,20 @@ The image is built and pushed by the
 `build-delete-e2e-data-postgres-image.yaml` GitHub Actions workflow, which
 authenticates to ghcr.io with the built-in `GITHUB_TOKEN` (no PAT needed).
 
-1. Bump `TAG` in this directory's `Makefile`.
-2. Merge to `main`: any change under `hack/delete-e2e-data-postgres/` triggers the
-   workflow, which builds a multi-arch image (linux/amd64 + linux/arm64) and
-   pushes `ghcr.io/bucketeer-io/bucketeer-delete-e2e-data-postgres:<TAG>`.
-3. The workflow can also be run manually via `workflow_dispatch`, optionally
-   overriding the tag.
+1. Bump `TAG` in this directory's `Makefile` to a version greater than the
+   newest `vX.Y.Z` tag already published.
+2. Merge to `main`. A change under `hack/delete-e2e-data-postgres/` runs the
+   workflow. It publishes a multi-arch image (linux/amd64 + linux/arm64) only
+   when that tag is newer than the published release. The push tags the image
+   with `<TAG>` and the commit SHA. The same published tag is left unchanged.
+   An older tag fails the job.
+3. A manual `workflow_dispatch` uses the same check. Leave the tag empty to
+   use the Makefile `TAG`.
 
 These packages were first published with a personal access token, so grant
 this repository Write under each package's **Manage Actions access** once.
-Until that is set, the workflow builds the image and ghcr.io denies the push.
+Until that is set, the workflow cannot list the published tags and the job
+fails without pushing.
 
 For a local build without pushing (e.g. to verify the Dockerfile), run
 `make deps docker-build`. The `deps` target is required: the Docker build
