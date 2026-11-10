@@ -2583,6 +2583,8 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 	userMetadata := map[string]string{"b": "value-b", "c": "value-c", "a": "value-a", "d": "value-d"}
 	ueidFromAndroidFeatures := evaluation.UserEvaluationsID(userID, nil, androidFeatures)
 	ueidWithDataFromAndroidFeatures := evaluation.UserEvaluationsID(userID, userMetadata, androidFeatures)
+	ueidFromAllFeatures := evaluation.UserEvaluationsID(userID, nil, append([]*featureproto.Feature(nil), multiFeatures...))
+	ueidFromNoFeatures := evaluation.UserEvaluationsID(userID, nil, nil)
 
 	patterns := []struct {
 		desc                      string
@@ -2743,6 +2745,67 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 			expected: &gwproto.GetEvaluationsResponse{
 				State:             featureproto.UserEvaluations_FULL,
 				UserEvaluationsId: ueidFromAndroidFeatures,
+			},
+			expectedErr:               nil,
+			expectedEvaluationsAssert: assert.NotNil,
+		},
+		{
+			desc: "empty tag hashes all features and detects a change",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_SDK_CLIENT,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: multiFeatures,
+					}, nil)
+			},
+			input: &gwproto.GetEvaluationsRequest{
+				User:              &userproto.User{Id: userID},
+				UserEvaluationsId: ueidFromNoFeatures,
+				// The tag is optional on the UserEvaluationCondition path.
+				UserEvaluationCondition: &gwproto.GetEvaluationsRequest_UserEvaluationCondition{},
+			},
+			expected: &gwproto.GetEvaluationsResponse{
+				State:             featureproto.UserEvaluations_FULL,
+				UserEvaluationsId: ueidFromAllFeatures,
+			},
+			expectedErr:               nil,
+			expectedEvaluationsAssert: assert.NotNil,
+		},
+		{
+			desc: "empty tag and the id is the same",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_SDK_CLIENT,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: multiFeatures,
+					}, nil)
+			},
+			input: &gwproto.GetEvaluationsRequest{
+				User:              &userproto.User{Id: userID},
+				UserEvaluationsId: ueidFromAllFeatures,
+				// The tag is optional on the UserEvaluationCondition path.
+				UserEvaluationCondition: &gwproto.GetEvaluationsRequest_UserEvaluationCondition{},
+			},
+			expected: &gwproto.GetEvaluationsResponse{
+				State:             featureproto.UserEvaluations_FULL,
+				UserEvaluationsId: ueidFromAllFeatures,
+				Evaluations:       &featureproto.UserEvaluations{},
 			},
 			expectedErr:               nil,
 			expectedEvaluationsAssert: assert.NotNil,
