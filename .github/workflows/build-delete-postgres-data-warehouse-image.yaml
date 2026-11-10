@@ -1,0 +1,91 @@
+name: Build and Push delete-postgres-data-warehouse Multi-Arch Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'hack/delete-postgres-data-warehouse/**'
+  # Builds on pull requests so the workflow can be verified before merge.
+  # PR runs publish a pr-<number> tag and do not overwrite the Makefile tag.
+  pull_request:
+    paths:
+      - 'hack/delete-postgres-data-warehouse/**'
+      - '.github/workflows/build-delete-postgres-data-warehouse-image.yaml'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag (leave empty to use the Makefile TAG)"
+        type: string
+        required: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/bucketeer-io/bucketeer-delete-postgres-data-warehouse
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Get image tag
+        id: tag
+        run: |
+          # Use input tag if provided, otherwise extract from the Makefile.
+          # Pull requests publish a distinct tag so they cannot overwrite a release.
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            TAG="pr-${{ github.event.pull_request.number }}"
+          else
+            TAG=$(grep -E '^TAG=' hack/delete-postgres-data-warehouse/Makefile | sed 's/TAG=//')
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Using tag: ${TAG}"
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: hack/delete-postgres-data-warehouse/go.mod
+
+      # The Docker build context is hack/delete-postgres-data-warehouse only, but
+      # its go.mod replaces bucketeer/v2 with ../../, so the parent module must
+      # be vendored into the context before building the image. `make deps` runs
+      # `go mod tidy` before vendoring, so drift in the parent module's
+      # dependencies since the last committed go.mod/go.sum doesn't fail the
+      # build (bare `go mod vendor` errors with "updates to go.mod needed").
+      - name: Vendor dependencies
+        working-directory: hack/delete-postgres-data-warehouse
+        run: make deps
+
+      - name: Set up QEMU for ARM64 builds
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
+        with:
+          platforms: linux/arm64
+
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+        with:
+          use: true
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push multi-arch image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: ./hack/delete-postgres-data-warehouse
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=delete-postgres-data-warehouse
+          cache-to: type=gha,mode=max,scope=delete-postgres-data-warehouse
+          provenance: false
