@@ -177,6 +177,7 @@ const (
 
 // subscription notifications
 const (
+	NotificationFeatureRolloutOrder             = "NotificationFeatureRolloutOrder"
 	NotificationFeatureStrategyType             = "NotificationFeatureStrategyType"
 	NotificationFeatureRolloutWeight            = "NotificationFeatureRolloutWeight"
 	NotificationFeatureAudiencePercentage       = "NotificationFeatureAudiencePercentage"

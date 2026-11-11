@@ -143,6 +143,13 @@ func addFeatureStrategyChanges(
 			" (" + slackEscape(limitChangeValue(id)) + ")"
 		add(weightLabel, oldWeight, newWeight)
 	}
+	oldPositions := featureRolloutPositions(oldRollout, newWeights)
+	newPositions := featureRolloutPositions(newRollout, oldWeights)
+	for _, id := range sortedKeys(oldPositions, newPositions) {
+		orderLabel := label + " / " + l.MustLocalize(locale.NotificationFeatureRolloutOrder) +
+			" (" + slackEscape(limitChangeValue(id)) + ")"
+		add(orderLabel, oldPositions[id], newPositions[id])
+	}
 	oldAudience, newAudience := oldRollout.GetAudience(), newRollout.GetAudience()
 	var oldPercentage, newPercentage interface{}
 	if oldAudience != nil {
@@ -164,6 +171,19 @@ func featureRolloutWeights(rollout *featureproto.RolloutStrategy) map[string]int
 		}
 	}
 	return weights
+}
+
+func featureRolloutPositions(rollout *featureproto.RolloutStrategy, shared map[string]int32) map[string]int {
+	positions := make(map[string]int)
+	for _, variation := range rollout.GetVariations() {
+		if variation == nil {
+			continue
+		}
+		if _, ok := shared[variation.Variation]; ok {
+			positions[variation.Variation] = len(positions) + 1
+		}
+	}
+	return positions
 }
 
 // Compare rules and clauses before shortening values. Serializing a complete

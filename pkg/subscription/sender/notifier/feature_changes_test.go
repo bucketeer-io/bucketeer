@@ -414,10 +414,10 @@ func TestFeatureChangeStrategyLeaves(t *testing.T) {
 			want: []string{`Strategy type: "ROLLOUT" → null`, `Rollout weight (a): 100000 → null`},
 		},
 		{
-			name:   "rollout variation order ignored",
+			name:   "rollout variation order changes cohort assignment",
 			before: `{"type":1,"rollout_strategy":{"variations":[{"variation":"a","weight":10000},{"variation":"b","weight":90000}]}}`,
 			after:  `{"type":1,"rollout_strategy":{"variations":[{"variation":"b","weight":90000},{"variation":"a","weight":10000}]}}`,
-			empty:  true,
+			want:   []string{"Rollout order (a): 1 → 2", "Rollout order (b): 2 → 1"},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
