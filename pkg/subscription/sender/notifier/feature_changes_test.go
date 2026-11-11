@@ -110,7 +110,7 @@ func TestFeatureChangeConfiguration(t *testing.T) {
             "rules":[], "default_strategy":{"type":1,"rollout_strategy":{"variations":[{"variation":"v1","weight":100000}]}}}`,
 	}
 	summary := featureChangeSummary(n, newTestLocalizer(locale.En))
-	assert.Contains(t, summary, "Default strategy:")
+	assert.Contains(t, summary, "Default strategy / Strategy type:")
 	assert.Contains(t, summary, "Rule:")
 	assert.Contains(t, summary, "Variation (v1):")
 	assert.Contains(t, summary, `"old"`)
@@ -315,6 +315,161 @@ func TestFeatureChangeRulesAndClauses(t *testing.T) {
 				assert.Contains(t, summary, expected)
 			}
 			assert.NotContains(t, summary, "shared")
+		})
+	}
+}
+
+func TestFeatureChangeRolloutAudienceWithRealisticIDs(t *testing.T) {
+	t.Parallel()
+	const (
+		firstID  = "3749d3ec-6273-428c-8c41-1d5ea0998911"
+		secondID = "d48293e5-b591-4e62-a72d-3f61ce371277"
+	)
+	beforeStrategy := &featureproto.Strategy{
+		Type: featureproto.Strategy_ROLLOUT,
+		RolloutStrategy: &featureproto.RolloutStrategy{
+			Variations: []*featureproto.RolloutStrategy_Variation{
+				{Variation: firstID, Weight: 50000}, {Variation: secondID, Weight: 50000},
+			},
+			Audience: &featureproto.Audience{Percentage: 10, DefaultVariation: firstID},
+		},
+	}
+	var afterStrategy featureproto.Strategy
+	data, err := json.Marshal(beforeStrategy)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(data, &afterStrategy))
+	afterStrategy.RolloutStrategy.Audience.Percentage = 20
+	// Demonstrate that the original truncated strategy snippets hide the change.
+	assert.Equal(t, featureChangeValue(beforeStrategy), featureChangeValue(&afterStrategy))
+	for _, scope := range []string{"default", "rule"} {
+		t.Run(scope, func(t *testing.T) {
+			t.Parallel()
+			before, after := &featureproto.Feature{Id: "flag"}, &featureproto.Feature{Id: "flag"}
+			if scope == "default" {
+				before.DefaultStrategy, after.DefaultStrategy = beforeStrategy, &afterStrategy
+			} else {
+				before.Rules = []*featureproto.Rule{{Id: "rule", Strategy: beforeStrategy}}
+				after.Rules = []*featureproto.Rule{{Id: "rule", Strategy: &afterStrategy}}
+			}
+			n := &senderproto.DomainEventNotification{
+				EntityId: "flag", PreviousEntityData: featureSnapshot(t, before), EntityData: featureSnapshot(t, after),
+			}
+			for _, lang := range []string{locale.En, locale.Ja} {
+				l := newTestLocalizer(lang)
+				summary := featureChangeSummary(n, l)
+				assert.Contains(t, summary, l.MustLocalize(locale.NotificationFeatureAudiencePercentage)+": 10 → 20")
+				assert.NotContains(t, summary, firstID)
+				assert.NotContains(t, summary, secondID)
+				assert.Len(t, strings.Split(summary, "\n"), 1)
+			}
+		})
+	}
+}
+
+func TestFeatureChangeStrategyLeaves(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name, before, after string
+		want                []string
+		empty               bool
+	}{
+		{
+			name:   "weights",
+			before: `{"type":1,"rollout_strategy":{"variations":[{"variation":"a","weight":10000},{"variation":"b","weight":90000}]}}`,
+			after:  `{"type":1,"rollout_strategy":{"variations":[{"variation":"a","weight":20000},{"variation":"b","weight":80000}]}}`,
+			want:   []string{"Rollout weight (a): 10000 → 20000", "Rollout weight (b): 90000 → 80000"},
+		},
+		{
+			name:   "audience default",
+			before: `{"type":1,"rollout_strategy":{"audience":{"percentage":10,"default_variation":"a"}}}`,
+			after:  `{"type":1,"rollout_strategy":{"audience":{"percentage":10,"default_variation":"b"}}}`,
+			want:   []string{`Audience default variation: "a" → "b"`},
+		},
+		{
+			name:   "audience added at zero percent",
+			before: `{"type":1,"rollout_strategy":{}}`,
+			after:  `{"type":1,"rollout_strategy":{"audience":{"percentage":0}}}`,
+			want:   []string{"Audience percentage: null → 0"},
+		},
+		{
+			name:   "audience removed",
+			before: `{"type":1,"rollout_strategy":{"audience":{"percentage":10,"default_variation":"a"}}}`,
+			after:  `{"type":1,"rollout_strategy":{}}`,
+			want:   []string{"Audience percentage: 10 → null", `Audience default variation: "a" → ""`},
+		},
+		{
+			name:   "fixed variation",
+			before: `{"type":0,"fixed_strategy":{"variation":"a"}}`,
+			after:  `{"type":0,"fixed_strategy":{"variation":"b"}}`,
+			want:   []string{`Variation: "a" → "b"`},
+		},
+		{
+			name:   "strategy added",
+			before: `null`, after: `{"type":0,"fixed_strategy":{"variation":"a"}}`,
+			want: []string{`Strategy type: null → "FIXED"`, `Variation: "" → "a"`},
+		},
+		{
+			name:   "strategy removed",
+			before: `{"type":1,"rollout_strategy":{"variations":[{"variation":"a","weight":100000}]}}`, after: `null`,
+			want: []string{`Strategy type: "ROLLOUT" → null`, `Rollout weight (a): 100000 → null`},
+		},
+		{
+			name:   "rollout variation order ignored",
+			before: `{"type":1,"rollout_strategy":{"variations":[{"variation":"a","weight":10000},{"variation":"b","weight":90000}]}}`,
+			after:  `{"type":1,"rollout_strategy":{"variations":[{"variation":"b","weight":90000},{"variation":"a","weight":10000}]}}`,
+			empty:  true,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := &senderproto.DomainEventNotification{
+				EntityId:           "flag",
+				PreviousEntityData: `{"id":"flag","default_strategy":` + tt.before + `}`,
+				EntityData:         `{"id":"flag","default_strategy":` + tt.after + `}`,
+			}
+			summary := featureChangeSummary(n, newTestLocalizer(locale.En))
+			for _, want := range tt.want {
+				assert.Contains(t, summary, want)
+			}
+			if tt.empty {
+				assert.Empty(t, summary)
+			}
+		})
+	}
+}
+
+func TestFeatureChangeRulePriorityWithAdditionsAndRemovals(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name          string
+		before, after []string
+		reordered     bool
+	}{
+		{"delete and reorder", []string{"A", "B", "C"}, []string{"B", "A"}, true},
+		{"add and reorder", []string{"A", "B"}, []string{"B", "A", "C"}, true},
+		{"replace and reorder", []string{"A", "B", "C"}, []string{"B", "A", "D"}, true},
+		{"delete only", []string{"A", "C", "B"}, []string{"A", "B"}, false},
+		{"insert only", []string{"A", "B"}, []string{"C", "A", "B"}, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			before, after := &featureproto.Feature{Id: "flag"}, &featureproto.Feature{Id: "flag"}
+			for _, id := range tt.before {
+				before.Rules = append(before.Rules, &featureproto.Rule{Id: id})
+			}
+			for _, id := range tt.after {
+				after.Rules = append(after.Rules, &featureproto.Rule{Id: id})
+			}
+			n := &senderproto.DomainEventNotification{
+				EntityId: "flag", PreviousEntityData: featureSnapshot(t, before), EntityData: featureSnapshot(t, after),
+			}
+			summary := featureChangeSummary(n, newTestLocalizer(locale.En))
+			if tt.reordered {
+				assert.Contains(t, summary, "Rules order (A): 1 → 2")
+				assert.Contains(t, summary, "Rules order (B): 2 → 1")
+			} else {
+				assert.NotContains(t, summary, "Rules order")
+			}
 		})
 	}
 }

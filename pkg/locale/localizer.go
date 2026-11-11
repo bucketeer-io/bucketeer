@@ -177,20 +177,24 @@ const (
 
 // subscription notifications
 const (
-	NotificationFeatureName                = "NotificationFeatureName"
-	NotificationFeatureEnabled             = "NotificationFeatureEnabled"
-	NotificationFeatureArchived            = "NotificationFeatureArchived"
-	NotificationFeatureDeleted             = "NotificationFeatureDeleted"
-	NotificationFeatureDescription         = "NotificationFeatureDescription"
-	NotificationFeatureVariationType       = "NotificationFeatureVariationType"
-	NotificationFeatureVariationSchema     = "NotificationFeatureVariationSchema"
-	NotificationFeatureTargetAdded         = "NotificationFeatureTargetAdded"
-	NotificationFeatureTargetRemoved       = "NotificationFeatureTargetRemoved"
-	NotificationFeatureChangesOmitted      = "NotificationFeatureChangesOmitted"
-	NotificationFeatureStaleTemplate       = "NotificationFeatureStale"
-	NotificationExperimentRunning          = "NotificationExperimentRunning"
-	NotificationExperimentDaysLeftTemplate = "NotificationExperimentDaysLeft"
-	NotificationMAUCountTemplate           = "NotificationMAUCount"
+	NotificationFeatureStrategyType             = "NotificationFeatureStrategyType"
+	NotificationFeatureRolloutWeight            = "NotificationFeatureRolloutWeight"
+	NotificationFeatureAudiencePercentage       = "NotificationFeatureAudiencePercentage"
+	NotificationFeatureAudienceDefaultVariation = "NotificationFeatureAudienceDefaultVariation"
+	NotificationFeatureName                     = "NotificationFeatureName"
+	NotificationFeatureEnabled                  = "NotificationFeatureEnabled"
+	NotificationFeatureArchived                 = "NotificationFeatureArchived"
+	NotificationFeatureDeleted                  = "NotificationFeatureDeleted"
+	NotificationFeatureDescription              = "NotificationFeatureDescription"
+	NotificationFeatureVariationType            = "NotificationFeatureVariationType"
+	NotificationFeatureVariationSchema          = "NotificationFeatureVariationSchema"
+	NotificationFeatureTargetAdded              = "NotificationFeatureTargetAdded"
+	NotificationFeatureTargetRemoved            = "NotificationFeatureTargetRemoved"
+	NotificationFeatureChangesOmitted           = "NotificationFeatureChangesOmitted"
+	NotificationFeatureStaleTemplate            = "NotificationFeatureStale"
+	NotificationExperimentRunning               = "NotificationExperimentRunning"
+	NotificationExperimentDaysLeftTemplate      = "NotificationExperimentDaysLeft"
+	NotificationMAUCountTemplate                = "NotificationMAUCount"
 )
 
 func init() {

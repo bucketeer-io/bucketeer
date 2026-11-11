@@ -66,7 +66,6 @@ func featureChangeSummary(n *senderproto.DomainEventNotification, l locale.Local
 		{locale.NotificationFeatureName, before.Name, after.Name},
 		{locale.NotificationFeatureDescription, before.Description, after.Description},
 		{locale.Tag, before.Tags, after.Tags},
-		{locale.DefaultStrategy, before.DefaultStrategy, after.DefaultStrategy},
 		{locale.OffVariation,
 			variationLabel(&before.Feature, before.OffVariation),
 			variationLabel(&after.Feature, after.OffVariation)},
@@ -77,6 +76,8 @@ func featureChangeSummary(n *senderproto.DomainEventNotification, l locale.Local
 	for _, field := range fields {
 		add(l.MustLocalize(field.label), field.before, field.after)
 	}
+	addFeatureStrategyChanges(l.MustLocalize(locale.DefaultStrategy),
+		before.DefaultStrategy, after.DefaultStrategy, l, add)
 	addFeatureRuleChanges(before.Rules, after.Rules, l, add)
 	// Match variations by stable ID so adding one does not report unrelated
 	// variations as changed just because their array positions moved.
@@ -110,6 +111,61 @@ func featureChangeSummary(n *senderproto.DomainEventNotification, l locale.Local
 	return strings.Join(lines, "\n")
 }
 
+// Render strategy leaves separately so unchanged variation IDs cannot hide
+// rollout weights or audience settings behind the display limit.
+func addFeatureStrategyChanges(
+	label string,
+	before, after *featureproto.Strategy,
+	l locale.Localizer,
+	add func(string, interface{}, interface{}),
+) {
+	var oldType, newType interface{}
+	if before != nil {
+		oldType = before.Type.String()
+	}
+	if after != nil {
+		newType = after.Type.String()
+	}
+	add(label+" / "+l.MustLocalize(locale.NotificationFeatureStrategyType), oldType, newType)
+	add(label+" / "+l.MustLocalize(locale.Variation),
+		before.GetFixedStrategy().GetVariation(), after.GetFixedStrategy().GetVariation())
+	oldRollout, newRollout := before.GetRolloutStrategy(), after.GetRolloutStrategy()
+	oldWeights, newWeights := featureRolloutWeights(oldRollout), featureRolloutWeights(newRollout)
+	for _, id := range sortedKeys(oldWeights, newWeights) {
+		var oldWeight, newWeight interface{}
+		if weight, ok := oldWeights[id]; ok {
+			oldWeight = weight
+		}
+		if weight, ok := newWeights[id]; ok {
+			newWeight = weight
+		}
+		weightLabel := label + " / " + l.MustLocalize(locale.NotificationFeatureRolloutWeight) +
+			" (" + slackEscape(limitChangeValue(id)) + ")"
+		add(weightLabel, oldWeight, newWeight)
+	}
+	oldAudience, newAudience := oldRollout.GetAudience(), newRollout.GetAudience()
+	var oldPercentage, newPercentage interface{}
+	if oldAudience != nil {
+		oldPercentage = oldAudience.Percentage
+	}
+	if newAudience != nil {
+		newPercentage = newAudience.Percentage
+	}
+	add(label+" / "+l.MustLocalize(locale.NotificationFeatureAudiencePercentage), oldPercentage, newPercentage)
+	add(label+" / "+l.MustLocalize(locale.NotificationFeatureAudienceDefaultVariation),
+		oldAudience.GetDefaultVariation(), newAudience.GetDefaultVariation())
+}
+
+func featureRolloutWeights(rollout *featureproto.RolloutStrategy) map[string]int32 {
+	weights := make(map[string]int32)
+	for _, variation := range rollout.GetVariations() {
+		if variation != nil {
+			weights[variation.Variation] = variation.Weight
+		}
+	}
+	return weights
+}
+
 // Compare rules and clauses before shortening values. Serializing a complete
 // rule can otherwise use the entire display budget on unchanged IDs/strategy.
 func addFeatureRuleChanges(
@@ -126,7 +182,8 @@ func addFeatureRuleChanges(
 			// their own entries instead of one truncated object.
 			add(l.MustLocalize(locale.Rule), featureItemID(oldRule), featureItemID(newRule))
 		}
-		add(label+" / "+l.MustLocalize(locale.RuleStrategy), oldRule.GetStrategy(), newRule.GetStrategy())
+		addFeatureStrategyChanges(label+" / "+l.MustLocalize(locale.RuleStrategy),
+			oldRule.GetStrategy(), newRule.GetStrategy(), l, add)
 		oldClauses := featureItemsByID(oldRule.GetClauses())
 		newClauses := featureItemsByID(newRule.GetClauses())
 		for _, clauseID := range sortedKeys(oldClauses, newClauses) {
@@ -152,27 +209,20 @@ func addFeatureRuleChanges(
 			add(clauseLabel+" / "+slackEscape(limitChangeValue(attribute)), removed, added)
 		}
 	}
-	// Rule priority matters. Report positions independently from configuration
-	// changes, without treating insertion/removal as a reorder of every rule.
-	if len(oldRules) != len(newRules) {
-		return
-	}
-	for id := range oldRules {
-		if newRules[id] == nil {
-			return
-		}
-	}
-	oldPositions, newPositions := featureItemPositions(before), featureItemPositions(after)
-	for _, id := range sortedKeys(oldRules, newRules) {
+	// Compare relative priority among surviving rules. Insertions/deletions
+	// alone do not change their relative order, but may accompany a real swap.
+	oldPositions := featureItemPositions(before, func(id string) bool { return newRules[id] != nil })
+	newPositions := featureItemPositions(after, func(id string) bool { return oldRules[id] != nil })
+	for _, id := range sortedKeys(oldPositions, newPositions) {
 		label := l.MustLocalize(locale.RulesOrder) + " (" + slackEscape(limitChangeValue(id)) + ")"
 		add(label, oldPositions[id], newPositions[id])
 	}
 }
 
-func featureItemPositions[T interface{ GetId() string }](items []T) map[string]int {
+func featureItemPositions[T interface{ GetId() string }](items []T, include func(string) bool) map[string]int {
 	result := make(map[string]int, len(items))
 	for _, item := range items {
-		if id := item.GetId(); id != "" {
+		if id := item.GetId(); id != "" && include(id) {
 			result[id] = len(result) + 1
 		}
 	}

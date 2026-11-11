@@ -171,3 +171,7 @@ NotificationFeatureTargetAdded: "ターゲティング（バリエーション {
 NotificationFeatureTargetRemoved: "ターゲティング（バリエーション {{ .Field_1 }}）：ユーザー {{ .Field_2 }} を削除"
 NotificationFeatureChangesOmitted: "その他の変更は省略されています。詳細はフィーチャーフラグを確認してください。"
 NotificationFeatureName: "名前"
+NotificationFeatureStrategyType: "ストラテジーの種類"
+NotificationFeatureRolloutWeight: "ロールアウトの重み"
+NotificationFeatureAudiencePercentage: "オーディエンスの割合"
+NotificationFeatureAudienceDefaultVariation: "オーディエンスのデフォルトバリエーション"

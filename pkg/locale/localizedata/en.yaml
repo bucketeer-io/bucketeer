@@ -171,3 +171,7 @@ NotificationFeatureTargetAdded: "Targeting (variation {{ .Field_1 }}): added use
 NotificationFeatureTargetRemoved: "Targeting (variation {{ .Field_1 }}): removed users {{ .Field_2 }}"
 NotificationFeatureChangesOmitted: "More changes omitted. View the feature flag for full details."
 NotificationFeatureName: "Name"
+NotificationFeatureStrategyType: "Strategy type"
+NotificationFeatureRolloutWeight: "Rollout weight"
+NotificationFeatureAudiencePercentage: "Audience percentage"
+NotificationFeatureAudienceDefaultVariation: "Audience default variation"
