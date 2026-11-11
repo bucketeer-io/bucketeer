@@ -251,6 +251,9 @@ func (s *TagService) ListTags(
 		PageSize:       int(req.PageSize),
 		Cursor:         cursor,
 	}
+	if req.EnvironmentId == "" && req.OrganizationId == "" {
+		return nil, statusMissingEnvironmentOrOrganization.Err()
+	}
 	if req.OrganizationId != "" {
 		// New console
 		editor, err := s.checkOrganizationRole(

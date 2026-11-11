@@ -226,6 +226,17 @@ func TestListTags(t *testing.T) {
 		expectedTags   []*proto.Tag
 	}{
 		{
+			desc: "ErrMissingListTagsScope",
+			params: tagstorage.ListTagsParams{
+				PageSize: 10,
+				Cursor:   "0",
+			},
+			expectedCount:  0,
+			expectedCursor: 0,
+			expectedErr:    tagstorage.ErrMissingListTagsScope,
+			expectedTags:   nil,
+		},
+		{
 			desc: "Error",
 			setup: func(s *tagStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(

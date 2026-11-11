@@ -26,6 +26,13 @@ var (
 	statusEntityTypeRequired = api.NewGRPCStatus(
 		err.NewErrorInvalidArgEmpty(err.TagPackageName, "entity_type must be specified", "EntityType"),
 	)
+	statusMissingEnvironmentOrOrganization = api.NewGRPCStatus(
+		err.NewErrorInvalidArgEmpty(
+			err.TagPackageName,
+			"environment_id or organization_id must be specified",
+			"EnvironmentId, OrganizationId",
+		),
+	)
 	statusTagInUsed = api.NewGRPCStatus(
 		err.NewErrorFailedPrecondition(err.TagPackageName, "tag is in use").
 			WithMessageKey("TagInUse"))
