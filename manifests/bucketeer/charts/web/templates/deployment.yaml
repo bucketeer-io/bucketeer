@@ -97,7 +97,7 @@ spec:
             - name: BUCKETEER_WEB_STORAGE_TYPE
               value: "{{ .Values.env.operationalDatabase.type | default .Values.global.operationalDatabase.type }}"
             - name: BUCKETEER_WEB_MYSQL_USER
-              value: "{{ .Values.env.operationalDatabase.mysql.user | default .Values.global.operationalDatabase.mysql.user }}"
+              {{- include "web.db-user-env-source" (dict "root" . "engine" "mysql") | nindent 14 }}
             - name: BUCKETEER_WEB_MYSQL_PASS
               valueFrom:
                 secretKeyRef:
@@ -109,7 +109,7 @@ spec:
             - name: BUCKETEER_WEB_MYSQL_DB_NAME
               value: "{{ .Values.env.operationalDatabase.mysql.name | default .Values.global.operationalDatabase.mysql.name }}"
             - name: BUCKETEER_WEB_POSTGRES_USER
-              value: "{{ .Values.env.operationalDatabase.postgres.user | default .Values.global.operationalDatabase.postgres.user }}"
+              {{- include "web.db-user-env-source" (dict "root" . "engine" "postgres") | nindent 14 }}
             - name: BUCKETEER_WEB_POSTGRES_PASS
               valueFrom:
                 secretKeyRef:

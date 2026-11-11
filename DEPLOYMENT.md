@@ -241,6 +241,11 @@ so those values do not have to appear in a values file:
   `secretKeyRef`; when no existing Secret is set, the chart creates
   `<service>-db-credentials` from `pass`, and changing `pass` rolls the pods. Pods do
   not restart on their own when the content of an existing Secret changes.
+- Database user names: leave `user` empty to read the user name from the same
+  existing Secret, so that it does not have to appear in a values file either. The
+  key is `existingSecretUserKey` (`mysql-user` / `postgres-user` by default). This
+  applies to the engine selected by `operationalDatabase.type`; a `user` set in
+  values always takes precedence.
 - OAuth configuration: `web.oauth.existingSecret`, a Secret with an
   `oauth-config.json` key holding the complete `oauth` block as JSON.
 - Email configuration: `global.email.existingSecret`, a Secret with an

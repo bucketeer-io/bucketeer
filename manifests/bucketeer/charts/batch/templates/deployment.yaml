@@ -121,7 +121,7 @@ spec:
             - name: BUCKETEER_BATCH_STORAGE_TYPE
               value: "{{ .Values.env.operationalDatabase.type | default .Values.global.operationalDatabase.type }}"
             - name: BUCKETEER_BATCH_MYSQL_USER
-              value: "{{ .Values.env.operationalDatabase.mysql.user | default .Values.global.operationalDatabase.mysql.user }}"
+              {{- include "batch-server.db-user-env-source" (dict "root" . "engine" "mysql") | nindent 14 }}
             - name: BUCKETEER_BATCH_MYSQL_PASS
               valueFrom:
                 secretKeyRef:
@@ -135,7 +135,7 @@ spec:
             - name: BUCKETEER_BATCH_MYSQL_DB_OPEN_CONNS
               value: "{{ .Values.env.operationalDatabase.mysql.openConns | default .Values.global.operationalDatabase.mysql.openConns }}"
             - name: BUCKETEER_BATCH_POSTGRES_USER
-              value: "{{ .Values.env.operationalDatabase.postgres.user | default .Values.global.operationalDatabase.postgres.user }}"
+              {{- include "batch-server.db-user-env-source" (dict "root" . "engine" "postgres") | nindent 14 }}
             - name: BUCKETEER_BATCH_POSTGRES_PASS
               valueFrom:
                 secretKeyRef:
