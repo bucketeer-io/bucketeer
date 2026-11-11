@@ -91,7 +91,7 @@ The setup uses Docker Compose secrets to securely manage MySQL passwords instead
 
 - **Root Password**: Stored in `./secrets/mysql_root_password.txt`
 - **User Password**: Stored in `./secrets/mysql_password.txt`
-- **Migration**: The migration service reads the same `mysql_password` secret and builds its database URL from it in `./config/atlas/atlas.hcl`, so the URL is not written in `compose.yml`
+- **Migration Database URL**: Stored in `./secrets/migration_db_url.txt`. The migration service reads the complete URL (user, password, host, port and database name) from this file, so it is not written in `compose.yml`
 - **Automatic Setup**: The `make docker-compose-setup` command automatically creates these secret files
 - **File Permissions**: Secret files are created with `600` permissions (read/write for owner only)
 - **Git Ignored**: The `secrets/` directory is automatically excluded from version control
@@ -100,6 +100,18 @@ To regenerate secrets (if needed):
 ```shell
 make docker-compose-regenerate-secrets
 ```
+
+#### Changing the migration database URL
+
+`make docker-compose-setup` creates `./secrets/migration_db_url.txt` for the bundled MySQL when the file is missing, using the password in `./secrets/mysql_password.txt`. It never overwrites the file, so you can edit it to use another user, password, host, port or database name:
+
+```
+mysql://user:password@host:port/db_name
+```
+
+Percent-encode special characters in the user name and password (for example `@` as `%40` and a space as `%20`). The file is read only by the migration service: the MySQL settings of the `mysql`, `web`, `api`, `batch` and `subscriber` services are set in `compose.yml` and have to be changed there as well. After changing `./secrets/mysql_password.txt`, delete `./secrets/migration_db_url.txt` and run `make docker-compose-setup` again, or edit the password in the URL.
+
+If you start the stack with `docker compose` directly on a checkout that does not have the file yet, run `make docker-compose-setup` once first. `make docker-compose-up` does this for you.
 
 **Note**: The secrets directory is automatically created during setup and is excluded from Git to prevent accidental credential commits.
 
@@ -432,9 +444,11 @@ docker-compose/
 ├── compose.yml               # Main Docker Compose configuration
 ├── env.default               # Default environment variables
 ├── .gitignore                # Git ignore rules
-├── secrets/                  # MySQL passwords (auto-generated, git-ignored)
+├── secrets/                  # Passwords and the migration database URL (auto-generated, git-ignored)
 │   ├── mysql_root_password.txt
-│   └── mysql_password.txt
+│   ├── mysql_password.txt
+│   ├── postgres_password.txt
+│   └── migration_db_url.txt
 └── config/
     ├── atlas/                # Migration (Atlas) configuration
     │   └── atlas.hcl

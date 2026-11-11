@@ -1,20 +1,16 @@
 # Atlas configuration for the Docker Compose migration service.
 #
-# The database password is read from the Docker secret that
-# `make docker-compose-setup` creates (docker-compose/secrets/mysql_password.txt),
-# the same file the mysql service reads, so the database URL is not written in
-# compose.yml.
-
-locals {
-  # chomp() removes only the trailing newlines, like the mysql image does when
-  # it reads the same file, so spaces that belong to the password are kept.
-  mysql_password = chomp(file("/run/secrets/mysql_password"))
-  # urlescape() encodes a space as "+", which is a literal plus sign in the
-  # user-info part of a URL. A real plus sign is already encoded as %2B, so
-  # every "+" left after urlescape() stands for a space.
-  mysql_password_escaped = replace(urlescape(local.mysql_password), "+", "%20")
-}
+# The complete database URL (user, password, host, port and database name) is
+# read from the migration_db_url Docker secret, so no part of it is written in
+# compose.yml or in this file. `make docker-compose-setup` creates
+# docker-compose/secrets/migration_db_url.txt for the bundled MySQL when the
+# file is missing; edit that file to change any part of the URL.
+# Format: mysql://user:password@host:port/db_name, with special characters in
+# the user name and password percent-encoded.
 
 env "docker-compose" {
-  url = "mysql://bucketeer:${local.mysql_password_escaped}@mysql:3306/bucketeer"
+  # A URL has no leading or trailing whitespace of its own (a space in the
+  # password is percent-encoded), so trimming only removes the newline an
+  # editor leaves at the end of the file.
+  url = trimspace(file("/run/secrets/migration_db_url"))
 }

@@ -216,7 +216,16 @@ add_header 'Access-Control-Allow-Origin' 'https://your-domain.com' always;
 mkdir -p docker-compose/secrets
 echo "your-mysql-password" > docker-compose/secrets/mysql_password.txt
 echo "your-mysql-root-password" > docker-compose/secrets/mysql_root_password.txt
+# Database URL of the migration service: user, password, host, port and database name.
+# Percent-encode special characters in the user name and password.
+echo "mysql://user:password@host:port/db_name" > docker-compose/secrets/migration_db_url.txt
+chmod 600 docker-compose/secrets/*.txt
 ```
+
+`make docker-compose-setup` creates `migration_db_url.txt` for the bundled MySQL when
+it is missing and never overwrites it. The migration service reads the whole URL from
+this file; nothing else does, so the MySQL settings of the other services in
+`docker-compose/compose.yml` have to match it.
 
 ```bash
 # For PostgresQL

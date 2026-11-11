@@ -5,6 +5,8 @@ secrets:
     file: ./secrets/mysql_root_password.txt
   postgres_password:
     file: ./secrets/postgres_password.txt
+  migration_db_url:
+    file: ./secrets/migration_db_url.txt
 
 services:
   mysql:
@@ -113,8 +115,10 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    # The database URL is built in config/atlas/atlas.hcl from the mysql_password
-    # secret, so the password is not written here.
+    # The database URL (user, password, host, port and database name) is read
+    # from the migration_db_url secret through config/atlas/atlas.hcl, so it is
+    # not written here. `make docker-compose-setup` creates
+    # secrets/migration_db_url.txt; edit that file to change the URL.
     command:
       - migrate
       - apply
@@ -125,7 +129,7 @@ services:
       - --baseline
       - "20240626022133"
     secrets:
-      - mysql_password
+      - migration_db_url
     volumes:
       - ./config/atlas/atlas.hcl:/etc/atlas/atlas.hcl:ro
     networks:
