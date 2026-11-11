@@ -48,7 +48,7 @@ message Feature {
   Strategy default_strategy = 14;
   string off_variation = 15;
   repeated string tags = 16;
-  FeatureLastUsedInfo last_used_info = 17;
+  FeatureLastUsedInfo last_used_info = 17 [deprecated = true];
   string maintainer = 18;
   VariationType variation_type = 19;
   bool archived = 20;
@@ -56,6 +56,7 @@ message Feature {
   string sampling_seed = 22;
   AutoOpsSummary auto_ops_summary = 23;
   VariationValueSchema variation_value_schema = 24;
+  int64 last_used_at = 25;
 }
 
 message VariationValueSchema {

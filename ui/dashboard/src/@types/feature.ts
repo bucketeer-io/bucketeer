@@ -117,14 +117,7 @@ export interface Feature {
   defaultStrategy: FeatureRuleStrategy;
   offVariation: string;
   tags: string[];
-  lastUsedInfo: {
-    featureId: string;
-    version: 0;
-    lastUsedAt: string;
-    createdAt: string;
-    clientOldestVersion: string;
-    clientLatestVersion: string;
-  };
+  lastUsedAt: string;
   maintainer: string;
   variationType: FeatureVariationType;
   archived: boolean;

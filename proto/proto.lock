@@ -29574,7 +29574,13 @@
               {
                 "id": 17,
                 "name": "last_used_info",
-                "type": "FeatureLastUsedInfo"
+                "type": "FeatureLastUsedInfo",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 18,
@@ -29611,6 +29617,11 @@
                 "id": 24,
                 "name": "variation_value_schema",
                 "type": "VariationValueSchema"
+              },
+              {
+                "id": 25,
+                "name": "last_used_at",
+                "type": "int64"
               }
             ]
           },
@@ -29823,7 +29834,13 @@
               {
                 "id": 2,
                 "name": "version",
-                "type": "int32"
+                "type": "int32",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 3,
@@ -29833,17 +29850,35 @@
               {
                 "id": 4,
                 "name": "created_at",
-                "type": "int64"
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "client_oldest_version",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 6,
                 "name": "client_latest_version",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               }
             ]
           }

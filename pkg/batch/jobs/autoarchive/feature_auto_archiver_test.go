@@ -443,25 +443,19 @@ func createTestEnvironment(id string, unusedDays int32, checkCodeRefs bool) *env
 
 func createTestFeature(id string, lastUsedAt int64) *featureproto.Feature {
 	return &featureproto.Feature{
-		Id:       id,
-		Name:     id,
-		Archived: false,
-		LastUsedInfo: &featureproto.FeatureLastUsedInfo{
-			FeatureId:  id,
-			LastUsedAt: lastUsedAt,
-		},
+		Id:         id,
+		Name:       id,
+		Archived:   false,
+		LastUsedAt: lastUsedAt,
 	}
 }
 
 func createTestFeatureWithPrerequisite(id string, lastUsedAt int64, prerequisiteID string) *featureproto.Feature {
 	return &featureproto.Feature{
-		Id:       id,
-		Name:     id,
-		Archived: false,
-		LastUsedInfo: &featureproto.FeatureLastUsedInfo{
-			FeatureId:  id,
-			LastUsedAt: lastUsedAt,
-		},
+		Id:         id,
+		Name:       id,
+		Archived:   false,
+		LastUsedAt: lastUsedAt,
 		Prerequisites: []*featureproto.Prerequisite{
 			{
 				FeatureId: prerequisiteID,

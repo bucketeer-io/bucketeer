@@ -1179,10 +1179,10 @@ func (f *Feature) findPrerequisite(fID string) (int, error) {
 }
 
 func (f *Feature) IsStale(t time.Time) bool {
-	if f.LastUsedInfo == nil {
+	if f.LastUsedAt == 0 {
 		return false
 	}
-	if (t.Unix() - f.LastUsedInfo.LastUsedAt) < SecondsToStale {
+	if (t.Unix() - f.LastUsedAt) < SecondsToStale {
 		return false
 	}
 	return true

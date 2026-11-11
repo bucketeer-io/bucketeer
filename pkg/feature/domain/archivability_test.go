@@ -46,11 +46,9 @@ func TestEvaluateArchivabilityWithCounts(t *testing.T) {
 			name: "feature is archivable when meets all criteria",
 			features: []*ftproto.Feature{
 				{
-					Id:       "feature-1",
-					Archived: false,
-					LastUsedInfo: &ftproto.FeatureLastUsedInfo{
-						LastUsedAt: daysAgo(100),
-					},
+					Id:         "feature-1",
+					Archived:   false,
+					LastUsedAt: daysAgo(100),
 				},
 			},
 			criteria: ArchivabilityCriteria{
@@ -74,11 +72,9 @@ func TestEvaluateArchivabilityWithCounts(t *testing.T) {
 			name: "feature is not archivable when already archived",
 			features: []*ftproto.Feature{
 				{
-					Id:       "feature-1",
-					Archived: true,
-					LastUsedInfo: &ftproto.FeatureLastUsedInfo{
-						LastUsedAt: daysAgo(100),
-					},
+					Id:         "feature-1",
+					Archived:   true,
+					LastUsedAt: daysAgo(100),
 				},
 			},
 			criteria: ArchivabilityCriteria{
@@ -100,11 +96,9 @@ func TestEvaluateArchivabilityWithCounts(t *testing.T) {
 			name: "feature is not archivable when not unused long enough",
 			features: []*ftproto.Feature{
 				{
-					Id:       "feature-1",
-					Archived: false,
-					LastUsedInfo: &ftproto.FeatureLastUsedInfo{
-						LastUsedAt: daysAgo(30), // Only 30 days ago
-					},
+					Id:         "feature-1",
+					Archived:   false,
+					LastUsedAt: daysAgo(30), // Only 30 days ago
 				},
 			},
 			criteria: ArchivabilityCriteria{
@@ -126,11 +120,9 @@ func TestEvaluateArchivabilityWithCounts(t *testing.T) {
 			name: "feature is not archivable when has code references",
 			features: []*ftproto.Feature{
 				{
-					Id:       "feature-1",
-					Archived: false,
-					LastUsedInfo: &ftproto.FeatureLastUsedInfo{
-						LastUsedAt: daysAgo(100),
-					},
+					Id:         "feature-1",
+					Archived:   false,
+					LastUsedAt: daysAgo(100),
 				},
 			},
 			criteria: ArchivabilityCriteria{
@@ -154,11 +146,9 @@ func TestEvaluateArchivabilityWithCounts(t *testing.T) {
 			name: "feature is archivable when has code references but check is disabled",
 			features: []*ftproto.Feature{
 				{
-					Id:       "feature-1",
-					Archived: false,
-					LastUsedInfo: &ftproto.FeatureLastUsedInfo{
-						LastUsedAt: daysAgo(100),
-					},
+					Id:         "feature-1",
+					Archived:   false,
+					LastUsedAt: daysAgo(100),
 				},
 			},
 			criteria: ArchivabilityCriteria{
@@ -179,12 +169,12 @@ func TestEvaluateArchivabilityWithCounts(t *testing.T) {
 			},
 		},
 		{
-			name: "feature is not archivable when never used (nil LastUsedInfo)",
+			name: "feature is not archivable when never used (last_used_at is 0)",
 			features: []*ftproto.Feature{
 				{
-					Id:           "feature-1",
-					Archived:     false,
-					LastUsedInfo: nil,
+					Id:         "feature-1",
+					Archived:   false,
+					LastUsedAt: 0,
 				},
 			},
 			criteria: ArchivabilityCriteria{
@@ -206,18 +196,14 @@ func TestEvaluateArchivabilityWithCounts(t *testing.T) {
 			name: "feature is not archivable when has prerequisites dependencies",
 			features: []*ftproto.Feature{
 				{
-					Id:       "feature-1",
-					Archived: false,
-					LastUsedInfo: &ftproto.FeatureLastUsedInfo{
-						LastUsedAt: daysAgo(100),
-					},
+					Id:         "feature-1",
+					Archived:   false,
+					LastUsedAt: daysAgo(100),
 				},
 				{
-					Id:       "feature-2",
-					Archived: false,
-					LastUsedInfo: &ftproto.FeatureLastUsedInfo{
-						LastUsedAt: daysAgo(100),
-					},
+					Id:         "feature-2",
+					Archived:   false,
+					LastUsedAt: daysAgo(100),
 					Prerequisites: []*ftproto.Prerequisite{
 						{
 							FeatureId: "feature-1", // feature-2 depends on feature-1
@@ -248,18 +234,14 @@ func TestEvaluateArchivabilityWithCounts(t *testing.T) {
 			name: "feature is not archivable when has FEATURE_FLAG clause dependencies",
 			features: []*ftproto.Feature{
 				{
-					Id:       "feature-1",
-					Archived: false,
-					LastUsedInfo: &ftproto.FeatureLastUsedInfo{
-						LastUsedAt: daysAgo(100),
-					},
+					Id:         "feature-1",
+					Archived:   false,
+					LastUsedAt: daysAgo(100),
 				},
 				{
-					Id:       "feature-2",
-					Archived: false,
-					LastUsedInfo: &ftproto.FeatureLastUsedInfo{
-						LastUsedAt: daysAgo(100),
-					},
+					Id:         "feature-2",
+					Archived:   false,
+					LastUsedAt: daysAgo(100),
 					Rules: []*ftproto.Rule{
 						{
 							Id: "rule-1",
@@ -297,9 +279,9 @@ func TestEvaluateArchivabilityWithCounts(t *testing.T) {
 			name: "multiple blocking reasons",
 			features: []*ftproto.Feature{
 				{
-					Id:           "feature-1",
-					Archived:     true,
-					LastUsedInfo: nil,
+					Id:         "feature-1",
+					Archived:   true,
+					LastUsedAt: 0,
 				},
 			},
 			criteria: ArchivabilityCriteria{
@@ -367,11 +349,9 @@ func TestArchivabilityEvaluator_EvaluateArchivability(t *testing.T) {
 	now := time.Now().Unix()
 	features := []*ftproto.Feature{
 		{
-			Id:       "feature-1",
-			Archived: false,
-			LastUsedInfo: &ftproto.FeatureLastUsedInfo{
-				LastUsedAt: now - 100*24*60*60,
-			},
+			Id:         "feature-1",
+			Archived:   false,
+			LastUsedAt: now - 100*24*60*60,
 		},
 	}
 

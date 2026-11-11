@@ -70,12 +70,10 @@ func TestCreateNotification(t *testing.T) {
 					gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListFeaturesResponse{
 						Features: []*featureproto.Feature{{
-							Id:      "fid",
-							Name:    "fname",
-							Enabled: true,
-							LastUsedInfo: &featureproto.FeatureLastUsedInfo{
-								LastUsedAt: time.Now().Unix(),
-							},
+							Id:         "fid",
+							Name:       "fname",
+							Enabled:    true,
+							LastUsedAt: time.Now().Unix(),
 						}},
 					}, nil)
 			},
@@ -93,19 +91,15 @@ func TestCreateNotification(t *testing.T) {
 					gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListFeaturesResponse{
 						Features: []*featureproto.Feature{{
-							Id:      "fid",
-							Name:    "fname",
-							Enabled: true,
-							LastUsedInfo: &featureproto.FeatureLastUsedInfo{
-								LastUsedAt: time.Now().Unix() - 120*24*60*60,
-							},
+							Id:         "fid",
+							Name:       "fname",
+							Enabled:    true,
+							LastUsedAt: time.Now().Unix() - 120*24*60*60,
 						}, {
-							Id:      "fid1",
-							Name:    "fname1",
-							Enabled: true,
-							LastUsedInfo: &featureproto.FeatureLastUsedInfo{
-								LastUsedAt: time.Now().Unix() - 120*24*60*60,
-							},
+							Id:         "fid1",
+							Name:       "fname1",
+							Enabled:    true,
+							LastUsedAt: time.Now().Unix() - 120*24*60*60,
 						}},
 					}, nil)
 				w.sender.(*sendermock.MockSender).EXPECT().Send(gomock.Any(), gomock.Any()).Return(nil)

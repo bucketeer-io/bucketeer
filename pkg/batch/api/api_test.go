@@ -894,10 +894,7 @@ func getFeatures(t *testing.T) []*featureproto.Feature {
 			Id:           "fid0",
 			Enabled:      true,
 			OffVariation: "variation",
-			LastUsedInfo: &featureproto.FeatureLastUsedInfo{
-				// Stale feature
-				LastUsedAt: time.Now().Unix() - featuredomain.SecondsToStale - 20,
-			},
+			LastUsedAt:   time.Now().Unix() - featuredomain.SecondsToStale - 20, // Stale feature
 		},
 	}
 }

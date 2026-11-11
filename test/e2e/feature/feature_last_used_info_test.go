@@ -56,6 +56,9 @@ func TestGprcGetFeatureLastUsedInfo(t *testing.T) {
 			if actual.LastUsedInfo.LastUsedAt != lastUsedAt.Unix() {
 				t.Fatalf("lastUsedAt at is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedInfo.LastUsedAt)
 			}
+			if actual.LastUsedAt != lastUsedAt.Unix() {
+				t.Fatalf("feature lastUsedAt is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedAt)
+			}
 			break
 		}
 		if i == featureRecorderRetryTimes-1 {
@@ -82,6 +85,9 @@ func TestGetFeatureLastUsedInfo(t *testing.T) {
 			}
 			if actual.LastUsedInfo.LastUsedAt != lastUsedAt.Unix() {
 				t.Fatalf("lastUsedAt at is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedInfo.LastUsedAt)
+			}
+			if actual.LastUsedAt != lastUsedAt.Unix() {
+				t.Fatalf("feature lastUsedAt is not correct: expected: %d, actual: %d", lastUsedAt.Unix(), actual.LastUsedAt)
 			}
 			break
 		}
