@@ -47,9 +47,13 @@ global:
       # Rendered into a chart-managed Secret and injected through secretKeyRef.
       pass: ""
       # Existing Secret to read the password from instead of `pass`. When set,
-      # `pass` is ignored, and when `user` is empty the user name is read from
-      # the same Secret under `existingSecretUserKey`. Each chart can override
-      # these values under its own env.operationalDatabase.mysql.
+      # the pods no longer read `pass`, and when `user` is empty the user name
+      # is read from the same Secret under `existingSecretUserKey`. To switch a
+      # running release, set `existingSecret` first and remove `pass` once the
+      # pods have been replaced: the chart-managed Secret keeps the password
+      # for as long as `pass` is set, so that the previous pods can still
+      # start. Each chart can override these values under its own
+      # env.operationalDatabase.mysql.
       existingSecret: ""
       existingSecretKey: "mysql-pass"
       existingSecretUserKey: "mysql-user"
@@ -63,9 +67,13 @@ global:
       # Rendered into a chart-managed Secret and injected through secretKeyRef.
       pass: ""
       # Existing Secret to read the password from instead of `pass`. When set,
-      # `pass` is ignored, and when `user` is empty the user name is read from
-      # the same Secret under `existingSecretUserKey`. Each chart can override
-      # these values under its own env.operationalDatabase.postgres.
+      # the pods no longer read `pass`, and when `user` is empty the user name
+      # is read from the same Secret under `existingSecretUserKey`. To switch a
+      # running release, set `existingSecret` first and remove `pass` once the
+      # pods have been replaced: the chart-managed Secret keeps the password
+      # for as long as `pass` is set, so that the previous pods can still
+      # start. Each chart can override these values under its own
+      # env.operationalDatabase.postgres.
       existingSecret: ""
       existingSecretKey: "postgres-pass"
       existingSecretUserKey: "postgres-user"
