@@ -253,7 +253,12 @@ database URL of the migration job:
   read from the same Secret under `existingSecretUserKey` (`mysql-user` /
   `postgres-user` by default). When no existing Secret is set, the chart creates
   `<service>-db-credentials` from `pass`, and changing `pass` rolls the pods. Pods do
-  not restart on their own when the content of an existing Secret changes.
+  not restart on their own when the content of an existing Secret changes. To switch
+  a running release to an existing Secret, set `existingSecret` and keep `pass` for
+  that release: the new pods read the existing Secret, and `<service>-db-credentials`
+  keeps the password so that pods created before the switch can still start (a
+  scale-out or an aborted rollout during the switch). Remove `pass` once the new pods
+  have replaced the previous ones; this rolls the pods once more.
 - Migration database URL: `migration.existingSecret` / `existingSecretKey`
   (`existingSecret` / `existingSecretKey` in the standalone `bucketeer-migration`
   chart), a Secret whose key (`db-url` by default) holds the complete URL, for
