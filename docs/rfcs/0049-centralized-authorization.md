@@ -16,8 +16,9 @@ across 15 packages call their own `checkXRole` wrapper, `pkg/role/role.go`
 is a nest of `if … else` for the special cases (system admin, service token,
 public API key), and target-dependent rules such as owner protection live as
 ad-hoc `if` blocks inside the account handlers. The dashboard re-implements the
-same rules, and `GetMe` fakes an EDITOR role on every environment for system
-admins so the UI works.
+same rules, and `GetMe` synthesizes environment roles for system admins
+(VIEWER on every environment for non-members, EDITOR for organization admins)
+so the UI works.
 
 A missing check is invisible without grep: PR #2950 fixed an owner demotion
 that one handler did not guard, and #2995 found list queries that returned
@@ -139,9 +140,12 @@ maintainer has. `ping` and the gRPC health service stay public.
 
 ### Dashboard
 
-`GetMe` also returns the permissions per environment computed from Table 1,
-and the UI calls `can("feature:write", environmentId)` instead of
-re-implementing the rules. The fake EDITOR roles for system admins are removed.
+`GetMe` also returns the effective permissions per environment, computed by
+the same authorizer rather than from Table 1 alone, so a system admin keeps
+read access in every environment without membership while write stays
+membership-based. The UI calls `can("feature:write", environmentId)` instead
+of re-implementing the rules, and the synthetic roles for system admins are
+removed.
 
 ### Testing
 
