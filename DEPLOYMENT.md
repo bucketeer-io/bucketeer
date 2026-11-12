@@ -248,7 +248,10 @@ database URL of the migration job:
   `existingSecretKey` and `global.operationalDatabase.postgres.existingSecret` /
   `existingSecretKey` (each service chart can override them under
   `<chart>.env.operationalDatabase.<engine>`). The password is injected through a
-  `secretKeyRef`; when no existing Secret is set, the chart creates
+  `secretKeyRef`. To keep the user name out of the values file as well, leave `user`
+  empty: the user name of the engine selected by `operationalDatabase.type` is then
+  read from the same Secret under `existingSecretUserKey` (`mysql-user` /
+  `postgres-user` by default). When no existing Secret is set, the chart creates
   `<service>-db-credentials` from `pass`, and changing `pass` rolls the pods. Pods do
   not restart on their own when the content of an existing Secret changes.
 - Migration database URL: `migration.existingSecret` / `existingSecretKey`

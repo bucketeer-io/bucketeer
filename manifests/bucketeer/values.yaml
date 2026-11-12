@@ -42,27 +42,33 @@ global:
   operationalDatabase:
     type: mysql
     mysql:
+      # Leave empty to read the user name from `existingSecret` below.
       user: ""
       # Rendered into a chart-managed Secret and injected through secretKeyRef.
       pass: ""
       # Existing Secret to read the password from instead of `pass`. When set,
-      # `pass` is ignored. Each chart can override both values under its own
-      # env.operationalDatabase.mysql.
+      # `pass` is ignored, and when `user` is empty the user name is read from
+      # the same Secret under `existingSecretUserKey`. Each chart can override
+      # these values under its own env.operationalDatabase.mysql.
       existingSecret: ""
       existingSecretKey: "mysql-pass"
+      existingSecretUserKey: "mysql-user"
       host: ""
       port: 3306
       name: ""
       openConns: 50
     postgres:
+      # Leave empty to read the user name from `existingSecret` below.
       user: ""
       # Rendered into a chart-managed Secret and injected through secretKeyRef.
       pass: ""
       # Existing Secret to read the password from instead of `pass`. When set,
-      # `pass` is ignored. Each chart can override both values under its own
-      # env.operationalDatabase.postgres.
+      # `pass` is ignored, and when `user` is empty the user name is read from
+      # the same Secret under `existingSecretUserKey`. Each chart can override
+      # these values under its own env.operationalDatabase.postgres.
       existingSecret: ""
       existingSecretKey: "postgres-pass"
+      existingSecretUserKey: "postgres-user"
       host: ""
       port: 5432
       name: ""

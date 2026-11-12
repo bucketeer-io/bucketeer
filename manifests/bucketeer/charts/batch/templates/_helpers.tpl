@@ -98,6 +98,29 @@ key: {{ $defaultKey }}
 {{- end -}}
 {{- end -}}
 
+{{/*
+Source (value or valueFrom) of the user name env var of the given database
+engine ("mysql" or "postgres"). The user name comes from `user`. When `user` is
+empty and an existing Secret is set for the engine in use, it is read from that
+Secret instead, so that it does not have to appear in a values file.
+Usage: include "batch-server.db-user-env-source" (dict "root" . "engine" "mysql")
+*/}}
+{{- define "batch-server.db-user-env-source" -}}
+{{- $local := index .root.Values.env.operationalDatabase .engine -}}
+{{- $global := index .root.Values.global.operationalDatabase .engine -}}
+{{- $user := $local.user | default $global.user -}}
+{{- $type := .root.Values.env.operationalDatabase.type | default .root.Values.global.operationalDatabase.type -}}
+{{- $existing := include "batch-server.db-password-existing-secret" . -}}
+{{- if and $existing (not $user) (eq $type .engine) -}}
+valueFrom:
+  secretKeyRef:
+    name: {{ $existing | quote }}
+    key: {{ $local.existingSecretUserKey | default $global.existingSecretUserKey | default (printf "%s-user" .engine) | quote }}
+{{- else -}}
+value: {{ $user | default "" | quote }}
+{{- end -}}
+{{- end -}}
+
 {{- define "batch.deploy" -}}
 {{- if not .Values.gcpMultiCluster.enabled }}
   {{- true }}
