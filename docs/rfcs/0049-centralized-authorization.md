@@ -199,9 +199,10 @@ var methodRequirements = map[string]Requirement{
     "/bucketeer.feature.FeatureService/GetFeature":        Need("feature:read",  InEnv("environment_id")),
     "/bucketeer.feature.FeatureService/UpdateFeature":     Need("feature:write", InEnv("environment_id")),
     "/bucketeer.account.AccountService/UpdateAccountV2":   Need("account:manage", InOrg("organization_id")).
-        Or(Self("email"), OnlyFields("first_name", "last_name", "language", "avatar")).
+        Or(Self("email"), NoPrivilegeChange()).
         Guard(RoleNotAboveCaller("organization_role")).
         Guard(NotLastOwner("email")),
+    "/bucketeer.auditlog.AuditLogService/ListAuditLogs":   EachScope(Env("environment_id", "auditlog:read"), Org("organization_id", "auditlog:manage")),
     "/bucketeer.environment.EnvironmentService/UpdateEnvironmentV2": Need("environment:manage", OrgOfEnvironment("id")),
     "/bucketeer.notification.NotificationService/CreateAdminNotification": SystemAdminOnly(),
     "/bucketeer.auth.AuthService/SignIn":                 Public(),
@@ -215,7 +216,8 @@ Scope resolvers, chosen from what the request carries (counted from the
 | --- | --- | --- |
 | `InEnv(field)` | the request has `environment_id` | most feature / experiment / autoops RPCs |
 | `InOrg(field)` | the request has `organization_id` | account, team, organization-wide lists |
-| `InEnvOrOrg(envField, orgField)` | lists that accept either | `ListTags`, `ListAuditLogs` (#2995) |
+| `InEnvOrOrg(envField, orgField)` | lists that accept either ID and return one scope's rows | `ListTags` (#2995) |
+| `EachScope(Env(...), Org(...))` | lists that accept both IDs and return both scopes' rows; every supplied ID is checked at its own threshold, never one instead of the other | `ListAuditLogs`: environment VIEWER for the environment's logs and organization ADMIN for the organization-level logs, as `checkScopeRole` does today |
 | `OrgOfEnvironment(idField)` / `OrgOfProject(idField)` | the request has only the resource `id` | 19 environment-service RPCs such as `UpdateEnvironmentV2`, `EnableProject` |
 | `SystemAdminOnly()` | no scope; system admins only | admin notifications, admin subscriptions, `ListOrganizations` |
 | `Public()` | no token yet | `SignIn`, `ExchangeToken`, `FlagTriggerWebhook` (token in body) |
@@ -246,6 +248,13 @@ It is added to the chain in `pkg/rpc/server.go` after the token interceptor.
 A stream interceptor with the same logic covers the one streaming RPC
 (`AIChatService.Chat`).
 
+One handler is outside gRPC: the dashboard's `/v1/aichat/chat` is an HTTP SSE
+handler registered on the REST server (`rest.WithService(chatHTTPSvc)` in
+`pkg/web/cmd/server/server.go`), so no interceptor sees it. It calls
+`authz.Check` explicitly with its own method name and a row in Table 2, and the
+table-driven test lists it next to the gRPC RPCs. It is the only such handler
+today.
+
 `authz.Check` keeps the special cases that `pkg/role/role.go` implements today,
 moved as they are:
 
@@ -262,13 +271,24 @@ moved as they are:
 A guard is a named function `(caller, request, target) -> error` implemented
 once in `pkg/authz/guards.go` and attached in Table 2:
 
-- `RoleNotAboveCaller(field)`: the role being granted is not above the
-  caller's own (replaces `checkOrganizationRoleWithinEditorAuthority`).
-- `NotLastOwner(field)`: the target is not the only OWNER of the organization
-  (replaces `checkNotOrganizationOwner`, attached to `UpdateAccountV2`,
+- `RoleNotAboveCaller(field)`: neither the target's current organization
+  role nor the role being granted is above the caller's own, so an ADMIN can
+  neither demote an OWNER nor create one. A public API key editor can never
+  grant or act on OWNER, and system admins are exempt from the hierarchy
+  (replaces `checkOrganizationRoleWithinEditorAuthority` and
+  `canManageOrganizationRole`, with both checks and both exceptions).
+- `NotLastOwner(field)`: runs only when the request removes active ownership
+  (disable, delete, or an organization role change away from OWNER). Profile
+  updates and an unchanged OWNER role pass untouched, as today. It rejects when
+  the target is the last active OWNER of the organization (replaces
+  `checkNotOrganizationOwner`, attached to `UpdateAccountV2`,
   `DisableAccountV2`, `DeleteAccountV2`, `UpdateOrganization`).
-- `Self(field)` + `OnlyFields(...)`: a member may update their own account,
-  but only profile fields (replaces the self-service branch).
+- `Self(field)` + `NoPrivilegeChange()`: a member may update their own account
+  as long as `organization_role`, `environment_roles` and `disabled` are
+  absent or equal to the stored values. A client that echoes its unchanged
+  environment roles, as the dashboard profile form does, keeps working
+  (replaces the self-service branch and `selfServicePrivilegeChangeAttempted`;
+  a field whitelist was rejected because it would break that client).
 - `EnvironmentsInOrganization(field)`: the environment roles being set belong
   to the request's organization (replaces
   `checkEnvironmentRolesInOrganization`).
@@ -281,6 +301,21 @@ With `NotLastOwner`, "owner" means "has the OWNER role". The
 what #2856 (multiple owners) and ownership transfer need: transfer is "grant
 OWNER to B, remove from A" in one transaction.
 
+Guards run before the handler, so two concurrent requests that each remove a
+different owner could both pass and leave the organization without one. The
+guard is therefore only a fast pre-check: every owner-removing mutation also
+locks the organization row (`SELECT ... FOR UPDATE`) and re-checks inside the
+same transaction that at least one active OWNER remains, and a transfer is
+evaluated against the resulting owner set.
+
+Today `checkOrganizationOwner` (`pkg/environment/api/organization.go`) also
+lets the `owner_email` account act as owner even when its role was demoted
+below OWNER, as a recovery path covered by a regression test. Role-only
+ownership removes that path, so before it is enforced every organization's
+`owner_email` account must be audited and given the OWNER role where it is
+missing (§5 step 3). Otherwise a legacy organization could end up with no
+recognized owner, and its former owner would become deletable.
+
 ### 4.5 Public API gateway
 
 The gateway (`pkg/api/api`) keeps authenticating the API key, but the
@@ -288,8 +323,15 @@ accepted key roles move from the 85 `checkRequest(ctx, []APIKey_Role{...})`
 calls into a third column of Table 2:
 
 ```go
-"/bucketeer.gateway.Gateway/UpdateFeature": Need("feature:write", InEnv("environment_id")).APIKey(PUBLIC_API_WRITE, PUBLIC_API_ADMIN),
+"/bucketeer.gateway.Gateway/UpdateFeature": Need("feature:write", FromAPIKey()).APIKey(PUBLIC_API_WRITE, PUBLIC_API_ADMIN),
 ```
+
+Gateway rows use the `FromAPIKey()` resolver: the scope is the environment of
+the authenticated API key, not a request field. The gateway already forwards
+`envAPIKey.Environment.Id` rather than anything from the request
+(`pkg/api/api/feature.go`), and SDK requests carry no `environment_id`, so
+reading a request field would reject valid calls or check a scope other than
+the one relayed. Authorization and the relay use the same scope.
 
 The relay to the web service is unchanged: the web interceptor still checks
 the key's maintainer, so a key never grants more than its maintainer has.
@@ -328,9 +370,13 @@ Screens do not change.
    and production until the log is clean.
 2. **Enforce per service.** Starting with small services (tag, team, coderef),
    turn the interceptor on for that service's RPCs and delete its wrapper and
-   handler checks. Repeat for each package.
-3. **Account service last.** Replace the ad-hoc `if` blocks with the guards;
-   stop reading `owner_email` for protection.
+   handler checks. Repeat for each package. The AI chat HTTP handler switches
+   to the explicit `authz.Check` call in the same step as `aichat`.
+3. **Account service last.** First audit every organization's `owner_email`
+   account and grant it the OWNER role where missing, so no organization is
+   left without a recognized owner. Then replace the ad-hoc `if` blocks with
+   the guards, add the in-transaction owner check, and stop reading
+   `owner_email` for protection.
 4. **Public API gateway.** Move the API key role lists into Table 2.
 5. **Dashboard.** Read the permission list from `GetMe`; remove the fake
    EDITOR roles.
