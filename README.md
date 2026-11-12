@@ -303,12 +303,10 @@ Big thanks to all Bucketeer contributors who have helped us since the beginning!
 
 <a href="https://github.com/sivchari"><img src="https://avatars.githubusercontent.com/u/55221074?v=4" title="sivchari" width="80" height="80"></a>
 <a href="https://github.com/ouchi2501"><img src="https://avatars.githubusercontent.com/u/11391317?v=4" title="ouchi2501" width="80" height="80"></a>
-<a href="https://github.com/cut0"><img src="https://avatars.githubusercontent.com/u/59341902?v=4" title="cut0" width="80" height="80"></a>
 <a href="https://github.com/3846masa"><img src="https://avatars.githubusercontent.com/u/5629366?v=4" title="3846masa" width="80" height="80"></a>
 <a href="https://github.com/Warashi"><img src="https://avatars.githubusercontent.com/u/3600530?v=4" title="Warashi" width="80" height="80"></a>
 <a href="https://github.com/ta1m1kam"><img src="https://avatars.githubusercontent.com/u/25325947?v=4" title="ta1m1kam" width="80" height="80"></a>
 <a href="https://github.com/pcbeingused333"><img src="https://avatars.githubusercontent.com/u/82875882?v=4" title="pcbeingused333" width="80" height="80"></a>
 <a href="https://github.com/isomorfisma"><img src="https://avatars.githubusercontent.com/u/133991017?v=4" title="isomorfisma" width="80" height="80"></a>
 <a href="https://github.com/balckowl"><img src="https://avatars.githubusercontent.com/u/129815120?v=4" title="balckowl" width="80" height="80"></a>
-
 <a href="https://github.com/orshih6"><img src="https://avatars.githubusercontent.com/u/34618353?v=4" title="orshih6" width="80" height="80"></a>
