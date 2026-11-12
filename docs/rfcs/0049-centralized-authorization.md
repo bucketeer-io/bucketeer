@@ -179,12 +179,18 @@ editor := rpc.EditorFrom(ctx)
 // pkg/authz/permissions.go
 var rolePermissions = map[Role][]Permission{
     OrgOwner:  {"*"},
-    OrgAdmin:  {"organization:read", "account:manage", "apikey:manage", "env:*"},
+    OrgAdmin:  {"organization:read", "account:manage", "apikey:manage", Inherit(EnvEditor)},
     OrgMember: {"organization:read"},            // plus the environment roles below
     EnvEditor: {"feature:read", "feature:write", "segment:read", "segment:write", "experiment:read", "experiment:write", /* ... */},
     EnvViewer: {"feature:read", "segment:read", "experiment:read", /* ... */},
 }
 ```
+
+`Inherit(EnvEditor)` means an organization ADMIN holds every EnvEditor
+permission in every environment of the organization without an environment
+role, which is how `checkRole` in `pkg/role/role.go` behaves today (ADMIN and
+above pass any environment check). OWNER inherits the same through `*`. No
+other wildcard exists.
 
 Permission names follow `<resource>:<verb>`. The first draft is produced
 mechanically from the current `checkXRole` calls: every `VIEWER` call becomes
@@ -201,7 +207,10 @@ var methodRequirements = map[string]Requirement{
     "/bucketeer.account.AccountService/UpdateAccountV2":   Need("account:manage", InOrg("organization_id")).
         Or(Self("email"), NoPrivilegeChange()).
         Guard(RoleNotAboveCaller("organization_role")).
-        Guard(NotLastOwner("email")),
+        Guard(NotLastOwner("email")).
+        Guard(EnvironmentsInOrganization("environment_roles")),
+    "/bucketeer.account.AccountService/GetAccountV2":      Need("account:read", InOrg("organization_id")).
+        Guard(AccountVisible("email")),
     "/bucketeer.auditlog.AuditLogService/ListAuditLogs":   EachScope(Env("environment_id", "auditlog:read"), Org("organization_id", "auditlog:read", MinRole(ADMIN))),
     "/bucketeer.environment.EnvironmentService/UpdateEnvironmentV2": Need("environment:manage", OrgOfEnvironment("id")),
     "/bucketeer.notification.NotificationService/CreateAdminNotification": SystemAdminOnly(),
@@ -265,6 +274,7 @@ moved as they are:
 | System admin, read permission | allowed without membership | allowed without membership |
 | System admin, write permission | must be an organization member with the role | must be an organization member with the role |
 | Disabled account | Unauthenticated | Unauthenticated |
+| Organization ADMIN or OWNER, environment-scoped RPC | passes without an environment role | passes without an environment role (`Inherit`, §4.1) |
 
 ### 4.4 Guards
 
@@ -295,6 +305,14 @@ once in `pkg/authz/guards.go` and attached in Table 2:
 - `EnvironmentsInOrganization(field)`: the environment roles being set belong
   to the request's organization (replaces
   `checkEnvironmentRolesInOrganization`).
+- `AccountVisible(field)`: a member may read their own account, any ADMIN or
+  OWNER of the organization, and any account holding a role in an environment
+  the member has access to; admins, owners and system admins read every
+  account. An invisible target answers NotFound, not PermissionDenied, so the
+  response does not reveal that the account exists (replaces `canReadAccount`
+  and `isOwnAccount` on `GetAccountV2` and `GetAccountV2ByEnvironmentID`,
+  where the lookup environment is also restricted). This is a target-dependent
+  allow / deny, not a list filter, so it belongs here and not in §4.7.
 
 Forgetting a guard becomes a one-line omission in Table 2 that the
 table-driven test catches, instead of a missing `if` in one of four handlers.
@@ -341,9 +359,11 @@ the key's maintainer, so a key never grants more than its maintainer has.
 
 The gateway also serves five native SDK HTTP routes outside gRPC
 (`gatewayService.Register` in `pkg/api/api/api.go`: ping, get evaluations, get
-evaluation, register events, stream evaluations), each doing its own API key
-check today. They get a row in Table 2 keyed by route and call `authz.Check`
-explicitly, like the AI chat handler (§4.3), so the test covers them too.
+evaluation, register events, stream evaluations). The four authenticated
+routes do their own API key check today; `ping`, like the gRPC
+`Gateway.Ping`, checks nothing and stays `Public()`. They get a row in Table 2
+keyed by route and call `authz.Check` explicitly, like the AI chat handler
+(§4.3), so the test covers them too.
 
 ### 4.6 Dashboard
 
@@ -367,12 +387,18 @@ Screens do not change.
 
 - `pkg/authz` gets one table-driven test: every RPC in Table 2 × every role
   (plus system admin, service token, disabled) → expected allow / deny.
-- A test fails when a RPC in any `service.proto` has no row in Table 2.
+- A test fails when a method of any service registered on a server has no
+  row in Table 2. The list comes from the registered gRPC service descriptors
+  and the HTTP routes, not from scanning the repository's `service.proto`
+  files, so externally defined services are included: `grpc.health.v1.Health`
+  (`Check`, `List`) is registered on the gateway and batch servers and keeps a
+  `Public()` row, as its probes are unauthenticated today.
 - A RPC × role matrix alone cannot prove a guard: the same role may edit its
   own profile but not its privileges, or remove one of two owners but not the
   last one. Every RPC with a guard therefore also has request / target-state
   fixtures with an independent expected decision per case (profile-only
-  update, privilege change, last owner, second owner, legacy `owner_email`
+  update, privilege change, last owner, second owner, foreign environment in
+  `environment_roles`, invisible account, legacy `owner_email`
   account), plus a concurrent owner-removal test against the in-transaction
   check. A guard dropped from Table 2 flips one of these cases and fails.
 - Existing handler tests drop their `checkXRole` mocks and instead put an
@@ -396,7 +422,9 @@ Screens do not change.
    to the explicit `authz.Check` call in the same step as `aichat`.
 4. **Account service last.** Replace the ad-hoc `if` blocks with the guards,
    add the in-transaction owner check, and stop reading `owner_email` for
-   protection.
+   protection. `account_read_visibility_test.go` is carried over against the
+   `AccountVisible` guard so read visibility and NotFound answers are
+   unchanged.
 5. **Public API gateway.** Move the API key role lists into Table 2 and switch
    the native SDK routes to the explicit `authz.Check` call.
 6. **Dashboard.** Read the permission list from `GetMe`; remove the fake
