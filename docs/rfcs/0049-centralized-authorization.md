@@ -202,7 +202,7 @@ var methodRequirements = map[string]Requirement{
         Or(Self("email"), NoPrivilegeChange()).
         Guard(RoleNotAboveCaller("organization_role")).
         Guard(NotLastOwner("email")),
-    "/bucketeer.auditlog.AuditLogService/ListAuditLogs":   EachScope(Env("environment_id", "auditlog:read"), Org("organization_id", "auditlog:manage")),
+    "/bucketeer.auditlog.AuditLogService/ListAuditLogs":   EachScope(Env("environment_id", "auditlog:read"), Org("organization_id", "auditlog:read", MinRole(ADMIN))),
     "/bucketeer.environment.EnvironmentService/UpdateEnvironmentV2": Need("environment:manage", OrgOfEnvironment("id")),
     "/bucketeer.notification.NotificationService/CreateAdminNotification": SystemAdminOnly(),
     "/bucketeer.auth.AuthService/SignIn":                 Public(),
@@ -217,7 +217,7 @@ Scope resolvers, chosen from what the request carries (counted from the
 | `InEnv(field)` | the request has `environment_id` | most feature / experiment / autoops RPCs |
 | `InOrg(field)` | the request has `organization_id` | account, team, organization-wide lists |
 | `InEnvOrOrg(envField, orgField)` | lists that accept either ID and return one scope's rows | `ListTags` (#2995) |
-| `EachScope(Env(...), Org(...))` | lists that accept both IDs and return both scopes' rows; every supplied ID is checked at its own threshold, never one instead of the other | `ListAuditLogs`: environment VIEWER for the environment's logs and organization ADMIN for the organization-level logs, as `checkScopeRole` does today |
+| `EachScope(Env(...), Org(...))` | lists that accept both IDs and return both scopes' rows; every supplied ID is checked at its own threshold, never one instead of the other | `GetAuditLog`, `ListAuditLogs`: environment VIEWER for the environment's logs and organization ADMIN for the organization-level logs, as `checkScopeRole` does today. The organization side stays a *read* permission with a raised threshold (`MinRole(ADMIN)`), so the §4.3 rule "system admins read without membership" still applies to it |
 | `OrgOfEnvironment(idField)` / `OrgOfProject(idField)` | the request has only the resource `id` | 19 environment-service RPCs such as `UpdateEnvironmentV2`, `EnableProject` |
 | `SystemAdminOnly()` | no scope; system admins only | admin notifications, admin subscriptions, `ListOrganizations` |
 | `Public()` | no token yet | `SignIn`, `ExchangeToken`, `FlagTriggerWebhook` (token in body) |
@@ -252,8 +252,8 @@ One handler is outside gRPC: the dashboard's `/v1/aichat/chat` is an HTTP SSE
 handler registered on the REST server (`rest.WithService(chatHTTPSvc)` in
 `pkg/web/cmd/server/server.go`), so no interceptor sees it. It calls
 `authz.Check` explicitly with its own method name and a row in Table 2, and the
-table-driven test lists it next to the gRPC RPCs. It is the only such handler
-today.
+table-driven test lists it next to the gRPC RPCs. The public API gateway has
+the same kind of handlers for SDKs (§4.5); they are treated the same way.
 
 `authz.Check` keeps the special cases that `pkg/role/role.go` implements today,
 moved as they are:
@@ -286,9 +286,12 @@ once in `pkg/authz/guards.go` and attached in Table 2:
 - `Self(field)` + `NoPrivilegeChange()`: a member may update their own account
   as long as `organization_role`, `environment_roles` and `disabled` are
   absent or equal to the stored values. A client that echoes its unchanged
-  environment roles, as the dashboard profile form does, keeps working
-  (replaces the self-service branch and `selfServicePrivilegeChangeAttempted`;
-  a field whitelist was rejected because it would break that client).
+  environment roles, as the dashboard profile form does, keeps working.
+  After the guard passes, the handler still drops the three privilege fields
+  from the write, as today, so an echoed value can never restore a role that
+  an admin revoked between the guard and the write (replaces the self-service
+  branch and `selfServicePrivilegeChangeAttempted`; a field whitelist was
+  rejected because it would break that client).
 - `EnvironmentsInOrganization(field)`: the environment roles being set belong
   to the request's organization (replaces
   `checkEnvironmentRolesInOrganization`).
@@ -313,7 +316,7 @@ lets the `owner_email` account act as owner even when its role was demoted
 below OWNER, as a recovery path covered by a regression test. Role-only
 ownership removes that path, so before it is enforced every organization's
 `owner_email` account must be audited and given the OWNER role where it is
-missing (§5 step 3). Otherwise a legacy organization could end up with no
+missing (§5 step 2). Otherwise a legacy organization could end up with no
 recognized owner, and its former owner would become deletable.
 
 ### 4.5 Public API gateway
@@ -335,6 +338,12 @@ the one relayed. Authorization and the relay use the same scope.
 
 The relay to the web service is unchanged: the web interceptor still checks
 the key's maintainer, so a key never grants more than its maintainer has.
+
+The gateway also serves five native SDK HTTP routes outside gRPC
+(`gatewayService.Register` in `pkg/api/api/api.go`: ping, get evaluations, get
+evaluation, register events, stream evaluations), each doing its own API key
+check today. They get a row in Table 2 keyed by route and call `authz.Check`
+explicitly, like the AI chat handler (§4.3), so the test covers them too.
 
 ### 4.6 Dashboard
 
@@ -359,6 +368,13 @@ Screens do not change.
 - `pkg/authz` gets one table-driven test: every RPC in Table 2 × every role
   (plus system admin, service token, disabled) → expected allow / deny.
 - A test fails when a RPC in any `service.proto` has no row in Table 2.
+- A RPC × role matrix alone cannot prove a guard: the same role may edit its
+  own profile but not its privileges, or remove one of two owners but not the
+  last one. Every RPC with a guard therefore also has request / target-state
+  fixtures with an independent expected decision per case (profile-only
+  update, privilege change, last owner, second owner, legacy `owner_email`
+  account), plus a concurrent owner-removal test against the in-transaction
+  check. A guard dropped from Table 2 flips one of these cases and fails.
 - Existing handler tests drop their `checkXRole` mocks and instead put an
   editor into the context.
 
@@ -368,21 +384,32 @@ Screens do not change.
    mechanically from today's `checkXRole` calls. The interceptor logs every
    disagreement with the handler's own check and denies nothing. Run on dev
    and production until the log is clean.
-2. **Enforce per service.** Starting with small services (tag, team, coderef),
+2. **Owner audit.** Audit every organization's `owner_email` account and
+   grant it the OWNER role where missing, so no organization is left without
+   a recognized owner. This runs before any service is enforced, because
+   `UpdateOrganization` in the environment service carries the legacy
+   `owner_email` recovery path and enforcing it first would lock demoted
+   legacy owners out of organization updates and transfers.
+3. **Enforce per service.** Starting with small services (tag, team, coderef),
    turn the interceptor on for that service's RPCs and delete its wrapper and
    handler checks. Repeat for each package. The AI chat HTTP handler switches
    to the explicit `authz.Check` call in the same step as `aichat`.
-3. **Account service last.** First audit every organization's `owner_email`
-   account and grant it the OWNER role where missing, so no organization is
-   left without a recognized owner. Then replace the ad-hoc `if` blocks with
-   the guards, add the in-transaction owner check, and stop reading
-   `owner_email` for protection.
-4. **Public API gateway.** Move the API key role lists into Table 2.
-5. **Dashboard.** Read the permission list from `GetMe`; remove the fake
+4. **Account service last.** Replace the ad-hoc `if` blocks with the guards,
+   add the in-transaction owner check, and stop reading `owner_email` for
+   protection.
+5. **Public API gateway.** Move the API key role lists into Table 2 and switch
+   the native SDK routes to the explicit `authz.Check` call.
+6. **Dashboard.** Read the permission list from `GetMe`; remove the fake
    EDITOR roles.
-6. Delete `pkg/role/role.go` once nothing calls it.
+7. Delete `pkg/role/role.go` once nothing calls it.
 
-Each step is its own PR and can be reverted independently.
+Each step is its own PR and can be reverted independently, with one
+exception: step 4 is a coordinated cutover. Once role-only ownership permits
+removing the `owner_email` account, a rollback to `checkNotOrganizationOwner`
+would protect nobody (it returns nil when `owner_email` matches no account),
+so the remaining OWNER could be removed too. Until `owner_email` is dropped
+(#2856), granting or revoking OWNER keeps the column in sync with an active
+OWNER, so a rollback always finds a valid owner to protect.
 
 ## 6. Alternatives considered
 
