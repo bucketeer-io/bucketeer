@@ -24,5 +24,18 @@ spec:
             - --baseline
             - "{{ .Values.dbBaseline }}"
             - -u
+            {{- if .Values.existingSecret }}
+            {{- /* Kubernetes expands $(VAR) from the container environment, so the URL never appears in the Job spec. */}}
+            - "$(MIGRATION_DB_URL)"
+            {{- else }}
             - {{ .Values.dbUrl }}
+            {{- end }}
+          {{- if .Values.existingSecret }}
+          env:
+            - name: MIGRATION_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecret | quote }}
+                  key: {{ .Values.existingSecretKey | default "db-url" | quote }}
+          {{- end }}
       restartPolicy: Never

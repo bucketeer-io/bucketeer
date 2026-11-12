@@ -105,6 +105,38 @@ encryption-key-secret:
 	kubectl delete secret bucketeer-encryption-key --namespace $(NAMESPACE) --ignore-not-found
 	kubectl create secret generic bucketeer-encryption-key --from-file key=${CURDIR}/cert/encryption-key --namespace $(NAMESPACE)
 
+# Database URL for the migration job, read through migration.existingSecret in
+# manifests/bucketeer/values.dev.yaml. The password is taken from the Secret of
+# the local database and percent-encoded, so the URL is never written to the
+# repository. Run it after localenv is installed, and again after changing the
+# localenv database password; the root Makefile runs it from deploy-bucketeer.
+# OPERATIONAL_DB_TYPE is mysql or postgres.
+OPERATIONAL_DB_TYPE ?= mysql
+.PHONY: migration-db-url-secret
+migration-db-url-secret:
+	kubectl config use-context minikube
+	@set -e; \
+	case "$(OPERATIONAL_DB_TYPE)" in \
+		mysql) \
+			scheme=mysql; user=root; \
+			secret=localenv-mysql-secrets; key=mysql-root-password; \
+			address="localenv-mysql.$(NAMESPACE).svc:3306/bucketeer";; \
+		postgres) \
+			scheme=postgres; user=bucketeer; \
+			secret=localenv-postgresql-secret; key=postgres-password; \
+			address="localenv-postgresql-headless.$(NAMESPACE).svc.cluster.local:5432/bucketeer?sslmode=disable";; \
+		*) echo "Unsupported OPERATIONAL_DB_TYPE '$(OPERATIONAL_DB_TYPE)': use mysql or postgres" >&2; exit 1;; \
+	esac; \
+	pass=$$(kubectl get secret $$secret --namespace $(NAMESPACE) \
+		-o go-template="{{ index .data \"$$key\" | base64decode | urlquery }}" | sed 's/+/%20/g'); \
+	if [ -z "$$pass" ]; then \
+		echo "Could not read $$key from the $$secret Secret. Install localenv first (make start-minikube)." >&2; \
+		exit 1; \
+	fi; \
+	kubectl delete secret bucketeer-migration-db-url --namespace $(NAMESPACE) --ignore-not-found; \
+	kubectl create secret generic bucketeer-migration-db-url \
+		--from-literal db-url="$$scheme://$$user:$$pass@$$address" --namespace $(NAMESPACE)
+
 # Pre-cache Docker images to persist them across minikube deletions
 pre-cache-docker-images:
 	@echo "Pre-caching Docker images to survive minikube deletions..."

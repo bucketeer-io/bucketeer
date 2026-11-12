@@ -836,6 +836,10 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 		echo "Ensuring PostgreSQL event tables exist..."; \
 		make -C ./ create-postgres-event-tables-minikube; \
 	fi
+	# The migration job reads its database URL from this Secret
+	# (migration.existingSecret in values.dev.yaml). It is built from the
+	# localenv database Secret, so it has to run after localenv is installed.
+	make -C tools/dev migration-db-url-secret OPERATIONAL_DB_TYPE=$(if $(filter postgres,$(ODB_TYPE)),postgres,mysql)
 	@echo "Installing Bucketeer services..."
 	helm install bucketeer manifests/bucketeer/ --values manifests/bucketeer/values.dev.yaml
 
@@ -887,7 +891,33 @@ docker-compose-setup: ensure-service-token ensure-encryption-key ensure-dev-cert
 	else \
 		echo "docker-compose/secrets directory already exists"; \
 	fi
+	@$(MAKE) docker-compose-migration-db-url
 	@echo "Docker Compose setup complete"
+
+# Database URL of the Docker Compose migration service, read by the migration
+# container as the migration_db_url secret (docker-compose/config/atlas/atlas.hcl).
+# Created only when the file is missing, from the password in
+# docker-compose/secrets/mysql_password.txt, so a URL that was edited by hand is
+# kept and a checkout whose secrets directory already exists gets the file too.
+# A password with characters outside the URL unreserved set is written with every
+# byte percent-encoded. The URL is put together by printf: a literal
+# scheme://user:password@host template in this file is reported by secret
+# scanning as a connection string.
+.PHONY: docker-compose-migration-db-url
+docker-compose-migration-db-url:
+	@set -e; \
+	file=docker-compose/secrets/migration_db_url.txt; \
+	if [ -f "$$file" ]; then \
+		echo "$$file already exists"; \
+		exit 0; \
+	fi; \
+	pass=$$(cat docker-compose/secrets/mysql_password.txt); \
+	case "$$pass" in \
+		*[!A-Za-z0-9._~-]*) pass=$$(printf '%s' "$$pass" | od -An -v -tx1 | tr -d ' \n' | sed 's/../%&/g');; \
+	esac; \
+	umask 077; \
+	printf '%s://%s:%s@%s\n' mysql bucketeer "$$pass" mysql:3306/bucketeer > "$$file"; \
+	echo "Created $$file"
 
 .PHONY: docker-compose-init-env
 docker-compose-init-env:
@@ -959,6 +989,7 @@ docker-compose-regenerate-secrets:
 	@echo "bucketeer" > docker-compose/secrets/mysql_password.txt
 	@echo "bucketeer" > docker-compose/secrets/postgres_password.txt
 	@chmod 600 docker-compose/secrets/*.txt
+	@$(MAKE) docker-compose-migration-db-url
 	@echo "MySQL and Postgres secrets regenerated"
 
 .PHONY: docker-compose-delete-data

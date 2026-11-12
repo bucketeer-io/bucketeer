@@ -14,7 +14,15 @@ ttlSecondsAfterFinished:
 
 # URL to access the DB to do the migration
 # E.g. mysql://user:password@host:port/db_name
+# The URL is passed to the migration job as a plain argument, so anyone who
+# can read the Job or the Helm release can read the password. Prefer
+# `existingSecret` below.
 dbUrl:
+# Existing Secret to read the URL from instead of `dbUrl`. When set, `dbUrl`
+# is ignored. The Secret must already exist in the release namespace.
+# Percent-encode special characters in the user name and password.
+existingSecret: ""
+existingSecretKey: "db-url"
 
 # The migration baseline
 # First revision

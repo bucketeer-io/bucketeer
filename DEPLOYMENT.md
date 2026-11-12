@@ -216,7 +216,16 @@ add_header 'Access-Control-Allow-Origin' 'https://your-domain.com' always;
 mkdir -p docker-compose/secrets
 echo "your-mysql-password" > docker-compose/secrets/mysql_password.txt
 echo "your-mysql-root-password" > docker-compose/secrets/mysql_root_password.txt
+# Database URL of the migration service: user, password, host, port and database name.
+# Percent-encode special characters in the user name and password.
+echo "mysql://user:password@host:port/db_name" > docker-compose/secrets/migration_db_url.txt
+chmod 600 docker-compose/secrets/*.txt
 ```
+
+`make docker-compose-setup` creates `migration_db_url.txt` for the bundled MySQL when
+it is missing and never overwrites it. The migration service reads the whole URL from
+this file; nothing else does, so the MySQL settings of the other services in
+`docker-compose/compose.yml` have to match it.
 
 ```bash
 # For PostgresQL
@@ -233,7 +242,8 @@ container environment values. The exception is the demo sign-in password, which
 `env.js` publishes to the browser by design when the demo sign-in is enabled (see
 above). For the database passwords, the OAuth configuration and the email
 configuration you can also create the Secrets yourself and point the chart at them,
-so those values do not have to appear in a values file:
+so those values do not have to appear in a values file. The same applies to the
+database URL of the migration job:
 - Database passwords: `global.operationalDatabase.mysql.existingSecret` /
   `existingSecretKey` and `global.operationalDatabase.postgres.existingSecret` /
   `existingSecretKey` (each service chart can override them under
@@ -241,6 +251,20 @@ so those values do not have to appear in a values file:
   `secretKeyRef`; when no existing Secret is set, the chart creates
   `<service>-db-credentials` from `pass`, and changing `pass` rolls the pods. Pods do
   not restart on their own when the content of an existing Secret changes.
+- Migration database URL: `migration.existingSecret` / `existingSecretKey`
+  (`existingSecret` / `existingSecretKey` in the standalone `bucketeer-migration`
+  chart), a Secret whose key (`db-url` by default) holds the complete URL, for
+  example `mysql://user:password@host:port/db_name`. Percent-encode special
+  characters in the user name and password. Unlike the passwords above,
+  `migration.dbUrl` is not rendered into a Secret: it is passed to the migration job
+  as a plain argument, so it is readable in the Job and in the Helm release. With
+  `existingSecret` the job reads the URL through a `secretKeyRef` and `dbUrl` is
+  ignored. In the `bucketeer` chart the migration job is a pre-install/pre-upgrade
+  hook, so the Secret must exist in the release namespace before Helm runs:
+  ```shell
+  kubectl create secret generic bucketeer-migration-db-url -n bucketeer \
+    --from-literal db-url='mysql://user:password@host:port/db_name'
+  ```
 - OAuth configuration: `web.oauth.existingSecret`, a Secret with an
   `oauth-config.json` key holding the complete `oauth` block as JSON.
 - Email configuration: `global.email.existingSecret`, a Secret with an

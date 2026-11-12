@@ -32,7 +32,20 @@ spec:
             - --baseline
             - "{{ .Values.migration.dbBaseline }}"
             - -u
+            {{- if .Values.migration.existingSecret }}
+            {{- /* Kubernetes expands $(VAR) from the container environment, so the URL never appears in the Job spec. */}}
+            - "$(MIGRATION_DB_URL)"
+            {{- else }}
             - {{ .Values.migration.dbUrl }}
+            {{- end }}
+          {{- if .Values.migration.existingSecret }}
+          env:
+            - name: MIGRATION_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.migration.existingSecret | quote }}
+                  key: {{ .Values.migration.existingSecretKey | default "db-url" | quote }}
+          {{- end }}
           {{- if .Values.global.operationalDatabase.postgres.sslSecretName }}
           volumeMounts:
             - name: postgres-cert-secret

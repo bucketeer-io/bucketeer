@@ -93,6 +93,15 @@ The following command will deploy all the Bucketeer services at once.
 make deploy-bucketeer
 ```
 
+**Note:** The migration job reads its database URL from the `bucketeer-migration-db-url` Secret (`migration.existingSecret` in `values.dev.yaml`), so the URL and its password are not kept in the repository. `make deploy-bucketeer` creates the Secret from the password of the local database, following `global.operationalDatabase.type`. If you run `helm install` or `helm upgrade` for `manifests/bucketeer` yourself on a cluster that does not have the Secret yet (for example, a cluster deployed before this Secret was introduced), create it first. Otherwise the migration job cannot start and Helm waits until it times out.
+
+```shell
+# MySQL (default)
+make -C tools/dev migration-db-url-secret
+# PostgreSQL
+make -C tools/dev migration-db-url-secret OPERATIONAL_DB_TYPE=postgres
+```
+
 If you need to deploy a single service, you can do as follows.
 
 ```shell

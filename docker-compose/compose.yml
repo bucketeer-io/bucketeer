@@ -5,6 +5,8 @@ secrets:
     file: ./secrets/mysql_root_password.txt
   postgres_password:
     file: ./secrets/postgres_password.txt
+  migration_db_url:
+    file: ./secrets/migration_db_url.txt
 
 services:
   mysql:
@@ -113,13 +115,23 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    command: 
+    # The database URL (user, password, host, port and database name) is read
+    # from the migration_db_url secret through config/atlas/atlas.hcl, so it is
+    # not written here. `make docker-compose-setup` creates
+    # secrets/migration_db_url.txt; edit that file to change the URL.
+    command:
       - migrate
       - apply
-      - -u
-      - mysql://bucketeer:bucketeer@mysql:3306/bucketeer
+      - --config
+      - file:///etc/atlas/atlas.hcl
+      - --env
+      - docker-compose
       - --baseline
       - "20240626022133"
+    secrets:
+      - migration_db_url
+    volumes:
+      - ./config/atlas/atlas.hcl:/etc/atlas/atlas.hcl:ro
     networks:
       - bucketeer
     restart: "no"
