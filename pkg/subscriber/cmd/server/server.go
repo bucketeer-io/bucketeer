@@ -95,6 +95,8 @@ type server struct {
 	webURL           *string
 	emailConfigPath  *string
 	demoSiteEnabled  *bool
+	// Demo site
+	demoOrganizationCreationNotifierSlackWebhookURL *string
 	// Encryption of secrets stored at rest
 	encryptionType    *string
 	encryptionKeyID   *string
@@ -171,6 +173,11 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
 		webURL:           cmd.Flag("web-url", "Web console URL.").Required().String(),
 		emailConfigPath:  cmd.Flag("email-config-path", "Path to email config.").Required().String(),
+		demoOrganizationCreationNotifierSlackWebhookURL: cmd.Flag(
+			"demo-organization-creation-notifier-slack-webhook-url",
+			"Slack webhook URL of the demo organization creation notifier. "+
+				"When set, it is used instead of the webhook URL in the processors config.",
+		).String(),
 		encryptionType: cmd.Flag(
 			"encryption-type",
 			"Encryption of stored secrets such as FCM service accounts (none, aead-local). "+
@@ -1203,6 +1210,7 @@ func (s *server) registerPubSubProcessorMap(
 			demoOrganizationCreationNotifier := processor.NewDemoOrganizationCreationNotifier(
 				processorsConfigMap[processor.DemoOrganizationCreationNotifierName],
 				*s.webURL,
+				*s.demoOrganizationCreationNotifierSlackWebhookURL,
 				logger,
 			)
 			processors.RegisterProcessor(

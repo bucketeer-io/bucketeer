@@ -50,9 +50,15 @@ type demoOrganizationCreationNotifier struct {
 	logger                                 *zap.Logger
 }
 
+// NewDemoOrganizationCreationNotifier creates the processor that notifies a
+// Slack channel when a demo organization is created.
+// slackWebhookURL, when not empty, takes precedence over the webhook URL in
+// config, so that the URL can be supplied separately from the processors
+// config, for example from a Kubernetes Secret.
 func NewDemoOrganizationCreationNotifier(
 	config interface{},
 	webURL string,
+	slackWebhookURL string,
 	logger *zap.Logger,
 ) subscriber.PubSubProcessor {
 	jsonConfigMap, ok := config.(map[string]interface{})
@@ -69,6 +75,9 @@ func NewDemoOrganizationCreationNotifier(
 	if err := json.Unmarshal(configBytes, &notifierConfig); err != nil {
 		logger.Error("demoOrganizationCreationNotifier: failed to unmarshal config", zap.Error(err))
 		return nil
+	}
+	if slackWebhookURL != "" {
+		notifierConfig.Notifier.Slack.WebHookURL = slackWebhookURL
 	}
 	slackNotifier := notifier.NewSlackNotifier(webURL)
 

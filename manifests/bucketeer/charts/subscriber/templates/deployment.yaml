@@ -87,6 +87,14 @@ spec:
               value: "{{.Values.env.profile}}"
             - name: BUCKETEER_SUBSCRIBER_DEMO_SITE_ENABLED
               value: "{{.Values.env.demoSiteEnabled}}"
+            {{- $demoSlack := (((.Values.processors.demoOrganizationCreationNotifier).notifier).slack) | default dict }}
+            {{- if and .Values.env.demoSiteEnabled $demoSlack.existingSecret }}
+            - name: BUCKETEER_SUBSCRIBER_DEMO_ORGANIZATION_CREATION_NOTIFIER_SLACK_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $demoSlack.existingSecret | quote }}
+                  key: {{ $demoSlack.existingSecretKey | default "slack-webhook-url" | quote }}
+            {{- end }}
             - name: BUCKETEER_SUBSCRIBER_GCP_TRACE_ENABLED
               value: "{{.Values.env.gcpEnabled}}"
             - name: PUBSUB_EMULATOR_HOST

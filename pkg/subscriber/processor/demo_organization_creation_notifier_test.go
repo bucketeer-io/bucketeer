@@ -105,6 +105,66 @@ func TestDemoOrganizationCreationNotifierHandleMessageLogsOmitWebhookURL(t *test
 	}
 }
 
+func TestNewDemoOrganizationCreationNotifierWebhookURL(t *testing.T) {
+	t.Parallel()
+	const configuredWebhookURL = "https://hooks.slack.com/services/T000/B000/configured"
+	patterns := []struct {
+		desc            string
+		config          map[string]interface{}
+		slackWebhookURL string
+		expected        string
+	}{
+		{
+			desc: "the webhook url in the config is used",
+			config: map[string]interface{}{
+				"notifier": map[string]interface{}{
+					"slack": map[string]interface{}{"webhookURL": configuredWebhookURL},
+				},
+			},
+			expected: configuredWebhookURL,
+		},
+		{
+			desc: "the webhook url passed separately replaces the one in the config",
+			config: map[string]interface{}{
+				"notifier": map[string]interface{}{
+					"slack": map[string]interface{}{"webhookURL": configuredWebhookURL},
+				},
+			},
+			slackWebhookURL: testSlackWebhookURL,
+			expected:        testSlackWebhookURL,
+		},
+		{
+			desc: "the webhook url passed separately is used when the config has none",
+			config: map[string]interface{}{
+				"notifier": map[string]interface{}{
+					"slack": map[string]interface{}{"webhookURL": ""},
+				},
+			},
+			slackWebhookURL: testSlackWebhookURL,
+			expected:        testSlackWebhookURL,
+		},
+		{
+			desc:            "the webhook url passed separately is used when the config is empty",
+			config:          map[string]interface{}{},
+			slackWebhookURL: testSlackWebhookURL,
+			expected:        testSlackWebhookURL,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			created := NewDemoOrganizationCreationNotifier(
+				p.config,
+				"https://example.com",
+				p.slackWebhookURL,
+				zap.NewNop(),
+			)
+			d, ok := created.(*demoOrganizationCreationNotifier)
+			require.True(t, ok)
+			assert.Equal(t, p.expected, d.demoOrganizationCreationNotifierConfig.Notifier.Slack.WebHookURL)
+		})
+	}
+}
+
 func newDemoOrganizationCreatedMessage(t *testing.T, ack func()) *puller.Message {
 	t.Helper()
 	data, err := anypb.New(&domaineventproto.OrganizationCreatedEvent{

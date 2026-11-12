@@ -277,9 +277,17 @@ database URL of the migration job:
   `oauth-config.json` key holding the complete `oauth` block as JSON.
 - Email configuration: `global.email.existingSecret`, a Secret with an
   `email-config.json` key holding the complete `global.email` block as JSON.
+- Slack webhook URL of the demo organization creation notifier:
+  `subscriber.processors.demoOrganizationCreationNotifier.notifier.slack.existingSecret`
+  / `existingSecretKey`, a Secret whose key (`slack-webhook-url` by default) holds
+  the webhook URL. It is injected into the subscriber through a `secretKeyRef` and
+  takes precedence over `webhookURL`, which can then stay empty. It is only used
+  when `subscriber.env.demoSiteEnabled` is `true`. Pods do not restart on their own
+  when the content of the Secret changes.
 
-The data warehouse and subscriber processor configurations are always rendered by the
-chart from values; they have no existing-Secret override.
+The data warehouse configuration and the rest of the subscriber processor
+configuration are always rendered by the chart from values; they have no
+existing-Secret override.
 
 **Encrypt stored secrets (FCM service accounts and Slack webhook URLs):**
 Push configurations store a Firebase service-account key and notification
