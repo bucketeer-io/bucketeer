@@ -179,8 +179,8 @@ editor := rpc.EditorFrom(ctx)
 // pkg/authz/permissions.go
 var rolePermissions = map[Role][]Permission{
     OrgOwner:  {"*"},
-    OrgAdmin:  {"organization:read", "account:manage", "apikey:manage", Inherit(EnvEditor)},
-    OrgMember: {"organization:read"},            // plus the environment roles below
+    OrgAdmin:  {"organization:read", "account:read", "account:manage", "apikey:manage", "environment:manage", Inherit(EnvEditor)},
+    OrgMember: {"organization:read", "account:read"}, // plus the environment roles below
     EnvEditor: {"feature:read", "feature:write", "segment:read", "segment:write", "experiment:read", "experiment:write", /* ... */},
     EnvViewer: {"feature:read", "segment:read", "experiment:read", /* ... */},
 }
