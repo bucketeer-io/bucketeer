@@ -47,7 +47,7 @@ type TagStorage interface {
 		params ListTagsParams,
 	) ([]*proto.Tag, int, int64, error)
 	ListAllEnvironmentTags(ctx context.Context) ([]*proto.EnvironmentTag, error)
-	DeleteTag(ctx context.Context, id string) error
+	DeleteTag(ctx context.Context, id, environmentID string) error
 }
 
 type ListTagsParams struct {

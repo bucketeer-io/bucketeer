@@ -42,7 +42,7 @@ type TeamStorage interface {
 		ctx context.Context,
 		params ListTeamsParams,
 	) ([]*proto.Team, int, int64, error)
-	DeleteTeam(ctx context.Context, id string) error
+	DeleteTeam(ctx context.Context, id, organizationID string) error
 }
 
 type ListTeamsParams struct {
