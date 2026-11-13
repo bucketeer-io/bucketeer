@@ -91,6 +91,41 @@ func TestGetAuditLogMySQL(t *testing.T) {
 	}
 }
 
+func TestAuditLogMissingScopeMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc string
+		call func(*auditLogStorage) error
+	}{
+		{
+			desc: "GetAuditLog",
+			call: func(s *auditLogStorage) error {
+				_, err := s.GetAuditLog(context.Background(), "audit-log-id", "", "")
+				return err
+			},
+		},
+		{
+			desc: "ListAuditLogs",
+			call: func(s *auditLogStorage) error {
+				_, _, _, err := s.ListAuditLogs(context.Background(), v2als.ListAuditLogsParams{
+					PageSize: 10,
+					Cursor:   "0",
+				})
+				return err
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := &auditLogStorage{qe: mock.NewMockClient(mockController)}
+			assert.Equal(t, v2als.ErrMissingScope, p.call(storage))
+		})
+	}
+}
+
 func TestCreateAuditLogMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

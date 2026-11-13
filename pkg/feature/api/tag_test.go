@@ -47,6 +47,12 @@ func TestListTagsMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
+			desc:        "errMissingEnvironmentID",
+			input:       &featureproto.ListTagsRequest{},
+			expected:    nil,
+			expectedErr: statusMissingEnvironmentID.Err(),
+		},
+		{
 			desc:        "errInvalidCursor",
 			input:       &featureproto.ListTagsRequest{EnvironmentId: environmentId, Cursor: "foo"},
 			expected:    nil,

@@ -33,6 +33,9 @@ func (s *FeatureService) ListTags(
 	ctx context.Context,
 	req *featureproto.ListTagsRequest,
 ) (*featureproto.ListTagsResponse, error) {
+	if req.EnvironmentId == "" {
+		return nil, statusMissingEnvironmentID.Err()
+	}
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
 		req.EnvironmentId)
