@@ -356,6 +356,12 @@ processors:
     notifier:
       slack:
         webhookURL: ""
+        # Existing Secret to read the webhook URL from instead of `webhookURL`.
+        # It is injected through a secretKeyRef and takes precedence over
+        # `webhookURL`. `existingSecretKey` defaults to `slack-webhook-url`.
+        # Only used when env.demoSiteEnabled is true.
+        existingSecret:
+        existingSecretKey:
   emailSender: {}
   # Processors for the dedicated DWH/OPS topic persisters (see `subscribers`).
   # The DWH ones need an empty `dataWarehouse` map, filled from global settings.
