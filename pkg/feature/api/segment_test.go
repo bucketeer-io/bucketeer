@@ -249,7 +249,7 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 					},
 				}, nil, nil)
 				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().DeleteSegment(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &featureproto.DeleteSegmentRequest{
@@ -854,7 +854,7 @@ func TestSegmentDomainEventPublishedAfterCommitMySQL(t *testing.T) {
 					},
 				}, nil, nil)
 				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().DeleteSegment(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			run: func(s *FeatureService) error {

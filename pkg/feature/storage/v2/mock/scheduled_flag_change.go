@@ -134,32 +134,32 @@ func (mr *MockScheduledFlagChangeStorageMockRecorder) ListScheduledFlagChanges(c
 }
 
 // TryLock mocks base method.
-func (m *MockScheduledFlagChangeStorage) TryLock(ctx context.Context, id, lockedBy string) (bool, error) {
+func (m *MockScheduledFlagChangeStorage) TryLock(ctx context.Context, id, environmentID, lockedBy string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TryLock", ctx, id, lockedBy)
+	ret := m.ctrl.Call(m, "TryLock", ctx, id, environmentID, lockedBy)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // TryLock indicates an expected call of TryLock.
-func (mr *MockScheduledFlagChangeStorageMockRecorder) TryLock(ctx, id, lockedBy any) *gomock.Call {
+func (mr *MockScheduledFlagChangeStorageMockRecorder) TryLock(ctx, id, environmentID, lockedBy any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TryLock", reflect.TypeOf((*MockScheduledFlagChangeStorage)(nil).TryLock), ctx, id, lockedBy)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TryLock", reflect.TypeOf((*MockScheduledFlagChangeStorage)(nil).TryLock), ctx, id, environmentID, lockedBy)
 }
 
 // Unlock mocks base method.
-func (m *MockScheduledFlagChangeStorage) Unlock(ctx context.Context, id, lockedBy string) error {
+func (m *MockScheduledFlagChangeStorage) Unlock(ctx context.Context, id, environmentID, lockedBy string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Unlock", ctx, id, lockedBy)
+	ret := m.ctrl.Call(m, "Unlock", ctx, id, environmentID, lockedBy)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Unlock indicates an expected call of Unlock.
-func (mr *MockScheduledFlagChangeStorageMockRecorder) Unlock(ctx, id, lockedBy any) *gomock.Call {
+func (mr *MockScheduledFlagChangeStorageMockRecorder) Unlock(ctx, id, environmentID, lockedBy any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unlock", reflect.TypeOf((*MockScheduledFlagChangeStorage)(nil).Unlock), ctx, id, lockedBy)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unlock", reflect.TypeOf((*MockScheduledFlagChangeStorage)(nil).Unlock), ctx, id, environmentID, lockedBy)
 }
 
 // UpdateScheduledFlagChange mocks base method.
