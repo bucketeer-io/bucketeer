@@ -294,3 +294,19 @@ Big thanks to all Bucketeer contributors who have helped us since the beginning!
 <a href="https://github.com/yysskk"><img src="https://avatars.githubusercontent.com/u/7744927?v=4" title="yysskk" width="80" height="80"></a>
 <a href="https://github.com/xenbase"><img src="https://avatars.githubusercontent.com/u/1312483?v=4" title="xenbase" width="80" height="80"></a>
 <a href="https://github.com/unvalley"><img src="https://avatars.githubusercontent.com/u/38400669?v=4" title="unvalley" width="80" height="80"></a>
+<a href="https://github.com/steveninhle"><img src="https://avatars.githubusercontent.com/u/39097412?v=4" title="steveninhle" width="80" height="80"></a>
+<a href="https://github.com/SekineNaoyuki-cyberagent"><img src="https://avatars.githubusercontent.com/u/349169423?v=4" title="SekineNaoyuki-cyberagent" width="80" height="80"></a>
+<a href="https://github.com/kimurakazuhiro-c"><img src="https://avatars.githubusercontent.com/u/316061370?v=4" title="kimurakazuhiro-c" width="80" height="80"></a>
+<a href="https://github.com/pradhankukiran"><img src="https://avatars.githubusercontent.com/u/127883780?v=4" title="pradhankukiran" width="80" height="80"></a>
+<a href="https://github.com/Rtosshy"><img src="https://avatars.githubusercontent.com/u/98640064?v=4" title="Rtosshy" width="80" height="80"></a>
+<a href="https://github.com/knanao"><img src="https://avatars.githubusercontent.com/u/50069775?v=4" title="knanao" width="80" height="80"></a>
+
+<a href="https://github.com/sivchari"><img src="https://avatars.githubusercontent.com/u/55221074?v=4" title="sivchari" width="80" height="80"></a>
+<a href="https://github.com/ouchi2501"><img src="https://avatars.githubusercontent.com/u/11391317?v=4" title="ouchi2501" width="80" height="80"></a>
+<a href="https://github.com/3846masa"><img src="https://avatars.githubusercontent.com/u/5629366?v=4" title="3846masa" width="80" height="80"></a>
+<a href="https://github.com/Warashi"><img src="https://avatars.githubusercontent.com/u/3600530?v=4" title="Warashi" width="80" height="80"></a>
+<a href="https://github.com/ta1m1kam"><img src="https://avatars.githubusercontent.com/u/25325947?v=4" title="ta1m1kam" width="80" height="80"></a>
+<a href="https://github.com/pcbeingused333"><img src="https://avatars.githubusercontent.com/u/82875882?v=4" title="pcbeingused333" width="80" height="80"></a>
+<a href="https://github.com/isomorfisma"><img src="https://avatars.githubusercontent.com/u/133991017?v=4" title="isomorfisma" width="80" height="80"></a>
+<a href="https://github.com/balckowl"><img src="https://avatars.githubusercontent.com/u/129815120?v=4" title="balckowl" width="80" height="80"></a>
+<a href="https://github.com/orshih6"><img src="https://avatars.githubusercontent.com/u/34618353?v=4" title="orshih6" width="80" height="80"></a>
