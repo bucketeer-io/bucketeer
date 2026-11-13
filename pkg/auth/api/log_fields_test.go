@@ -33,6 +33,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/google"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	tokentesting "github.com/bucketeer-io/bucketeer/v2/pkg/token/testing"
 	acproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
@@ -230,7 +231,8 @@ func TestAuthService_ExchangeToken_LogsOmitCode(t *testing.T) {
 			authenticator: &fakeAuthenticator{userInfo: &auth.UserInfo{Email: email}},
 			setup: func(t *testing.T, s *authService, ac *accountclientmock.MockClient) {
 				t.Helper()
-				signer, err := token.NewSigner("../../token/testdata/valid-private.pem")
+				privateKeyPath, _ := tokentesting.WriteKeyPair(t)
+				signer, err := token.NewSigner(privateKeyPath)
 				require.NoError(t, err)
 				s.signer = signer
 				ac.EXPECT().GetMyOrganizationsByEmail(gomock.Any(), gomock.Any()).Return(
