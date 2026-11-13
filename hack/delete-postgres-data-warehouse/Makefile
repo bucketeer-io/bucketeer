@@ -1,4 +1,4 @@
-TAG=v0.0.1
+TAG=v0.0.2
 IMAGE=ghcr.io/bucketeer-io/bucketeer-delete-postgres-data-warehouse
 
 .PHONY: deps

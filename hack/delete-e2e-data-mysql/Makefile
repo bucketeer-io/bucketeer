@@ -1,4 +1,4 @@
-TAG=v0.0.9
+TAG=v0.0.10
 IMAGE=ghcr.io/bucketeer-io/bucketeer-delete-e2e-data-mysql
 
 .PHONY: deps
