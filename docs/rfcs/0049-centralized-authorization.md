@@ -104,7 +104,11 @@ The scope resolver says where the scope comes from: an `environment_id` or
 `organization_id` in the request, the organization of a resource whose `id`
 is the only field (environment service), the authenticated API key (gateway),
 both IDs each checked at its own threshold (audit logs), system admin only, or
-public. An RPC with no row is denied.
+public. A requirement may also carry several scopes: every ID in a repeated
+field is checked (`EachEnv("environment_ids")`, insights), and a source /
+target pair is checked at different permissions (`CloneFeature`:
+`feature:read` in `environment_id` and `feature:write` in
+`target_environment_id`). An RPC with no row is denied.
 
 ### Interceptor
 
