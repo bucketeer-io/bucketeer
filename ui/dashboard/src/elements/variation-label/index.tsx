@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { cn } from 'utils/style';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import NameWithTooltip from 'elements/name-with-tooltip';
@@ -13,7 +14,8 @@ const VariationLabel = ({
   className?: string;
   asChild?: boolean;
 }) => {
-  const id = `variation-label-${index}`;
+  // Unique per instance: the same index is rendered in several places on one page
+  const id = `variation-label-${useId()}`;
 
   return (
     <div className={cn('flex items-center gap-x-2 pl-0.5', className)}>

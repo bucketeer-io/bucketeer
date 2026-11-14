@@ -12,8 +12,8 @@ import { Organization } from '@types';
 import Button from 'components/button';
 import Dropdown from 'components/dropdown';
 import Form from 'components/form';
-import Input from 'components/input';
 import TextArea from 'components/textarea';
+import InputWithTooltip from 'elements/input-with-tooltip';
 
 const formSchema = ({ requiredMessage }: FormSchemaProps) =>
   yup.object().shape({
@@ -93,7 +93,7 @@ const OrganizationSettings = ({
                 <Form.Item>
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                       name="organization-name"
@@ -110,7 +110,7 @@ const OrganizationSettings = ({
                 <Form.Item>
                   <Form.Label required>{t('form:url-code')}</Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       disabled
                       placeholder={`${t('form:placeholder-code')}`}
                       {...field}

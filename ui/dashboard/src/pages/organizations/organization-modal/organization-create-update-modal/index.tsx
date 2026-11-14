@@ -25,10 +25,10 @@ import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
 import Dropdown from 'components/dropdown';
 import Form from 'components/form';
-import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
 import FormLoading from 'elements/form-loading';
+import InputWithTooltip from 'elements/input-with-tooltip';
 
 interface OrganizationCreateUpdateModalProps {
   isOpen: boolean;
@@ -179,7 +179,7 @@ const OrganizationCreateUpdateModal = ({
                   <Form.Item>
                     <Form.Label required>{t('name')}</Form.Label>
                     <Form.Control>
-                      <Input
+                      <InputWithTooltip
                         placeholder={`${t('form:placeholder-name')}`}
                         autoComplete="organization"
                         {...field}
@@ -210,7 +210,7 @@ const OrganizationCreateUpdateModal = ({
                   <Form.Item>
                     <Form.Label required>{t('form:url-code')}</Form.Label>
                     <Form.Control>
-                      <Input
+                      <InputWithTooltip
                         placeholder={`${t('form:placeholder-code')}`}
                         disabled={!!organization}
                         {...field}
@@ -258,7 +258,7 @@ const OrganizationCreateUpdateModal = ({
                           })}
                         />
                       ) : (
-                        <Input
+                        <InputWithTooltip
                           placeholder={`${t('form:placeholder-email')}`}
                           autoComplete="email"
                           {...field}

@@ -12,9 +12,9 @@ import { onGenerateSlug } from 'utils/converts';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Form from 'components/form';
-import Input from 'components/input';
 import DialogModal from 'components/modal/dialog';
 import TextArea from 'components/textarea';
+import InputWithTooltip from 'elements/input-with-tooltip';
 
 export type CreateGoalModalProps = {
   isOpen: boolean;
@@ -112,7 +112,7 @@ const CreateGoalModal = ({
                 <Form.Item className="w-full py-0">
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       {...field}
                       placeholder={t('form:placeholder-name')}
                       onChange={value => {
@@ -134,7 +134,7 @@ const CreateGoalModal = ({
                 <Form.Item className="w-full py-0">
                   <Form.Label required>{t('form:goal-id')}</Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       {...field}
                       placeholder={t('form:placeholder-goal-id')}
                       name="goal-id"

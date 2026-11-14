@@ -9,9 +9,9 @@ import { IconCopy, IconToastWarning, IconWatch, IconWebhook } from '@icons';
 import Button from 'components/button';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import DateTooltip from 'elements/date-tooltip';
 import FeatureFlagStatus from 'elements/feature-flag-status';
+import InputWithTooltip from 'elements/input-with-tooltip';
 import { TriggerAction } from '../types';
 import TriggerPopover from './trigger-popover';
 
@@ -108,7 +108,7 @@ const TriggerItem = ({
               {t('trigger.trigger-url')}
             </p>
             <div className="flex items-center gap-x-2">
-              <Input value={triggerNewlyCreated?.url} readOnly />
+              <InputWithTooltip value={triggerNewlyCreated?.url} readOnly />
               <Button
                 variant={'secondary-2'}
                 className="px-3"

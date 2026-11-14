@@ -28,9 +28,9 @@ import Divider from 'components/divider';
 import Dropdown, { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { Tooltip } from 'components/tooltip';
+import InputWithTooltip from 'elements/input-with-tooltip';
 import SelectMenu from 'elements/select-menu';
 import EnvironmentRoles from './environment-roles';
 
@@ -204,7 +204,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                 <Form.Item>
                   <Form.Label required>{t('email')}</Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       placeholder={t('form:placeholder-email')}
                       autoComplete="email"
                       {...field}

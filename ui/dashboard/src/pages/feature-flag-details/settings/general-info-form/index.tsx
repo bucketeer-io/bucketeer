@@ -19,12 +19,12 @@ import Button from 'components/button';
 import { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import Card from 'elements/card';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import InputWithTooltip from 'elements/input-with-tooltip';
 import SelectMenu from 'elements/select-menu';
 import {
   SCHEDULE_TYPE_SCHEDULE,
@@ -295,7 +295,7 @@ const GeneralInfoForm = ({
               <Form.Item className="w-full py-0">
                 <Form.Label required>{t('common:name')}</Form.Label>
                 <Form.Control>
-                  <Input
+                  <InputWithTooltip
                     {...field}
                     placeholder={t('placeholder-name')}
                     disabled={disabled}
@@ -312,7 +312,7 @@ const GeneralInfoForm = ({
               <Form.Item className="w-full py-0">
                 <Form.Label required>{t('feature-flags.flag-id')}</Form.Label>
                 <Form.Control>
-                  <Input
+                  <InputWithTooltip
                     {...field}
                     disabled
                     placeholder={t('feature-flags.placeholder-flag')}

@@ -7,8 +7,8 @@ import { onGenerateSlug } from 'utils/converts';
 import { IconInfo } from '@icons';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import { Tooltip } from 'components/tooltip';
+import InputWithTooltip from 'elements/input-with-tooltip';
 import SelectMenu from 'elements/select-menu';
 
 const GeneralInfo = ({
@@ -47,7 +47,7 @@ const GeneralInfo = ({
                   {t('common:name')}
                 </Form.Label>
                 <Form.Control>
-                  <Input
+                  <InputWithTooltip
                     placeholder={`${t('placeholder-name')}`}
                     {...field}
                     name="flag-name"
@@ -84,7 +84,7 @@ const GeneralInfo = ({
                   />
                 </Form.Label>
                 <Form.Control>
-                  <Input
+                  <InputWithTooltip
                     placeholder={`${t('feature-flags.placeholder-flag')}`}
                     disabled={isUpdate}
                     {...field}
@@ -111,7 +111,7 @@ const GeneralInfo = ({
                   {t('description')}
                 </Form.Label>
                 <Form.Control>
-                  <Input
+                  <InputWithTooltip
                     placeholder={t('placeholder-desc')}
                     {...field}
                     name="flag-description"
