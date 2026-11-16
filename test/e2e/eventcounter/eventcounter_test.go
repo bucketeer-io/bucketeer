@@ -326,6 +326,167 @@ func singleUserGoalCountReady(vcA, vcB *ecproto.VariationCount) bool {
 		cmp.Diff(vcB.ValueSumPerUserVariance, float64(0), compareFloatOpt) == ""
 }
 
+// TestExperimentCountAcrossEventFlows checks that the old and new persisters count the events
+// together without duplicates: one user's events are seeded on the dedicated topics only,
+// one user's on the main topics only, as left over from before the gateway filter,
+// and one user's are sent through the gateway, which publishes them to both.
+func TestExperimentCountAcrossEventFlows(t *testing.T) {
+	pubsubCfg := util.PubSubConfigFromEnv(t)
+	t.Parallel()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+	experimentClient := newExperimentClient(t)
+	// Closed after the cleanup that stops the experiment, which is registered later
+	t.Cleanup(experimentClient.Close)
+	ecClient := newEventCounterClient(t)
+	defer ecClient.Close()
+	uuid := newUUID(t)
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	baseUserID := createUserID(t, uuid)
+	gatewayUserID := baseUserID + "-gateway"
+	dedicatedUserID := baseUserID + "-dedicated"
+	leftoverUserID := baseUserID + "-leftover"
+	featureID := createFeatureID(t, uuid)
+
+	variationVarA := "a"
+	variationVarB := "b"
+	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
+	f, err := getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
+	reason := &featureproto.Reason{
+		Type: featureproto.Reason_TARGET,
+	}
+	variationAID := f.Variations[0].Id
+	addFeatureIndividualTargetingBulk(t, featureID, variationAID,
+		[]string{gatewayUserID, dedicatedUserID, leftoverUserID}, featureClient)
+	updateFeatueFlagCache(t)
+	f, err = getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
+
+	goalIDs := createGoals(ctx, t, experimentClient, 1)
+	startAt := time.Now().Add(-time.Hour)
+	stopAt := startAt.Add(time.Hour * 2)
+	experiment := createExperimentWithMultiGoals(
+		ctx, t, experimentClient, "TestExperimentCountAcrossEventFlows",
+		featureID, goalIDs, variationAID, startAt, stopAt)
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		stopExperiment(cleanupCtx, t, experimentClient, experiment.Id)
+	})
+	variations := make(map[string]*featureproto.Variation)
+	variationIDs := []string{}
+	for _, v := range experiment.Variations {
+		variationIDs = append(variationIDs, v.Id)
+		variations[v.Value] = v
+	}
+
+	// Wait for the on-demand subscriber to create PubSub subscriptions.
+	time.Sleep(15 * time.Second)
+
+	grpcRegisterEvaluationEvent(t, featureID, experiment.FeatureVersion, gatewayUserID, variationAID, tag, reason)
+	util.PublishEvents(ctx, t, pubsubCfg, pubsubCfg.EvaluationDWHTopic, []*eventproto.Event{
+		util.NewEvaluationEvent(t, *environmentID, featureID, experiment.FeatureVersion, dedicatedUserID, variationAID, tag, reason),
+	})
+	util.PublishEvents(ctx, t, pubsubCfg, pubsubCfg.EvaluationTopic, []*eventproto.Event{
+		util.NewEvaluationEvent(t, *environmentID, featureID, experiment.FeatureVersion, leftoverUserID, variationAID, tag, reason),
+	})
+
+	time.Sleep(10 * time.Second)
+
+	now := time.Now().Unix()
+	grpcRegisterGoalEvent(t, goalIDs[0], gatewayUserID, tag, float64(0.2), now)
+	grpcRegisterGoalEvent(t, goalIDs[0], gatewayUserID, tag, float64(0.3), now)
+	util.PublishEvents(ctx, t, pubsubCfg, pubsubCfg.GoalDWHTopic, []*eventproto.Event{
+		util.NewGoalEvent(t, *environmentID, goalIDs[0], dedicatedUserID, tag, float64(0.2), now),
+		util.NewGoalEvent(t, *environmentID, goalIDs[0], dedicatedUserID, tag, float64(0.3), now),
+	})
+	util.PublishEvents(ctx, t, pubsubCfg, pubsubCfg.GoalTopic, []*eventproto.Event{
+		util.NewGoalEvent(t, *environmentID, goalIDs[0], leftoverUserID, tag, float64(0.2), now),
+		util.NewGoalEvent(t, *environmentID, goalIDs[0], leftoverUserID, tag, float64(0.3), now),
+	})
+
+	waitForEventFlowCounts(t, ecClient, goalIDs[0], featureID, experiment.FeatureVersion, variationIDs,
+		variations[variationVarA].Id, variations[variationVarB].Id)
+}
+
+// waitForEventFlowCounts polls until the three users of TestExperimentCountAcrossEventFlows are counted
+// on variation A, with one evaluation and two goal events (0.2 + 0.3) each,
+// and the counts stay exact while the other persister may still deliver the gateway copies.
+func waitForEventFlowCounts(
+	t *testing.T,
+	ecClient ecclient.Client,
+	goalID, featureID string,
+	featureVersion int32,
+	variationIDs []string,
+	variationAID, variationBID string,
+) {
+	t.Helper()
+	const (
+		users        = 3
+		stableChecks = 3
+	)
+	matched := 0
+	for i := 0; i < retryTimes; i++ {
+		if i == retryTimes-1 {
+			t.Fatalf("retry timeout after %d attempts", retryTimes)
+		}
+		time.Sleep(10 * time.Second)
+
+		evalResp, err := getExperimentEvaluationCount(t, ecClient, featureID, featureVersion, variationIDs)
+		if err != nil {
+			t.Fatalf("Failed to get the experiment evaluation count: %v", err)
+		}
+		goalResp, err := getExperimentGoalCount(t, ecClient, goalID, featureID, featureVersion, variationIDs)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment goal count: %v", err)
+			}
+			t.Logf("Retry %d/%d: experiment goal count not found yet", i+1, retryTimes)
+			continue
+		}
+		evalA := getVariationCount(evalResp.VariationCounts, variationAID)
+		evalB := getVariationCount(evalResp.VariationCounts, variationBID)
+		goalA := getVariationCount(goalResp.VariationCounts, variationAID)
+		goalB := getVariationCount(goalResp.VariationCounts, variationBID)
+		if evalA == nil || evalB == nil || goalA == nil || goalB == nil {
+			t.Fatalf("variation counts are missing")
+		}
+		if evalA.EventCount > users || goalA.EventCount > 2*users || evalB.EventCount > 0 || goalB.EventCount > 0 {
+			t.Fatalf("event counts exceed the expected total "+
+				"(evaluation A=%d/%d B=%d/0, goal A=%d/%d B=%d/0): events were persisted more than once",
+				evalA.EventCount, users, evalB.EventCount, goalA.EventCount, 2*users, goalB.EventCount)
+		}
+		if evalA.UserCount != users || evalA.EventCount != users ||
+			goalA.UserCount != users || goalA.EventCount != 2*users ||
+			cmp.Diff(goalA.ValueSum, 0.5*users, compareFloatOpt) != "" {
+			if matched > 0 {
+				t.Fatalf("counts changed after matching the expected totals: evaluation A{users=%d events=%d} "+
+					"goal A{users=%d events=%d valueSum=%.2f}",
+					evalA.UserCount, evalA.EventCount, goalA.UserCount, goalA.EventCount, goalA.ValueSum)
+			}
+			t.Logf("Retry %d/%d: waiting for counts: evaluation A{users=%d/%d events=%d/%d} "+
+				"goal A{users=%d/%d events=%d/%d valueSum=%.2f/%.2f}",
+				i+1, retryTimes, evalA.UserCount, users, evalA.EventCount, users,
+				goalA.UserCount, users, goalA.EventCount, 2*users, goalA.ValueSum, 0.5*users)
+			continue
+		}
+		matched++
+		if matched == stableChecks {
+			return
+		}
+	}
+}
+
 func TestGrpcExperimentResult(t *testing.T) {
 	t.Parallel()
 	featureClient := newFeatureClient(t)
