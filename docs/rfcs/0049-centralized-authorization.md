@@ -127,7 +127,7 @@ and attached in Table 2:
 
 - `RoleNotAboveCaller`: neither the target's current role nor the granted role is above the caller's; API keys never touch OWNER; system admins are exempt.
 - `NotLastOwner`: an owner-removing change (disable, delete, demote) is rejected when the target is the last active OWNER; the storage transaction re-checks it under a row lock.
-- `Self` + `NoPrivilegeChange`: a member may update their own profile as long as the privilege fields are unchanged, and those fields are dropped from the write.
+- `Self` + `NoPrivilegeChange`: a caller without the permission may still update their own account (`req.email` is the caller), as long as `organization_role`, `environment_roles` and `disabled` are unchanged; those fields are then dropped from the write, so only profile fields are updated.
 - `EnvironmentsInOrganization`: environment roles being set belong to the request's organization.
 - `AccountVisible`: a member reads only their own account, admins, and accounts sharing an environment; invisible targets answer NotFound.
 
