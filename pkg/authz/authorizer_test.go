@@ -33,6 +33,7 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	insightsproto "github.com/bucketeer-io/bucketeer/v2/proto/insights"
+	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
 const (
@@ -43,7 +44,9 @@ const (
 	listAuditLogs      = "/bucketeer.auditlog.AuditLogService/ListAuditLogs"
 	updateAccount      = "/bucketeer.account.AccountService/UpdateAccountV2"
 	listAccounts       = "/bucketeer.account.AccountService/ListAccountsV2"
+	getSubscription    = "/bucketeer.subscription.SubscriptionService/GetSubscription"
 	listNotifications  = "/bucketeer.notification.NotificationService/ListNotifications"
+	invalidRule        = "/bucketeer.feature.FeatureService/InvalidRule"
 	createOrganization = "/bucketeer.environment.EnvironmentService/CreateOrganization"
 	ping               = "/bucketeer.gateway.Gateway/Ping"
 
@@ -68,7 +71,9 @@ func testRules(guard Guard) Rules {
 			And(Need(AuditLogRead, InEnv("environment_id").IfSet())),
 		updateAccount:      Need(AccountManage, InOrg("organization_id")).Or(Self("email")).Guard(guard),
 		listAccounts:       Need(AccountRead, InOrg("organization_id")),
+		getSubscription:    Need(SubscriptionRead, InEnv("environment_id")),
 		listNotifications:  Authenticated(),
+		invalidRule:        Need(FeatureWrite, InEnv("environment_id")).And(SystemAdminOnly()),
 		createOrganization: SystemAdminOnly(),
 		ping:               Public(),
 	}
@@ -115,6 +120,11 @@ func testAccounts() map[string]*accountproto.AccountV2 {
 			OrganizationId:   "org-1",
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole("env-1", editor), envRole("env-2", viewer)},
+		},
+		"member@example.com": {
+			Email:            "member@example.com",
+			OrganizationId:   "org-1",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 		},
 		"admin@example.com": {
 			Email:            "admin@example.com",
@@ -311,7 +321,15 @@ func TestAuthorize(t *testing.T) {
 			expectedCalls: 1,
 		},
 		{
-			desc:          "member reads accounts",
+			desc:          "organization member without an environment role is denied there",
+			ctx:           userCtx("member@example.com"),
+			method:        getSubscription,
+			req:           &subscriptionproto.GetSubscriptionRequest{EnvironmentId: "env-1"},
+			expectedErr:   ErrPermissionDenied,
+			expectedCalls: 1,
+		},
+		{
+			desc:          "organization member reads accounts",
 			ctx:           userCtx("viewer@example.com"),
 			method:        listAccounts,
 			req:           &accountproto.ListAccountsV2Request{OrganizationId: "org-1"},
@@ -463,6 +481,13 @@ func TestAuthorize(t *testing.T) {
 			expectedCalls: 1,
 		},
 		{
+			desc:         "rule composes a special kind",
+			ctx:          systemAdminCtx("editor@example.com"),
+			method:       invalidRule,
+			req:          &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
+			expectedCode: codes.Internal,
+		},
+		{
 			desc:         "rule names a field the request lacks",
 			ctx:          userCtx("editor@example.com"),
 			method:       getFeature,
@@ -497,6 +522,73 @@ func memberEditor(email string) *eventproto.Editor {
 		OrganizationRole: account.OrganizationRole,
 		EnvironmentRoles: account.EnvironmentRoles,
 	}
+}
+
+func TestInvalidCompositions(t *testing.T) {
+	t.Parallel()
+	need := Need(FeatureWrite, InEnv("environment_id"))
+	guard := guardFunc(func(context.Context, *Access) error { return nil })
+	patterns := []struct {
+		desc string
+		rule Requirement
+	}{
+		{desc: "And on Public", rule: Public().And(need)},
+		{desc: "And with SystemAdminOnly", rule: need.And(SystemAdminOnly())},
+		{desc: "Or on Authenticated", rule: Authenticated().Or(SystemAdmin())},
+		{desc: "Guard on SystemAdminOnly", rule: SystemAdminOnly().Guard(guard)},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			assert.ErrorIs(t, p.rule.err, ErrRule)
+		})
+	}
+	assert.NoError(t, need.Or(Self("email")).And(need).Guard(guard).err)
+}
+
+// scopedAccounts answers per scope, like a caller who is a member of two
+// organizations with different roles.
+type scopedAccounts map[ScopeID]*accountproto.AccountV2
+
+func (s scopedAccounts) Account(_ context.Context, _ string, scope ScopeID) (*accountproto.AccountV2, error) {
+	if account, ok := s[scope]; ok {
+		return account, nil
+	}
+	return nil, status.Error(codes.NotFound, "account not found")
+}
+
+func TestAuthorizeEditorOfTheTargetScope(t *testing.T) {
+	t.Parallel()
+	viewer := accountproto.AccountV2_Role_Environment_VIEWER
+	editor := accountproto.AccountV2_Role_Environment_EDITOR
+	source := &accountproto.AccountV2{
+		Email:            "clone@example.com",
+		OrganizationId:   "org-1",
+		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole("env-1", viewer)},
+	}
+	target := &accountproto.AccountV2{
+		Email:            "clone@example.com",
+		OrganizationId:   "org-2",
+		OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole("env-2", editor)},
+	}
+	loader := scopedAccounts{
+		{Kind: EnvironmentScope, ID: "env-1"}: source,
+		{Kind: EnvironmentScope, ID: "env-2"}: target,
+	}
+	authorizer := New(testRules(guardFunc(func(context.Context, *Access) error { return nil })), loader)
+	actual, err := authorizer.Authorize(
+		userCtx("clone@example.com"),
+		cloneFeature,
+		&featureproto.CloneFeatureRequest{EnvironmentId: "env-1", TargetEnvironmentId: "env-2"},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, &eventproto.Editor{
+		Email:            "clone@example.com",
+		Name:             "Name",
+		OrganizationRole: target.OrganizationRole,
+		EnvironmentRoles: target.EnvironmentRoles,
+	}, actual)
 }
 
 func TestAccessAccountIsCached(t *testing.T) {

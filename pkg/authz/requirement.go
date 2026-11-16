@@ -16,6 +16,7 @@ package authz
 
 import (
 	"context"
+	"fmt"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -48,10 +49,34 @@ type need struct {
 }
 
 // Requirement is one row of Table 2: what a caller needs to invoke an RPC.
+// Or, And and Guard apply to Need only; used on Public, Authenticated or
+// SystemAdminOnly they make the requirement invalid, and the authorizer then
+// rejects every call of the RPC instead of silently dropping a clause.
 type Requirement struct {
 	kind   requirementKind
 	needs  []need
 	guards []Guard
+	err    error
+}
+
+func (r Requirement) composable(op string) Requirement {
+	if r.err == nil && r.kind != requirePermission {
+		r.err = fmt.Errorf("%w: %s is not allowed on %s", ErrRule, op, r.kind)
+	}
+	return r
+}
+
+func (k requirementKind) String() string {
+	switch k {
+	case requirePublic:
+		return "Public"
+	case requireAuthenticated:
+		return "Authenticated"
+	case requireSystemAdmin:
+		return "SystemAdminOnly"
+	default:
+		return "Need"
+	}
 }
 
 // Need requires permission in the scope resolved from the request.
@@ -78,7 +103,8 @@ func SystemAdminOnly() Requirement {
 // Or adds an alternative to the last Need: the caller passes it when every
 // condition holds, even without the permission.
 func (r Requirement) Or(conditions ...Condition) Requirement {
-	if len(r.needs) == 0 || len(conditions) == 0 {
+	r = r.composable("Or")
+	if r.err != nil || len(r.needs) == 0 || len(conditions) == 0 {
 		return r
 	}
 	needs := append([]need(nil), r.needs...)
@@ -91,6 +117,11 @@ func (r Requirement) Or(conditions ...Condition) Requirement {
 // And requires other as well, for requests that carry several scopes with
 // different permissions (a source and a target environment).
 func (r Requirement) And(other Requirement) Requirement {
+	r = r.composable("And")
+	other = other.composable("And")
+	if r.err == nil {
+		r.err = other.err
+	}
 	r.needs = append(append([]need(nil), r.needs...), other.needs...)
 	r.guards = append(append([]Guard(nil), r.guards...), other.guards...)
 	return r
@@ -98,6 +129,7 @@ func (r Requirement) And(other Requirement) Requirement {
 
 // Guard adds a guard checked after every Need passed.
 func (r Requirement) Guard(guard Guard) Requirement {
+	r = r.composable("Guard")
 	r.guards = append(append([]Guard(nil), r.guards...), guard)
 	return r
 }
@@ -129,7 +161,7 @@ func Self(field string) Condition {
 }
 
 func (c selfCondition) Holds(_ context.Context, access *Access) (bool, error) {
-	values, err := stringField(access.Request, c.field)
+	values, _, err := stringField(access.Request, c.field)
 	if err != nil {
 		return false, err
 	}

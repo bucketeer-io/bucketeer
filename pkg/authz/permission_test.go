@@ -73,6 +73,7 @@ func TestGranted(t *testing.T) {
 			{EnvironmentId: "env-1", Role: accountproto.AccountV2_Role_Environment_EDITOR},
 		},
 	}
+	member := &accountproto.AccountV2{OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER}
 	admin := &accountproto.AccountV2{OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN}
 	unassigned := &accountproto.AccountV2{
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
@@ -92,6 +93,9 @@ func TestGranted(t *testing.T) {
 		{desc: "member does not manage organization", account: editor, scope: org, permission: AccountManage, expected: false},
 		{desc: "environment role does not count in organization scope",
 			account: editor, scope: org, permission: FeatureWrite, expected: false},
+		{desc: "member reads tags of the organization", account: member, scope: org, permission: TagRead, expected: true},
+		{desc: "member without an environment role reads no tags there",
+			account: member, scope: env, permission: TagRead, expected: false},
 		{desc: "admin writes every environment", account: admin, scope: otherEnv, permission: FeatureWrite, expected: true},
 		{desc: "admin manages organization scope", account: admin, scope: org, permission: AccountManage, expected: true},
 		{desc: "unassigned environment role grants nothing",
@@ -102,6 +106,14 @@ func TestGranted(t *testing.T) {
 			assert.Equal(t, p.expected, granted(p.account, p.scope, p.permission))
 		})
 	}
+}
+
+func TestInheritsRole(t *testing.T) {
+	t.Parallel()
+	assert.True(t, inheritsRole(OrganizationOwner, EnvironmentViewer))
+	assert.True(t, inheritsRole(OrganizationAdmin, EnvironmentViewer))
+	assert.False(t, inheritsRole(OrganizationMember, EnvironmentViewer))
+	assert.False(t, inheritsRole(EnvironmentViewer, EnvironmentViewer))
 }
 
 func TestReadableBySystemAdmin(t *testing.T) {

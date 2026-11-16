@@ -82,6 +82,9 @@ func (a *Authorizer) Authorize(ctx context.Context, method string, req proto.Mes
 	if !ok {
 		return nil, ErrNoRule
 	}
+	if rule.err != nil {
+		return nil, statusOf(rule.err)
+	}
 	if rule.kind == requirePublic {
 		return nil, nil
 	}
@@ -107,6 +110,8 @@ func (a *Authorizer) Authorize(ctx context.Context, method string, req proto.Mes
 	if caller.FullAccess() {
 		return tokenEditor(caller), nil
 	}
+	// The editor carries the account of the last scope checked: the target
+	// of a clone, as the handlers choose today.
 	var account *Account
 	for _, n := range rule.needs {
 		scopes, err := n.scope.Resolve(req)
@@ -119,7 +124,7 @@ func (a *Authorizer) Authorize(ctx context.Context, method string, req proto.Mes
 			if err != nil {
 				return nil, err
 			}
-			if account == nil {
+			if acc != nil {
 				account = acc
 			}
 		}

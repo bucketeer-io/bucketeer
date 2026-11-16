@@ -49,11 +49,17 @@ func TestFieldScopeResolve(t *testing.T) {
 		{
 			desc:  "repeated field",
 			scope: EachEnv("environment_ids"),
-			req:   &insightsproto.GetInsightsMonthlySummaryRequest{EnvironmentIds: []string{"env-1", "", "env-2"}},
+			req:   &insightsproto.GetInsightsMonthlySummaryRequest{EnvironmentIds: []string{"env-1", "env-2"}},
 			expected: []ScopeID{
 				{Kind: EnvironmentScope, ID: "env-1"},
 				{Kind: EnvironmentScope, ID: "env-2"},
 			},
+		},
+		{
+			desc:        "empty element of a repeated field",
+			scope:       EachEnv("environment_ids").IfSet(),
+			req:         &insightsproto.GetInsightsMonthlySummaryRequest{EnvironmentIds: []string{"env-1", "", "env-2"}},
+			expectedErr: ErrMissingScope,
 		},
 		{
 			desc:        "empty field",

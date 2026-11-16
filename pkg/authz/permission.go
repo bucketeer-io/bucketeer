@@ -195,12 +195,25 @@ func environmentRole(roles []*accountproto.AccountV2_EnvironmentRole, environmen
 	return "", false
 }
 
+// inheritsRole reports whether role inherits ancestor, directly or not.
+func inheritsRole(role, ancestor Role) bool {
+	for _, parent := range inherits[role] {
+		if parent == ancestor || inheritsRole(parent, ancestor) {
+			return true
+		}
+	}
+	return false
+}
+
 // granted reports whether account holds permission in scope. The
-// organization role counts in every scope; the environment role only in its
-// own environment.
+// organization role counts in an environment only when it inherits an
+// environment role (ADMIN, OWNER); a MEMBER counts in the organization alone,
+// and needs an environment role for the environment, as in pkg/role.
 func granted(account *accountproto.AccountV2, scope ScopeID, permission Permission) bool {
 	if role, ok := organizationRole(account.OrganizationRole); ok && Grants(role, permission) {
-		return true
+		if scope.Kind == OrganizationScope || inheritsRole(role, EnvironmentViewer) {
+			return true
+		}
 	}
 	if scope.Kind != EnvironmentScope {
 		return false
