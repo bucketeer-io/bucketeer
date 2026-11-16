@@ -361,6 +361,21 @@ func TestAuthorize(t *testing.T) {
 			expectedCalls: 1,
 		},
 		{
+			desc:        "service token runs the guards",
+			ctx:         serviceTokenCtx(),
+			method:      updateAccount,
+			req:         &accountproto.UpdateAccountV2Request{OrganizationId: "org-1", Email: "editor@example.com"},
+			guardErr:    errGuard,
+			expectedErr: errGuard,
+		},
+		{
+			desc:     "service token passes the guards without a permission check",
+			ctx:      serviceTokenCtx(),
+			method:   updateAccount,
+			req:      &accountproto.UpdateAccountV2Request{OrganizationId: "org-1", Email: "editor@example.com"},
+			expected: &eventproto.Editor{Email: "service@example.com", Name: "Service", IsAdmin: true},
+		},
+		{
 			desc:          "guard rejects",
 			ctx:           userCtx("admin@example.com"),
 			method:        updateAccount,

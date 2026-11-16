@@ -107,7 +107,10 @@ func (a *Authorizer) Authorize(ctx context.Context, method string, req proto.Mes
 		}
 		return tokenEditor(caller), nil
 	}
-	if caller.FullAccess() {
+	// A service token skips the permission checks, but not the guards: owner
+	// protection and the like apply whoever calls.
+	fullAccess := caller.FullAccess()
+	if fullAccess && len(rule.guards) == 0 {
 		return tokenEditor(caller), nil
 	}
 	// The editor carries the account of the last scope checked: the target
@@ -119,6 +122,9 @@ func (a *Authorizer) Authorize(ctx context.Context, method string, req proto.Mes
 			return nil, statusOf(err)
 		}
 		access.Scopes = append(access.Scopes, scopes...)
+		if fullAccess {
+			continue
+		}
 		for _, scope := range scopes {
 			acc, err := a.check(ctx, access, n, scope)
 			if err != nil {
