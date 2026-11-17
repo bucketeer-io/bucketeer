@@ -88,6 +88,47 @@ const (
 	OrganizationOwner  Role = "organization:OWNER"
 )
 
+// The scope each permission is checked in: a permission asked in the other
+// scope is never granted. A resource that is listed by organization as well
+// as by environment (tags, pushes, subscriptions, API keys, audit logs) is in
+// both. TestPermissionsAreScopedAndGranted keeps these lists and Table 1
+// complete when a permission is added or moved.
+var (
+	environmentPermissions = []Permission{
+		FeatureRead, FeatureWrite, SegmentRead, SegmentWrite,
+		ScheduledFlagChangeRead, ScheduledFlagChangeWrite,
+		HoldoutGroupRead, HoldoutGroupManage, AutoOpsRuleRead, AutoOpsRuleWrite,
+		ProgressiveRolloutRead, ProgressiveRolloutWrite, ExperimentRead, ExperimentWrite,
+		GoalRead, GoalWrite, EventCounterRead, InsightsRead,
+		CodeReferenceRead, CodeReferenceWrite, TagRead, TagWrite, PushRead, PushWrite,
+		SubscriptionRead, SubscriptionWrite, SearchFilterWrite, AIChatRead,
+		UserAttributeRead, AuditLogRead, APIKeyRead,
+	}
+	organizationPermissions = []Permission{
+		AccountRead, AccountManage, APIKeyRead, APIKeyManage,
+		EnvironmentRead, EnvironmentManage, ProjectRead, ProjectManage,
+		OrganizationRead, OrganizationManage, TeamRead, TeamManage,
+		TagRead, PushRead, SubscriptionRead, AuditLogRead,
+	}
+	scoped = map[ScopeKind]map[Permission]struct{}{
+		EnvironmentScope:  toSet(environmentPermissions),
+		OrganizationScope: toSet(organizationPermissions),
+	}
+)
+
+func toSet(list []Permission) map[Permission]struct{} {
+	set := make(map[Permission]struct{}, len(list))
+	for _, p := range list {
+		set[p] = struct{}{}
+	}
+	return set
+}
+
+func inScope(permission Permission, kind ScopeKind) bool {
+	_, ok := scoped[kind][permission]
+	return ok
+}
+
 // Table 1: what each role grants. A role inherits every permission of the
 // roles listed in inherits, so the entries only name what the role adds.
 var (
@@ -210,6 +251,9 @@ func inheritsRole(role, ancestor Role) bool {
 // environment role (ADMIN, OWNER); a MEMBER counts in the organization alone,
 // and needs an environment role for the environment, as in pkg/role.
 func granted(account *accountproto.AccountV2, scope ScopeID, permission Permission) bool {
+	if !inScope(permission, scope.Kind) {
+		return false
+	}
 	if role, ok := organizationRole(account.OrganizationRole); ok && Grants(role, permission) {
 		if scope.Kind == OrganizationScope || inheritsRole(role, EnvironmentViewer) {
 			return true

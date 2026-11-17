@@ -15,9 +15,14 @@
 package authz
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 )
@@ -51,6 +56,92 @@ func TestGrants(t *testing.T) {
 			assert.Equal(t, p.expected, Grants(p.role, p.permission))
 		})
 	}
+}
+
+// TestPermissionsAreScopedAndGranted fails when a permission is added to
+// permission.go without a scope or without a role in Table 1, or when it is
+// granted only by roles that do not count in its scope, so a resource cannot
+// be added or moved without updating both lists and Table 1.
+func TestPermissionsAreScopedAndGranted(t *testing.T) {
+	t.Parallel()
+	declared := declaredPermissions(t)
+	grantedBy := make(map[Permission][]Role)
+	for role, list := range grants {
+		for _, p := range list {
+			grantedBy[p] = append(grantedBy[p], role)
+		}
+	}
+	for _, p := range declared {
+		assert.NotEmpty(t, grantedBy[p], "%s is declared but no role grants it", p)
+		assert.True(t, inScope(p, EnvironmentScope) || inScope(p, OrganizationScope),
+			"%s is declared but in neither scope list", p)
+	}
+	for p, roles := range grantedBy {
+		assert.Contains(t, declared, p, "%s is granted but not declared", p)
+		for _, r := range roles {
+			if (r == EnvironmentViewer || r == EnvironmentEditor) && !inScope(p, EnvironmentScope) {
+				assert.Fail(t, "scope", "%s grants %s, which is not environment-scoped", r, p)
+			}
+			if r == OrganizationMember && !inScope(p, OrganizationScope) {
+				assert.Fail(t, "scope", "%s grants %s, which is not organization-scoped", r, p)
+			}
+		}
+	}
+	for _, p := range environmentPermissions {
+		assert.Contains(t, declared, p, "%s is environment-scoped but not declared", p)
+		assert.True(t, grantedInEnvironment(grantedBy[p]),
+			"%s is environment-scoped but only %v grant it", p, grantedBy[p])
+	}
+	for _, p := range organizationPermissions {
+		assert.Contains(t, declared, p, "%s is organization-scoped but not declared", p)
+		assert.True(t, grantedInOrganization(grantedBy[p]),
+			"%s is organization-scoped but only %v grant it", p, grantedBy[p])
+	}
+}
+
+func grantedInEnvironment(roles []Role) bool {
+	for _, r := range roles {
+		if r == EnvironmentViewer || r == EnvironmentEditor || inheritsRole(r, EnvironmentViewer) {
+			return true
+		}
+	}
+	return false
+}
+
+func grantedInOrganization(roles []Role) bool {
+	for _, r := range roles {
+		if r == OrganizationMember || inheritsRole(r, OrganizationMember) {
+			return true
+		}
+	}
+	return false
+}
+
+// declaredPermissions reads every Permission constant of permission.go.
+func declaredPermissions(t *testing.T) []Permission {
+	t.Helper()
+	file, err := parser.ParseFile(token.NewFileSet(), "permission.go", nil, 0)
+	require.NoError(t, err)
+	var declared []Permission
+	for _, decl := range file.Decls {
+		gen, ok := decl.(*ast.GenDecl)
+		if !ok || gen.Tok != token.CONST {
+			continue
+		}
+		for _, spec := range gen.Specs {
+			vs := spec.(*ast.ValueSpec)
+			if ident, ok := vs.Type.(*ast.Ident); !ok || ident.Name != "Permission" {
+				continue
+			}
+			for _, v := range vs.Values {
+				value, err := strconv.Unquote(v.(*ast.BasicLit).Value)
+				require.NoError(t, err)
+				declared = append(declared, Permission(value))
+			}
+		}
+	}
+	require.NotEmpty(t, declared)
+	return declared
 }
 
 func TestOwnerHoldsEverything(t *testing.T) {
@@ -98,6 +189,10 @@ func TestGranted(t *testing.T) {
 			account: member, scope: env, permission: TagRead, expected: false},
 		{desc: "admin writes every environment", account: admin, scope: otherEnv, permission: FeatureWrite, expected: true},
 		{desc: "admin manages organization scope", account: admin, scope: org, permission: AccountManage, expected: true},
+		{desc: "environment permission is never granted in organization scope",
+			account: admin, scope: org, permission: FeatureWrite, expected: false},
+		{desc: "organization permission is never granted in environment scope",
+			account: admin, scope: env, permission: AccountManage, expected: false},
 		{desc: "unassigned environment role grants nothing",
 			account: unassigned, scope: env, permission: FeatureRead, expected: false},
 	}
