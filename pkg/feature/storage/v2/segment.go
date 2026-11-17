@@ -48,7 +48,7 @@ type SegmentStorage interface {
 		ctx context.Context,
 		params ListSegmentsParams,
 	) ([]*proto.Segment, int, int64, map[string][]string, error)
-	DeleteSegment(ctx context.Context, id string) error
+	DeleteSegment(ctx context.Context, id, environmentId string) error
 	// ListAllInUseSegments lists all segments that are in use (referenced by feature flags).
 	// Returns lightweight segment info (id, environment_id, updated_at, rules).
 	ListAllInUseSegments(ctx context.Context) ([]*InUseSegment, error)

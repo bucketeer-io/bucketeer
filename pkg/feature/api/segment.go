@@ -208,7 +208,7 @@ func (s *FeatureService) DeleteSegment(
 		if err != nil {
 			return err
 		}
-		return s.segmentStorage.DeleteSegment(contextWithTx, segment.Id)
+		return s.segmentStorage.DeleteSegment(contextWithTx, segment.Id, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrSegmentUnexpectedAffectedRows) {

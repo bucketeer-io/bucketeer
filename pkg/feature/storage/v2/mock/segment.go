@@ -58,17 +58,17 @@ func (mr *MockSegmentStorageMockRecorder) CreateSegment(ctx, segment, environmen
 }
 
 // DeleteSegment mocks base method.
-func (m *MockSegmentStorage) DeleteSegment(ctx context.Context, id string) error {
+func (m *MockSegmentStorage) DeleteSegment(ctx context.Context, id, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteSegment", ctx, id)
+	ret := m.ctrl.Call(m, "DeleteSegment", ctx, id, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteSegment indicates an expected call of DeleteSegment.
-func (mr *MockSegmentStorageMockRecorder) DeleteSegment(ctx, id any) *gomock.Call {
+func (mr *MockSegmentStorageMockRecorder) DeleteSegment(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSegment", reflect.TypeOf((*MockSegmentStorage)(nil).DeleteSegment), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSegment", reflect.TypeOf((*MockSegmentStorage)(nil).DeleteSegment), ctx, id, environmentId)
 }
 
 // GetSegment mocks base method.

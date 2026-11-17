@@ -351,7 +351,7 @@ func TestDeleteSegment(t *testing.T) {
 			mockQueryExecer := mock.NewMockQueryExecer(mockController)
 			tt.setup(mockQueryExecer)
 			storage := NewSegmentStorage(mockQueryExecer)
-			err := storage.DeleteSegment(context.Background(), "test-segment-id")
+			err := storage.DeleteSegment(context.Background(), "test-segment-id", "environment-id")
 			assert.Equal(t, tt.expectedErr, err)
 		})
 	}

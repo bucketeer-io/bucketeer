@@ -474,7 +474,7 @@ func TestScheduledFlagChangeStorageTryLock(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			storage := &scheduledFlagChangeStorage{qe: mock.NewMockQueryExecer(mockController)}
 			p.setup(storage)
-			locked, err := storage.TryLock(context.Background(), p.id, p.lockedBy)
+			locked, err := storage.TryLock(context.Background(), p.id, "env-1", p.lockedBy)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expectedLocked, locked)
 		})
@@ -520,7 +520,7 @@ func TestScheduledFlagChangeStorageUnlock(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			storage := &scheduledFlagChangeStorage{qe: mock.NewMockQueryExecer(mockController)}
 			p.setup(storage)
-			err := storage.Unlock(context.Background(), p.id, p.lockedBy)
+			err := storage.Unlock(context.Background(), p.id, "env-1", p.lockedBy)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
