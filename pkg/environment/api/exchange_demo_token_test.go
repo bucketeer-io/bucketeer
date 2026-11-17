@@ -27,6 +27,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/google"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	tokentesting "github.com/bucketeer-io/bucketeer/v2/pkg/token/testing"
 	accproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
@@ -117,6 +118,9 @@ func TestEnvironmentService_GetAuthenticator(t *testing.T) {
 func TestExchangeDemoToken_AuthType(t *testing.T) {
 	t.Parallel()
 	const email = "demo@example.com"
+	// The success pattern signs in its setup and verifies after the call, so
+	// both use this pair.
+	privateKeyPath, publicKeyPath := tokentesting.WriteKeyPair(t)
 	patterns := []struct {
 		desc          string
 		req           *environmentproto.ExchangeDemoTokenRequest
@@ -160,7 +164,7 @@ func TestExchangeDemoToken_AuthType(t *testing.T) {
 			},
 			setup: func(t *testing.T, s *EnvironmentService) {
 				t.Helper()
-				signer, err := token.NewSigner("../../token/testdata/valid-private.pem")
+				signer, err := token.NewSigner(privateKeyPath)
 				require.NoError(t, err)
 				s.signer = signer
 				s.accountClient.(*acmock.MockClient).EXPECT().
@@ -194,11 +198,7 @@ func TestExchangeDemoToken_AuthType(t *testing.T) {
 			require.NotNil(t, resp)
 			require.NotNil(t, resp.DemoCreationToken)
 			assert.NotEmpty(t, resp.DemoCreationToken.AccessToken)
-			verifier, vErr := token.NewVerifier(
-				"../../token/testdata/valid-public.pem",
-				service.issuer,
-				service.audience,
-			)
+			verifier, vErr := token.NewVerifier(publicKeyPath, service.issuer, service.audience)
 			require.NoError(t, vErr)
 			parsed, vErr := verifier.VerifyDemoCreationToken(resp.DemoCreationToken.AccessToken)
 			require.NoError(t, vErr)

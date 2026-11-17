@@ -30,6 +30,7 @@ import (
 	envstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	tokentesting "github.com/bucketeer-io/bucketeer/v2/pkg/token/testing"
 	acproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
@@ -262,9 +263,10 @@ func TestNewAuthService_WithTokenTTLs(t *testing.T) {
 			orgStorage := envstoragemock.NewMockOrganizationStorage(mockController)
 			projectStorage := envstoragemock.NewMockProjectStorage(mockController)
 			environmentStorage := envstoragemock.NewMockEnvironmentStorage(mockController)
-			signer, err := token.NewSigner("../../token/testdata/valid-private.pem")
+			privateKeyPath, publicKeyPath := tokentesting.WriteKeyPair(t)
+			signer, err := token.NewSigner(privateKeyPath)
 			require.NoError(t, err)
-			verifier, err := token.NewVerifier("../../token/testdata/valid-public.pem", "test-issuer", "test-audience")
+			verifier, err := token.NewVerifier(publicKeyPath, "test-issuer", "test-audience")
 			require.NoError(t, err)
 			config := &auth.OAuthConfig{}
 
@@ -444,9 +446,10 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 			orgStorage := envstoragemock.NewMockOrganizationStorage(mockController)
 			projectStorage := envstoragemock.NewMockProjectStorage(mockController)
 			environmentStorage := envstoragemock.NewMockEnvironmentStorage(mockController)
-			signer, err := token.NewSigner("../../token/testdata/valid-private.pem")
+			privateKeyPath, publicKeyPath := tokentesting.WriteKeyPair(t)
+			signer, err := token.NewSigner(privateKeyPath)
 			require.NoError(t, err)
-			verifier, err := token.NewVerifier("../../token/testdata/valid-public.pem", "test-issuer", "test-audience")
+			verifier, err := token.NewVerifier(publicKeyPath, "test-issuer", "test-audience")
 			require.NoError(t, err)
 			config := &auth.OAuthConfig{}
 

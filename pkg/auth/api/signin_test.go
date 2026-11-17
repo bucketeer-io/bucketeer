@@ -28,6 +28,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/ratelimit"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	tokentesting "github.com/bucketeer-io/bucketeer/v2/pkg/token/testing"
 	acproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
@@ -40,7 +41,8 @@ const (
 
 func newSignInTestService(t *testing.T, enabled bool) *authService {
 	t.Helper()
-	signer, err := token.NewSigner("../../token/testdata/valid-private.pem")
+	privateKeyPath, _ := tokentesting.WriteKeyPair(t)
+	signer, err := token.NewSigner(privateKeyPath)
 	require.NoError(t, err)
 	opts := defaultOptions
 	return &authService{
