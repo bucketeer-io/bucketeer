@@ -110,35 +110,22 @@ func (a *Authorizer) Authorize(
 		SystemAdmin: fullAccess,
 		accounts:    &accountCache{loader: a.accounts},
 	}
-	// home is the account the editor is named from: the caller's account in
-	// its current organization, or its system admin account when it switched
-	// into an organization it is not a member of.
-	var home *Account
+	var admin *Account
 	if !fullAccess && caller.PublicAPI == nil {
-		admin, err := access.accounts.systemAdmin(ctx, caller.Email)
-		if err != nil {
+		var err error
+		if admin, err = access.accounts.systemAdmin(ctx, caller.Email); err != nil {
 			return nil, err
 		}
 		access.SystemAdmin = admin != nil
-		home, err = access.accounts.lookup(ctx, caller.Email, ScopeID{Kind: OrganizationScope, ID: caller.OrganizationID})
-		if err != nil {
-			return nil, err
-		}
-		if home == nil {
-			if admin == nil {
-				return nil, ErrUnauthenticated
-			}
-			home = admin
-		}
 	}
 	switch rule.kind {
 	case requireAuthenticated:
-		return editorOf(access, home, nil), nil
+		return editorOf(access, admin, nil), nil
 	case requireSystemAdmin:
 		if !access.SystemAdmin {
 			return nil, ErrPermissionDenied
 		}
-		return editorOf(access, home, nil), nil
+		return editorOf(access, admin, nil), nil
 	}
 	// A service identity skips the permission checks, but not the guards:
 	// owner protection and the like apply whoever calls.
@@ -175,7 +162,7 @@ func (a *Authorizer) Authorize(
 			return nil, statusOf(err)
 		}
 	}
-	return editorOf(access, home, target), nil
+	return editorOf(access, admin, target), nil
 }
 
 // check decides one need in one scope. A member's account is loaded first
@@ -232,15 +219,17 @@ func statusOf(err error) error {
 	return status.Error(codes.Internal, fmt.Sprintf("authz: %v", err))
 }
 
-func editorOf(access *Access, home, target *Account) *eventproto.Editor {
+// editorOf names the editor from the account of the scope checked, or from
+// the system admin account.
+func editorOf(access *Access, admin, target *Account) *eventproto.Editor {
 	editor := &eventproto.Editor{
 		Email:           access.Caller.Email,
 		IsAdmin:         access.SystemAdmin,
 		PublicApiEditor: access.Caller.PublicAPI,
 	}
-	named := home
+	named := target
 	if named == nil {
-		named = target
+		named = admin
 	}
 	if named != nil {
 		editor.Name = (&accdomain.AccountV2{AccountV2: named.AccountV2}).GetAccountFullName()
@@ -258,18 +247,7 @@ type accountCache struct {
 	loaded map[ScopeID]*Account
 }
 
-// get returns the account in scope, or ErrUnauthenticated when the caller
-// has none there.
 func (c *accountCache) get(ctx context.Context, email string, scope ScopeID) (*Account, error) {
-	account, err := c.lookup(ctx, email, scope)
-	if err == nil && account == nil {
-		return nil, ErrUnauthenticated
-	}
-	return account, err
-}
-
-// lookup returns the account in scope, or nil when the caller has none there.
-func (c *accountCache) lookup(ctx context.Context, email string, scope ScopeID) (*Account, error) {
 	if account, ok := c.loaded[scope]; ok {
 		return account, nil
 	}
@@ -277,7 +255,7 @@ func (c *accountCache) lookup(ctx context.Context, email string, scope ScopeID) 
 		return nil, ErrInternal
 	}
 	account, err := active(c.loader.Account(ctx, email, scope))
-	if err != nil || account == nil {
+	if err != nil {
 		return nil, err
 	}
 	if c.loaded == nil {
@@ -300,19 +278,16 @@ func (c *accountCache) systemAdmin(ctx context.Context, email string) (*Account,
 	return account, err
 }
 
-// active maps a loader result to the account, nil for a missing one,
-// ErrUnauthenticated for a disabled one, or ErrInternal.
+// active maps a loader result to an active account, ErrUnauthenticated for
+// a missing or disabled one, or ErrInternal.
 func active(account *accountproto.AccountV2, err error) (*Account, error) {
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
-			return nil, nil
+			return nil, ErrUnauthenticated
 		}
 		return nil, ErrInternal
 	}
-	if account == nil {
-		return nil, nil
-	}
-	if account.Disabled {
+	if account == nil || account.Disabled {
 		return nil, ErrUnauthenticated
 	}
 	return &Account{AccountV2: account}, nil

@@ -34,8 +34,7 @@ const (
 // by the public API gateway is attributed to the API key's maintainer, with
 // the maintainer's own membership and roles.
 type Caller struct {
-	Email          string
-	OrganizationID string
+	Email string
 	// Service is set for the machine identity of batch and subscriber jobs.
 	Service bool
 	// PublicAPI is set when the request was relayed by the public API gateway.

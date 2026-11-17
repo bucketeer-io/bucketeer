@@ -173,15 +173,11 @@ func testAccounts() map[string]*accountproto.AccountV2 {
 }
 
 func user(email string) Caller {
-	return Caller{Email: email, OrganizationID: "org-1"}
+	return Caller{Email: email}
 }
 
 func root() Caller {
-	return Caller{Email: "root@example.com", OrganizationID: "org-admin"}
-}
-
-func switchedRoot() Caller {
-	return Caller{Email: "root@example.com", OrganizationID: "org-1"}
+	return user("root@example.com")
 }
 
 func service() Caller {
@@ -234,20 +230,21 @@ func TestAuthorize(t *testing.T) {
 			expectedErr: ErrUnauthenticated,
 		},
 		{
-			desc:          "authenticated only",
-			caller:        user("viewer@example.com"),
-			method:        listNotifications,
-			req:           &featureproto.UpdateFeatureRequest{},
-			expected:      &eventproto.Editor{Email: "viewer@example.com", Name: "Viewer"},
-			expectedCalls: 2,
-		},
-		{
-			desc:          "authenticated only without an account",
+			desc:          "authenticated only needs no account",
 			caller:        user("nobody@example.com"),
 			method:        listNotifications,
 			req:           &featureproto.UpdateFeatureRequest{},
-			expectedErr:   ErrUnauthenticated,
-			expectedCalls: 2,
+			expected:      &eventproto.Editor{Email: "nobody@example.com"},
+			expectedCalls: 1,
+		},
+		{
+			desc:          "authenticated only by a system admin",
+			caller:        root(),
+			systemAdmin:   true,
+			method:        listNotifications,
+			req:           &featureproto.UpdateFeatureRequest{},
+			expected:      rootEditor(),
+			expectedCalls: 1,
 		},
 		{
 			desc:        "authenticated only denies a public API request",
@@ -262,7 +259,7 @@ func TestAuthorize(t *testing.T) {
 			method:        createOrganization,
 			req:           &featureproto.UpdateFeatureRequest{},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 2,
+			expectedCalls: 1,
 		},
 		{
 			desc:        "system admin only denies a public API request",
@@ -278,16 +275,7 @@ func TestAuthorize(t *testing.T) {
 			method:        createOrganization,
 			req:           &featureproto.UpdateFeatureRequest{},
 			expected:      rootEditor(),
-			expectedCalls: 2,
-		},
-		{
-			desc:          "system admin only allows a system admin in a switched organization",
-			caller:        switchedRoot(),
-			systemAdmin:   true,
-			method:        createOrganization,
-			req:           &featureproto.UpdateFeatureRequest{},
-			expected:      rootEditor(),
-			expectedCalls: 2,
+			expectedCalls: 1,
 		},
 		{
 			desc:     "system admin only allows a service identity",
@@ -309,7 +297,7 @@ func TestAuthorize(t *testing.T) {
 			method:        updateFeature,
 			req:           &featureproto.UpdateFeatureRequest{},
 			expectedErr:   ErrMissingScope,
-			expectedCalls: 2,
+			expectedCalls: 1,
 		},
 		{
 			desc:          "editor writes its environment",
@@ -317,7 +305,7 @@ func TestAuthorize(t *testing.T) {
 			method:        updateFeature,
 			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expected:      memberEditor("editor@example.com"),
-			expectedCalls: 3,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "viewer cannot write",
@@ -325,7 +313,7 @@ func TestAuthorize(t *testing.T) {
 			method:        updateFeature,
 			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 3,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "viewer reads",
@@ -333,7 +321,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getFeature,
 			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
 			expected:      memberEditor("viewer@example.com"),
-			expectedCalls: 3,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "non-member",
@@ -366,7 +354,7 @@ func TestAuthorize(t *testing.T) {
 			method:        updateFeature,
 			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-9"},
 			expected:      memberEditor("admin@example.com"),
-			expectedCalls: 3,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "system admin reads without membership",
@@ -375,7 +363,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getFeature,
 			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
 			expected:      rootEditor(),
-			expectedCalls: 2,
+			expectedCalls: 1,
 		},
 		{
 			desc:          "system admin writes only as a member",
@@ -384,37 +372,10 @@ func TestAuthorize(t *testing.T) {
 			method:        updateFeature,
 			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expectedErr:   ErrUnauthenticated,
-			expectedCalls: 3,
-		},
-		{
-			desc:          "system admin reads in a switched organization without membership",
-			caller:        switchedRoot(),
-			systemAdmin:   true,
-			method:        getFeature,
-			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
-			expected:      rootEditor(),
 			expectedCalls: 2,
 		},
 		{
-			desc:          "system admin with a disabled account in the switched organization",
-			caller:        user("disabled@example.com"),
-			systemAdmin:   true,
-			method:        getFeature,
-			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
-			expectedErr:   ErrUnauthenticated,
-			expectedCalls: 2,
-		},
-		{
-			desc:          "system admin writes in a switched organization only as a member",
-			caller:        switchedRoot(),
-			systemAdmin:   true,
-			method:        updateFeature,
-			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
-			expectedErr:   ErrUnauthenticated,
-			expectedCalls: 3,
-		},
-		{
-			desc:        "system admin writes in a switched organization as a member",
+			desc:        "system admin member writes",
 			caller:      user("editor@example.com"),
 			systemAdmin: true,
 			method:      updateFeature,
@@ -426,7 +387,7 @@ func TestAuthorize(t *testing.T) {
 				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 				EnvironmentRoles: testAccounts()["editor@example.com"].EnvironmentRoles,
 			},
-			expectedCalls: 3,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "organization member without an environment role is denied there",
@@ -434,7 +395,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getSubscription,
 			req:           &subscriptionproto.GetSubscriptionRequest{EnvironmentId: "env-1"},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 3,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "organization member reads accounts",
@@ -515,7 +476,7 @@ func TestAuthorize(t *testing.T) {
 			method:        listAuditLogs,
 			req:           &auditlogproto.ListAuditLogsRequest{OrganizationId: "org-1"},
 			expected:      rootEditor(),
-			expectedCalls: 2,
+			expectedCalls: 1,
 		},
 		{
 			desc:          "audit logs of an environment by a viewer",
@@ -523,7 +484,7 @@ func TestAuthorize(t *testing.T) {
 			method:        listAuditLogs,
 			req:           &auditlogproto.ListAuditLogsRequest{EnvironmentId: "env-1"},
 			expected:      memberEditor("viewer@example.com"),
-			expectedCalls: 3,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "audit logs without any scope",
@@ -531,7 +492,7 @@ func TestAuthorize(t *testing.T) {
 			method:        listAuditLogs,
 			req:           &auditlogproto.ListAuditLogsRequest{},
 			expectedErr:   ErrMissingScope,
-			expectedCalls: 2,
+			expectedCalls: 1,
 		},
 		{
 			desc:          "clone needs read on the source and write on the target",
@@ -539,7 +500,7 @@ func TestAuthorize(t *testing.T) {
 			method:        cloneFeature,
 			req:           &featureproto.CloneFeatureRequest{EnvironmentId: "env-2", TargetEnvironmentId: "env-1"},
 			expected:      memberEditor("editor@example.com"),
-			expectedCalls: 4,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "clone into an environment without write",
@@ -547,7 +508,7 @@ func TestAuthorize(t *testing.T) {
 			method:        cloneFeature,
 			req:           &featureproto.CloneFeatureRequest{EnvironmentId: "env-1", TargetEnvironmentId: "env-2"},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 4,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "every listed environment is checked",
@@ -555,7 +516,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getInsights,
 			req:           &insightsproto.GetInsightsMonthlySummaryRequest{EnvironmentIds: []string{"env-1", "env-2"}},
 			expected:      memberEditor("editor@example.com"),
-			expectedCalls: 4,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "one listed environment without a role denies",
@@ -563,7 +524,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getInsights,
 			req:           &insightsproto.GetInsightsMonthlySummaryRequest{EnvironmentIds: []string{"env-1", "env-2"}},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 4,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "a repeated environment is loaded once",
@@ -571,7 +532,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getInsights,
 			req:           &insightsproto.GetInsightsMonthlySummaryRequest{EnvironmentIds: []string{"env-1", "env-1"}},
 			expected:      memberEditor("viewer@example.com"),
-			expectedCalls: 3,
+			expectedCalls: 2,
 		},
 		{
 			desc:   "public API request acts as the key maintainer",
@@ -616,7 +577,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getFeature,
 			req:           &accountproto.GetMeRequest{},
 			expectedCode:  codes.Internal,
-			expectedCalls: 2,
+			expectedCalls: 1,
 		},
 		{
 			desc:         "rule asks a permission in the wrong scope",
@@ -710,14 +671,14 @@ func TestAuthorizeEditorOfTheTargetScope(t *testing.T) {
 	}
 	target := &accountproto.AccountV2{
 		Email:            "clone@example.com",
+		Name:             "Clone",
 		OrganizationId:   "org-2",
 		OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole("env-2", editor)},
 	}
 	loader := scopedAccounts{
-		{Kind: OrganizationScope, ID: "org-1"}: source,
-		{Kind: EnvironmentScope, ID: "env-1"}:  source,
-		{Kind: EnvironmentScope, ID: "env-2"}:  target,
+		{Kind: EnvironmentScope, ID: "env-1"}: source,
+		{Kind: EnvironmentScope, ID: "env-2"}: target,
 	}
 	authorizer := New(testRules(guardFunc(func(context.Context, *Access) error { return nil })), loader)
 	actual, err := authorizer.Authorize(
