@@ -53,25 +53,26 @@ func (s ScopeID) String() string {
 // Scope resolves the scope IDs of a request. It returns ErrMissingScope when
 // the request carries no ID, unless it is optional.
 type Scope interface {
+	Kind() ScopeKind
 	Resolve(req proto.Message) ([]ScopeID, error)
 }
 
 // FieldScope reads scope IDs from one string field of the request. The field
 // is named as in the .proto file, and may be repeated.
 type FieldScope struct {
-	Kind     ScopeKind
-	Field    string
+	kind     ScopeKind
+	field    string
 	optional bool
 }
 
 // InEnv scopes the check to the environment named by field.
 func InEnv(field string) FieldScope {
-	return FieldScope{Kind: EnvironmentScope, Field: field}
+	return FieldScope{kind: EnvironmentScope, field: field}
 }
 
 // InOrg scopes the check to the organization named by field.
 func InOrg(field string) FieldScope {
-	return FieldScope{Kind: OrganizationScope, Field: field}
+	return FieldScope{kind: OrganizationScope, field: field}
 }
 
 // EachEnv checks every environment listed in the repeated field.
@@ -87,11 +88,15 @@ func (s FieldScope) IfSet() FieldScope {
 	return s
 }
 
+func (s FieldScope) Kind() ScopeKind {
+	return s.kind
+}
+
 // Resolve returns one scope per value of the field. An empty element of a
 // repeated field is an error, because the handler would still use it; an
 // empty singular field is an error unless the scope is optional.
 func (s FieldScope) Resolve(req proto.Message) ([]ScopeID, error) {
-	values, repeated, err := stringField(req, s.Field)
+	values, repeated, err := stringField(req, s.field)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +108,7 @@ func (s FieldScope) Resolve(req proto.Message) ([]ScopeID, error) {
 			}
 			continue
 		}
-		ids = append(ids, ScopeID{Kind: s.Kind, ID: v})
+		ids = append(ids, ScopeID{Kind: s.kind, ID: v})
 	}
 	if len(ids) == 0 && !s.optional {
 		return nil, ErrMissingScope

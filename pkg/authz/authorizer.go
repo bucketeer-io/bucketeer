@@ -120,10 +120,13 @@ func (a *Authorizer) Authorize(
 			return nil, err
 		}
 		access.SystemAdmin = admin != nil
-		home, err = access.Account(ctx, ScopeID{Kind: OrganizationScope, ID: caller.OrganizationID})
+		home, err = access.accounts.lookup(ctx, caller.Email, ScopeID{Kind: OrganizationScope, ID: caller.OrganizationID})
 		if err != nil {
-			if admin == nil || !errors.Is(err, ErrUnauthenticated) {
-				return nil, err
+			return nil, err
+		}
+		if home == nil {
+			if admin == nil {
+				return nil, ErrUnauthenticated
 			}
 			home = admin
 		}
@@ -255,7 +258,18 @@ type accountCache struct {
 	loaded map[ScopeID]*Account
 }
 
+// get returns the account in scope, or ErrUnauthenticated when the caller
+// has none there.
 func (c *accountCache) get(ctx context.Context, email string, scope ScopeID) (*Account, error) {
+	account, err := c.lookup(ctx, email, scope)
+	if err == nil && account == nil {
+		return nil, ErrUnauthenticated
+	}
+	return account, err
+}
+
+// lookup returns the account in scope, or nil when the caller has none there.
+func (c *accountCache) lookup(ctx context.Context, email string, scope ScopeID) (*Account, error) {
 	if account, ok := c.loaded[scope]; ok {
 		return account, nil
 	}
@@ -263,7 +277,7 @@ func (c *accountCache) get(ctx context.Context, email string, scope ScopeID) (*A
 		return nil, ErrInternal
 	}
 	account, err := active(c.loader.Account(ctx, email, scope))
-	if err != nil {
+	if err != nil || account == nil {
 		return nil, err
 	}
 	if c.loaded == nil {
@@ -273,7 +287,8 @@ func (c *accountCache) get(ctx context.Context, email string, scope ScopeID) (*A
 	return account, nil
 }
 
-// systemAdmin returns the caller's active system admin account, or nil.
+// systemAdmin returns the caller's system admin account, or nil when the
+// caller has none or it is disabled.
 func (c *accountCache) systemAdmin(ctx context.Context, email string) (*Account, error) {
 	if c.loader == nil {
 		return nil, ErrInternal
@@ -285,16 +300,19 @@ func (c *accountCache) systemAdmin(ctx context.Context, email string) (*Account,
 	return account, err
 }
 
-// active maps a loader result to an active account, ErrUnauthenticated for
-// a missing or disabled one, or ErrInternal.
+// active maps a loader result to the account, nil for a missing one,
+// ErrUnauthenticated for a disabled one, or ErrInternal.
 func active(account *accountproto.AccountV2, err error) (*Account, error) {
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
-			return nil, ErrUnauthenticated
+			return nil, nil
 		}
 		return nil, ErrInternal
 	}
-	if account == nil || account.Disabled {
+	if account == nil {
+		return nil, nil
+	}
+	if account.Disabled {
 		return nil, ErrUnauthenticated
 	}
 	return &Account{AccountV2: account}, nil

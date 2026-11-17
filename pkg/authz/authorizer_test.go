@@ -112,7 +112,12 @@ func (f *fakeAccounts) SystemAdmin(_ context.Context, email string) (*accountpro
 	if !f.systemAdmins[email] {
 		return nil, status.Error(codes.NotFound, "account not found")
 	}
-	return f.accounts[email], nil
+	return &accountproto.AccountV2{
+		Email:            email,
+		Name:             f.accounts[email].GetName(),
+		OrganizationId:   "org-admin",
+		OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
+	}, nil
 }
 
 func envRole(env string, role accountproto.AccountV2_Role_Environment) *accountproto.AccountV2_EnvironmentRole {
@@ -388,6 +393,15 @@ func TestAuthorize(t *testing.T) {
 			method:        getFeature,
 			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
 			expected:      rootEditor(),
+			expectedCalls: 2,
+		},
+		{
+			desc:          "system admin with a disabled account in the switched organization",
+			caller:        user("disabled@example.com"),
+			systemAdmin:   true,
+			method:        getFeature,
+			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
+			expectedErr:   ErrUnauthenticated,
 			expectedCalls: 2,
 		},
 		{
