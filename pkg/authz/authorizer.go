@@ -48,12 +48,14 @@ type Rules map[string]Requirement
 // loaded it.
 type Account struct {
 	*accountproto.AccountV2
+	// SystemAdmin is set when the organization is a system admin one.
+	SystemAdmin bool
 }
 
 // AccountLoader fetches the caller's account in the organization that owns
 // a scope. It returns a NotFound status when the caller is not a member.
 type AccountLoader interface {
-	Account(ctx context.Context, email string, scope ScopeID) (*accountproto.AccountV2, error)
+	Account(ctx context.Context, email string, scope ScopeID) (*Account, error)
 }
 
 // Authorizer applies Table 1 and Table 2 to a request.
@@ -72,12 +74,17 @@ func (a *Authorizer) Rule(method string) (Requirement, bool) {
 	return r, ok
 }
 
-// Authorize decides whether the caller in ctx may invoke method with req and
-// returns the editor the handler acts as. The editor is nil for a public
-// method. The error is a gRPC status: Unauthenticated for a missing token or
-// a non-member, PermissionDenied for an insufficient role, or the error a
+// Authorize decides whether caller may invoke method with req and returns
+// the editor the handler acts as. The editor is nil for a public method.
+// The error is a gRPC status: Unauthenticated for an anonymous caller or a
+// non-member, PermissionDenied for an insufficient role, or the error a
 // guard returned.
-func (a *Authorizer) Authorize(ctx context.Context, method string, req proto.Message) (*eventproto.Editor, error) {
+func (a *Authorizer) Authorize(
+	ctx context.Context,
+	caller Caller,
+	method string,
+	req proto.Message,
+) (*eventproto.Editor, error) {
 	rule, ok := a.rules[method]
 	if !ok {
 		return nil, ErrNoRule
@@ -88,34 +95,43 @@ func (a *Authorizer) Authorize(ctx context.Context, method string, req proto.Mes
 	if rule.kind == requirePublic {
 		return nil, nil
 	}
-	caller, ok := callerFromContext(ctx)
-	if !ok {
+	if caller.Email == "" {
 		return nil, ErrUnauthenticated
 	}
+	fullAccess := caller.FullAccess()
 	access := &Access{
-		Method:   method,
-		Request:  req,
-		Caller:   caller,
-		accounts: &accountCache{loader: a.accounts},
+		Method:      method,
+		Request:     req,
+		Caller:      caller,
+		SystemAdmin: fullAccess,
+		accounts:    &accountCache{loader: a.accounts},
+	}
+	var home *Account
+	if !fullAccess && caller.PublicAPI == nil {
+		var err error
+		home, err = access.Account(ctx, ScopeID{Kind: OrganizationScope, ID: caller.OrganizationID})
+		if err != nil {
+			return nil, err
+		}
+		access.SystemAdmin = home.SystemAdmin
 	}
 	switch rule.kind {
 	case requireAuthenticated:
-		return tokenEditor(caller), nil
+		return editorOf(access, home, nil), nil
 	case requireSystemAdmin:
-		if !caller.IsSystemAdmin {
+		if !access.SystemAdmin {
 			return nil, ErrPermissionDenied
 		}
-		return tokenEditor(caller), nil
+		return editorOf(access, home, nil), nil
 	}
-	// A service token skips the permission checks, but not the guards: owner
-	// protection and the like apply whoever calls.
-	fullAccess := caller.FullAccess()
+	// A service identity skips the permission checks, but not the guards:
+	// owner protection and the like apply whoever calls.
 	if fullAccess && len(rule.guards) == 0 {
-		return tokenEditor(caller), nil
+		return editorOf(access, nil, nil), nil
 	}
 	// The editor carries the account of the last scope checked: the target
 	// of a clone, as the handlers choose today.
-	var account *Account
+	var target *Account
 	for _, n := range rule.needs {
 		scopes, err := n.scope.Resolve(req)
 		if err != nil {
@@ -131,7 +147,7 @@ func (a *Authorizer) Authorize(ctx context.Context, method string, req proto.Mes
 				return nil, err
 			}
 			if acc != nil {
-				account = acc
+				target = acc
 			}
 		}
 	}
@@ -143,25 +159,21 @@ func (a *Authorizer) Authorize(ctx context.Context, method string, req proto.Mes
 			return nil, statusOf(err)
 		}
 	}
-	if account == nil {
-		return tokenEditor(caller), nil
-	}
-	return accountEditor(caller, account), nil
+	return editorOf(access, home, target), nil
 }
 
 // check decides one need in one scope. A member's account is loaded first
 // so a disabled or unknown account is rejected whatever the rule says; a
 // system admin's is loaded only when the permission needs membership.
 func (a *Authorizer) check(ctx context.Context, access *Access, n need, scope ScopeID) (*Account, error) {
-	caller := access.Caller
 	var account *Account
-	if !caller.IsSystemAdmin {
+	if !access.SystemAdmin {
 		var err error
 		if account, err = access.Account(ctx, scope); err != nil {
 			return nil, err
 		}
 	}
-	if caller.IsSystemAdmin && readableBySystemAdmin(n.permission) {
+	if access.SystemAdmin && readableBySystemAdmin(n.permission) {
 		return account, nil
 	}
 	for _, alternative := range n.alternatives {
@@ -204,28 +216,24 @@ func statusOf(err error) error {
 	return status.Error(codes.Internal, fmt.Sprintf("authz: %v", err))
 }
 
-func tokenEditor(caller *Caller) *eventproto.Editor {
-	return &eventproto.Editor{
-		Email:           caller.Email,
-		Name:            caller.Name,
-		IsAdmin:         caller.IsSystemAdmin,
-		PublicApiEditor: caller.PublicAPI,
+func editorOf(access *Access, home, target *Account) *eventproto.Editor {
+	editor := &eventproto.Editor{
+		Email:           access.Caller.Email,
+		IsAdmin:         access.SystemAdmin,
+		PublicApiEditor: access.Caller.PublicAPI,
 	}
-}
-
-func accountEditor(caller *Caller, account *Account) *eventproto.Editor {
-	name := caller.Name
-	if caller.PublicAPI != nil {
-		name = (&accdomain.AccountV2{AccountV2: account.AccountV2}).GetAccountFullName()
+	named := home
+	if named == nil {
+		named = target
 	}
-	return &eventproto.Editor{
-		Email:            caller.Email,
-		Name:             name,
-		IsAdmin:          caller.IsSystemAdmin,
-		PublicApiEditor:  caller.PublicAPI,
-		EnvironmentRoles: account.EnvironmentRoles,
-		OrganizationRole: account.OrganizationRole,
+	if named != nil {
+		editor.Name = (&accdomain.AccountV2{AccountV2: named.AccountV2}).GetAccountFullName()
 	}
+	if target != nil {
+		editor.EnvironmentRoles = target.EnvironmentRoles
+		editor.OrganizationRole = target.OrganizationRole
+	}
+	return editor
 }
 
 // accountCache loads each scope's account once per request.
@@ -241,17 +249,16 @@ func (c *accountCache) get(ctx context.Context, email string, scope ScopeID) (*A
 	if c.loader == nil {
 		return nil, ErrInternal
 	}
-	acc, err := c.loader.Account(ctx, email, scope)
+	account, err := c.loader.Account(ctx, email, scope)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			return nil, ErrUnauthenticated
 		}
 		return nil, ErrInternal
 	}
-	if acc == nil || acc.Disabled {
+	if account == nil || account.AccountV2 == nil || account.Disabled {
 		return nil, ErrUnauthenticated
 	}
-	account := &Account{AccountV2: acc}
 	if c.loaded == nil {
 		c.loaded = make(map[ScopeID]*Account)
 	}

@@ -26,8 +26,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	accdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	auditlogproto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -79,23 +78,28 @@ func testRules(guard Guard) Rules {
 	}
 }
 
-// fakeAccounts answers by email, whatever the scope, like one organization.
+// fakeAccounts answers by email; every environment belongs to org-1.
 type fakeAccounts struct {
-	accounts map[string]*accountproto.AccountV2
-	err      error
-	calls    int
+	accounts     map[string]*accountproto.AccountV2
+	systemAdmins map[string]bool
+	err          error
+	calls        int
 }
 
-func (f *fakeAccounts) Account(_ context.Context, email string, _ ScopeID) (*accountproto.AccountV2, error) {
+func (f *fakeAccounts) Account(_ context.Context, email string, scope ScopeID) (*Account, error) {
 	f.calls++
 	if f.err != nil {
 		return nil, f.err
 	}
+	organizationID := scope.ID
+	if scope.Kind == EnvironmentScope {
+		organizationID = "org-1"
+	}
 	account, ok := f.accounts[email]
-	if !ok {
+	if !ok || account.OrganizationId != organizationID {
 		return nil, status.Error(codes.NotFound, "account not found")
 	}
-	return account, nil
+	return &Account{AccountV2: account, SystemAdmin: f.systemAdmins[email]}, nil
 }
 
 func envRole(env string, role accountproto.AccountV2_Role_Environment) *accountproto.AccountV2_EnvironmentRole {
@@ -108,6 +112,7 @@ func testAccounts() map[string]*accountproto.AccountV2 {
 	return map[string]*accountproto.AccountV2{
 		"viewer@example.com": {
 			Email:            "viewer@example.com",
+			Name:             "Viewer",
 			OrganizationId:   "org-1",
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole("env-1", viewer)},
@@ -123,47 +128,62 @@ func testAccounts() map[string]*accountproto.AccountV2 {
 		},
 		"member@example.com": {
 			Email:            "member@example.com",
+			Name:             "Member",
 			OrganizationId:   "org-1",
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 		},
 		"admin@example.com": {
 			Email:            "admin@example.com",
+			Name:             "Admin",
 			OrganizationId:   "org-1",
 			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 		},
 		"disabled@example.com": {
 			Email:            "disabled@example.com",
+			Name:             "Disabled",
 			OrganizationId:   "org-1",
 			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 			Disabled:         true,
 		},
+		"root@example.com": {
+			Email:            "root@example.com",
+			Name:             "Root",
+			OrganizationId:   "org-admin",
+			OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
+		},
 	}
 }
 
-func userCtx(email string) context.Context {
-	return context.WithValue(context.Background(), rpc.AccessTokenKey, &token.AccessToken{Email: email, Name: "Name"})
+func user(email string) Caller {
+	return Caller{Email: email, OrganizationID: "org-1"}
 }
 
-func systemAdminCtx(email string) context.Context {
-	return context.WithValue(context.Background(), rpc.AccessTokenKey,
-		&token.AccessToken{Email: email, Name: "Admin", IsSystemAdmin: true})
+func root() Caller {
+	return Caller{Email: "root@example.com", OrganizationID: "org-admin"}
 }
 
-func serviceTokenCtx() context.Context {
-	return context.WithValue(context.Background(), rpc.AccessTokenKey,
-		&token.AccessToken{Email: "service@example.com", Name: "Service", IsSystemAdmin: true, IsServiceToken: true})
+func service() Caller {
+	return Caller{Email: "service@example.com", Service: true}
 }
 
-func relayedCtx(maintainer string) context.Context {
-	md := metadata.Pairs(APIKeyTokenMDKey, rawAPIKey, APIKeyMaintainerMDKey, maintainer, APIKeyNameMDKey, "key")
-	return metadata.NewIncomingContext(serviceTokenCtx(), md)
+func relayed(maintainer string) Caller {
+	return Caller{Email: maintainer, PublicAPI: publicAPIEditor(maintainer)}
+}
+
+func publicAPIEditor(maintainer string) *eventproto.Editor_PublicAPIEditor {
+	return &eventproto.Editor_PublicAPIEditor{Token: obfuscatedAPIKey, Maintainer: maintainer, Name: "key"}
+}
+
+func rootEditor() *eventproto.Editor {
+	return &eventproto.Editor{Email: "root@example.com", Name: "Root", IsAdmin: true}
 }
 
 func TestAuthorize(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc          string
-		ctx           context.Context
+		caller        Caller
+		systemAdmin   bool
 		method        string
 		req           proto.Message
 		guardErr      error
@@ -175,91 +195,104 @@ func TestAuthorize(t *testing.T) {
 	}{
 		{
 			desc:        "no rule",
-			ctx:         userCtx("editor@example.com"),
+			caller:      user("editor@example.com"),
 			method:      "/bucketeer.feature.FeatureService/Unknown",
 			req:         &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expectedErr: ErrNoRule,
 		},
 		{
-			desc:   "public without token",
-			ctx:    context.Background(),
+			desc:   "public without caller",
 			method: ping,
 			req:    &featureproto.UpdateFeatureRequest{},
 		},
 		{
-			desc:        "no token",
-			ctx:         context.Background(),
+			desc:        "no caller",
 			method:      updateFeature,
 			req:         &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expectedErr: ErrUnauthenticated,
 		},
 		{
-			desc:     "authenticated only",
-			ctx:      userCtx("nobody@example.com"),
-			method:   listNotifications,
-			req:      &featureproto.UpdateFeatureRequest{},
-			expected: &eventproto.Editor{Email: "nobody@example.com", Name: "Name"},
-		},
-		{
-			desc:        "system admin only denies a user",
-			ctx:         userCtx("admin@example.com"),
-			method:      createOrganization,
-			req:         &featureproto.UpdateFeatureRequest{},
-			expectedErr: ErrPermissionDenied,
-		},
-		{
-			desc:     "system admin only allows a system admin",
-			ctx:      systemAdminCtx("root@example.com"),
-			method:   createOrganization,
-			req:      &featureproto.UpdateFeatureRequest{},
-			expected: &eventproto.Editor{Email: "root@example.com", Name: "Admin", IsAdmin: true},
-		},
-		{
-			desc:     "service token has full access",
-			ctx:      serviceTokenCtx(),
-			method:   updateFeature,
-			req:      &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
-			expected: &eventproto.Editor{Email: "service@example.com", Name: "Service", IsAdmin: true},
-		},
-		{
-			desc:        "missing scope",
-			ctx:         userCtx("editor@example.com"),
-			method:      updateFeature,
-			req:         &featureproto.UpdateFeatureRequest{},
-			expectedErr: ErrMissingScope,
-		},
-		{
-			desc:   "editor writes its environment",
-			ctx:    userCtx("editor@example.com"),
-			method: updateFeature,
-			req:    &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
-			expected: &eventproto.Editor{
-				Email:            "editor@example.com",
-				Name:             "Name",
-				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-				EnvironmentRoles: testAccounts()["editor@example.com"].EnvironmentRoles,
-			},
+			desc:          "authenticated only",
+			caller:        user("viewer@example.com"),
+			method:        listNotifications,
+			req:           &featureproto.UpdateFeatureRequest{},
+			expected:      &eventproto.Editor{Email: "viewer@example.com", Name: "Viewer"},
 			expectedCalls: 1,
 		},
 		{
-			desc:          "viewer cannot write",
-			ctx:           userCtx("viewer@example.com"),
-			method:        updateFeature,
-			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
+			desc:          "authenticated only without an account",
+			caller:        user("nobody@example.com"),
+			method:        listNotifications,
+			req:           &featureproto.UpdateFeatureRequest{},
+			expectedErr:   ErrUnauthenticated,
+			expectedCalls: 1,
+		},
+		{
+			desc:          "system admin only denies a user",
+			caller:        user("admin@example.com"),
+			method:        createOrganization,
+			req:           &featureproto.UpdateFeatureRequest{},
 			expectedErr:   ErrPermissionDenied,
 			expectedCalls: 1,
 		},
 		{
-			desc:          "viewer reads",
-			ctx:           userCtx("viewer@example.com"),
-			method:        getFeature,
-			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
-			expected:      memberEditor("viewer@example.com"),
+			desc:          "system admin only allows a system admin",
+			caller:        root(),
+			systemAdmin:   true,
+			method:        createOrganization,
+			req:           &featureproto.UpdateFeatureRequest{},
+			expected:      rootEditor(),
 			expectedCalls: 1,
 		},
 		{
+			desc:     "system admin only allows a service identity",
+			caller:   service(),
+			method:   createOrganization,
+			req:      &featureproto.UpdateFeatureRequest{},
+			expected: &eventproto.Editor{Email: "service@example.com", IsAdmin: true},
+		},
+		{
+			desc:     "service identity has full access",
+			caller:   service(),
+			method:   updateFeature,
+			req:      &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
+			expected: &eventproto.Editor{Email: "service@example.com", IsAdmin: true},
+		},
+		{
+			desc:          "missing scope",
+			caller:        user("editor@example.com"),
+			method:        updateFeature,
+			req:           &featureproto.UpdateFeatureRequest{},
+			expectedErr:   ErrMissingScope,
+			expectedCalls: 1,
+		},
+		{
+			desc:          "editor writes its environment",
+			caller:        user("editor@example.com"),
+			method:        updateFeature,
+			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
+			expected:      memberEditor("editor@example.com"),
+			expectedCalls: 2,
+		},
+		{
+			desc:          "viewer cannot write",
+			caller:        user("viewer@example.com"),
+			method:        updateFeature,
+			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
+			expectedErr:   ErrPermissionDenied,
+			expectedCalls: 2,
+		},
+		{
+			desc:          "viewer reads",
+			caller:        user("viewer@example.com"),
+			method:        getFeature,
+			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
+			expected:      memberEditor("viewer@example.com"),
+			expectedCalls: 2,
+		},
+		{
 			desc:          "non-member",
-			ctx:           userCtx("nobody@example.com"),
+			caller:        user("nobody@example.com"),
 			method:        getFeature,
 			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
 			expectedErr:   ErrUnauthenticated,
@@ -267,7 +300,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc:          "disabled account",
-			ctx:           userCtx("disabled@example.com"),
+			caller:        user("disabled@example.com"),
 			method:        getFeature,
 			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
 			expectedErr:   ErrUnauthenticated,
@@ -275,7 +308,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc:          "account lookup fails",
-			ctx:           userCtx("editor@example.com"),
+			caller:        user("editor@example.com"),
 			method:        getFeature,
 			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
 			loaderErr:     errors.New("db down"),
@@ -284,53 +317,56 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc:          "organization admin writes without an environment role",
-			ctx:           userCtx("admin@example.com"),
+			caller:        user("admin@example.com"),
 			method:        updateFeature,
 			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-9"},
 			expected:      memberEditor("admin@example.com"),
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "system admin reads without membership",
-			ctx:           systemAdminCtx("root@example.com"),
+			caller:        root(),
+			systemAdmin:   true,
 			method:        getFeature,
 			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
-			expected:      &eventproto.Editor{Email: "root@example.com", Name: "Admin", IsAdmin: true},
-			expectedCalls: 0,
-		},
-		{
-			desc:          "system admin writes only as a member",
-			ctx:           systemAdminCtx("root@example.com"),
-			method:        updateFeature,
-			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
-			expectedErr:   ErrUnauthenticated,
+			expected:      rootEditor(),
 			expectedCalls: 1,
 		},
 		{
-			desc:   "system admin member writes",
-			ctx:    systemAdminCtx("editor@example.com"),
-			method: updateFeature,
-			req:    &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
+			desc:          "system admin writes only as a member",
+			caller:        root(),
+			systemAdmin:   true,
+			method:        updateFeature,
+			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
+			expectedErr:   ErrUnauthenticated,
+			expectedCalls: 2,
+		},
+		{
+			desc:        "system admin member writes",
+			caller:      user("editor@example.com"),
+			systemAdmin: true,
+			method:      updateFeature,
+			req:         &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expected: &eventproto.Editor{
 				Email:            "editor@example.com",
-				Name:             "Admin",
+				Name:             "Edi Tor",
 				IsAdmin:          true,
 				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 				EnvironmentRoles: testAccounts()["editor@example.com"].EnvironmentRoles,
 			},
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "organization member without an environment role is denied there",
-			ctx:           userCtx("member@example.com"),
+			caller:        user("member@example.com"),
 			method:        getSubscription,
 			req:           &subscriptionproto.GetSubscriptionRequest{EnvironmentId: "env-1"},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "organization member reads accounts",
-			ctx:           userCtx("viewer@example.com"),
+			caller:        user("viewer@example.com"),
 			method:        listAccounts,
 			req:           &accountproto.ListAccountsV2Request{OrganizationId: "org-1"},
 			expected:      memberEditor("viewer@example.com"),
@@ -338,7 +374,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc:          "member cannot manage another account",
-			ctx:           userCtx("viewer@example.com"),
+			caller:        user("viewer@example.com"),
 			method:        updateAccount,
 			req:           &accountproto.UpdateAccountV2Request{OrganizationId: "org-1", Email: "editor@example.com"},
 			expectedErr:   ErrPermissionDenied,
@@ -346,7 +382,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc:          "member updates self through the alternative",
-			ctx:           userCtx("viewer@example.com"),
+			caller:        user("viewer@example.com"),
 			method:        updateAccount,
 			req:           &accountproto.UpdateAccountV2Request{OrganizationId: "org-1", Email: "viewer@example.com"},
 			expected:      memberEditor("viewer@example.com"),
@@ -354,30 +390,30 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc:          "admin manages accounts",
-			ctx:           userCtx("admin@example.com"),
+			caller:        user("admin@example.com"),
 			method:        updateAccount,
 			req:           &accountproto.UpdateAccountV2Request{OrganizationId: "org-1", Email: "editor@example.com"},
 			expected:      memberEditor("admin@example.com"),
 			expectedCalls: 1,
 		},
 		{
-			desc:        "service token runs the guards",
-			ctx:         serviceTokenCtx(),
+			desc:        "service identity runs the guards",
+			caller:      service(),
 			method:      updateAccount,
 			req:         &accountproto.UpdateAccountV2Request{OrganizationId: "org-1", Email: "editor@example.com"},
 			guardErr:    errGuard,
 			expectedErr: errGuard,
 		},
 		{
-			desc:     "service token passes the guards without a permission check",
-			ctx:      serviceTokenCtx(),
+			desc:     "service identity passes the guards without a permission check",
+			caller:   service(),
 			method:   updateAccount,
 			req:      &accountproto.UpdateAccountV2Request{OrganizationId: "org-1", Email: "editor@example.com"},
-			expected: &eventproto.Editor{Email: "service@example.com", Name: "Service", IsAdmin: true},
+			expected: &eventproto.Editor{Email: "service@example.com", IsAdmin: true},
 		},
 		{
 			desc:          "guard rejects",
-			ctx:           userCtx("admin@example.com"),
+			caller:        user("admin@example.com"),
 			method:        updateAccount,
 			req:           &accountproto.UpdateAccountV2Request{OrganizationId: "org-1", Email: "editor@example.com"},
 			guardErr:      errGuard,
@@ -386,7 +422,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc:          "audit logs of the organization need an admin",
-			ctx:           userCtx("viewer@example.com"),
+			caller:        user("viewer@example.com"),
 			method:        listAuditLogs,
 			req:           &auditlogproto.ListAuditLogsRequest{OrganizationId: "org-1"},
 			expectedErr:   ErrPermissionDenied,
@@ -394,7 +430,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc:          "audit logs of the organization by an admin",
-			ctx:           userCtx("admin@example.com"),
+			caller:        user("admin@example.com"),
 			method:        listAuditLogs,
 			req:           &auditlogproto.ListAuditLogsRequest{OrganizationId: "org-1"},
 			expected:      memberEditor("admin@example.com"),
@@ -402,70 +438,72 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc:          "audit logs of the organization by a system admin without membership",
-			ctx:           systemAdminCtx("root@example.com"),
+			caller:        root(),
+			systemAdmin:   true,
 			method:        listAuditLogs,
 			req:           &auditlogproto.ListAuditLogsRequest{OrganizationId: "org-1"},
-			expected:      &eventproto.Editor{Email: "root@example.com", Name: "Admin", IsAdmin: true},
-			expectedCalls: 0,
+			expected:      rootEditor(),
+			expectedCalls: 1,
 		},
 		{
 			desc:          "audit logs of an environment by a viewer",
-			ctx:           userCtx("viewer@example.com"),
+			caller:        user("viewer@example.com"),
 			method:        listAuditLogs,
 			req:           &auditlogproto.ListAuditLogsRequest{EnvironmentId: "env-1"},
 			expected:      memberEditor("viewer@example.com"),
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
-			desc:        "audit logs without any scope",
-			ctx:         userCtx("viewer@example.com"),
-			method:      listAuditLogs,
-			req:         &auditlogproto.ListAuditLogsRequest{},
-			expectedErr: ErrMissingScope,
+			desc:          "audit logs without any scope",
+			caller:        user("viewer@example.com"),
+			method:        listAuditLogs,
+			req:           &auditlogproto.ListAuditLogsRequest{},
+			expectedErr:   ErrMissingScope,
+			expectedCalls: 1,
 		},
 		{
 			desc:          "clone needs read on the source and write on the target",
-			ctx:           userCtx("editor@example.com"),
+			caller:        user("editor@example.com"),
 			method:        cloneFeature,
 			req:           &featureproto.CloneFeatureRequest{EnvironmentId: "env-2", TargetEnvironmentId: "env-1"},
 			expected:      memberEditor("editor@example.com"),
-			expectedCalls: 2,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "clone into an environment without write",
-			ctx:           userCtx("editor@example.com"),
+			caller:        user("editor@example.com"),
 			method:        cloneFeature,
 			req:           &featureproto.CloneFeatureRequest{EnvironmentId: "env-1", TargetEnvironmentId: "env-2"},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 2,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "every listed environment is checked",
-			ctx:           userCtx("editor@example.com"),
+			caller:        user("editor@example.com"),
 			method:        getInsights,
 			req:           &insightsproto.GetInsightsMonthlySummaryRequest{EnvironmentIds: []string{"env-1", "env-2"}},
 			expected:      memberEditor("editor@example.com"),
-			expectedCalls: 2,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "one listed environment without a role denies",
-			ctx:           userCtx("viewer@example.com"),
+			caller:        user("viewer@example.com"),
 			method:        getInsights,
 			req:           &insightsproto.GetInsightsMonthlySummaryRequest{EnvironmentIds: []string{"env-1", "env-2"}},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 2,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "a repeated environment is loaded once",
-			ctx:           userCtx("viewer@example.com"),
+			caller:        user("viewer@example.com"),
 			method:        getInsights,
 			req:           &insightsproto.GetInsightsMonthlySummaryRequest{EnvironmentIds: []string{"env-1", "env-1"}},
 			expected:      memberEditor("viewer@example.com"),
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:   "public API request acts as the key maintainer",
-			ctx:    relayedCtx("editor@example.com"),
+			caller: relayed("editor@example.com"),
 			method: updateFeature,
 			req:    &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expected: &eventproto.Editor{
@@ -473,15 +511,13 @@ func TestAuthorize(t *testing.T) {
 				Name:             "Edi Tor",
 				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 				EnvironmentRoles: testAccounts()["editor@example.com"].EnvironmentRoles,
-				PublicApiEditor: &eventproto.Editor_PublicAPIEditor{
-					Token: obfuscatedAPIKey, Maintainer: "editor@example.com", Name: "key",
-				},
+				PublicApiEditor:  publicAPIEditor("editor@example.com"),
 			},
 			expectedCalls: 1,
 		},
 		{
 			desc:          "public API request is limited to the maintainer's role",
-			ctx:           relayedCtx("viewer@example.com"),
+			caller:        relayed("viewer@example.com"),
 			method:        updateFeature,
 			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expectedErr:   ErrPermissionDenied,
@@ -489,7 +525,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc:          "public API request with an unknown maintainer",
-			ctx:           relayedCtx("nobody@example.com"),
+			caller:        relayed("nobody@example.com"),
 			method:        updateFeature,
 			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expectedErr:   ErrUnauthenticated,
@@ -497,26 +533,31 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc:         "rule composes a special kind",
-			ctx:          systemAdminCtx("editor@example.com"),
+			caller:       user("editor@example.com"),
 			method:       invalidRule,
 			req:          &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expectedCode: codes.Internal,
 		},
 		{
-			desc:         "rule names a field the request lacks",
-			ctx:          userCtx("editor@example.com"),
-			method:       getFeature,
-			req:          &accountproto.GetMeRequest{},
-			expectedCode: codes.Internal,
+			desc:          "rule names a field the request lacks",
+			caller:        user("editor@example.com"),
+			method:        getFeature,
+			req:           &accountproto.GetMeRequest{},
+			expectedCode:  codes.Internal,
+			expectedCalls: 1,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			loader := &fakeAccounts{accounts: testAccounts(), err: p.loaderErr}
+			loader := &fakeAccounts{
+				accounts:     testAccounts(),
+				systemAdmins: map[string]bool{p.caller.Email: p.systemAdmin},
+				err:          p.loaderErr,
+			}
 			guard := guardFunc(func(context.Context, *Access) error { return p.guardErr })
 			authorizer := New(testRules(guard), loader)
-			editor, err := authorizer.Authorize(p.ctx, p.method, p.req)
+			editor, err := authorizer.Authorize(context.Background(), p.caller, p.method, p.req)
 			if p.expectedCode != codes.OK {
 				require.Error(t, err)
 				assert.Equal(t, p.expectedCode, status.Code(err))
@@ -533,7 +574,7 @@ func memberEditor(email string) *eventproto.Editor {
 	account := testAccounts()[email]
 	return &eventproto.Editor{
 		Email:            email,
-		Name:             "Name",
+		Name:             (&accdomain.AccountV2{AccountV2: account}).GetAccountFullName(),
 		OrganizationRole: account.OrganizationRole,
 		EnvironmentRoles: account.EnvironmentRoles,
 	}
@@ -564,9 +605,9 @@ func TestInvalidCompositions(t *testing.T) {
 // organizations with different roles.
 type scopedAccounts map[ScopeID]*accountproto.AccountV2
 
-func (s scopedAccounts) Account(_ context.Context, _ string, scope ScopeID) (*accountproto.AccountV2, error) {
+func (s scopedAccounts) Account(_ context.Context, _ string, scope ScopeID) (*Account, error) {
 	if account, ok := s[scope]; ok {
-		return account, nil
+		return &Account{AccountV2: account}, nil
 	}
 	return nil, status.Error(codes.NotFound, "account not found")
 }
@@ -577,6 +618,7 @@ func TestAuthorizeEditorOfTheTargetScope(t *testing.T) {
 	editor := accountproto.AccountV2_Role_Environment_EDITOR
 	source := &accountproto.AccountV2{
 		Email:            "clone@example.com",
+		Name:             "Clone",
 		OrganizationId:   "org-1",
 		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole("env-1", viewer)},
@@ -588,19 +630,21 @@ func TestAuthorizeEditorOfTheTargetScope(t *testing.T) {
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole("env-2", editor)},
 	}
 	loader := scopedAccounts{
-		{Kind: EnvironmentScope, ID: "env-1"}: source,
-		{Kind: EnvironmentScope, ID: "env-2"}: target,
+		{Kind: OrganizationScope, ID: "org-1"}: source,
+		{Kind: EnvironmentScope, ID: "env-1"}:  source,
+		{Kind: EnvironmentScope, ID: "env-2"}:  target,
 	}
 	authorizer := New(testRules(guardFunc(func(context.Context, *Access) error { return nil })), loader)
 	actual, err := authorizer.Authorize(
-		userCtx("clone@example.com"),
+		context.Background(),
+		user("clone@example.com"),
 		cloneFeature,
 		&featureproto.CloneFeatureRequest{EnvironmentId: "env-1", TargetEnvironmentId: "env-2"},
 	)
 	require.NoError(t, err)
 	assert.Equal(t, &eventproto.Editor{
 		Email:            "clone@example.com",
-		Name:             "Name",
+		Name:             "Clone",
 		OrganizationRole: target.OrganizationRole,
 		EnvironmentRoles: target.EnvironmentRoles,
 	}, actual)
@@ -609,7 +653,7 @@ func TestAuthorizeEditorOfTheTargetScope(t *testing.T) {
 func TestAccessAccountIsCached(t *testing.T) {
 	t.Parallel()
 	loader := &fakeAccounts{accounts: testAccounts()}
-	access := &Access{Caller: &Caller{Email: "editor@example.com"}, accounts: &accountCache{loader: loader}}
+	access := &Access{Caller: Caller{Email: "editor@example.com"}, accounts: &accountCache{loader: loader}}
 	scope := ScopeID{Kind: EnvironmentScope, ID: "env-1"}
 	first, err := access.Account(context.Background(), scope)
 	require.NoError(t, err)
@@ -624,4 +668,36 @@ func TestEditorContext(t *testing.T) {
 	assert.Nil(t, EditorFrom(context.Background()))
 	editor := &eventproto.Editor{Email: "editor@example.com"}
 	assert.Same(t, editor, EditorFrom(WithEditor(context.Background(), editor)))
+}
+
+func TestCallerRelayed(t *testing.T) {
+	t.Parallel()
+	md := metadata.Pairs(APIKeyTokenMDKey, rawAPIKey, APIKeyMaintainerMDKey, "editor@example.com", APIKeyNameMDKey, "key")
+	withKey := metadata.NewIncomingContext(context.Background(), md)
+	patterns := []struct {
+		desc     string
+		ctx      context.Context
+		caller   Caller
+		expected Caller
+	}{
+		{desc: "service with an API key", ctx: withKey, caller: service(), expected: relayed("editor@example.com")},
+		{desc: "service without an API key", ctx: context.Background(), caller: service(), expected: service()},
+		{
+			desc: "service with empty metadata", caller: service(), expected: service(),
+			ctx: metadata.NewIncomingContext(context.Background(), metadata.Pairs(APIKeyMaintainerMDKey, "x")),
+		},
+		{desc: "user metadata is ignored", ctx: withKey, caller: user("viewer@example.com"), expected: user("viewer@example.com")},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			assert.Equal(t, p.expected, p.caller.Relayed(p.ctx))
+		})
+	}
+}
+
+func TestCallerFullAccess(t *testing.T) {
+	t.Parallel()
+	assert.True(t, service().FullAccess())
+	assert.False(t, relayed("editor@example.com").FullAccess())
+	assert.False(t, user("editor@example.com").FullAccess())
 }

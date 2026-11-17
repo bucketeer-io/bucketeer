@@ -20,7 +20,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	accdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
@@ -36,42 +35,31 @@ const (
 // the maintainer's own membership and roles.
 type Caller struct {
 	Email          string
-	Name           string
-	IsSystemAdmin  bool
-	IsServiceToken bool
+	OrganizationID string
+	// Service is set for the machine identity of batch and subscriber jobs.
+	Service bool
 	// PublicAPI is set when the request was relayed by the public API gateway.
 	PublicAPI *eventproto.Editor_PublicAPIEditor
 }
 
-// FullAccess reports whether the caller bypasses every check: a service
-// token (machine account of batch and subscriber jobs) that is not relaying
-// a public API request.
-func (c *Caller) FullAccess() bool {
-	return c.IsSystemAdmin && c.IsServiceToken && c.PublicAPI == nil
+// FullAccess reports whether the caller skips the permission checks: a
+// service identity that is not relaying a public API request.
+func (c Caller) FullAccess() bool {
+	return c.Service && c.PublicAPI == nil
 }
 
-// callerFromContext reads the verified access token, and the API key
-// metadata when a service token relays a public API request. API key
-// metadata is trusted on service token requests only, because only the
-// public API gateway sets it.
-func callerFromContext(ctx context.Context) (*Caller, bool) {
-	token, ok := rpc.GetAccessToken(ctx)
-	if !ok {
-		return nil, false
+// Relayed returns the API key's maintainer as the caller when the public API
+// gateway relayed the request. Only the gateway relays with a service
+// identity, so the metadata is read on service callers only.
+func (c Caller) Relayed(ctx context.Context) Caller {
+	if !c.Service {
+		return c
 	}
-	caller := &Caller{
-		Email:          token.Email,
-		Name:           token.Name,
-		IsSystemAdmin:  token.IsSystemAdmin,
-		IsServiceToken: token.IsServiceToken,
+	publicAPI := apiKeyEditorFromContext(ctx)
+	if publicAPI == nil {
+		return c
 	}
-	if !token.IsSystemAdmin || !token.IsServiceToken {
-		return caller, true
-	}
-	if publicAPI := apiKeyEditorFromContext(ctx); publicAPI != nil && publicAPI.Token != "" {
-		return &Caller{Email: publicAPI.Maintainer, PublicAPI: publicAPI}, true
-	}
-	return caller, true
+	return Caller{Email: publicAPI.Maintainer, PublicAPI: publicAPI}
 }
 
 func apiKeyEditorFromContext(ctx context.Context) *eventproto.Editor_PublicAPIEditor {

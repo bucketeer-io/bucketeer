@@ -84,18 +84,18 @@ func Need(permission Permission, scope Scope) Requirement {
 	return Requirement{needs: []need{{permission: permission, scope: scope}}}
 }
 
-// Public needs nothing, not even a token.
+// Public needs nothing, not even a caller.
 func Public() Requirement {
 	return Requirement{kind: requirePublic}
 }
 
-// Authenticated needs a valid token and nothing else, for RPCs that act on
-// the caller's own data.
+// Authenticated needs a caller with an account and nothing else, for RPCs
+// that act on the caller's own data.
 func Authenticated() Requirement {
 	return Requirement{kind: requireAuthenticated}
 }
 
-// SystemAdminOnly needs a system admin token; membership is not checked.
+// SystemAdminOnly needs a system admin caller.
 func SystemAdminOnly() Requirement {
 	return Requirement{kind: requireSystemAdmin}
 }
@@ -137,10 +137,11 @@ func (r Requirement) Guard(guard Guard) Requirement {
 // Access is what conditions and guards see: the request, the caller, the
 // scopes it resolved to and the caller's accounts, loaded on demand.
 type Access struct {
-	Method  string
-	Request proto.Message
-	Caller  *Caller
-	Scopes  []ScopeID
+	Method      string
+	Request     proto.Message
+	Caller      Caller
+	SystemAdmin bool
+	Scopes      []ScopeID
 
 	accounts *accountCache
 }
@@ -170,12 +171,12 @@ func (c selfCondition) Holds(_ context.Context, access *Access) (bool, error) {
 
 type systemAdminCondition struct{}
 
-// SystemAdmin holds for a system admin token, for RPCs a system admin may
-// call without being a member of the organization.
+// SystemAdmin holds for a system admin, for RPCs a system admin may call
+// without being a member of the organization.
 func SystemAdmin() Condition {
 	return systemAdminCondition{}
 }
 
 func (systemAdminCondition) Holds(_ context.Context, access *Access) (bool, error) {
-	return access.Caller.IsSystemAdmin, nil
+	return access.SystemAdmin, nil
 }
