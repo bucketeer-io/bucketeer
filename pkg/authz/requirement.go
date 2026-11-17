@@ -81,7 +81,11 @@ func (k requirementKind) String() string {
 
 // Need requires permission in the scope resolved from the request.
 func Need(permission Permission, scope Scope) Requirement {
-	return Requirement{needs: []need{{permission: permission, scope: scope}}}
+	r := Requirement{needs: []need{{permission: permission, scope: scope}}}
+	if field, ok := scope.(FieldScope); ok && !inScope(permission, field.Kind) {
+		r.err = fmt.Errorf("%w: %s is not %s-scoped", ErrRule, permission, field.Kind)
+	}
+	return r
 }
 
 // Public needs nothing, not even a caller.

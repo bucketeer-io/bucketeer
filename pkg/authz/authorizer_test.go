@@ -47,6 +47,7 @@ const (
 	listNotifications  = "/bucketeer.notification.NotificationService/ListNotifications"
 	invalidRule        = "/bucketeer.feature.FeatureService/InvalidRule"
 	createOrganization = "/bucketeer.environment.EnvironmentService/CreateOrganization"
+	wrongScope         = "/bucketeer.feature.FeatureService/WrongScope"
 	ping               = "/bucketeer.gateway.Gateway/Ping"
 
 	rawAPIKey        = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
@@ -74,6 +75,7 @@ func testRules(guard Guard) Rules {
 		listNotifications:  Authenticated(),
 		invalidRule:        Need(FeatureWrite, InEnv("environment_id")).And(SystemAdminOnly()),
 		createOrganization: SystemAdminOnly(),
+		wrongScope:         Need(FeatureRead, InOrg("organization_id")),
 		ping:               Public(),
 	}
 }
@@ -86,7 +88,7 @@ type fakeAccounts struct {
 	calls        int
 }
 
-func (f *fakeAccounts) Account(_ context.Context, email string, scope ScopeID) (*Account, error) {
+func (f *fakeAccounts) Account(_ context.Context, email string, scope ScopeID) (*accountproto.AccountV2, error) {
 	f.calls++
 	if f.err != nil {
 		return nil, f.err
@@ -99,7 +101,18 @@ func (f *fakeAccounts) Account(_ context.Context, email string, scope ScopeID) (
 	if !ok || account.OrganizationId != organizationID {
 		return nil, status.Error(codes.NotFound, "account not found")
 	}
-	return &Account{AccountV2: account, SystemAdmin: f.systemAdmins[email]}, nil
+	return account, nil
+}
+
+func (f *fakeAccounts) SystemAdmin(_ context.Context, email string) (*accountproto.AccountV2, error) {
+	f.calls++
+	if f.err != nil {
+		return nil, f.err
+	}
+	if !f.systemAdmins[email] {
+		return nil, status.Error(codes.NotFound, "account not found")
+	}
+	return f.accounts[email], nil
 }
 
 func envRole(env string, role accountproto.AccountV2_Role_Environment) *accountproto.AccountV2_EnvironmentRole {
@@ -162,6 +175,10 @@ func root() Caller {
 	return Caller{Email: "root@example.com", OrganizationID: "org-admin"}
 }
 
+func switchedRoot() Caller {
+	return Caller{Email: "root@example.com", OrganizationID: "org-1"}
+}
+
 func service() Caller {
 	return Caller{Email: "service@example.com", Service: true}
 }
@@ -217,7 +234,7 @@ func TestAuthorize(t *testing.T) {
 			method:        listNotifications,
 			req:           &featureproto.UpdateFeatureRequest{},
 			expected:      &eventproto.Editor{Email: "viewer@example.com", Name: "Viewer"},
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "authenticated only without an account",
@@ -225,7 +242,14 @@ func TestAuthorize(t *testing.T) {
 			method:        listNotifications,
 			req:           &featureproto.UpdateFeatureRequest{},
 			expectedErr:   ErrUnauthenticated,
-			expectedCalls: 1,
+			expectedCalls: 2,
+		},
+		{
+			desc:        "authenticated only denies a public API request",
+			caller:      relayed("editor@example.com"),
+			method:      listNotifications,
+			req:         &featureproto.UpdateFeatureRequest{},
+			expectedErr: ErrPermissionDenied,
 		},
 		{
 			desc:          "system admin only denies a user",
@@ -233,7 +257,14 @@ func TestAuthorize(t *testing.T) {
 			method:        createOrganization,
 			req:           &featureproto.UpdateFeatureRequest{},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 1,
+			expectedCalls: 2,
+		},
+		{
+			desc:        "system admin only denies a public API request",
+			caller:      relayed("editor@example.com"),
+			method:      createOrganization,
+			req:         &featureproto.UpdateFeatureRequest{},
+			expectedErr: ErrPermissionDenied,
 		},
 		{
 			desc:          "system admin only allows a system admin",
@@ -242,7 +273,16 @@ func TestAuthorize(t *testing.T) {
 			method:        createOrganization,
 			req:           &featureproto.UpdateFeatureRequest{},
 			expected:      rootEditor(),
-			expectedCalls: 1,
+			expectedCalls: 2,
+		},
+		{
+			desc:          "system admin only allows a system admin in a switched organization",
+			caller:        switchedRoot(),
+			systemAdmin:   true,
+			method:        createOrganization,
+			req:           &featureproto.UpdateFeatureRequest{},
+			expected:      rootEditor(),
+			expectedCalls: 2,
 		},
 		{
 			desc:     "system admin only allows a service identity",
@@ -264,7 +304,7 @@ func TestAuthorize(t *testing.T) {
 			method:        updateFeature,
 			req:           &featureproto.UpdateFeatureRequest{},
 			expectedErr:   ErrMissingScope,
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "editor writes its environment",
@@ -272,7 +312,7 @@ func TestAuthorize(t *testing.T) {
 			method:        updateFeature,
 			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expected:      memberEditor("editor@example.com"),
-			expectedCalls: 2,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "viewer cannot write",
@@ -280,7 +320,7 @@ func TestAuthorize(t *testing.T) {
 			method:        updateFeature,
 			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 2,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "viewer reads",
@@ -288,7 +328,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getFeature,
 			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
 			expected:      memberEditor("viewer@example.com"),
-			expectedCalls: 2,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "non-member",
@@ -296,7 +336,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getFeature,
 			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
 			expectedErr:   ErrUnauthenticated,
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "disabled account",
@@ -304,7 +344,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getFeature,
 			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
 			expectedErr:   ErrUnauthenticated,
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "account lookup fails",
@@ -321,7 +361,7 @@ func TestAuthorize(t *testing.T) {
 			method:        updateFeature,
 			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-9"},
 			expected:      memberEditor("admin@example.com"),
-			expectedCalls: 2,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "system admin reads without membership",
@@ -330,7 +370,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getFeature,
 			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
 			expected:      rootEditor(),
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "system admin writes only as a member",
@@ -339,10 +379,28 @@ func TestAuthorize(t *testing.T) {
 			method:        updateFeature,
 			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expectedErr:   ErrUnauthenticated,
+			expectedCalls: 3,
+		},
+		{
+			desc:          "system admin reads in a switched organization without membership",
+			caller:        switchedRoot(),
+			systemAdmin:   true,
+			method:        getFeature,
+			req:           &featureproto.GetFeatureRequest{EnvironmentId: "env-1"},
+			expected:      rootEditor(),
 			expectedCalls: 2,
 		},
 		{
-			desc:        "system admin member writes",
+			desc:          "system admin writes in a switched organization only as a member",
+			caller:        switchedRoot(),
+			systemAdmin:   true,
+			method:        updateFeature,
+			req:           &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
+			expectedErr:   ErrUnauthenticated,
+			expectedCalls: 3,
+		},
+		{
+			desc:        "system admin writes in a switched organization as a member",
 			caller:      user("editor@example.com"),
 			systemAdmin: true,
 			method:      updateFeature,
@@ -354,7 +412,7 @@ func TestAuthorize(t *testing.T) {
 				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 				EnvironmentRoles: testAccounts()["editor@example.com"].EnvironmentRoles,
 			},
-			expectedCalls: 2,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "organization member without an environment role is denied there",
@@ -362,7 +420,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getSubscription,
 			req:           &subscriptionproto.GetSubscriptionRequest{EnvironmentId: "env-1"},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 2,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "organization member reads accounts",
@@ -370,7 +428,7 @@ func TestAuthorize(t *testing.T) {
 			method:        listAccounts,
 			req:           &accountproto.ListAccountsV2Request{OrganizationId: "org-1"},
 			expected:      memberEditor("viewer@example.com"),
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "member cannot manage another account",
@@ -378,7 +436,7 @@ func TestAuthorize(t *testing.T) {
 			method:        updateAccount,
 			req:           &accountproto.UpdateAccountV2Request{OrganizationId: "org-1", Email: "editor@example.com"},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "member updates self through the alternative",
@@ -386,7 +444,7 @@ func TestAuthorize(t *testing.T) {
 			method:        updateAccount,
 			req:           &accountproto.UpdateAccountV2Request{OrganizationId: "org-1", Email: "viewer@example.com"},
 			expected:      memberEditor("viewer@example.com"),
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "admin manages accounts",
@@ -394,7 +452,7 @@ func TestAuthorize(t *testing.T) {
 			method:        updateAccount,
 			req:           &accountproto.UpdateAccountV2Request{OrganizationId: "org-1", Email: "editor@example.com"},
 			expected:      memberEditor("admin@example.com"),
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:        "service identity runs the guards",
@@ -418,7 +476,7 @@ func TestAuthorize(t *testing.T) {
 			req:           &accountproto.UpdateAccountV2Request{OrganizationId: "org-1", Email: "editor@example.com"},
 			guardErr:      errGuard,
 			expectedErr:   errGuard,
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "audit logs of the organization need an admin",
@@ -426,7 +484,7 @@ func TestAuthorize(t *testing.T) {
 			method:        listAuditLogs,
 			req:           &auditlogproto.ListAuditLogsRequest{OrganizationId: "org-1"},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "audit logs of the organization by an admin",
@@ -434,7 +492,7 @@ func TestAuthorize(t *testing.T) {
 			method:        listAuditLogs,
 			req:           &auditlogproto.ListAuditLogsRequest{OrganizationId: "org-1"},
 			expected:      memberEditor("admin@example.com"),
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "audit logs of the organization by a system admin without membership",
@@ -443,7 +501,7 @@ func TestAuthorize(t *testing.T) {
 			method:        listAuditLogs,
 			req:           &auditlogproto.ListAuditLogsRequest{OrganizationId: "org-1"},
 			expected:      rootEditor(),
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "audit logs of an environment by a viewer",
@@ -451,7 +509,7 @@ func TestAuthorize(t *testing.T) {
 			method:        listAuditLogs,
 			req:           &auditlogproto.ListAuditLogsRequest{EnvironmentId: "env-1"},
 			expected:      memberEditor("viewer@example.com"),
-			expectedCalls: 2,
+			expectedCalls: 3,
 		},
 		{
 			desc:          "audit logs without any scope",
@@ -459,7 +517,7 @@ func TestAuthorize(t *testing.T) {
 			method:        listAuditLogs,
 			req:           &auditlogproto.ListAuditLogsRequest{},
 			expectedErr:   ErrMissingScope,
-			expectedCalls: 1,
+			expectedCalls: 2,
 		},
 		{
 			desc:          "clone needs read on the source and write on the target",
@@ -467,7 +525,7 @@ func TestAuthorize(t *testing.T) {
 			method:        cloneFeature,
 			req:           &featureproto.CloneFeatureRequest{EnvironmentId: "env-2", TargetEnvironmentId: "env-1"},
 			expected:      memberEditor("editor@example.com"),
-			expectedCalls: 3,
+			expectedCalls: 4,
 		},
 		{
 			desc:          "clone into an environment without write",
@@ -475,7 +533,7 @@ func TestAuthorize(t *testing.T) {
 			method:        cloneFeature,
 			req:           &featureproto.CloneFeatureRequest{EnvironmentId: "env-1", TargetEnvironmentId: "env-2"},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 3,
+			expectedCalls: 4,
 		},
 		{
 			desc:          "every listed environment is checked",
@@ -483,7 +541,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getInsights,
 			req:           &insightsproto.GetInsightsMonthlySummaryRequest{EnvironmentIds: []string{"env-1", "env-2"}},
 			expected:      memberEditor("editor@example.com"),
-			expectedCalls: 3,
+			expectedCalls: 4,
 		},
 		{
 			desc:          "one listed environment without a role denies",
@@ -491,7 +549,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getInsights,
 			req:           &insightsproto.GetInsightsMonthlySummaryRequest{EnvironmentIds: []string{"env-1", "env-2"}},
 			expectedErr:   ErrPermissionDenied,
-			expectedCalls: 3,
+			expectedCalls: 4,
 		},
 		{
 			desc:          "a repeated environment is loaded once",
@@ -499,7 +557,7 @@ func TestAuthorize(t *testing.T) {
 			method:        getInsights,
 			req:           &insightsproto.GetInsightsMonthlySummaryRequest{EnvironmentIds: []string{"env-1", "env-1"}},
 			expected:      memberEditor("viewer@example.com"),
-			expectedCalls: 2,
+			expectedCalls: 3,
 		},
 		{
 			desc:   "public API request acts as the key maintainer",
@@ -544,7 +602,15 @@ func TestAuthorize(t *testing.T) {
 			method:        getFeature,
 			req:           &accountproto.GetMeRequest{},
 			expectedCode:  codes.Internal,
-			expectedCalls: 1,
+			expectedCalls: 2,
+		},
+		{
+			desc:         "rule asks a permission in the wrong scope",
+			caller:       root(),
+			systemAdmin:  true,
+			method:       wrongScope,
+			req:          &accountproto.ListAccountsV2Request{OrganizationId: "org-1"},
+			expectedCode: codes.Internal,
 		},
 	}
 	for _, p := range patterns {
@@ -592,6 +658,7 @@ func TestInvalidCompositions(t *testing.T) {
 		{desc: "And with SystemAdminOnly", rule: need.And(SystemAdminOnly())},
 		{desc: "Or on Authenticated", rule: Authenticated().Or(SystemAdmin())},
 		{desc: "Guard on SystemAdminOnly", rule: SystemAdminOnly().Guard(guard)},
+		{desc: "Need in the wrong scope", rule: Need(FeatureRead, InOrg("organization_id"))},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -605,10 +672,14 @@ func TestInvalidCompositions(t *testing.T) {
 // organizations with different roles.
 type scopedAccounts map[ScopeID]*accountproto.AccountV2
 
-func (s scopedAccounts) Account(_ context.Context, _ string, scope ScopeID) (*Account, error) {
+func (s scopedAccounts) Account(_ context.Context, _ string, scope ScopeID) (*accountproto.AccountV2, error) {
 	if account, ok := s[scope]; ok {
-		return &Account{AccountV2: account}, nil
+		return account, nil
 	}
+	return nil, status.Error(codes.NotFound, "account not found")
+}
+
+func (scopedAccounts) SystemAdmin(context.Context, string) (*accountproto.AccountV2, error) {
 	return nil, status.Error(codes.NotFound, "account not found")
 }
 

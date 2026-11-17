@@ -48,14 +48,15 @@ type Rules map[string]Requirement
 // loaded it.
 type Account struct {
 	*accountproto.AccountV2
-	// SystemAdmin is set when the organization is a system admin one.
-	SystemAdmin bool
 }
 
-// AccountLoader fetches the caller's account in the organization that owns
-// a scope. It returns a NotFound status when the caller is not a member.
+// AccountLoader fetches the caller's accounts. Both methods return a
+// NotFound status when the caller has no such account.
 type AccountLoader interface {
-	Account(ctx context.Context, email string, scope ScopeID) (*Account, error)
+	// Account is the caller's account in the organization that owns scope.
+	Account(ctx context.Context, email string, scope ScopeID) (*accountproto.AccountV2, error)
+	// SystemAdmin is the caller's account in a system admin organization.
+	SystemAdmin(ctx context.Context, email string) (*accountproto.AccountV2, error)
 }
 
 // Authorizer applies Table 1 and Table 2 to a request.
@@ -98,6 +99,9 @@ func (a *Authorizer) Authorize(
 	if caller.Email == "" {
 		return nil, ErrUnauthenticated
 	}
+	if caller.PublicAPI != nil && rule.kind != requirePermission {
+		return nil, ErrPermissionDenied
+	}
 	fullAccess := caller.FullAccess()
 	access := &Access{
 		Method:      method,
@@ -106,14 +110,23 @@ func (a *Authorizer) Authorize(
 		SystemAdmin: fullAccess,
 		accounts:    &accountCache{loader: a.accounts},
 	}
+	// home is the account the editor is named from: the caller's account in
+	// its current organization, or its system admin account when it switched
+	// into an organization it is not a member of.
 	var home *Account
 	if !fullAccess && caller.PublicAPI == nil {
-		var err error
-		home, err = access.Account(ctx, ScopeID{Kind: OrganizationScope, ID: caller.OrganizationID})
+		admin, err := access.accounts.systemAdmin(ctx, caller.Email)
 		if err != nil {
 			return nil, err
 		}
-		access.SystemAdmin = home.SystemAdmin
+		access.SystemAdmin = admin != nil
+		home, err = access.Account(ctx, ScopeID{Kind: OrganizationScope, ID: caller.OrganizationID})
+		if err != nil {
+			if admin == nil || !errors.Is(err, ErrUnauthenticated) {
+				return nil, err
+			}
+			home = admin
+		}
 	}
 	switch rule.kind {
 	case requireAuthenticated:
@@ -249,21 +262,42 @@ func (c *accountCache) get(ctx context.Context, email string, scope ScopeID) (*A
 	if c.loader == nil {
 		return nil, ErrInternal
 	}
-	account, err := c.loader.Account(ctx, email, scope)
+	account, err := active(c.loader.Account(ctx, email, scope))
 	if err != nil {
-		if status.Code(err) == codes.NotFound {
-			return nil, ErrUnauthenticated
-		}
-		return nil, ErrInternal
-	}
-	if account == nil || account.AccountV2 == nil || account.Disabled {
-		return nil, ErrUnauthenticated
+		return nil, err
 	}
 	if c.loaded == nil {
 		c.loaded = make(map[ScopeID]*Account)
 	}
 	c.loaded[scope] = account
 	return account, nil
+}
+
+// systemAdmin returns the caller's active system admin account, or nil.
+func (c *accountCache) systemAdmin(ctx context.Context, email string) (*Account, error) {
+	if c.loader == nil {
+		return nil, ErrInternal
+	}
+	account, err := active(c.loader.SystemAdmin(ctx, email))
+	if errors.Is(err, ErrUnauthenticated) {
+		return nil, nil
+	}
+	return account, err
+}
+
+// active maps a loader result to an active account, ErrUnauthenticated for
+// a missing or disabled one, or ErrInternal.
+func active(account *accountproto.AccountV2, err error) (*Account, error) {
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, ErrUnauthenticated
+		}
+		return nil, ErrInternal
+	}
+	if account == nil || account.Disabled {
+		return nil, ErrUnauthenticated
+	}
+	return &Account{AccountV2: account}, nil
 }
 
 type editorContextKey struct{}
