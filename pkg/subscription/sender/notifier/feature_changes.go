@@ -65,16 +65,20 @@ func featureChangeSummary(n *senderproto.DomainEventNotification, l locale.Local
 		{locale.NotificationFeatureDeleted, before.Deleted, after.Deleted},
 		{locale.NotificationFeatureName, before.Name, after.Name},
 		{locale.NotificationFeatureDescription, before.Description, after.Description},
-		{locale.Tag, before.Tags, after.Tags},
-		{locale.OffVariation,
-			variationLabel(&before.Feature, before.OffVariation),
-			variationLabel(&after.Feature, after.OffVariation)},
+		{locale.Tag,
+			sortedKeys(featureValueSet(before.Tags), nil),
+			sortedKeys(featureValueSet(after.Tags), nil)},
 		{locale.Prerequisite, before.Prerequisites, after.Prerequisites},
 		{locale.NotificationFeatureVariationType, before.VariationType.String(), after.VariationType.String()},
 		{locale.NotificationFeatureVariationSchema, before.VariationValueSchema, after.VariationValueSchema},
 	}
 	for _, field := range fields {
 		add(l.MustLocalize(field.label), field.before, field.after)
+	}
+	if before.OffVariation != after.OffVariation {
+		add(l.MustLocalize(locale.OffVariation),
+			variationReference(&before.Feature, before.OffVariation),
+			variationReference(&after.Feature, after.OffVariation))
 	}
 	addFeatureStrategyChanges(l.MustLocalize(locale.DefaultStrategy),
 		before.DefaultStrategy, after.DefaultStrategy, l, add)
@@ -83,8 +87,16 @@ func featureChangeSummary(n *senderproto.DomainEventNotification, l locale.Local
 	// variations as changed just because their array positions moved.
 	oldVariations, newVariations := variationMap(&before.Feature), variationMap(&after.Feature)
 	for _, id := range sortedKeys(oldVariations, newVariations) {
+		oldVariation, newVariation := oldVariations[id], newVariations[id]
 		label := l.MustLocalize(locale.Variation) + " (" + slackEscape(limitChangeValue(id)) + ")"
-		add(label, oldVariations[id], newVariations[id])
+		if oldVariation == nil || newVariation == nil {
+			add(l.MustLocalize(locale.Variation), featureItemID(oldVariation), featureItemID(newVariation))
+		}
+		add(label+" / "+l.MustLocalize(locale.NotificationFeatureName), oldVariation.GetName(), newVariation.GetName())
+		add(label+" / "+l.MustLocalize(locale.NotificationFeatureDescription),
+			oldVariation.GetDescription(), newVariation.GetDescription())
+		add(label+" / "+l.MustLocalize(locale.NotificationFeatureVariationValue),
+			oldVariation.GetValue(), newVariation.GetValue())
 	}
 	oldTargets, newTargets := targetMap(&before.Feature), targetMap(&after.Feature)
 	for _, id := range sortedKeys(oldTargets, newTargets) {
@@ -317,6 +329,15 @@ func variationLabel(feature *featureproto.Feature, id string) string {
 		}
 	}
 	return id
+}
+
+func variationReference(feature *featureproto.Feature, id string) string {
+	label := variationLabel(feature, id)
+	if label == id {
+		return id
+	}
+	// Keep the ID visible even when two variations have identical labels.
+	return id + " (" + label + ")"
 }
 
 func targetMap(feature *featureproto.Feature) map[string]map[string]bool {

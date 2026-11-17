@@ -188,6 +188,7 @@ const (
 	NotificationFeatureDeleted                  = "NotificationFeatureDeleted"
 	NotificationFeatureDescription              = "NotificationFeatureDescription"
 	NotificationFeatureVariationType            = "NotificationFeatureVariationType"
+	NotificationFeatureVariationValue           = "NotificationFeatureVariationValue"
 	NotificationFeatureVariationSchema          = "NotificationFeatureVariationSchema"
 	NotificationFeatureTargetAdded              = "NotificationFeatureTargetAdded"
 	NotificationFeatureTargetRemoved            = "NotificationFeatureTargetRemoved"

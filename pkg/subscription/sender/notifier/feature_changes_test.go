@@ -52,7 +52,7 @@ func TestFeatureChangeSummary(t *testing.T) {
 			}
 			actual := featureChangeSummary(notification, newTestLocalizer(lang))
 			assert.Contains(t, actual, "false → true")
-			assert.Contains(t, actual, `["team-a"] → ["team-a","payments"]`)
+			assert.Contains(t, actual, `["team-a"] → ["payments","team-a"]`)
 			assert.Contains(t, actual, `"On (true)"`)
 			assert.Contains(t, actual, `["9941"]`)
 			assert.Contains(t, actual, `["old"]`)
@@ -112,14 +112,15 @@ func TestFeatureChangeConfiguration(t *testing.T) {
 	summary := featureChangeSummary(n, newTestLocalizer(locale.En))
 	assert.Contains(t, summary, "Default strategy / Strategy type:")
 	assert.Contains(t, summary, "Rule:")
-	assert.Contains(t, summary, "Variation (v1):")
+	assert.Contains(t, summary, "Variation (v1) / Value:")
 	assert.Contains(t, summary, `"old"`)
 	assert.Contains(t, summary, `"new"`)
-	assert.Contains(t, summary, "Variation (v2): null →")
+	assert.Contains(t, summary, `Variation: null → "v2"`)
 	assert.NotContains(t, summary, "updated_at")
 	assert.NotContains(t, summary, "version")
 	n.EntityData, n.PreviousEntityData = n.PreviousEntityData, n.EntityData
-	assert.Contains(t, featureChangeSummary(n, newTestLocalizer(locale.En)), `"other","name":"","description":""} → null`)
+	assert.Contains(t, featureChangeSummary(n, newTestLocalizer(locale.En)), `Variation: "v2" → null`)
+	assert.Contains(t, featureChangeSummary(n, newTestLocalizer(locale.En)), `Variation (v2) / Value: "other" → ""`)
 }
 
 func TestFeatureChangeIgnoresBookkeepingAndTargetOrder(t *testing.T) {
@@ -469,6 +470,121 @@ func TestFeatureChangeRulePriorityWithAdditionsAndRemovals(t *testing.T) {
 				assert.Contains(t, summary, "Rules order (B): 2 → 1")
 			} else {
 				assert.NotContains(t, summary, "Rules order")
+			}
+		})
+	}
+}
+
+func TestFeatureChangeVariationMetadataWithLongValue(t *testing.T) {
+	t.Parallel()
+	const variationID = "3749d3ec-6273-428c-8c41-1d5ea0998911"
+	value := `{"content":"` + strings.Repeat("界", 200) + `"}`
+	for _, field := range []string{"name", "description"} {
+		t.Run(field, func(t *testing.T) {
+			t.Parallel()
+			before := &featureproto.Feature{
+				Id: "flag", OffVariation: variationID,
+				Variations: []*featureproto.Variation{{
+					Id: variationID, Value: value, Name: "old name", Description: "old description",
+				}},
+			}
+			var after featureproto.Feature
+			require.NoError(t, json.Unmarshal([]byte(featureSnapshot(t, before)), &after))
+			labelID, oldValue, newValue := locale.NotificationFeatureName, "old name", "new name"
+			if field == "name" {
+				after.Variations[0].Name = newValue
+			} else {
+				labelID, oldValue, newValue = locale.NotificationFeatureDescription, "old description", "new description"
+				after.Variations[0].Description = newValue
+			}
+			// The original whole-variation rendering hides these metadata changes.
+			assert.Equal(t, featureChangeValue(before.Variations[0]), featureChangeValue(after.Variations[0]))
+			n := &senderproto.DomainEventNotification{
+				EntityId: "flag", PreviousEntityData: featureSnapshot(t, before), EntityData: featureSnapshot(t, &after),
+			}
+			for _, lang := range []string{locale.En, locale.Ja} {
+				l := newTestLocalizer(lang)
+				summary := featureChangeSummary(n, l)
+				assert.Contains(t, summary, variationID)
+				assert.Contains(t, summary, l.MustLocalize(labelID)+`: "`+oldValue+`" → "`+newValue+`"`)
+				assert.NotContains(t, summary, l.MustLocalize(locale.OffVariation))
+				assert.NotContains(t, summary, "界")
+				assert.Len(t, strings.Split(summary, "\n"), 1)
+			}
+		})
+	}
+}
+
+func TestFeatureChangeOffVariationIdentity(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name, before, after string
+		want                string
+		unchanged           bool
+	}{
+		{
+			name:   "rename referenced variation",
+			before: `{"id":"flag","off_variation":"a","variations":[{"id":"a","name":"old","value":"false"}]}`,
+			after:  `{"id":"flag","off_variation":"a","variations":[{"id":"a","name":"new","value":"false"}]}`,
+			want:   `Name: "old" → "new"`, unchanged: true,
+		},
+		{
+			name:   "change referenced value",
+			before: `{"id":"flag","off_variation":"a","variations":[{"id":"a","value":"old"}]}`,
+			after:  `{"id":"flag","off_variation":"a","variations":[{"id":"a","value":"new"}]}`,
+			want:   `Value: "old" → "new"`, unchanged: true,
+		},
+		{
+			name:   "switch IDs with identical labels",
+			before: `{"id":"flag","off_variation":"a","variations":[{"id":"a","value":"false"},{"id":"b","value":"false"}]}`,
+			after:  `{"id":"flag","off_variation":"b","variations":[{"id":"a","value":"false"},{"id":"b","value":"false"}]}`,
+			want:   `Off variation: "a (false)" → "b (false)"`,
+		},
+		{
+			name:   "switch IDs with readable names",
+			before: `{"id":"flag","off_variation":"a","variations":[{"id":"a","name":"Off","value":"false"},{"id":"b","name":"On","value":"true"}]}`,
+			after:  `{"id":"flag","off_variation":"b","variations":[{"id":"a","name":"Off","value":"false"},{"id":"b","name":"On","value":"true"}]}`,
+			want:   `Off variation: "a (Off (false))" → "b (On (true))"`,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := &senderproto.DomainEventNotification{
+				EntityId: "flag", PreviousEntityData: tt.before, EntityData: tt.after,
+			}
+			summary := featureChangeSummary(n, newTestLocalizer(locale.En))
+			assert.Contains(t, summary, tt.want)
+			assert.Len(t, strings.Split(summary, "\n"), 1)
+			if tt.unchanged {
+				assert.NotContains(t, summary, "Off variation")
+			}
+		})
+	}
+}
+
+func TestFeatureChangeTagsAsSet(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name, before, after, want string
+	}{
+		{"reorder", `["a","b"]`, `["b","a"]`, ""},
+		{"duplicates", `["a","a","b"]`, `["b","a"]`, ""},
+		{"empty representations", `null`, `[]`, ""},
+		{"membership change", `["b","a","a"]`, `["c","b"]`, `Tag: ["a","b"] → ["b","c"]`},
+		{"add", `[]`, `["b","a"]`, `Tag: [] → ["a","b"]`},
+		{"remove", `["b","a"]`, `[]`, `Tag: ["a","b"] → []`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := &senderproto.DomainEventNotification{
+				EntityId: "flag", PreviousEntityData: `{"id":"flag","tags":` + tt.before + `}`,
+				EntityData: `{"id":"flag","tags":` + tt.after + `}`,
+			}
+			summary := featureChangeSummary(n, newTestLocalizer(locale.En))
+			if tt.want == "" {
+				assert.Empty(t, summary)
+			} else {
+				assert.Equal(t, "• "+tt.want, summary)
 			}
 		})
 	}
