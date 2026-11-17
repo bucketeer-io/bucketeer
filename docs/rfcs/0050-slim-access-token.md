@@ -149,10 +149,12 @@ type ServiceToken struct {
 - `hack/generate-service-token` emits this type and gains a `--ttl` flag. The
   default lifetime does not change, so no deployment is broken by an
   unexpected expiry.
-- The verifier dispatches on `token_use`. A token without `token_use` that
-  has both `is_system_admin` and `is_service_token` is accepted as a legacy
-  service token. The access token verifier rejects a service token, and the
-  reverse, as the existing token kinds already do.
+- The verifier dispatches on `token_use`. An access token that has both
+  `is_system_admin` and `is_service_token` is a legacy service token and is
+  treated as a service identity, whether its `token_use` is `access` (the
+  current generator stamps it) or absent (older tokens). Otherwise the access
+  token verifier rejects a service token, and the reverse, as the existing
+  token kinds already do.
 - While `pkg/role` exists, the auth interceptor presents a service token to
   it as an access token with both legacy flags set, so services that are not
   yet migrated to RFC 0049 behave as today.
@@ -177,6 +179,60 @@ answers one question, whether this person may stay signed in:
 A refresh token without `auth_time`, issued before this change, is treated
 as signed in at its own `iat`. The maximum sign-in age is a new option next
 to `accessTokenTTL` and `refreshTokenTTL`.
+
+### One claims type for every kind
+
+The demo-creation token is already marked `token_use: "demo"`. What it still
+has of its own is a Go type and a sign and a verify function, and the service
+token would add a fourth set. Once the access token is slimmed, the kinds
+carry almost the same claims, so they share one type:
+
+```go
+type Claims struct {
+	Issuer   string    `json:"iss"`
+	Subject  string    `json:"sub"`
+	Audience string    `json:"aud"`
+	Expiry   time.Time `json:"exp"`
+	IssuedAt time.Time `json:"iat"`
+	Email    string    `json:"email,omitempty"`
+	ID       string    `json:"jti,omitempty"`
+	TokenUse string    `json:"token_use"`
+}
+```
+
+One function signs and one verifies, each taking the kind. The verifier
+checks the signature, issuer, audience and expiry for every kind, and then
+the rule of that kind, so "a token of one kind does not verify as another"
+is decided in one place:
+
+| Kind | `token_use` | Required claims | Accepted by |
+| --- | --- | --- | --- |
+| access | `access`, or absent on a token issued before the claim existed | `email` | Every RPC except `CreateDemoOrganization` |
+| service | `service`, or the legacy form described under Service token | `sub`, `jti` (not required in the legacy form) | The same RPCs, as a service identity |
+| demo | `demo` | `email` | `CreateDemoOrganization` only |
+
+The tokens on the wire do not change, except that the demo token also
+carries `sub`. Demo tokens live 5 minutes, so no older form has to be
+accepted.
+
+`demo` stays a kind of its own and is not replaced by an access token. It
+proves something an access token does not: `ExchangeDemoToken` issues it
+only after checking that the email has no account in any organization, and
+`CreateDemoOrganization` does not repeat that check. If an access token were
+accepted there, any existing user could create demo organizations.
+
+Two things keep their own shape:
+
+- **Go types for handlers.** `AccessToken`, `ServiceToken` and
+  `DemoCreationToken` remain distinct named types over `Claims`, so the
+  compiler still rejects a demo token where an access token is expected. The
+  structs in the sections above list the claims each kind carries.
+- **The refresh token.** It omits `iss` and `aud` on purpose, for verifiers
+  of earlier versions, and would become an opaque value with server-side
+  sessions (§7).
+
+The access token keeps its own struct, with the old claims, until they are
+removed (§6, step 7), and moves to `Claims` then.
 
 ### Which organization a request is for
 
@@ -263,7 +319,9 @@ Old claims are still written until no running version reads them.
 1. **Fix the system admin derivation.** Independent of everything else.
 2. **Read both forms.** The signer adds `sub` and `auth_time`. The verifier
    accepts tokens with or without them, and service tokens in the new and
-   the legacy form. `RefreshToken` enforces the maximum sign-in age.
+   the legacy form. `RefreshToken` enforces the maximum sign-in age. The
+   service and demo tokens use the shared claims type, and every kind is
+   signed and verified through one path.
 3. **Console.** Stop decoding the token and stop calling
    `SwitchOrganization`. Mark the RPC deprecated.
 4. **Regenerate the service token** once every pod runs the release of step
@@ -275,7 +333,8 @@ Old claims are still written until no running version reads them.
    flag.
 7. **Stop writing the old claims** (`organization_id`, `name`,
    `is_system_admin`, `is_service_token`) in the release after the one that
-   deletes `pkg/role`, so a rollback target does not need them.
+   deletes `pkg/role`, so a rollback target does not need them. The access
+   token then moves to the shared claims type.
 8. **Drop the legacy service token** in a later release, announced in the
    release notes.
 
