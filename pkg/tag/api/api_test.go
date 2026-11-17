@@ -460,7 +460,7 @@ func TestDeleteTagMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), nil)
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),

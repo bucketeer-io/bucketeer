@@ -297,8 +297,8 @@ func (s *tagStorage) ListAllEnvironmentTags(ctx context.Context) ([]*proto.Envir
 	return environmentTags, nil
 }
 
-func (s *tagStorage) DeleteTag(ctx context.Context, id string) error {
-	result, err := s.qe.ExecContext(ctx, deleteTagSQL, id)
+func (s *tagStorage) DeleteTag(ctx context.Context, id, environmentID string) error {
+	result, err := s.qe.ExecContext(ctx, deleteTagSQL, id, environmentID)
 	if err != nil {
 		return err
 	}

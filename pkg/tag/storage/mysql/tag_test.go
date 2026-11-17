@@ -446,7 +446,7 @@ func TestDeleteTag(t *testing.T) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
 			id:          "tag-id-0",
@@ -456,7 +456,7 @@ func TestDeleteTag(t *testing.T) {
 			desc: "Error",
 			setup: func(s *tagStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
 			id:          "tag-id-0",
@@ -471,6 +471,7 @@ func TestDeleteTag(t *testing.T) {
 					gomock.Any(),
 					deleteTagSQL,
 					"tag-id-0",
+					"env-id-0",
 				).Return(result, nil)
 			},
 			id:          "tag-id-0",
@@ -483,7 +484,7 @@ func TestDeleteTag(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.DeleteTag(context.Background(), p.id)
+			err := storage.DeleteTag(context.Background(), p.id, "env-id-0")
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

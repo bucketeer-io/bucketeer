@@ -292,7 +292,7 @@ func (s *TeamService) DeleteTeam(
 			return statusTeamInUsed.Err()
 		}
 
-		if err := s.teamStorage.DeleteTeam(ctxWithTx, req.Id); err != nil {
+		if err := s.teamStorage.DeleteTeam(ctxWithTx, req.Id, req.OrganizationId); err != nil {
 			return err
 		}
 		event, err = domainevent.NewAdminEvent(

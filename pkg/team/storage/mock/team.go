@@ -44,17 +44,17 @@ func (m *MockTeamStorage) EXPECT() *MockTeamStorageMockRecorder {
 }
 
 // DeleteTeam mocks base method.
-func (m *MockTeamStorage) DeleteTeam(ctx context.Context, id string) error {
+func (m *MockTeamStorage) DeleteTeam(ctx context.Context, id, organizationID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteTeam", ctx, id)
+	ret := m.ctrl.Call(m, "DeleteTeam", ctx, id, organizationID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteTeam indicates an expected call of DeleteTeam.
-func (mr *MockTeamStorageMockRecorder) DeleteTeam(ctx, id any) *gomock.Call {
+func (mr *MockTeamStorageMockRecorder) DeleteTeam(ctx, id, organizationID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTeam", reflect.TypeOf((*MockTeamStorage)(nil).DeleteTeam), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTeam", reflect.TypeOf((*MockTeamStorage)(nil).DeleteTeam), ctx, id, organizationID)
 }
 
 // GetTeam mocks base method.

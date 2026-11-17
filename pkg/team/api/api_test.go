@@ -397,7 +397,7 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(&accountproto.ListAccountsV2Response{}, nil)
 				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().DeleteTeam(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(errStorage)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
@@ -434,7 +434,7 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(&accountproto.ListAccountsV2Response{}, nil)
 				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().DeleteTeam(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
@@ -468,7 +468,7 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(&accountproto.ListAccountsV2Response{}, nil)
 				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().DeleteTeam(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
@@ -502,7 +502,7 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(&accountproto.ListAccountsV2Response{}, nil)
 				s.teamStorage.(*teamstoragemock.MockTeamStorage).EXPECT().DeleteTeam(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),

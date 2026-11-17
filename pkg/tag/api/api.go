@@ -365,7 +365,7 @@ func (s *TagService) DeleteTag(
 		}
 
 		// Delete it from DB
-		return s.tagStorage.DeleteTag(ctxWithTx, req.Id)
+		return s.tagStorage.DeleteTag(ctxWithTx, req.Id, req.EnvironmentId)
 	})
 	if err != nil {
 		s.logger.Error(
