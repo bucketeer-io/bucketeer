@@ -204,8 +204,9 @@ type ServiceToken struct {
 - **Lifetime.** The generator gains a `--ttl` flag. The default does not
   change at first, so no deployment is broken by an unexpected expiry. A
   service reads its token at startup, so rotating it means replacing the
-  Secret and restarting. The default is lowered at the end of the rollout
-  (§6), after a service warns when its own token is close to expiry.
+  Secret and restarting. The default is lowered to one year at the end of
+  the rollout (§6), after a service warns when its own token is close to
+  expiry. An operator can set a shorter lifetime with `--ttl`.
 - **Access.** A service token keeps the full access it has today. Naming the
   service is what allows RFC 0049 to later give each one only the RPCs it
   calls.
@@ -535,7 +536,8 @@ Clean up:
     release notes.
 13. **Shorten the service token.** Services warn when their own token is
     close to expiry, the rotation steps are documented, and the generator's
-    default lifetime is lowered. Tokens already issued keep their expiry.
+    default lifetime is lowered to one year. Tokens already issued keep
+    their expiry.
 
 ## 7. Future Work
 
@@ -571,13 +573,11 @@ Clean up:
 2. How a service token is marked. This RFC uses `token_use: "service"` like
    the other kinds; PR #3015 mentions a separate audience. One marker should
    be used for every kind.
-3. The default service token lifetime after step 13. The proposal is one
-   year.
-4. Whether the service names are a fixed list in the code or free text. The
+3. Whether the service names are a fixed list in the code or free text. The
    relay rule and later the rules per service need at least `api` to be a
    known name.
-5. The delegated token replaces `Caller.Relayed` in PR #3015, so it has to
+4. The delegated token replaces `Caller.Relayed` in PR #3015, so it has to
    be agreed with RFC 0049. Whether the public API reads that do not relay
    today should also use it is a question for that RFC.
-6. PR #2061 (password login) changes the same auth service and has not been
+5. PR #2061 (password login) changes the same auth service and has not been
    checked against this design.
