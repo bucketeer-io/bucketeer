@@ -236,7 +236,7 @@ jobs:
       - name: Slack notification
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_DEV_CI }}
           webhook-type: incoming-webhook
           payload: |
             text: ""
@@ -260,7 +260,7 @@ jobs:
       - name: Slack notification
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_DEV_CI }}
           webhook-type: incoming-webhook
           payload: |
             text: ""
