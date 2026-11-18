@@ -236,33 +236,21 @@ jobs:
       - name: Slack notification
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
+          webhook-type: incoming-webhook
           payload: |
-            "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
-            "text": "",
-            "blocks": [],
-            "attachments": [
-              {
-                "title": "Image Push Succeeded",
-                "title_link": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                "color": "good",
-                "fields": [
-                  {
-                    "title": "Committer",
-                    "value": "${{ github.event.head_commit.author.name }}"
-                  },
-                  {
-                    "title": "Commit message",
-                    "value": "${{ needs.setup.outputs.COMMIT_MESSAGE }}"
-                  },
-                  {
-                    "title": "Commit URL",
-                    "value": "${{ github.event.head_commit.url }}"
-                  }
-                ]
-              }
-            ]
+            text: ""
+            attachments:
+              - title: "Image Push Succeeded"
+                title_link: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                color: "good"
+                fields:
+                  - title: "Committer"
+                    value: "${{ github.event.head_commit.author.name }}"
+                  - title: "Commit message"
+                    value: "${{ needs.setup.outputs.COMMIT_MESSAGE }}"
+                  - title: "Commit URL"
+                    value: "${{ github.event.head_commit.url }}"
 
   notify-failure-to-slack:
     needs: [setup, go, dispatch]
@@ -272,30 +260,18 @@ jobs:
       - name: Slack notification
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
-          method: chat.postMessage
-          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
+          webhook-type: incoming-webhook
           payload: |
-            "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
-            "text": "",
-            "blocks": [],
-            "attachments": [
-              {
-                "title": "Image Push Failed",
-                "title_link": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                "color": "danger",
-                "fields": [
-                  {
-                    "title": "Committer",
-                    "value": "${{ github.event.head_commit.author.name }}"
-                  },
-                  {
-                    "title": "Commit message",
-                    "value": "${{ needs.setup.outputs.COMMIT_MESSAGE }}"
-                  },
-                  {
-                    "title": "Commit URL",
-                    "value": "${{ github.event.head_commit.url }}"
-                  }
-                ]
-              }
-            ]
+            text: ""
+            attachments:
+              - title: "Image Push Failed"
+                title_link: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                color: "danger"
+                fields:
+                  - title: "Committer"
+                    value: "${{ github.event.head_commit.author.name }}"
+                  - title: "Commit message"
+                    value: "${{ needs.setup.outputs.COMMIT_MESSAGE }}"
+                  - title: "Commit URL"
+                    value: "${{ github.event.head_commit.url }}"
