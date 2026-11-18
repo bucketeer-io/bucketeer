@@ -20,7 +20,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
@@ -72,8 +71,7 @@ func (s *authService) SignIn(
 	}
 
 	// Check if the user has at least one account enabled in any Organization
-	account, err := s.checkAccountStatus(ctx, config.Email, organizations)
-	if err != nil {
+	if _, err := s.checkAccountStatus(ctx, config.Email, organizations); err != nil {
 		s.logger.Error("Failed to check account",
 			zap.Error(err),
 			zap.String("email", config.Email),
@@ -81,10 +79,9 @@ func (s *authService) SignIn(
 		)
 		return nil, err
 	}
-	accountDomain := domain.AccountV2{AccountV2: account.Account}
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	token, err := s.generateToken(ctx, config.Email, accountDomain, isSystemAdmin)
+	token, err := s.generateToken(ctx, config.Email, isSystemAdmin)
 	if err != nil {
 		return nil, err
 	}

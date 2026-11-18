@@ -1,16 +1,13 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
-import { switchOrganization } from '@api/auth';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuth } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
-import { jwtDecode } from 'jwt-decode';
 import { setOrgIdStorage } from 'storage/organization';
-import { getTokenStorage, setTokenStorage } from 'storage/token';
+import { getTokenStorage } from 'storage/token';
 import * as yup from 'yup';
-import { DecodedToken } from '@types';
 import Button from 'components/button';
 import Dropdown from 'components/dropdown';
 import Form from 'components/form';
@@ -40,26 +37,11 @@ const SelectOrganization = () => {
 
       if (organizationId && token) {
         setOrgIdStorage(organizationId);
-        const parsedToken: DecodedToken = jwtDecode(token?.accessToken);
-
-        const fetchUserData = async () => {
-          const success = await onMeFetcher(
-            { organizationId },
-            { logoutOnFailure: true }
-          );
-          if (success) navigate(PAGE_PATH_ROOT);
-        };
-
-        if (parsedToken.organization_id === organizationId) {
-          await fetchUserData();
-        } else {
-          const resp = await switchOrganization({
-            organizationId,
-            accessToken: token.accessToken
-          });
-          setTokenStorage(resp.token);
-          await fetchUserData();
-        }
+        const success = await onMeFetcher(
+          { organizationId },
+          { logoutOnFailure: true }
+        );
+        if (success) navigate(PAGE_PATH_ROOT);
       }
     } catch (error) {
       console.log(error);

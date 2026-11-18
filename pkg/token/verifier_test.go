@@ -320,12 +320,11 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 	})
 	require.NoError(t, err)
 	refreshRaw, err := signer.SignRefreshToken(&RefreshToken{
-		Issuer:         issuer,
-		Audience:       audience,
-		Email:          email,
-		Expiry:         now.Add(time.Hour),
-		IssuedAt:       now,
-		OrganizationID: "org-1",
+		Issuer:   issuer,
+		Audience: audience,
+		Email:    email,
+		Expiry:   now.Add(time.Hour),
+		IssuedAt: now,
 	})
 	require.NoError(t, err)
 	demoRaw, err := signer.SignDemoCreationToken(&DemoCreationToken{
@@ -394,7 +393,6 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 	assert.Equal(t, email, refresh.Email)
 	assert.Empty(t, refresh.Issuer)
 	assert.Empty(t, refresh.Audience)
-	assert.Equal(t, "org-1", refresh.OrganizationID)
 	assertRefreshTokenOmitsIssuerAudience(t, refreshRaw)
 
 	demo, err := verifier.VerifyDemoCreationToken(demoRaw)
@@ -417,7 +415,6 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 	assert.Equal(t, email, legacyRefreshParsed.Email)
 	assert.Empty(t, legacyRefreshParsed.Issuer)
 	assert.Empty(t, legacyRefreshParsed.Audience)
-	assert.Equal(t, "org-1", legacyRefreshParsed.OrganizationID)
 
 	verifyAccess := func(raw string) error {
 		_, err := verifier.VerifyAccessToken(raw)

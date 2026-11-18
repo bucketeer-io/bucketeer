@@ -249,7 +249,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 		},
 		{
 			desc:              "success",
-			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com", Name: "test"}),
+			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
 			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
 				return &accountproto.GetAccountV2Response{
@@ -369,7 +369,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 			desc: "err: API key metadata on a human system admin token does not grant admin access",
 			inputCtx: getContextWithTokenAndAPIKey(
 				t,
-				&token.AccessToken{Email: "admin@bucketeer.io", Name: "admin", IsSystemAdmin: true},
+				&token.AccessToken{Email: "admin@bucketeer.io", IsSystemAdmin: true},
 				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
@@ -386,7 +386,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 			desc: "success: API key metadata on a human system admin token is ignored for member-level reads",
 			inputCtx: getContextWithTokenAndAPIKey(
 				t,
-				&token.AccessToken{Email: "admin@bucketeer.io", Name: "admin", IsSystemAdmin: true},
+				&token.AccessToken{Email: "admin@bucketeer.io", IsSystemAdmin: true},
 				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
@@ -398,7 +398,6 @@ func TestCheckOrganizationRole(t *testing.T) {
 			},
 			expected: &eventproto.Editor{
 				Email:   "admin@bucketeer.io",
-				Name:    "admin",
 				IsAdmin: true,
 			},
 			expectedErr: nil,
@@ -429,7 +428,6 @@ func TestCheckOrganizationRole(t *testing.T) {
 			desc: "success: service token retains write access without account membership",
 			inputCtx: getContextWithToken(t, &token.AccessToken{
 				Email:          "batch@bucketeer.io",
-				Name:           "batch",
 				IsSystemAdmin:  true,
 				IsServiceToken: true,
 			}),
@@ -439,7 +437,6 @@ func TestCheckOrganizationRole(t *testing.T) {
 			},
 			expected: &eventproto.Editor{
 				Email:   "batch@bucketeer.io",
-				Name:    "batch",
 				IsAdmin: true,
 			},
 			expectedErr: nil,
@@ -448,7 +445,6 @@ func TestCheckOrganizationRole(t *testing.T) {
 			desc: "err: human system admin is read-only for admin operations",
 			inputCtx: getContextWithToken(t, &token.AccessToken{
 				Email:         "admin@bucketeer.io",
-				Name:          "admin",
 				IsSystemAdmin: true,
 			}),
 			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
@@ -462,7 +458,6 @@ func TestCheckOrganizationRole(t *testing.T) {
 			desc: "err: service token without system admin does not bypass role check",
 			inputCtx: getContextWithToken(t, &token.AccessToken{
 				Email:          "rogue@bucketeer.io",
-				Name:           "rogue",
 				IsSystemAdmin:  false,
 				IsServiceToken: true,
 			}),
@@ -546,7 +541,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 		},
 		{
 			desc:          "success: environment role satisfied",
-			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com", Name: "test"}),
+			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
 			environmentID: "ns0",
 			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
@@ -570,7 +565,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 		},
 		{
 			desc:          "success: organization role satisfied",
-			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com", Name: "test"}),
+			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
 			environmentID: "ns0",
 			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
@@ -720,7 +715,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			desc: "err: API key metadata on a human system admin token does not grant write access",
 			ctx: getContextWithTokenAndAPIKey(
 				t,
-				&token.AccessToken{Email: "admin@bucketeer.io", Name: "admin", IsSystemAdmin: true},
+				&token.AccessToken{Email: "admin@bucketeer.io", IsSystemAdmin: true},
 				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
@@ -738,7 +733,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			desc: "success: API key metadata on a human system admin token is ignored for reads",
 			ctx: getContextWithTokenAndAPIKey(
 				t,
-				&token.AccessToken{Email: "admin@bucketeer.io", Name: "admin", IsSystemAdmin: true},
+				&token.AccessToken{Email: "admin@bucketeer.io", IsSystemAdmin: true},
 				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
@@ -751,7 +746,6 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			},
 			expected: &eventproto.Editor{
 				Email:   "admin@bucketeer.io",
-				Name:    "admin",
 				IsAdmin: true,
 			},
 			expectedErr: nil,
@@ -760,7 +754,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			desc: "err: API key metadata on a member token does not grant the maintainer's role",
 			ctx: getContextWithTokenAndAPIKey(
 				t,
-				&token.AccessToken{Email: "viewer@example.com", Name: "viewer"},
+				&token.AccessToken{Email: "viewer@example.com"},
 				rawAPIKey,
 				"apikey_maintainer@example.com",
 				"apikey_name",
@@ -784,7 +778,6 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			desc: "success: service token retains write access without account membership",
 			ctx: getContextWithToken(t, &token.AccessToken{
 				Email:          "batch@bucketeer.io",
-				Name:           "batch",
 				IsSystemAdmin:  true,
 				IsServiceToken: true,
 			}),
@@ -795,7 +788,6 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			},
 			expected: &eventproto.Editor{
 				Email:   "batch@bucketeer.io",
-				Name:    "batch",
 				IsAdmin: true,
 			},
 			expectedErr: nil,
@@ -804,7 +796,6 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			desc: "err: human system admin is read-only for write operations",
 			ctx: getContextWithToken(t, &token.AccessToken{
 				Email:         "admin@bucketeer.io",
-				Name:          "admin",
 				IsSystemAdmin: true,
 			}),
 			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
@@ -819,7 +810,6 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			desc: "err: service token without system admin does not bypass role check",
 			ctx: getContextWithToken(t, &token.AccessToken{
 				Email:          "rogue@bucketeer.io",
-				Name:           "rogue",
 				IsSystemAdmin:  false,
 				IsServiceToken: true,
 			}),
@@ -946,12 +936,13 @@ func TestCheckEnvironmentRoleWithLog(t *testing.T) {
 		},
 		{
 			desc:          "success: returns editor from underlying CheckEnvironmentRole",
-			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com", Name: "test"}),
+			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
 			environmentID: "ns0",
 			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
 				return &accountproto.AccountV2{
 					Email: "test@example.com",
+					Name:  "test",
 					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 						{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
 					},
@@ -969,7 +960,7 @@ func TestCheckEnvironmentRoleWithLog(t *testing.T) {
 		},
 		{
 			desc:          "success: system admin bypasses role check for viewer",
-			ctx:           getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
+			ctx:           getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", IsSystemAdmin: true}),
 			requiredRole:  accountproto.AccountV2_Role_Environment_VIEWER,
 			environmentID: "ns0",
 			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
@@ -978,7 +969,6 @@ func TestCheckEnvironmentRoleWithLog(t *testing.T) {
 			},
 			expected: &eventproto.Editor{
 				Email:   "admin@example.com",
-				Name:    "admin",
 				IsAdmin: true,
 			},
 			expectedErr:      nil,
@@ -986,12 +976,13 @@ func TestCheckEnvironmentRoleWithLog(t *testing.T) {
 		},
 		{
 			desc:          "success: system admin with editor role as org member",
-			ctx:           getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
+			ctx:           getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", IsSystemAdmin: true}),
 			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
 			environmentID: "ns0",
 			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
 				return &accountproto.AccountV2{
 					Email:            email,
+					Name:             "admin",
 					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 						{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
@@ -1160,13 +1151,14 @@ func TestCheckOrganizationRoleWithLog(t *testing.T) {
 		},
 		{
 			desc:           "success: returns editor from underlying CheckOrganizationRole",
-			ctx:            getContextWithToken(t, &token.AccessToken{Email: "test@example.com", Name: "test"}),
+			ctx:            getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			requiredRole:   accountproto.AccountV2_Role_Organization_ADMIN,
 			organizationID: "org0",
 			getAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
 				return &accountproto.GetAccountV2Response{
 					Account: &accountproto.AccountV2{
 						Email:            "test@example.com",
+						Name:             "test",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil
@@ -1181,7 +1173,7 @@ func TestCheckOrganizationRoleWithLog(t *testing.T) {
 		},
 		{
 			desc:           "success: system admin bypasses role check for member-level",
-			ctx:            getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
+			ctx:            getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", IsSystemAdmin: true}),
 			requiredRole:   accountproto.AccountV2_Role_Organization_MEMBER,
 			organizationID: "org0",
 			getAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
@@ -1190,7 +1182,6 @@ func TestCheckOrganizationRoleWithLog(t *testing.T) {
 			},
 			expected: &eventproto.Editor{
 				Email:   "admin@example.com",
-				Name:    "admin",
 				IsAdmin: true,
 			},
 			expectedErr:      nil,
@@ -1198,13 +1189,14 @@ func TestCheckOrganizationRoleWithLog(t *testing.T) {
 		},
 		{
 			desc:           "success: system admin with admin role as org member",
-			ctx:            getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", Name: "admin", IsSystemAdmin: true}),
+			ctx:            getContextWithToken(t, &token.AccessToken{Email: "admin@example.com", IsSystemAdmin: true}),
 			requiredRole:   accountproto.AccountV2_Role_Organization_ADMIN,
 			organizationID: "org0",
 			getAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
 				return &accountproto.GetAccountV2Response{
 					Account: &accountproto.AccountV2{
 						Email:            email,
+						Name:             "admin",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil

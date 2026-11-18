@@ -24,14 +24,12 @@ import (
 	"go.uber.org/mock/gomock"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	envstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	tokentesting "github.com/bucketeer-io/bucketeer/v2/pkg/token/testing"
-	acproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/v2/proto/auth"
 )
 
@@ -297,7 +295,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 	patterns := []struct {
 		desc         string
 		setupFunc    func() []Option
-		inputFunc    func() (context.Context, string, domain.AccountV2, bool)
+		inputFunc    func() (context.Context, string, bool)
 		expectedFunc func(*testing.T, *authproto.Token, time.Duration, time.Duration)
 		expectedErr  error
 	}{
@@ -306,18 +304,10 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 			setupFunc: func() []Option {
 				return []Option{}
 			},
-			inputFunc: func() (context.Context, string, domain.AccountV2, bool) {
+			inputFunc: func() (context.Context, string, bool) {
 				ctx := context.Background()
 				email := "test@example.com"
-				account := domain.AccountV2{
-					AccountV2: &acproto.AccountV2{
-						Email:          email,
-						OrganizationId: "org-1",
-						FirstName:      "Test",
-						LastName:       "User",
-					},
-				}
-				return ctx, email, account, false
+				return ctx, email, false
 			},
 			expectedFunc: func(t *testing.T, token *authproto.Token, accessTokenTTL, refreshTokenTTL time.Duration) {
 				t.Helper()
@@ -340,18 +330,10 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 					WithAccessTokenTTL(30 * time.Minute),
 				}
 			},
-			inputFunc: func() (context.Context, string, domain.AccountV2, bool) {
+			inputFunc: func() (context.Context, string, bool) {
 				ctx := context.Background()
 				email := "test@example.com"
-				account := domain.AccountV2{
-					AccountV2: &acproto.AccountV2{
-						Email:          email,
-						OrganizationId: "org-1",
-						FirstName:      "Test",
-						LastName:       "User",
-					},
-				}
-				return ctx, email, account, false
+				return ctx, email, false
 			},
 			expectedFunc: func(t *testing.T, token *authproto.Token, accessTokenTTL, refreshTokenTTL time.Duration) {
 				t.Helper()
@@ -373,18 +355,10 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 					WithRefreshTokenTTL(14 * 24 * time.Hour),
 				}
 			},
-			inputFunc: func() (context.Context, string, domain.AccountV2, bool) {
+			inputFunc: func() (context.Context, string, bool) {
 				ctx := context.Background()
 				email := "test@example.com"
-				account := domain.AccountV2{
-					AccountV2: &acproto.AccountV2{
-						Email:          email,
-						OrganizationId: "org-1",
-						FirstName:      "Test",
-						LastName:       "User",
-					},
-				}
-				return ctx, email, account, false
+				return ctx, email, false
 			},
 			expectedFunc: func(t *testing.T, token *authproto.Token, accessTokenTTL, refreshTokenTTL time.Duration) {
 				t.Helper()
@@ -407,18 +381,10 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 					WithRefreshTokenTTL(30 * 24 * time.Hour),
 				}
 			},
-			inputFunc: func() (context.Context, string, domain.AccountV2, bool) {
+			inputFunc: func() (context.Context, string, bool) {
 				ctx := context.Background()
 				email := "test@example.com"
-				account := domain.AccountV2{
-					AccountV2: &acproto.AccountV2{
-						Email:          email,
-						OrganizationId: "org-1",
-						FirstName:      "Test",
-						LastName:       "User",
-					},
-				}
-				return ctx, email, account, false
+				return ctx, email, false
 			},
 			expectedFunc: func(t *testing.T, token *authproto.Token, accessTokenTTL, refreshTokenTTL time.Duration) {
 				t.Helper()
@@ -473,8 +439,8 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 			accessTokenTTL := service.opts.accessTokenTTL
 			refreshTokenTTL := service.opts.refreshTokenTTL
 
-			ctx, email, account, isSystemAdmin := p.inputFunc()
-			token, err := service.generateToken(ctx, email, account, isSystemAdmin)
+			ctx, email, isSystemAdmin := p.inputFunc()
+			token, err := service.generateToken(ctx, email, isSystemAdmin)
 
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
@@ -504,7 +470,6 @@ func assertIssuedTokenUses(t *testing.T, verifier token.Verifier, issued *authpr
 	assert.Empty(t, refresh.Issuer)
 	assert.Empty(t, refresh.Audience)
 	assert.Equal(t, access.Email, refresh.Email)
-	assert.Equal(t, access.OrganizationID, refresh.OrganizationID)
 
 	_, err = verifier.VerifyDemoCreationToken(issued.AccessToken)
 	assert.Error(t, err)

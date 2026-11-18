@@ -258,18 +258,17 @@ func (c *command) Run(ctx context.Context, _ metrics.Metrics, logger *zap.Logger
 		return err
 	}
 	for _, t := range []struct {
-		email          string
-		output         string
-		organizationID string
-		isSystemAdmin  bool
+		email         string
+		output        string
+		isSystemAdmin bool
 	}{
-		{*c.sysAdminEmail, *c.sysAdminTokenOutput, *c.e2eOrganizationID, true},
-		{*c.orgOwnerEmail, *c.orgOwnerDefaultTokenOutput, *c.defaultOrganizationID, false},
-		{*c.orgOwnerEmail, *c.orgOwnerE2ETokenOutput, *c.e2eOrganizationID, false},
-		{*c.envWriteEmail, *c.envWriteTokenOutput, *c.defaultOrganizationID, false},
-		{*c.envReadEmail, *c.envReadTokenOutput, *c.defaultOrganizationID, false},
+		{*c.sysAdminEmail, *c.sysAdminTokenOutput, true},
+		{*c.orgOwnerEmail, *c.orgOwnerDefaultTokenOutput, false},
+		{*c.orgOwnerEmail, *c.orgOwnerE2ETokenOutput, false},
+		{*c.envWriteEmail, *c.envWriteTokenOutput, false},
+		{*c.envReadEmail, *c.envReadTokenOutput, false},
 	} {
-		if err := c.writeAccessToken(logger, signer, t.email, t.output, t.organizationID, t.isSystemAdmin); err != nil {
+		if err := c.writeAccessToken(logger, signer, t.email, t.output, t.isSystemAdmin); err != nil {
 			return err
 		}
 	}
@@ -298,7 +297,7 @@ func environmentRolesJSON(environmentID string, role int) (string, error) {
 func (c *command) writeAccessToken(
 	logger *zap.Logger,
 	signer token.Signer,
-	email, output, organizationID string,
+	email, output string,
 	isSystemAdmin bool,
 ) error {
 	now := time.Now()
@@ -308,8 +307,6 @@ func (c *command) writeAccessToken(
 		Expiry:         now.Add(*c.tokenTTL),
 		IssuedAt:       now,
 		Email:          email,
-		Name:           accountName(email),
-		OrganizationID: organizationID,
 		IsSystemAdmin:  isSystemAdmin,
 		IsServiceToken: false,
 	}

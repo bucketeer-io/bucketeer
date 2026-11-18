@@ -9,10 +9,6 @@ export interface ServerError {
   message: string;
 }
 
-export interface DecodedToken {
-  organization_id: string;
-}
-
 export type EnvironmentRoleType =
   'Environment_UNASSIGNED' | 'Environment_EDITOR' | 'Environment_VIEWER';
 
@@ -77,15 +73,6 @@ export interface ConsoleAccountResponse {
 
 export interface AuthUrlResponse {
   url: string;
-}
-
-export interface SwitchOrganizationPayload {
-  accessToken: string;
-  organizationId: string;
-}
-
-export interface SwitchOrganizationResponse {
-  token: AuthToken;
 }
 
 export interface DemoSiteStatusType {

@@ -275,8 +275,7 @@ func (s *authService) ExchangeToken(
 	s.updateUserInfoForOrganizations(ctx, userInfo, organizations)
 
 	// Check if the user has at least one account enabled in any Organization
-	account, err := s.checkAccountStatus(ctx, userInfo.Email, organizations)
-	if err != nil {
+	if _, err := s.checkAccountStatus(ctx, userInfo.Email, organizations); err != nil {
 		s.logger.Error("Failed to check account",
 			zap.Error(err),
 			zap.String("email", userInfo.Email),
@@ -284,10 +283,9 @@ func (s *authService) ExchangeToken(
 		)
 		return nil, err
 	}
-	accountDomain := domain.AccountV2{AccountV2: account.Account}
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	token, err := s.generateToken(ctx, userInfo.Email, accountDomain, isSystemAdmin)
+	token, err := s.generateToken(ctx, userInfo.Email, isSystemAdmin)
 	if err != nil {
 		s.logger.Error("Failed to generate token",
 			zap.Error(err),
@@ -336,8 +334,7 @@ func (s *authService) RefreshToken(
 	}
 
 	// Check if the user has at least one account enabled in any Organization
-	account, err := s.checkAccountStatus(ctx, refreshToken.Email, organizations)
-	if err != nil {
+	if _, err := s.checkAccountStatus(ctx, refreshToken.Email, organizations); err != nil {
 		s.logger.Error("Failed to check account",
 			zap.Error(err),
 			zap.String("email", refreshToken.Email),
@@ -345,10 +342,9 @@ func (s *authService) RefreshToken(
 		)
 		return nil, err
 	}
-	accountDomain := domain.AccountV2{AccountV2: account.Account}
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	newToken, err := s.generateToken(ctx, refreshToken.Email, accountDomain, isSystemAdmin)
+	newToken, err := s.generateToken(ctx, refreshToken.Email, isSystemAdmin)
 	if err != nil {
 		s.logger.Error(
 			"Failed to generate token",
@@ -391,7 +387,6 @@ func (s *authService) SwitchOrganization(
 		if err != nil {
 			return nil, err
 		}
-		accountDomain := domain.AccountV2{AccountV2: account.Account}
 		if account.Account.Disabled {
 			s.logger.Error(
 				"The account is disabled",
@@ -399,13 +394,7 @@ func (s *authService) SwitchOrganization(
 				zap.String("organizationID", newOrganizationID),
 			)
 		}
-		accountDomain.OrganizationId = newOrganizationID
-		token, err := s.generateToken(
-			ctx,
-			accessToken.Email,
-			accountDomain,
-			isSystemAdmin,
-		)
+		token, err := s.generateToken(ctx, accessToken.Email, isSystemAdmin)
 		if err != nil {
 			return nil, err
 		}
@@ -426,7 +415,6 @@ func (s *authService) SwitchOrganization(
 		)
 		return nil, api.NewGRPCStatus(err).Err()
 	}
-	accountDomain := domain.AccountV2{AccountV2: account.Account}
 	if account.Account.Disabled {
 		s.logger.Error(
 			"The account is disabled",
@@ -436,13 +424,7 @@ func (s *authService) SwitchOrganization(
 		return nil, statusUnauthenticated.Err()
 	}
 
-	// Generate new tokens with the new organization ID
-	newToken, err := s.generateToken(
-		ctx,
-		accessToken.Email,
-		accountDomain,
-		isSystemAdmin,
-	)
+	newToken, err := s.generateToken(ctx, accessToken.Email, isSystemAdmin)
 	if err != nil {
 		return nil, err
 	}
@@ -633,7 +615,6 @@ func (s *authService) downloadAvatar(ctx context.Context, url string) ([]byte, e
 func (s *authService) generateToken(
 	ctx context.Context,
 	userEmail string,
-	accountDomain domain.AccountV2,
 	isSystemAdmin bool,
 ) (*authproto.Token, error) {
 	if err := s.checkEmail(userEmail); err != nil {
@@ -644,20 +625,15 @@ func (s *authService) generateToken(
 		return nil, err
 	}
 
-	// Use the account's organization ID
-	organizationID := accountDomain.OrganizationId
-
 	// Create access token
 	timeNow := time.Now()
 	accessToken := &token.AccessToken{
-		Issuer:         s.issuer,
-		Audience:       s.audience,
-		Expiry:         timeNow.Add(s.opts.accessTokenTTL),
-		IssuedAt:       timeNow,
-		Email:          userEmail,
-		OrganizationID: organizationID,
-		Name:           accountDomain.GetAccountFullName(),
-		IsSystemAdmin:  isSystemAdmin,
+		Issuer:        s.issuer,
+		Audience:      s.audience,
+		Expiry:        timeNow.Add(s.opts.accessTokenTTL),
+		IssuedAt:      timeNow,
+		Email:         userEmail,
+		IsSystemAdmin: isSystemAdmin,
 	}
 
 	signedAccessToken, err := s.signer.SignAccessToken(accessToken)
@@ -671,10 +647,9 @@ func (s *authService) generateToken(
 
 	// Create refresh token
 	refreshToken := &token.RefreshToken{
-		Email:          userEmail,
-		OrganizationID: organizationID,
-		Expiry:         timeNow.Add(s.opts.refreshTokenTTL),
-		IssuedAt:       timeNow,
+		Email:    userEmail,
+		Expiry:   timeNow.Add(s.opts.refreshTokenTTL),
+		IssuedAt: timeNow,
 	}
 
 	signedRefreshToken, err := s.signer.SignRefreshToken(refreshToken)

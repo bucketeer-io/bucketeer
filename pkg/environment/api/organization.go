@@ -656,7 +656,7 @@ func (s *EnvironmentService) checkOrganizationOwner(
 	)
 	return &eventproto.Editor{
 		Email:            token.Email,
-		Name:             token.Name,
+		Name:             caller.GetAccountFullName(),
 		IsAdmin:          token.IsSystemAdmin,
 		EnvironmentRoles: caller.EnvironmentRoles,
 		OrganizationRole: caller.OrganizationRole,
