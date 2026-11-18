@@ -5,17 +5,9 @@ import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
 import { allowNavigation, useConfirm } from 'hooks/use-unsaved-leave-page';
 import { useTranslation } from 'i18n';
-import {
-  clearCurrentEnvIdStorage,
-  getCurrentEnvIdStorage,
-  setCurrentEnvIdStorage
-} from 'storage/environment';
+import { clearCurrentEnvIdStorage } from 'storage/environment';
 import { getOrgIdStorage, setOrgIdStorage } from 'storage/organization';
-import {
-  clearCurrentProjectEnvironmentStorage,
-  getCurrentProjectEnvironmentStorage,
-  setCurrentProjectEnvironmentStorage
-} from 'storage/project-environment';
+import { clearCurrentProjectEnvironmentStorage } from 'storage/project-environment';
 import { cn } from 'utils/style';
 import { IconChecked } from '@icons';
 import Icon from 'components/icon';
@@ -98,10 +90,6 @@ const SwitchOrganization = ({
     async (organizationId: string) => {
       try {
         setIsLoading(true);
-        const previousOrgId = getOrgIdStorage();
-        const previousEnvId = getCurrentEnvIdStorage();
-        const previousProjectEnvironment =
-          getCurrentProjectEnvironmentStorage();
         setOrgIdStorage(organizationId);
         clearCurrentEnvIdStorage();
         clearCurrentProjectEnvironmentStorage();
@@ -111,16 +99,7 @@ const SwitchOrganization = ({
         // EnvironmentRoot can't match a same-named urlCode and keep the
         // stale entity path (e.g. a flag ID from the previous org).
         allowNavigation(() => navigate(PAGE_PATH_ROOT, { replace: true }));
-        // The token does not change, so a failed load keeps the current
-        // session and restores the previous selection.
-        const success = await onMeFetcher({ organizationId });
-        if (!success) {
-          if (previousOrgId) setOrgIdStorage(previousOrgId);
-          if (previousEnvId) setCurrentEnvIdStorage(previousEnvId);
-          if (previousProjectEnvironment) {
-            setCurrentProjectEnvironmentStorage(previousProjectEnvironment);
-          }
-        }
+        await onMeFetcher({ organizationId }, { logoutOnFailure: true });
       } catch (error) {
         errorNotify(error);
       } finally {

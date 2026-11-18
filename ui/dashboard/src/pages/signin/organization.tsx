@@ -37,7 +37,10 @@ const SelectOrganization = () => {
 
       if (organizationId && token) {
         setOrgIdStorage(organizationId);
-        const success = await onMeFetcher({ organizationId });
+        const success = await onMeFetcher(
+          { organizationId },
+          { logoutOnFailure: true }
+        );
         if (success) navigate(PAGE_PATH_ROOT);
       }
     } catch (error) {
