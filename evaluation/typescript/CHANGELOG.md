@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.10] (2026-11-19)
+
+### Features
+
+- feat: evaluate users for universal holdout before flag assignment [#2880](https://github.com/bucketeer-io/bucketeer/pull/2880)
+- feat: serve holdout groups from the gateway cache [#2881](https://github.com/bucketeer-io/bucketeer/pull/2881)
+- feat: deliver holdout groups to local evaluation SDKs [#3023](https://github.com/bucketeer-io/bucketeer/pull/3023)
+
+### Miscellaneous
+
+- refactor: drop the disabled/no-off-variation holdout cascade [#2883](https://github.com/bucketeer-io/bucketeer/pull/2883)
+
 ## [0.0.7] (2026-01-20)
 
 ### Fix
