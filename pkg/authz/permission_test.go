@@ -158,6 +158,7 @@ func TestGranted(t *testing.T) {
 	env := ScopeID{Kind: EnvironmentScope, ID: "env-1"}
 	otherEnv := ScopeID{Kind: EnvironmentScope, ID: "env-2"}
 	org := ScopeID{Kind: OrganizationScope, ID: "org-1"}
+	orgOfEnv := ScopeID{Kind: OrganizationOfEnvironmentScope, ID: "env-1"}
 	editor := &accountproto.AccountV2{
 		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
@@ -195,6 +196,14 @@ func TestGranted(t *testing.T) {
 			account: admin, scope: env, permission: AccountManage, expected: false},
 		{desc: "unassigned environment role grants nothing",
 			account: unassigned, scope: env, permission: FeatureRead, expected: false},
+		{desc: "member reads through the environment of its organization",
+			account: member, scope: orgOfEnv, permission: AccountRead, expected: true},
+		{desc: "admin manages through the environment of its organization",
+			account: admin, scope: orgOfEnv, permission: HoldoutGroupManage, expected: true},
+		{desc: "environment role does not count in the organization of its environment",
+			account: editor, scope: orgOfEnv, permission: HoldoutGroupManage, expected: false},
+		{desc: "environment permission is never granted in the organization of its environment",
+			account: admin, scope: orgOfEnv, permission: FeatureRead, expected: false},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
