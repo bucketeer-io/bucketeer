@@ -29,6 +29,7 @@ import (
 	accdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	auditlogproto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	insightsproto "github.com/bucketeer-io/bucketeer/v2/proto/insights"
@@ -47,6 +48,7 @@ const (
 	listNotifications  = "/bucketeer.notification.NotificationService/ListNotifications"
 	invalidRule        = "/bucketeer.feature.FeatureService/InvalidRule"
 	createOrganization = "/bucketeer.environment.EnvironmentService/CreateOrganization"
+	getProject         = "/bucketeer.environment.EnvironmentService/GetProject"
 	wrongScope         = "/bucketeer.feature.FeatureService/WrongScope"
 	ping               = "/bucketeer.gateway.Gateway/Ping"
 
@@ -753,4 +755,40 @@ func TestCallerFullAccess(t *testing.T) {
 	assert.True(t, service().FullAccess())
 	assert.False(t, relayed("editor@example.com").FullAccess())
 	assert.False(t, user("editor@example.com").FullAccess())
+}
+
+func TestAuthorizeWithLookups(t *testing.T) {
+	t.Parallel()
+	rules := Rules{getProject: Need(ProjectRead, InOrgOfProject("id"))}
+	accounts := &fakeAccounts{accounts: testAccounts()}
+	req := &environmentproto.GetProjectRequest{Id: "proj-1"}
+	patterns := []struct {
+		desc         string
+		authorizer   *Authorizer
+		expectedCode codes.Code
+	}{
+		{
+			desc:       "member of the organization of the project",
+			authorizer: New(rules, accounts, WithLookups(fakeLookups{"proj-1": "org-1"})),
+		},
+		{
+			desc:         "unknown project",
+			authorizer:   New(rules, accounts, WithLookups(fakeLookups{})),
+			expectedCode: codes.NotFound,
+		},
+		{
+			desc:         "no lookups",
+			authorizer:   New(rules, accounts),
+			expectedCode: codes.Internal,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			editor, err := p.authorizer.Authorize(context.Background(), user("member@example.com"), getProject, req)
+			assert.Equal(t, p.expectedCode, status.Code(err))
+			if p.expectedCode == codes.OK {
+				assert.Equal(t, memberEditor("member@example.com"), editor)
+			}
+		})
+	}
 }

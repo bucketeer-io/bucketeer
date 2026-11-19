@@ -91,13 +91,14 @@ const (
 // The scope each permission is checked in: a permission asked in the other
 // scope is never granted. A resource that is listed by organization as well
 // as by environment (tags, pushes, subscriptions, API keys, audit logs) is in
-// both. TestPermissionsAreScopedAndGranted keeps these lists and Table 1
-// complete when a permission is added or moved.
+// both; holdout groups are managed by organization admins through an
+// environment ID. TestPermissionsAreScopedAndGranted keeps these lists and
+// Table 1 complete when a permission is added or moved.
 var (
 	environmentPermissions = []Permission{
 		FeatureRead, FeatureWrite, SegmentRead, SegmentWrite,
 		ScheduledFlagChangeRead, ScheduledFlagChangeWrite,
-		HoldoutGroupRead, HoldoutGroupManage, AutoOpsRuleRead, AutoOpsRuleWrite,
+		HoldoutGroupRead, AutoOpsRuleRead, AutoOpsRuleWrite,
 		ProgressiveRolloutRead, ProgressiveRolloutWrite, ExperimentRead, ExperimentWrite,
 		GoalRead, GoalWrite, EventCounterRead, InsightsRead,
 		CodeReferenceRead, CodeReferenceWrite, TagRead, TagWrite, PushRead, PushWrite,
@@ -108,11 +109,12 @@ var (
 		AccountRead, AccountManage, APIKeyRead, APIKeyManage,
 		EnvironmentRead, EnvironmentManage, ProjectRead, ProjectManage,
 		OrganizationRead, OrganizationManage, TeamRead, TeamManage,
-		TagRead, PushRead, SubscriptionRead, AuditLogRead,
+		TagRead, PushRead, SubscriptionRead, AuditLogRead, HoldoutGroupManage,
 	}
 	scoped = map[ScopeKind]map[Permission]struct{}{
-		EnvironmentScope:  toSet(environmentPermissions),
-		OrganizationScope: toSet(organizationPermissions),
+		EnvironmentScope:               toSet(environmentPermissions),
+		OrganizationScope:              toSet(organizationPermissions),
+		OrganizationOfEnvironmentScope: toSet(organizationPermissions),
 	}
 )
 
@@ -255,7 +257,7 @@ func granted(account *accountproto.AccountV2, scope ScopeID, permission Permissi
 		return false
 	}
 	if role, ok := organizationRole(account.OrganizationRole); ok && Grants(role, permission) {
-		if scope.Kind == OrganizationScope || inheritsRole(role, EnvironmentViewer) {
+		if scope.Kind != EnvironmentScope || inheritsRole(role, EnvironmentViewer) {
 			return true
 		}
 	}

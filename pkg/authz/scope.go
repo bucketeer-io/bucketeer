@@ -15,18 +15,22 @@
 package authz
 
 import (
+	"context"
+	"errors"
 	"fmt"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// ScopeKind says what a scope ID identifies.
+// ScopeKind says what a scope ID identifies and which roles count there.
 type ScopeKind int
 
 const (
 	EnvironmentScope ScopeKind = iota + 1
 	OrganizationScope
+	// OrganizationOfEnvironmentScope is the organization that owns the environment named by the ID.
+	OrganizationOfEnvironmentScope
 )
 
 func (k ScopeKind) String() string {
@@ -35,6 +39,8 @@ func (k ScopeKind) String() string {
 		return "environment"
 	case OrganizationScope:
 		return "organization"
+	case OrganizationOfEnvironmentScope:
+		return "organization of environment"
 	default:
 		return fmt.Sprintf("ScopeKind(%d)", int(k))
 	}
@@ -50,11 +56,18 @@ func (s ScopeID) String() string {
 	return s.Kind.String() + ":" + s.ID
 }
 
+// Lookups finds the scope of requests that carry only a resource ID.
+type Lookups interface {
+	// OrganizationOfProject returns the owner organization of the project, or a NotFound status.
+	OrganizationOfProject(ctx context.Context, projectID string) (string, error)
+}
+
 // Scope resolves the scope IDs of a request. It returns ErrMissingScope when
 // the request carries no ID, unless it is optional.
 type Scope interface {
-	Kind() ScopeKind
-	Resolve(req proto.Message) ([]ScopeID, error)
+	// Kinds lists the kinds of scope Resolve may return.
+	Kinds() []ScopeKind
+	Resolve(ctx context.Context, req proto.Message, lookups Lookups) ([]ScopeID, error)
 }
 
 // FieldScope reads scope IDs from one string field of the request. The field
@@ -75,6 +88,11 @@ func InOrg(field string) FieldScope {
 	return FieldScope{kind: OrganizationScope, field: field}
 }
 
+// InOrgOfEnv scopes the check to the organization that owns the environment named by field.
+func InOrgOfEnv(field string) FieldScope {
+	return FieldScope{kind: OrganizationOfEnvironmentScope, field: field}
+}
+
 // EachEnv checks every environment listed in the repeated field.
 func EachEnv(field string) FieldScope {
 	return InEnv(field)
@@ -88,14 +106,14 @@ func (s FieldScope) IfSet() FieldScope {
 	return s
 }
 
-func (s FieldScope) Kind() ScopeKind {
-	return s.kind
+func (s FieldScope) Kinds() []ScopeKind {
+	return []ScopeKind{s.kind}
 }
 
 // Resolve returns one scope per value of the field. An empty element of a
 // repeated field is an error, because the handler would still use it; an
 // empty singular field is an error unless the scope is optional.
-func (s FieldScope) Resolve(req proto.Message) ([]ScopeID, error) {
+func (s FieldScope) Resolve(_ context.Context, req proto.Message, _ Lookups) ([]ScopeID, error) {
 	values, repeated, err := stringField(req, s.field)
 	if err != nil {
 		return nil, err
@@ -114,6 +132,72 @@ func (s FieldScope) Resolve(req proto.Message) ([]ScopeID, error) {
 		return nil, ErrMissingScope
 	}
 	return ids, nil
+}
+
+// ProjectScope scopes the check to the organization that owns the project named by field.
+type ProjectScope struct {
+	field string
+}
+
+// InOrgOfProject scopes the check to the organization that owns the project named by field.
+func InOrgOfProject(field string) ProjectScope {
+	return ProjectScope{field: field}
+}
+
+func (s ProjectScope) Kinds() []ScopeKind {
+	return []ScopeKind{OrganizationScope}
+}
+
+func (s ProjectScope) Resolve(ctx context.Context, req proto.Message, lookups Lookups) ([]ScopeID, error) {
+	ids, err := InOrg(s.field).Resolve(ctx, req, lookups)
+	if err != nil {
+		return nil, err
+	}
+	if lookups == nil {
+		return nil, fmt.Errorf("%w: %s needs Lookups", ErrRule, s.field)
+	}
+	for i, id := range ids {
+		organizationID, err := lookups.OrganizationOfProject(ctx, id.ID)
+		if err != nil {
+			return nil, err
+		}
+		ids[i] = ScopeID{Kind: OrganizationScope, ID: organizationID}
+	}
+	return ids, nil
+}
+
+// FirstSetScope resolves the first of its scopes that the request names.
+type FirstSetScope struct {
+	scopes []Scope
+}
+
+// FirstSet checks the first of scopes the request names, and only that one.
+func FirstSet(scopes ...Scope) FirstSetScope {
+	return FirstSetScope{scopes: scopes}
+}
+
+func (s FirstSetScope) Kinds() []ScopeKind {
+	var kinds []ScopeKind
+	for _, scope := range s.scopes {
+		kinds = append(kinds, scope.Kinds()...)
+	}
+	return kinds
+}
+
+func (s FirstSetScope) Resolve(ctx context.Context, req proto.Message, lookups Lookups) ([]ScopeID, error) {
+	for _, scope := range s.scopes {
+		ids, err := scope.Resolve(ctx, req, lookups)
+		if errors.Is(err, ErrMissingScope) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		if len(ids) > 0 {
+			return ids, nil
+		}
+	}
+	return nil, ErrMissingScope
 }
 
 // stringField returns the values of a string field, one for a singular
