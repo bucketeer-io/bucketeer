@@ -230,18 +230,19 @@ metadata is replaced by a token that the auth service signs for that key:
 
 ```go
 type DelegatedToken struct {
-	Issuer        string    `json:"iss"`
-	Subject       string    `json:"sub"`   // the maintainer
-	Audience      string    `json:"aud"`
-	Expiry        time.Time `json:"exp"`
-	IssuedAt      time.Time `json:"iat"`
-	Email         string    `json:"email"` // the maintainer
-	TokenUse      string    `json:"token_use"` // "delegated"
-	APIKeyID      string    `json:"api_key_id"`
-	APIKeyName    string    `json:"api_key_name"`
-	APIKeyToken   string    `json:"api_key_token"` // obfuscated, as in audit logs
-	APIKeyRole    string    `json:"api_key_role"`
-	EnvironmentID string    `json:"environment_id"`
+	Issuer         string    `json:"iss"`
+	Subject        string    `json:"sub"`   // the maintainer
+	Audience       string    `json:"aud"`
+	Expiry         time.Time `json:"exp"`
+	IssuedAt       time.Time `json:"iat"`
+	Email          string    `json:"email"` // the maintainer
+	TokenUse       string    `json:"token_use"` // "delegated"
+	APIKeyID       string    `json:"api_key_id"`
+	APIKeyName     string    `json:"api_key_name"`
+	APIKeyToken    string    `json:"api_key_token"` // obfuscated, as in audit logs
+	APIKeyRole     string    `json:"api_key_role"`
+	EnvironmentID  string    `json:"environment_id"`
+	OrganizationID string    `json:"organization_id"`
 }
 ```
 
@@ -274,17 +275,33 @@ sequenceDiagram
   with the API key attached. The maintainer's account and role are still
   read from the database on every request, and the editor in audit logs is
   the same as today.
-- **Environment.** The request must be for the token's environment, or for
-  the organization that owns it. Today only the API service checks this.
-  `api_key_role` is available to RFC 0049 when the API key role lists move
-  into its Table 2.
-- **Which calls use it.** Every public API call, reads included. The API
-  service's own token is left for the calls it makes for itself, such as
-  loading flags and segments for the SDK endpoints, and for the exchange.
+- **Key role and scope.** A delegated token is a bearer credential, so the
+  web services do not rely on the API service having checked the key. Each
+  RPC that the public API uses is listed with the lowest key role that may
+  call it and with its scope. An RPC that is not listed is denied to a
+  delegated token, so the token reaches nothing the public API does not
+  offer, whatever the maintainer's own role is.
+  - *Environment scope:* the request's environment must be the token's
+    `environment_id`.
+  - *Organization scope:* the request must resolve to the token's
+    `organization_id`. This covers RPCs that take an organization, and RPCs
+    that take an environment only to find the organization, such as
+    `GetAccountV2ByEnvironmentID`, where the public API accepts any
+    environment of the key's organization today.
+
+  The list is filled from the checks the API service makes today. Those
+  checks stay, and a test fails when the two differ. When several public API
+  methods use the same RPC, the lowest of their roles applies. The list
+  becomes columns of RFC 0049's Table 2 when the API key roles move there.
+- **Which calls use it.** Every call that carries out a public API request,
+  reads included. The API service's own token is left for the calls it makes
+  for itself: loading flags and segments for the SDK endpoints, the
+  exchange, and the lookups behind its own checks, such as finding the
+  organization of an environment named in a request.
 - **Reads change behaviour.** The reads that carry no metadata today pass
   whoever the maintainer is. With a delegated token they are judged as the
   maintainer, like writes: a key whose maintainer is no longer an enabled
-  member, or has no access to the key's environment, is denied. This follows
+  member, or has no access to what the request names, is denied. This follows
   RFC 0049's rule that a key never grants more than its maintainer has.
   Nothing updates a key when its maintainer's account is disabled or
   removed, so some keys in use may be affected. Those reads are reported
@@ -292,9 +309,9 @@ sequenceDiagram
 
 The access token carries no organization because a user can switch, and the
 claim would be a guess. A delegated token differs: an API key belongs to one
-environment, the token cannot be refreshed, and it lives 5 minutes, so the
-claim is exact for as long as the token is valid. Disabling a key or changing
-its role applies when the cached token expires.
+environment of one organization, the token cannot be refreshed, and it lives
+5 minutes, so both claims are exact for as long as the token is valid.
+Disabling a key or changing its role applies when the cached token expires.
 
 Until the exchange exists, the metadata is accepted only from the `api`
 service token (and from the legacy token while it is still accepted), not
@@ -350,7 +367,7 @@ is decided in one place:
 | --- | --- | --- | --- |
 | access | `access`, or absent on a token issued before the claim existed | `email` | Every RPC except `CreateDemoOrganization` |
 | service | `service`, or the legacy form described under Service token | `sub`, `jti` (not required in the legacy form) | The same RPCs, as a service identity |
-| delegated | `delegated` | `email`, the API key claims, `environment_id` | The same RPCs, as the maintainer acting through the API key |
+| delegated | `delegated` | `email`, the API key claims, `environment_id`, `organization_id` | Only the RPCs listed for the public API, within the key's role and scope, as the maintainer acting through the API key |
 | demo | `demo` | `email` | `CreateDemoOrganization` only |
 
 The demo token on the wire does not change, except that it also carries
@@ -395,7 +412,7 @@ and as RFC 0049 keeps them:
 | --- | --- |
 | System admin | Reads need no account in the organization. Writes need one, like any user. |
 | Service token | No account is looked up. The service has full access. |
-| Delegated token | The maintainer's account in the organization, as for a user, and the request must be for the token's environment or the organization that owns it. |
+| Delegated token | The maintainer's account in the organization, as for a user. The RPC must be listed for the key's role, and the request must be within the token's environment or organization, as that RPC's scope says. |
 
 A user may put any organization in a request, and it is accepted only where
 the user has an enabled account, apart from system admin reads. A user whose
@@ -446,6 +463,7 @@ left out before the system admin check.
 | Role or system admin status is removed | Applies when the token expires | Applies on the next request |
 | A service token leaks | Full access for up to 100 years. The holder cannot be identified, and cancelling the token rotates the signing key, which signs out every user and replaces the token everywhere. | Full access until its ID is cancelled or it expires. The token names its service, and only that service gets a new one. |
 | A service token is used to name a user as the editor | Any holder can, through the relay metadata | No holder can. A delegated token is issued only for a valid API key and names that key's maintainer. |
+| A delegated token leaks | No such token exists | What the API key itself allows: the RPCs open to its role, in its environment or organization, as its maintainer, for at most 5 minutes |
 
 A leaked service token still gives full access until it is cancelled. What
 narrows that is outside this RFC: rules per service in RFC 0049, and the
@@ -530,8 +548,9 @@ Give each service its own token:
 Replace the relay metadata:
 
 8. **Accept delegated tokens.** The auth service gains the exchange RPC and
-   the web services verify delegated tokens. The API service's Envoy gets a
-   route to the auth service. Nothing sends the token yet.
+   the web services verify delegated tokens, including the key role and
+   scope of each RPC. The API service's Envoy gets a route to the auth
+   service. Nothing sends the token yet.
 9. **Send delegated tokens for the calls that relay today**, one release
    later. A rollback of the API service returns to the metadata, which is
    still accepted.
@@ -600,5 +619,8 @@ Clean up:
 3. How many API keys in use have a maintainer who would be denied on reads.
    It is not known until step 11 reports them, and it decides how long to
    wait before step 12.
-4. PR #2061 (password login) changes the same auth service and has not been
+4. Where the key role and scope of each RPC live until RFC 0049 moves the
+   API key roles into its Table 2: in a list next to the delegated token
+   verifier, or in Table 2 from the start.
+5. PR #2061 (password login) changes the same auth service and has not been
    checked against this design.
