@@ -101,7 +101,7 @@ make docker-compose-up
 MYSQL_VERSION=8.0                   # MySQL version
 POSTGRES_VERSION=18.0               # POSTGRES version
 REDIS_VERSION=7-alpine              # Redis version
-NGINX_VERSION=1.25-alpine           # Nginx version
+NGINX_VERSION=1.31.9-alpine         # Nginx version
 
 # Bucketeer service versions
 BUCKETEER_VERSION=localenv          # Version for all services
@@ -139,11 +139,10 @@ For a real deployment, keep the certificate and key outside the repository:
   for `web` and `api` to that Secret.
 - Docker Compose: store them in a directory outside the repository that only the
   Docker user can read (`chmod 600` on the key) and point every service
-  certificate mount in `docker-compose/compose.yml` at them: the
-  `../tools/dev/cert` directory mount of `nginx` (it reads `tls.crt` / `tls.key`
-  from `/etc/nginx/certs`), the `tls.crt` / `tls.key` file mounts of `web`, `api`,
-  `batch` and `subscriber`, and the `tls.crt` mount of `batch-cron`, which trusts
-  it when calling the batch service.
+  certificate mount in `docker-compose/compose.yml` at them: the `tls.crt` /
+  `tls.key` file mounts of `nginx` (it reads them from `/etc/nginx/certs`), `web`,
+  `api`, `batch` and `subscriber`, and the `tls.crt` mount of `batch-cron`, which
+  trusts it when calling the batch service.
 
 **Use a dedicated OAuth signing key and service token:**
 For local development, `make docker-compose-up` (and `make deploy-bucketeer` for the
