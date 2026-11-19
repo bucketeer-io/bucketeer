@@ -462,12 +462,16 @@ left out before the system admin check.
 | Both tokens are stolen | Every organization of the user, renewable without limit | Every organization of the user, until the maximum sign-in age |
 | Role or system admin status is removed | Applies when the token expires | Applies on the next request |
 | A service token leaks | Full access for up to 100 years. The holder cannot be identified, and cancelling the token rotates the signing key, which signs out every user and replaces the token everywhere. | Full access until its ID is cancelled or it expires. The token names its service, and only that service gets a new one. |
-| A service token is used to name a user as the editor | Any holder can, through the relay metadata | No holder can. A delegated token is issued only for a valid API key and names that key's maintainer. |
+| A service token is used to name a user as the editor | Any holder can, on any request, through the relay metadata | Not on a request of its own. A delegated token is issued only for a valid API key and names that key's maintainer. An indirect way remains, described below. |
 | A delegated token leaks | No such token exists | What the API key itself allows: the RPCs open to its role, in its environment or organization, as its maintainer, for at most 5 minutes |
 
-A leaked service token still gives full access until it is cancelled. What
-narrows that is outside this RFC: rules per service in RFC 0049, and the
-network controls in §7.
+A leaked service token still gives full access until it is cancelled. That
+includes creating an API key with another user as its maintainer and then
+using the key through the public API, which acts as that user. Unlike the
+relay metadata, this leaves a record: creating the key is written to the
+audit log with the service token as the editor. What narrows a service token
+is outside this RFC: rules per service in RFC 0049, so that only the
+services that need to can manage API keys, and the network controls in §7.
 
 ## 5. Alternatives Considered
 
