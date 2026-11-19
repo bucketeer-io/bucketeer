@@ -527,8 +527,10 @@ Split the user and service tokens:
    through one path.
 3. **Console.** Stop decoding the token and stop calling
    `SwitchOrganization`. Mark the RPC deprecated.
-4. **Remove `SwitchOrganization`** one release after step 3, so a cached
-   console does not call a missing RPC.
+4. **Remove `SwitchOrganization`** no earlier than one release after step
+   3, and only once its request metric shows no calls. The console does not
+   reload itself when a new version is deployed, so a tab left open keeps
+   calling the RPC until it is reloaded.
 
 Authorize in one place:
 
