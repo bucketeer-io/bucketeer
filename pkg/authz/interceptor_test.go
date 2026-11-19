@@ -301,7 +301,7 @@ func TestCallerFromContext(t *testing.T) {
 	}{
 		{desc: "no token", ctx: context.Background()},
 		{desc: "user", ctx: userCtx("viewer@example.com"), expected: user("viewer@example.com"), expectedOK: true},
-		{desc: "service", ctx: serviceCtx(""), expected: Caller{Email: "service@example.com", Service: true}, expectedOK: true},
+		{desc: "service", ctx: serviceCtx(""), expected: Caller{Email: "service@example.com", Service: LegacyService}, expectedOK: true},
 		{desc: "relayed", ctx: serviceCtx("viewer@example.com"), expected: relayed("viewer@example.com"), expectedOK: true},
 	}
 	for _, p := range patterns {

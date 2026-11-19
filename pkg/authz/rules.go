@@ -56,7 +56,7 @@ var WebServices = []string{
 // WebRules is Table 2 for the web gateway: what each handler checks today, written as a requirement.
 var WebRules = merge(
 	rows(AccountService, map[string]Requirement{
-		"GetMe":                     Authenticated(),
+		"GetMe":                     Need(AccountRead, InOrg("organization_id")),
 		"GetMyOrganizations":        Authenticated(),
 		"GetMyOrganizationsByEmail": SystemAdminOnly(),
 		"CreateAccountV2":           Need(AccountManage, InOrg("organization_id")),
