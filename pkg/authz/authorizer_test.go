@@ -183,7 +183,7 @@ func root() Caller {
 }
 
 func service() Caller {
-	return Caller{Email: "service@example.com", Service: true}
+	return Caller{Email: "service@example.com", Service: APIService}
 }
 
 func relayed(maintainer string) Caller {
@@ -288,7 +288,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc:     "service identity without an email has full access",
-			caller:   Caller{Service: true},
+			caller:   Caller{Service: "batch"},
 			method:   updateFeature,
 			req:      &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expected: &eventproto.Editor{IsAdmin: true},
@@ -737,6 +737,14 @@ func TestCallerRelayed(t *testing.T) {
 	}{
 		{desc: "service with an API key", ctx: withKey, caller: service(), expected: relayed("editor@example.com")},
 		{desc: "service without an API key", ctx: context.Background(), caller: service(), expected: service()},
+		{
+			desc: "legacy token with an API key", ctx: withKey,
+			caller: Caller{Service: LegacyService}, expected: relayed("editor@example.com"),
+		},
+		{
+			desc: "other services do not relay", ctx: withKey,
+			caller: Caller{Service: "batch"}, expected: Caller{Service: "batch"},
+		},
 		{
 			desc: "service with empty metadata", caller: service(), expected: service(),
 			ctx: metadata.NewIncomingContext(context.Background(), metadata.Pairs(APIKeyMaintainerMDKey, "x")),

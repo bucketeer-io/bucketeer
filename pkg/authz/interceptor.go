@@ -60,7 +60,11 @@ func CallerFromContext(ctx context.Context) (Caller, bool) {
 	if !ok || t == nil {
 		return Caller{}, false
 	}
-	caller := Caller{Email: t.Email, Service: t.IsServiceToken}
+	caller := Caller{Email: t.Email}
+	if t.IsServiceToken {
+		// Service tokens carry no name yet (RFC 0050 step 2).
+		caller.Service = LegacyService
+	}
 	return caller.Relayed(ctx), true
 }
 
@@ -171,7 +175,7 @@ func (i *Interceptor) compare(caller Caller, method string, authzErr, handlerErr
 	fields := []zap.Field{
 		zap.String("method", method),
 		zap.String("email", caller.Email),
-		zap.Bool("service", caller.Service),
+		zap.String("service", caller.Service),
 		zap.Bool("publicAPI", caller.PublicAPI != nil),
 	}
 	if errors.Is(authzErr, ErrNoRule) {
