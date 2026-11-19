@@ -46,12 +46,14 @@ Three further problems were found while reviewing the token:
   holder and replacing it touches all of them. Every internal call uses it,
   including the calls a service makes while handling a user's request.
 - **Public API relay.** The API service checks the API key, then calls the
-  web services with the shared service token and three metadata fields: the
-  obfuscated key, the maintainer's email and the key name. The web services
-  accept those fields on any service token and record the maintainer as the
-  editor, so every holder of the service token can attribute a change to any
-  user who has the role for it. The key's own role and environment are
-  checked by the API service only.
+  web services with the shared service token. On every write and a few reads
+  it adds three metadata fields: the obfuscated key, the maintainer's email
+  and the key name. The web services accept those fields on any service
+  token and record the maintainer as the editor, so every holder of the
+  service token can attribute a change to any user who has the role for it.
+  The other reads carry the service token alone, so the web services give
+  them full access whoever the maintainer is. The key's own role and
+  environment are checked by the API service only.
 - **Session lifetime.** `SwitchOrganization` accepts an access token and
   returns a new refresh token, so an access token that leaks on its own can
   be turned into lasting access. Each refresh returns a refresh token valid
@@ -276,11 +278,17 @@ sequenceDiagram
   the organization that owns it. Today only the API service checks this.
   `api_key_role` is available to RFC 0049 when the API key role lists move
   into its Table 2.
-- **Which calls use it.** The calls that send the metadata today: every
-  write and a few reads. The other reads keep using the API service's own
-  service token. Judging them as the maintainer would deny a key whose
-  maintainer is no longer an active member, which is an authorization change
-  for RFC 0049 to decide.
+- **Which calls use it.** Every public API call, reads included. The API
+  service's own token is left for the calls it makes for itself, such as
+  loading flags and segments for the SDK endpoints, and for the exchange.
+- **Reads change behaviour.** The reads that carry no metadata today pass
+  whoever the maintainer is. With a delegated token they are judged as the
+  maintainer, like writes: a key whose maintainer is no longer an enabled
+  member, or has no access to the key's environment, is denied. This follows
+  RFC 0049's rule that a key never grants more than its maintainer has.
+  Nothing updates a key when its maintainer's account is disabled or
+  removed, so some keys in use may be affected. Those reads are reported
+  before they are denied (§6, steps 11 and 12).
 
 The access token carries no organization because a user can switch, and the
 claim would be a guess. A delegated token differs: an API key belongs to one
@@ -369,7 +377,7 @@ Three things keep their own shape:
   sessions (§7).
 
 The access token keeps its own struct, with the old claims, until they are
-removed (§6, step 11), and moves to `Claims` then.
+removed (§6, step 13), and moves to `Claims` then.
 
 ### Which organization a request is for
 
@@ -463,6 +471,9 @@ network controls in §7.
   and was introduced recently with its own compatibility handling. Nothing
   outside our verifier reads these tokens, so replacing it has no benefit
   today.
+- **A separate audience for service tokens.** PR #3015 considered it. The
+  verifier already dispatches on `token_use`, so an audience would be a
+  second marker for the same purpose, and the two would have to agree.
 - **Checking tokens only at the gateway.** The REST gateway would
   authenticate, and the gRPC services behind it would trust every call. The
   gateway is not the only way in: the public listener also routes the
@@ -521,20 +532,33 @@ Replace the relay metadata:
 8. **Accept delegated tokens.** The auth service gains the exchange RPC and
    the web services verify delegated tokens. The API service's Envoy gets a
    route to the auth service. Nothing sends the token yet.
-9. **Send delegated tokens** from the API service, one release later. A
-   rollback of the API service returns to the metadata, which is still
-   accepted.
+9. **Send delegated tokens for the calls that relay today**, one release
+   later. A rollback of the API service returns to the metadata, which is
+   still accepted.
 10. **Stop reading the relay metadata** one release after step 9.
+
+Judge public API reads as the maintainer:
+
+11. **Report the reads that would be denied.** For a read from a key whose
+    maintainer would not pass the check, the API service writes a log entry
+    and counts it in a metric, and still sends its own service token. The
+    web services cannot report this, because they do not see the maintainer
+    on those reads. The release notes ask operators to change the maintainer
+    of the reported keys. This step depends on nothing else and can ship in
+    any release.
+12. **Send delegated tokens for reads** no earlier than one release after
+    steps 9 and 11, once the report shows no key in use that would be
+    denied, or its owners have been told.
 
 Clean up:
 
-11. **Stop writing the old claims** (`organization_id`, `name`,
+13. **Stop writing the old claims** (`organization_id`, `name`,
     `is_system_admin`, `is_service_token`) in the release after the one that
     deletes `pkg/role`, so a rollback target does not need them. The access
     token then moves to the shared claims type.
-12. **Drop the legacy service token** in a later release, announced in the
+14. **Drop the legacy service token** in a later release, announced in the
     release notes.
-13. **Shorten the service token.** Services warn when their own token is
+15. **Shorten the service token.** Services warn when their own token is
     close to expiry, the rotation steps are documented, and the generator's
     default lifetime is lowered to one year. Tokens already issued keep
     their expiry.
@@ -570,14 +594,11 @@ Clean up:
 ## 8. Open Questions
 
 1. The default maximum sign-in age. The proposal is 30 days.
-2. How a service token is marked. This RFC uses `token_use: "service"` like
-   the other kinds; PR #3015 mentions a separate audience. One marker should
-   be used for every kind.
-3. Whether the service names are a fixed list in the code or free text. The
+2. Whether the service names are a fixed list in the code or free text. The
    relay rule and later the rules per service need at least `api` to be a
    known name.
-4. The delegated token replaces `Caller.Relayed` in PR #3015, so it has to
-   be agreed with RFC 0049. Whether the public API reads that do not relay
-   today should also use it is a question for that RFC.
-5. PR #2061 (password login) changes the same auth service and has not been
+3. How many API keys in use have a maintainer who would be denied on reads.
+   It is not known until step 11 reports them, and it decides how long to
+   wait before step 12.
+4. PR #2061 (password login) changes the same auth service and has not been
    checked against this design.
