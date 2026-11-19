@@ -393,8 +393,8 @@ Three things keep their own shape:
   of earlier versions, and would become an opaque value with server-side
   sessions (§7).
 
-The access token keeps its own struct, with the old claims, until they are
-removed (§6, step 13), and moves to `Claims` then.
+The access token keeps its own struct until the last old claims are removed
+(§6, step 13), and moves to `Claims` then.
 
 ### Which organization a request is for
 
@@ -518,7 +518,8 @@ services that need to can manage API keys, and the network controls in §7.
 ## 6. Rollout Plan
 
 Old claims are still written until no running version reads them, and a new
-form is accepted one release before anything sends it.
+form is accepted one release before anything sends it. `organization_id` and
+`name` are the exception: they go in step 3, for the reasons given there.
 
 Split the user and service tokens:
 
@@ -529,8 +530,20 @@ Split the user and service tokens:
    `RefreshToken` enforces the maximum sign-in age. The service and demo
    tokens use the shared claims type, and every kind is signed and verified
    through one path.
-3. **Console.** Stop decoding the token and stop calling
-   `SwitchOrganization`. Mark the RPC deprecated.
+3. **Console, `organization_id` and `name`.** The console stops decoding the
+   token and stops calling `SwitchOrganization`. Mark the RPC deprecated.
+   The signer stops writing `organization_id` and `name` in the same
+   release, and `pkg/role` takes the editor name from the account it loads.
+   - `organization_id`: no backend version reads it. A console of the
+     previous release calls `SwitchOrganization` when the claim is missing,
+     and the RPC is still served.
+   - `name`: the previous release copies it into the editor of audit logs.
+     During a rolling update, or after a rollback, a pod of that release
+     records an empty editor name until the token expires. The console shows
+     the email when the name is empty, so this is accepted.
+   - Where `pkg/role` loads no account (a service token, or a system admin
+     acting without membership), the editor name is empty until RFC 0049's
+     authorizer replaces `pkg/role`.
 4. **Remove `SwitchOrganization`** no earlier than one release after step
    3, and only once its request metric shows no calls. The console does not
    reload itself when a new version is deployed, so a tab left open keeps
@@ -577,10 +590,10 @@ Judge public API reads as the maintainer:
 
 Clean up:
 
-13. **Stop writing the old claims** (`organization_id`, `name`,
-    `is_system_admin`, `is_service_token`) in the release after the one that
-    deletes `pkg/role`, so a rollback target does not need them. The access
-    token then moves to the shared claims type.
+13. **Stop writing the remaining old claims** (`is_system_admin`,
+    `is_service_token`) in the release after the one that deletes
+    `pkg/role`, so a rollback target does not need them. The access token
+    then moves to the shared claims type.
 14. **Drop the legacy service token** in a later release, announced in the
     release notes.
 15. **Shorten the service token.** Services warn when their own token is
