@@ -931,6 +931,11 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	} else {
 		targetFeatures = s.filterByTag(features, req.Tag)
 	}
+	// The serving holdout group is delivered with the flags so the SDK applies
+	// it during local evaluation. It is never a diff: every response carries
+	// the full list, and an empty list tells the SDK that nothing is serving.
+	servingGroups := sdkHoldoutGroups(s.liveHoldoutGroup(ctx, environmentId))
+	countHoldoutIncompatibleSDK(servingGroups, holdoutMinSDKVersions, environmentId, req.SourceId, req.SdkVersion)
 	now := time.Now()
 	if len(targetFeatures) == 0 {
 		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
@@ -940,11 +945,16 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			Features:               []*featureproto.Feature{},
 			ArchivedFeatureFlagIds: make([]string, 0),
 			RequestedAt:            now.Unix(),
+			HoldoutGroups:          servingGroups,
 		}, nil
 	}
-	// We don't include archived flags when generating the Feature Flag IDs
+	// We don't include archived flags when generating the Feature Flag IDs.
+	// The serving holdout group is a second part of the ID: starting or
+	// stopping a group, or changing its targets, changes no flag, and an SDK
+	// that already holds the current flags would otherwise never ask for the
+	// new definition.
 	filteredArchivedFlags := s.filterOutArchivedFeatures(targetFeatures)
-	ffID := evaluation.GenerateFeaturesID(filteredArchivedFlags)
+	ffID := evaluation.GenerateFeaturesID(filteredArchivedFlags, servingGroups...)
 	// Return an empty response because nothing changed.
 	// We preserve req.RequestedAt (clamped to now to handle clock skew)
 	// instead of advancing to now.Unix(), so the SDK's time cursor stays
@@ -966,6 +976,32 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			Features:               []*featureproto.Feature{},
 			ArchivedFeatureFlagIds: make([]string, 0),
 			RequestedAt:            min(req.RequestedAt, now.Unix()),
+			HoldoutGroups:          servingGroups,
+		}, nil
+	}
+	// Holdout-only change: the flags part of the SDK's ID is the current one,
+	// so the SDK holds the current flags and the two IDs differ only in the
+	// holdout groups (a group started or stopped, or its targets changed).
+	// Send the groups with an empty flag diff. The SDK replaces its holdout
+	// groups and keeps its flags; a full resend would make every server SDK
+	// reload all flags on each holdout edit.
+	//
+	// The flags are verified from the ID, not from timestamps. An SDK that
+	// misses a flag update has a different flags part and takes the diff path
+	// below with its force-recover fallback, whatever the holdout did.
+	// requested_at is preserved as in the unchanged case: no flag data is
+	// sent, so the flag cursor has nothing to advance past.
+	if req.FeatureFlagsId != "" &&
+		evaluation.FeaturesIDFlagsPart(req.FeatureFlagsId) == evaluation.FeaturesIDFlagsPart(ffID) {
+		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
+			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeHoldoutDiff).Inc()
+		return &gwproto.GetFeatureFlagsResponse{
+			FeatureFlagsId:         ffID,
+			Features:               []*featureproto.Feature{},
+			ArchivedFeatureFlagIds: make([]string, 0),
+			RequestedAt:            min(req.RequestedAt, now.Unix()),
+			ForceUpdate:            false,
+			HoldoutGroups:          servingGroups,
 		}, nil
 	}
 	s.logger.Debug(
@@ -990,6 +1026,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			ArchivedFeatureFlagIds: make([]string, 0),
 			RequestedAt:            now.Unix(),
 			ForceUpdate:            true,
+			HoldoutGroups:          servingGroups,
 		}, nil
 	}
 	// Diff path: only reached when req.RequestedAt is within [now-30days, now],
@@ -1039,6 +1076,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			ArchivedFeatureFlagIds: make([]string, 0),
 			RequestedAt:            now.Unix(),
 			ForceUpdate:            true,
+			HoldoutGroups:          servingGroups,
 		}, nil
 	}
 	getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
@@ -1049,6 +1087,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 		ArchivedFeatureFlagIds: archivedIDs,
 		RequestedAt:            now.Unix(),
 		ForceUpdate:            false,
+		HoldoutGroups:          servingGroups,
 	}, nil
 }
 
@@ -1155,6 +1194,18 @@ func (s *grpcGatewayService) GetSegmentUsers(
 		}
 	}
 
+	// A SEGMENT holdout group reads its members from a segment that no flag
+	// rule has to reference, so that segment is a target too. Without it a
+	// locally evaluating SDK holds nobody out.
+	holdoutSegmentIDs := evaluation.HoldoutSegmentIDs(
+		holdoutGroups(evaluation.ServingHoldout(s.liveHoldoutGroup(ctx, environmentId))),
+	)
+	for _, id := range holdoutSegmentIDs {
+		if !contains(targetSegmentIDs, id) {
+			targetSegmentIDs = append(targetSegmentIDs, id)
+		}
+	}
+
 	// Return an empty response when there is no segments
 	if len(targetSegmentIDs) == 0 {
 		getSegmentUsersCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId,
@@ -1217,9 +1268,16 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	}
 	// Diff path: only reached when req.RequestedAt is within [now-30days, now],
 	// so req.RequestedAt can be used directly without clamping.
+	//
+	// The holdout segment is also sent when the SDK does not hold it yet,
+	// whatever its age: the group can start long after the segment was last
+	// edited, so updated_at alone would never deliver it.
 	updatedSegments := make([]*featureproto.SegmentUsers, 0, len(targetSegmentUsers))
-	for _, su := range targetSegmentUsers {
-		if su.UpdatedAt >= req.RequestedAt {
+	for i, su := range targetSegmentUsers {
+		// targetSegmentUsers is in the order of targetSegmentIDs.
+		id := targetSegmentIDs[i]
+		if su.UpdatedAt >= req.RequestedAt ||
+			(contains(holdoutSegmentIDs, id) && !contains(req.SegmentIds, id)) {
 			updatedSegments = append(updatedSegments, su)
 		}
 	}

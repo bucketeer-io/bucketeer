@@ -1,9 +1,15 @@
 import test from 'ava';
 import * as userEvaluation from '../userEvaluation';
 import { Evaluation } from '../proto/feature/evaluation_pb';
-import { GenerateFeaturesID, UserEvaluationsID, sortMapKeys } from '../userEvaluation';
+import {
+  FeaturesIDFlagsPart,
+  GenerateFeaturesID,
+  UserEvaluationsID,
+  sortMapKeys,
+} from '../userEvaluation';
 import { Feature } from '../proto/feature/feature_pb';
-import type { HoldoutGroup } from '../bucketeer';
+import type { HoldoutFeature, HoldoutGroup } from '../bucketeer';
+import { createHoldoutFeature, createHoldoutGroup } from '../modelFactory';
 
 // Helper function to create an Evaluation object
 function NewEvaluation(id: string): Evaluation {
@@ -276,4 +282,107 @@ GenerateFeaturesIDTestCases.forEach(({ desc, input, expected }) => {
     const actual = GenerateFeaturesID(input ?? []);
     t.is(actual, expected, desc);
   });
+});
+
+// The pinned values match TestGenerateFeaturesIDHoldout in evaluation/go.
+test('GenerateFeaturesID includes the live holdout group', (t) => {
+  const newFeatures = () => [NewFeature('id-2', 2), NewFeature('id-1', 1)];
+  const group = createHoldoutGroup({ id: 'hg-a', updatedAt: 50 });
+  const withTarget = createHoldoutGroup({
+    id: 'hg-a',
+    updatedAt: 50,
+    features: [
+      createHoldoutFeature({
+        id: 'row-2',
+        featureId: 'id-2',
+        holdoutVariationId: 'v-off',
+        addedAt: 20,
+      }),
+      createHoldoutFeature({
+        id: 'row-1',
+        featureId: 'id-1',
+        holdoutVariationId: 'v-on',
+        addedAt: 10,
+      }),
+    ],
+  });
+
+  // With a live group the ID is "<flags>:<holdout>".
+  const withoutGroup = GenerateFeaturesID(newFeatures());
+  t.is(withoutGroup, '17283374094628184689');
+  t.is(GenerateFeaturesID(newFeatures(), [group]), '17283374094628184689:16147347951762488293');
+  t.is(GenerateFeaturesID(newFeatures(), [withTarget]), '17283374094628184689:6966737048624406302');
+  t.is(GenerateFeaturesID([], [group]), '14695981039346656037:16147347951762488293');
+
+  // The flags part does not depend on the groups.
+  t.is(FeaturesIDFlagsPart(withoutGroup), withoutGroup);
+  t.is(FeaturesIDFlagsPart(GenerateFeaturesID(newFeatures(), [group])), withoutGroup);
+  t.is(FeaturesIDFlagsPart(GenerateFeaturesID(newFeatures(), [withTarget])), withoutGroup);
+  t.is(FeaturesIDFlagsPart(''), '');
+
+  // A group with no id is a clearance or an unavailable snapshot, not a live group.
+  t.is(GenerateFeaturesID(newFeatures(), []), withoutGroup);
+  t.is(GenerateFeaturesID(newFeatures(), [createHoldoutGroup({ updatedAt: 100 })]), withoutGroup);
+  t.is(GenerateFeaturesID(newFeatures(), [createHoldoutGroup({ updatedAt: 1 })]), withoutGroup);
+
+  // Restarting the group or starting another one changes the id.
+  t.not(
+    GenerateFeaturesID(newFeatures(), [createHoldoutGroup({ id: 'hg-a', updatedAt: 51 })]),
+    GenerateFeaturesID(newFeatures(), [group]),
+  );
+  t.not(
+    GenerateFeaturesID(newFeatures(), [createHoldoutGroup({ id: 'hg-b', updatedAt: 50 })]),
+    GenerateFeaturesID(newFeatures(), [group]),
+  );
+});
+
+test('GenerateFeaturesID changes when targets change in the same second', (t) => {
+  const newFeatures = () => [NewFeature('id-1', 1), NewFeature('id-2', 2)];
+  const row1 = createHoldoutFeature({
+    id: 'row-1',
+    featureId: 'id-1',
+    holdoutVariationId: 'v-on',
+    addedAt: 10,
+  });
+  const row2 = createHoldoutFeature({
+    id: 'row-2',
+    featureId: 'id-2',
+    holdoutVariationId: 'v-off',
+    addedAt: 20,
+  });
+  const group = (features: HoldoutFeature[]) =>
+    createHoldoutGroup({ id: 'hg-a', updatedAt: 50, features });
+
+  const base = GenerateFeaturesID(newFeatures(), [group([row2, row1])]);
+  t.is(base, '17283374094628184689:6966737048624406302');
+  t.is(GenerateFeaturesID(newFeatures(), [group([row1, row2])]), base);
+  t.not(GenerateFeaturesID(newFeatures(), [group([])]), base);
+  t.not(
+    GenerateFeaturesID(newFeatures(), [
+      group([
+        row1,
+        createHoldoutFeature({
+          id: 'row-2',
+          featureId: 'id-2',
+          holdoutVariationId: 'v-on',
+          addedAt: 20,
+        }),
+      ]),
+    ]),
+    base,
+  );
+
+  // A removed target no longer counts.
+  const removed = createHoldoutFeature({
+    id: 'row-2',
+    featureId: 'id-2',
+    holdoutVariationId: 'v-off',
+    addedAt: 20,
+    removedAt: 30,
+  });
+  t.not(GenerateFeaturesID(newFeatures(), [group([row1, removed])]), base);
+  t.is(
+    GenerateFeaturesID(newFeatures(), [group([row1, removed])]),
+    GenerateFeaturesID(newFeatures(), [group([row1])]),
+  );
 });

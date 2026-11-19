@@ -811,17 +811,60 @@ func waitRESTPollCaughtUp(t *testing.T, tag, userID, ueid string, evaluatedAt in
 	}, cachePropagationTimeout, pollInterval, "REST client never reached caught-up poll state")
 }
 
-// waitFeatureFlagsPollCaughtUp polls GetFeatureFlags until the server SDK
-// cursor is current (empty non-forced diff, stable feature_flags_id).
-func waitFeatureFlagsPollCaughtUp(t *testing.T, tag, featureFlagsID string, requestedAt int64, wantFeatureFlagsID string) {
+// waitFeatureFlagsPoll polls GetFeatureFlags with a server SDK cursor until
+// pred accepts the response. A poll can still reach a gateway replica that
+// has not seen the latest holdout write, so one response is never final.
+func waitFeatureFlagsPoll(
+	t *testing.T,
+	tag string,
+	cursor *gatewayproto.GetFeatureFlagsResponse,
+	msg string,
+	pred func(*gatewayproto.GetFeatureFlagsResponse) bool,
+) *gatewayproto.GetFeatureFlagsResponse {
 	t.Helper()
+	var resp *gatewayproto.GetFeatureFlagsResponse
 	require.Eventually(t, func() bool {
-		resp := grpcGetFeatureFlags(t, tag, featureFlagsID, requestedAt)
-		return !resp.ForceUpdate &&
-			len(resp.Features) == 0 &&
-			len(resp.ArchivedFeatureFlagIds) == 0 &&
-			resp.FeatureFlagsId == wantFeatureFlagsID
-	}, cachePropagationTimeout, pollInterval, "server SDK never reached caught-up poll state")
+		resp = grpcGetFeatureFlags(t, tag, cursor.FeatureFlagsId, cursor.RequestedAt)
+		return pred(resp)
+	}, cachePropagationTimeout, pollInterval, msg)
+	return resp
+}
+
+// waitFeatureFlagsPollCaughtUp polls GetFeatureFlags until the gateway agrees
+// the server SDK cursor is current: an empty non-forced diff and the same
+// feature_flags_id (RFC §4.3.2). It returns that response.
+func waitFeatureFlagsPollCaughtUp(
+	t *testing.T,
+	tag string,
+	cursor *gatewayproto.GetFeatureFlagsResponse,
+) *gatewayproto.GetFeatureFlagsResponse {
+	t.Helper()
+	return waitFeatureFlagsPoll(t, tag, cursor, "server SDK never reached caught-up poll state",
+		func(resp *gatewayproto.GetFeatureFlagsResponse) bool {
+			return !resp.ForceUpdate &&
+				len(resp.Features) == 0 &&
+				len(resp.ArchivedFeatureFlagIds) == 0 &&
+				resp.FeatureFlagsId == cursor.FeatureFlagsId
+		})
+}
+
+// holdoutTargets maps the flags a delivered group holds out to their holdout
+// variation.
+func holdoutTargets(group *featureproto.HoldoutGroup) map[string]string {
+	targets := make(map[string]string, len(group.Features))
+	for _, f := range group.Features {
+		targets[f.FeatureId] = f.HoldoutVariationId
+	}
+	return targets
+}
+
+func findSegmentUsers(segments []*featureproto.SegmentUsers, id string) *featureproto.SegmentUsers {
+	for _, su := range segments {
+		if su.SegmentId == id {
+			return su
+		}
+	}
+	return nil
 }
 
 // restEvaluationsBody builds the /get_evaluations request body for the REST

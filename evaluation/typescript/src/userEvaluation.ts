@@ -61,12 +61,44 @@ function sortMapKeys(data: Record<string, string>): string[] {
   return keys;
 }
 
+// holdoutGroupsHashInput is the part of a change-detection hash that covers
+// the live holdout groups. A group with no ID adds nothing, so an ID computed
+// without a live group is the ID computed before holdout existed.
+//
+// Targets are part of the hash: two edits in the same second share UpdatedAt,
+// and the ID still has to change when a target or its holdout variation changes.
+// Matches writeHoldoutGroups in evaluation/go.
+function holdoutGroupsHashInput(groups: HoldoutGroup[] | undefined): string {
+  let hashInput = '';
+  sortedHoldoutGroups(groups).forEach((group) => {
+    hashInput += `${group.getId()}:${group.getUpdatedAt()}`;
+    sortedHoldoutTargets(group).forEach((target) => {
+      hashInput += `:${target.featureId}:${target.variationId}:${target.addedAt}:${target.id}`;
+    });
+  });
+  return hashInput;
+}
+
+// FEATURES_ID_HOLDOUT_SEPARATOR separates the flags part of a features ID from
+// its holdout part. Mirrors featuresIDHoldoutSeparator in Go.
+const FEATURES_ID_HOLDOUT_SEPARATOR = ':';
+
 // GenerateFeaturesID generates a hash ID for the server SDK to detect feature flag changes.
 // It uses FNV-1a 64-bit hash algorithm which is:
 // - Fast enough for SDK polling frequency
 // - 64-bit provides negligible collision risk for feature flag counts
 // - No cryptographic requirements for change detection
-function GenerateFeaturesID(features: Feature[]): string {
+//
+// A locally evaluating SDK caches the live holdout groups next to the flags, so
+// starting or stopping a group, or changing its targets, has to change the ID
+// even though no flag changed. The ID therefore has two parts,
+// "<flags>:<holdout>". Without a live group it is the flags part alone, which
+// is the ID computed before holdout existed.
+//
+// The parts are kept apart, rather than hashed together, so the server can tell
+// a holdout-only change from a flag change. Matches GenerateFeaturesID in
+// evaluation/go.
+function GenerateFeaturesID(features: Feature[], holdoutGroups?: HoldoutGroup[]): string {
   // Sort features based on the 'id'
   features.sort((a, b) => (a.getId() < b.getId() ? -1 : 1));
 
@@ -78,9 +110,23 @@ function GenerateFeaturesID(features: Feature[]): string {
     hashInput += `${feature.getId()}:${feature.getUpdatedAt()}`;
   });
 
-  // Generate the FNV-1a 64-bit hash and return it as a decimal string
-  const hash = fnv.hash(hashInput, 64);
-  return hash.dec();
+  // Generate the FNV-1a 64-bit hash as a decimal string
+  const flagsID = fnv.hash(hashInput, 64).dec();
+  if (sortedHoldoutGroups(holdoutGroups).length === 0) {
+    return flagsID;
+  }
+  // The holdout part hashes the same input as UserEvaluationsID.
+  const holdoutID = fnv.hash(holdoutGroupsHashInput(holdoutGroups), 64).dec();
+  return flagsID + FEATURES_ID_HOLDOUT_SEPARATOR + holdoutID;
+}
+
+// FeaturesIDFlagsPart returns the part of a features ID that identifies the
+// flags alone. Two IDs with the same flags part were issued for the same flags
+// and differ only in the holdout groups. Matches FeaturesIDFlagsPart in
+// evaluation/go.
+function FeaturesIDFlagsPart(id: string): string {
+  const index = id.indexOf(FEATURES_ID_HOLDOUT_SEPARATOR);
+  return index === -1 ? id : id.slice(0, index);
 }
 
 // UserEvaluationsID generates a hash ID for the client SDK to detect evaluation changes.
@@ -112,14 +158,7 @@ function UserEvaluationsID(
   });
 
   // Hash live groups after features so a missing group leaves the ID unchanged.
-  // Targets are part of the hash: two edits in the same second share UpdatedAt,
-  // and the ID still has to change when a target or its holdout variation changes.
-  sortedHoldoutGroups(holdoutGroups).forEach((group) => {
-    hashInput += `${group.getId()}:${group.getUpdatedAt()}`;
-    sortedHoldoutTargets(group).forEach((target) => {
-      hashInput += `:${target.featureId}:${target.variationId}:${target.addedAt}:${target.id}`;
-    });
-  });
+  hashInput += holdoutGroupsHashInput(holdoutGroups);
 
   // Generate the FNV-1a 64-bit hash
   const hash = fnv.hash(hashInput, 64);
@@ -133,4 +172,10 @@ function UserEvaluationsID(
   return hash.dec();
 }
 
-export { UserEvaluationsID, GenerateFeaturesID, sortMapKeys, NewUserEvaluations };
+export {
+  UserEvaluationsID,
+  GenerateFeaturesID,
+  FeaturesIDFlagsPart,
+  sortMapKeys,
+  NewUserEvaluations,
+};

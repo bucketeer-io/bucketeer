@@ -5035,6 +5035,12 @@ definitions:
         type: string
       status:
         $ref: '#/definitions/experimentExperimentStatus'
+  HoldoutGroupAssignmentType:
+    type: string
+    enum:
+      - HASH
+      - SEGMENT
+    default: HASH
   ListFlagTriggersResponseFlagTriggerWithUrl:
     type: object
     properties:
@@ -7959,6 +7965,115 @@ definitions:
       - Type_UNKNOWN
       - Type_WEBHOOK
     default: Type_UNKNOWN
+  featureHoldoutGroup:
+    type: object
+    properties:
+      id:
+        type: string
+      environmentId:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      assignmentType:
+        $ref: '#/definitions/HoldoutGroupAssignmentType'
+      samplingSeed:
+        type: string
+        description: HASH only. Environment holdout hash key, assigned by the server.
+      bucketStart:
+        type: number
+        format: double
+        description: HASH only. Start of the bucket range on [0, 100), assigned by the server.
+      percentage:
+        type: number
+        format: double
+        description: HASH only. 0 < percentage <= 50.
+      segmentId:
+        type: string
+        description: SEGMENT only. Fixed at creation.
+      status:
+        $ref: '#/definitions/featureHoldoutGroupStatus'
+      startAt:
+        type: string
+        format: int64
+      stopAt:
+        type: string
+        format: int64
+      startAnalysisAt:
+        type: string
+        format: int64
+        description: Scheduled entry into ANALYSIS. 0 means no analysis period.
+      analysisStartedAt:
+        type: string
+        format: int64
+        description: When ANALYSIS actually began. 0 means not started.
+      stoppedAt:
+        type: string
+        format: int64
+        description: When the group was stopped. 0 means not stopped.
+      goalIds:
+        type: array
+        items:
+          type: string
+      experimentId:
+        type: string
+        description: Empty until measurement creates an internal experiment (Phase 4).
+      analysisExperimentId:
+        type: string
+        description: Empty until the group enters ANALYSIS (Phase 4).
+      createdBy:
+        type: string
+      updatedBy:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      archived:
+        type: boolean
+      deleted:
+        type: boolean
+      features:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureHoldoutGroupFeature'
+        description: Current targets (removed_at = 0). Populated on read; not a column.
+    description: |-
+      HoldoutGroup is an environment-scoped control group. Membership is fixed at
+      creation. Phase 1 stores and manages the group; evaluation does not read it.
+  featureHoldoutGroupFeature:
+    type: object
+    properties:
+      id:
+        type: string
+      holdoutGroupId:
+        type: string
+      featureId:
+        type: string
+      environmentId:
+        type: string
+      holdoutVariationId:
+        type: string
+      addedAt:
+        type: string
+        format: int64
+      removedAt:
+        type: string
+        format: int64
+        description: 0 means the flag is still a current target.
+  featureHoldoutGroupStatus:
+    type: string
+    enum:
+      - WAITING
+      - RUNNING
+      - STOPPED
+      - FORCE_STOPPED
+      - ANALYSIS
+    default: WAITING
   featureListFeaturesRequestOrderBy:
     type: string
     enum:
@@ -8340,6 +8455,17 @@ definitions:
         format: int64
       forceUpdate:
         type: boolean
+      holdoutGroups:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureHoldoutGroup'
+        description: |-
+          The holdout groups that are serving in the environment. Unlike `features`,
+          this is never a diff: the full list is sent on every response, and an
+          empty list means no group is serving. Only the fields local evaluation
+          reads are set: the ID, the environment ID, the assignment, the status,
+          `updated_at` and the current target features.
   gatewayGetSegmentUsersRequest:
     type: object
     properties:

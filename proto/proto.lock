@@ -38942,6 +38942,12 @@
                 "id": 5,
                 "name": "force_update",
                 "type": "bool"
+              },
+              {
+                "id": 6,
+                "name": "holdout_groups",
+                "type": "bucketeer.feature.HoldoutGroup",
+                "is_repeated": true
               }
             ]
           },
@@ -46127,6 +46133,9 @@
           },
           {
             "path": "proto/feature/feature.proto"
+          },
+          {
+            "path": "proto/feature/holdout.proto"
           },
           {
             "path": "proto/feature/service.proto"

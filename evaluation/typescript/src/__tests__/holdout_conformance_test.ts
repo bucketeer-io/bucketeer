@@ -10,7 +10,7 @@ import { Reason } from '../proto/feature/reason_pb';
 import { SegmentUser } from '../proto/feature/segment_pb';
 import { Strategy, FixedStrategy } from '../proto/feature/strategy_pb';
 import { Variation } from '../proto/feature/variation_pb';
-import { createUser } from '../modelFactory';
+import { createHoldoutFeature, createHoldoutGroup, createUser } from '../modelFactory';
 
 // Shared with evaluation/go. See evaluation/testdata/holdout_conformance.json.
 interface ConformanceTarget {
@@ -110,25 +110,22 @@ fixture.segmentUsers.forEach((su) => {
   segmentUsers.set(su.segmentId, users);
 });
 
+// Groups are built with the public factory, so the shape a server SDK builds
+// from a GetFeatureFlags response is the shape checked against the fixture.
 function buildGroup(group: ConformanceGroup): HoldoutGroup {
-  const features: HoldoutFeature[] = group.targets.map((target) => ({
-    getId: () => '',
-    getFeatureId: () => target.featureId,
-    getHoldoutVariationId: () => target.variationId,
-    getAddedAt: () => 0,
-    getRemovedAt: () => 0,
-  }));
-  return {
-    getId: () => group.id,
-    getEnvironmentId: () => fixture.environmentId,
-    getAssignmentType: () => toAssignment(group.assignmentType),
-    getSamplingSeed: () => fixture.seed,
-    getBucketStart: () => group.bucketStart ?? 0,
-    getPercentage: () => group.percentage ?? 0,
-    getSegmentId: () => group.segmentId ?? '',
-    getUpdatedAt: () => 0,
-    getFeaturesList: () => features,
-  };
+  const features: HoldoutFeature[] = group.targets.map((target) =>
+    createHoldoutFeature({ featureId: target.featureId, holdoutVariationId: target.variationId }),
+  );
+  return createHoldoutGroup({
+    id: group.id,
+    environmentId: fixture.environmentId,
+    assignmentType: toAssignment(group.assignmentType),
+    samplingSeed: fixture.seed,
+    bucketStart: group.bucketStart,
+    percentage: group.percentage,
+    segmentId: group.segmentId,
+    features,
+  });
 }
 
 function buildFeatures(features: ConformanceFeature[]): Feature[] {

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/blang/semver"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -28,6 +29,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -182,6 +184,102 @@ func countHoldoutEvaluation(group *featureproto.HoldoutGroup, sourceID string) {
 		return
 	}
 	holdoutEvaluationsCounter.WithLabelValues(sourceID).Inc()
+}
+
+// sdkHoldoutGroups is the holdout_groups list of a GetFeatureFlags response:
+// the serving group, or nil when nothing is serving. A clearance snapshot and
+// an unavailable snapshot are both "nothing is serving" here. A server SDK
+// evaluates with its own copy, so an unreadable snapshot only means the SDK
+// evaluates without the holdout until the snapshot is back; the request is
+// not failed for it.
+//
+// The group is copied down to what local evaluation reads: the assignment,
+// the revision and the current targets. The name, the description, the goals
+// and the editors' email addresses stay on the server. The cached group is
+// shared between requests and is never modified.
+func sdkHoldoutGroups(group *featureproto.HoldoutGroup) []*featureproto.HoldoutGroup {
+	serving := evaluation.ServingHoldout(group)
+	if serving == nil {
+		return nil
+	}
+	var targets []*featureproto.HoldoutGroupFeature
+	for _, target := range serving.Features {
+		if target == nil || target.RemovedAt != 0 {
+			continue
+		}
+		targets = append(targets, &featureproto.HoldoutGroupFeature{
+			Id:                 target.Id,
+			HoldoutGroupId:     target.HoldoutGroupId,
+			FeatureId:          target.FeatureId,
+			EnvironmentId:      target.EnvironmentId,
+			HoldoutVariationId: target.HoldoutVariationId,
+			AddedAt:            target.AddedAt,
+		})
+	}
+	return []*featureproto.HoldoutGroup{{
+		Id: serving.Id,
+		// The environment ID is part of the HASH bucketing input.
+		EnvironmentId:  serving.EnvironmentId,
+		AssignmentType: serving.AssignmentType,
+		SamplingSeed:   serving.SamplingSeed,
+		BucketStart:    serving.BucketStart,
+		Percentage:     serving.Percentage,
+		SegmentId:      serving.SegmentId,
+		Status:         serving.Status,
+		UpdatedAt:      serving.UpdatedAt,
+		Features:       targets,
+	}}
+}
+
+// holdoutMinSDKVersions lists, per source, the first SDK release that applies
+// the holdout_groups of a GetFeatureFlags response.
+//
+// It is empty because no released SDK does yet. A source that is not listed
+// is reported as incompatible, which is also right for a wrapper such as an
+// OpenFeature provider: it reports its own version, so it needs its own
+// entry. Add an entry when an SDK release ships holdout support.
+var holdoutMinSDKVersions = map[eventproto.SourceId]semver.Version{}
+
+// holdoutCapableSDK reports whether the SDK applies holdout groups when it
+// evaluates locally. A version that cannot be parsed is not capable.
+func holdoutCapableSDK(
+	minVersions map[eventproto.SourceId]semver.Version,
+	sourceID eventproto.SourceId,
+	sdkVersion string,
+) bool {
+	minVersion, ok := minVersions[sourceID]
+	if !ok {
+		return false
+	}
+	version, err := semver.ParseTolerant(sdkVersion)
+	if err != nil {
+		return false
+	}
+	return version.GTE(minVersion)
+}
+
+// countHoldoutIncompatibleSDK counts a GetFeatureFlags request from an SDK
+// that ignores holdout_groups while a serving group has targets. Such an SDK
+// serves the normal variation to held-out users (RFC 0048 §4.3.2). The
+// request is still answered in full.
+func countHoldoutIncompatibleSDK(
+	groups []*featureproto.HoldoutGroup,
+	minVersions map[eventproto.SourceId]semver.Version,
+	environmentID string,
+	sourceID eventproto.SourceId,
+	sdkVersion string,
+) {
+	targeted := false
+	for _, group := range groups {
+		if group != nil && len(group.Features) > 0 {
+			targeted = true
+			break
+		}
+	}
+	if !targeted || holdoutCapableSDK(minVersions, sourceID, sdkVersion) {
+		return
+	}
+	holdoutIncompatibleSDKCounter.WithLabelValues(environmentID, sourceID.String(), sdkVersion).Inc()
 }
 
 func (s *gatewayService) liveHoldoutGroup(ctx context.Context, environmentID string) *featureproto.HoldoutGroup {

@@ -156,6 +156,7 @@ const (
 	codeAll           = "All"
 	codeForceAll      = "ForceAll"
 	codeDiff          = "Diff"
+	codeHoldoutDiff   = "HoldoutDiff"
 	codeNone          = "None"
 	codeNoFeatures    = "NoFeatures"
 	codeNoSegments    = "NoSegments"
@@ -221,6 +222,14 @@ var (
 			Name:      "api_holdout_evaluations_total",
 			Help:      "Total number of GetEvaluations requests served while a live holdout group has target features",
 		}, []string{"source_id"})
+	holdoutIncompatibleSDKCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_holdout_incompatible_sdk_requests_total",
+			Help: "Total number of GetFeatureFlags requests from an SDK that does not apply holdout groups " +
+				"while a live holdout group has target features",
+		}, []string{"environment_id", "source_id", "sdk_version"})
 	evaluationsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -379,6 +388,7 @@ func registerMetrics(r metrics.Registerer) {
 			metricsOverflowCounter,
 			evaluationsCounter,
 			holdoutEvaluationsCounter,
+			holdoutIncompatibleSDKCounter,
 			getFeatureFlagsCounter,
 			getSegmentUsersCounter,
 			requestTotal,
