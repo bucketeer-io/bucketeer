@@ -344,10 +344,9 @@ func TestAuthService_RefreshToken_RateLimit(t *testing.T) {
 			require.NoError(t, err)
 			now := time.Now()
 			refreshToken, err := signer.SignRefreshToken(&token.RefreshToken{
-				Email:          email,
-				OrganizationID: "org-1",
-				Expiry:         now.Add(time.Hour),
-				IssuedAt:       now,
+				Email:    email,
+				Expiry:   now.Add(time.Hour),
+				IssuedAt: now,
 			})
 			require.NoError(t, err)
 			service := newAuthTypeTestService(t, nil)

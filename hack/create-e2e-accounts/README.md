@@ -7,7 +7,7 @@ an access token for each of them. It upserts rows directly into the
 | Account | Organization (role) | Environment role | Access token |
 |---------|---------------------|------------------|--------------|
 | `--sys-admin-email` | e2e org (`OWNER`) | — | `--sys-admin-token-output` (system admin) |
-| `--org-owner-email` | default org (`OWNER`) + e2e org (`OWNER`) | — (org `OWNER` implies access to every environment in the org) | `--org-owner-default-token-output` (scoped to default org) + `--org-owner-e2e-token-output` (scoped to e2e org) |
+| `--org-owner-email` | default org (`OWNER`) + e2e org (`OWNER`) | — (org `OWNER` implies access to every environment in the org) | `--org-owner-default-token-output` + `--org-owner-e2e-token-output` (identical: the token no longer names an organization) |
 | `--env-write-email` | default org (`MEMBER`) | `EDITOR` on the e2e environment (`--e2e-environment-id`) | `--env-write-token-output` |
 | `--env-read-email` | default org (`MEMBER`) | `VIEWER` on the e2e environment (`--e2e-environment-id`) | `--env-read-token-output` |
 
@@ -19,12 +19,12 @@ Rows are upserted with `INSERT ... ON DUPLICATE KEY UPDATE` (MySQL 8.0
 row-alias form) against the composite primary key `(email, organization_id)`,
 so re-running against a DB that already has the rows is safe.
 
-The system admin token is scoped to the e2e organization and is minted with
-`is_system_admin=true`, so it can call system-admin-only APIs and read across
-organizations. The other three tokens are scoped to the default organization
-and are **not** system admins: the org owner relies on its organization
-`OWNER` role and the editor/viewer rely on their environment roles, so they
-exercise the real RBAC path. None of the tokens is a service token. Tokens
+Tokens carry only the email: the organization is named by each request. The
+system admin token is minted with `is_system_admin=true`, so it can call
+system-admin-only APIs and read across organizations. The other three tokens
+are **not** system admins: the org owner relies on its organization `OWNER`
+role and the editor/viewer rely on their environment roles, so they exercise
+the real RBAC path. None of the tokens is a service token. Tokens
 expire after `--token-ttl` (default `1h`); they are stateless JWTs that cannot
 be revoked once minted, so keep the TTL short.
 

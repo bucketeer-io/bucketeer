@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { switchOrganization } from '@api/auth';
 import { useAuth } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
@@ -9,7 +8,6 @@ import { useTranslation } from 'i18n';
 import { clearCurrentEnvIdStorage } from 'storage/environment';
 import { getOrgIdStorage, setOrgIdStorage } from 'storage/organization';
 import { clearCurrentProjectEnvironmentStorage } from 'storage/project-environment';
-import { getTokenStorage, setTokenStorage } from 'storage/token';
 import { cn } from 'utils/style';
 import { IconChecked } from '@icons';
 import Icon from 'components/icon';
@@ -92,27 +90,16 @@ const SwitchOrganization = ({
     async (organizationId: string) => {
       try {
         setIsLoading(true);
-        const token = getTokenStorage();
-        if (token?.accessToken) {
-          const resp = await switchOrganization({
-            accessToken: token.accessToken,
-            organizationId
-          });
-          if (resp.token) {
-            // Preserve the current session until the switch request succeeds.
-            setOrgIdStorage(organizationId);
-            clearCurrentEnvIdStorage();
-            clearCurrentProjectEnvironmentStorage();
-            setTokenStorage(resp.token);
-            onCloseSwitchOrg();
-            onCloseSetting();
-            // Leave the old org's URL before loading the new account, so
-            // EnvironmentRoot can't match a same-named urlCode and keep the
-            // stale entity path (e.g. a flag ID from the previous org).
-            allowNavigation(() => navigate(PAGE_PATH_ROOT, { replace: true }));
-            await onMeFetcher({ organizationId }, { logoutOnFailure: true });
-          }
-        }
+        setOrgIdStorage(organizationId);
+        clearCurrentEnvIdStorage();
+        clearCurrentProjectEnvironmentStorage();
+        onCloseSwitchOrg();
+        onCloseSetting();
+        // Leave the old org's URL before loading the new account, so
+        // EnvironmentRoot can't match a same-named urlCode and keep the
+        // stale entity path (e.g. a flag ID from the previous org).
+        allowNavigation(() => navigate(PAGE_PATH_ROOT, { replace: true }));
+        await onMeFetcher({ organizationId }, { logoutOnFailure: true });
       } catch (error) {
         errorNotify(error);
       } finally {

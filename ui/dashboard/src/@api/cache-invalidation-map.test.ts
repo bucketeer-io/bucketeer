@@ -35,7 +35,6 @@ const NON_INVALIDATING_ENDPOINTS: ReadonlySet<string> = new Set([
   '/v1/auth/refresh_token',
   '/v1/auth/exchange_token',
   '/v1/auth/authentication_url',
-  '/v1/auth/switch_organization',
   '/v1/exchange_demo_token',
   // Debug/inspection endpoints – they don't change persisted state.
   '/v1/debug_evaluate_features'

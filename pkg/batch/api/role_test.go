@@ -66,8 +66,7 @@ func TestExecuteBatchJobRequiresSystemAdminRole(t *testing.T) {
 		{
 			desc: "rejects organization owner",
 			ctx: createContextWithToken(t, &token.AccessToken{
-				Email:          "owner@example.com",
-				OrganizationID: "org0",
+				Email: "owner@example.com",
 			}),
 			job:         batchproto.BatchJob_FeatureFlagCacher,
 			expectedErr: role.ErrPermissionDenied,
@@ -76,7 +75,6 @@ func TestExecuteBatchJobRequiresSystemAdminRole(t *testing.T) {
 			desc: "rejects service token flag without system admin",
 			ctx: createContextWithToken(t, &token.AccessToken{
 				Email:          "service@example.com",
-				OrganizationID: "org0",
 				IsServiceToken: true,
 			}),
 			job:         batchproto.BatchJob_FeatureFlagCacher,

@@ -79,7 +79,6 @@ func CheckEnvironmentRole(
 		}
 		return &eventproto.Editor{
 			Email:   token.Email,
-			Name:    token.Name,
 			IsAdmin: true,
 		}, nil
 	}
@@ -92,7 +91,6 @@ func CheckEnvironmentRole(
 	if token.IsSystemAdmin && requiredRole <= accountproto.AccountV2_Role_Environment_VIEWER {
 		return &eventproto.Editor{
 			Email:   token.Email,
-			Name:    token.Name,
 			IsAdmin: true,
 		}, nil
 	}
@@ -109,7 +107,7 @@ func CheckEnvironmentRole(
 	accountEnvRole := getRole(account.EnvironmentRoles, environmentID)
 	return checkRole(
 		account.Email,
-		token.Name,
+		(&accdomain.AccountV2{AccountV2: account}).GetAccountFullName(),
 		accountEnvRole,
 		requiredRole,
 		account.EnvironmentRoles,
@@ -249,7 +247,6 @@ func CheckOrganizationRole(
 		}
 		return &eventproto.Editor{
 			Email:   token.Email,
-			Name:    token.Name,
 			IsAdmin: true,
 		}, nil
 	}
@@ -262,7 +259,6 @@ func CheckOrganizationRole(
 	if token.IsSystemAdmin && requiredRole <= accountproto.AccountV2_Role_Organization_MEMBER {
 		return &eventproto.Editor{
 			Email:   token.Email,
-			Name:    token.Name,
 			IsAdmin: true,
 		}, nil
 	}
@@ -281,7 +277,7 @@ func CheckOrganizationRole(
 	}
 	return &eventproto.Editor{
 		Email:            token.Email,
-		Name:             token.Name,
+		Name:             (&accdomain.AccountV2{AccountV2: resp.Account}).GetAccountFullName(),
 		IsAdmin:          token.IsSystemAdmin,
 		EnvironmentRoles: resp.Account.EnvironmentRoles,
 		OrganizationRole: resp.Account.OrganizationRole,
