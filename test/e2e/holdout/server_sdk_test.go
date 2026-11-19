@@ -58,10 +58,19 @@ func requireSameAsServer(
 	return localEval
 }
 
+// requireHoldoutOnlyDiff requires the response to a holdout-only change: the
+// groups come with an empty flag diff, not with a full resend.
+func requireHoldoutOnlyDiff(t *testing.T, change string, resp *gatewayproto.GetFeatureFlagsResponse) {
+	t.Helper()
+	assert.False(t, resp.ForceUpdate, "%s does not force a full resend", change)
+	assert.Empty(t, resp.Features, "%s changes no flag", change)
+	assert.Empty(t, resp.ArchivedFeatureFlagIds, "%s archives no flag", change)
+}
+
 // RFC §4.3.2 local-evaluation path: GetFeatureFlags with the server key
 // returns holdout_groups for a serving group and an empty list otherwise;
-// feature_flags_id changes on Start, Add, Remove and Stop; none of them forces
-// a full resend, and a caught-up SDK gets an empty non-forced diff; the
+// feature_flags_id changes on Start, Add, Remove and Stop; each of them is
+// answered with an empty non-forced flag diff, as is a caught-up SDK; the
 // delivered definition holds out the same users as GetEvaluations.
 func TestServerSDKHoldoutDelivery(t *testing.T) {
 	lockServing(t)
@@ -92,7 +101,7 @@ func TestServerSDKHoldoutDelivery(t *testing.T) {
 			return len(r.HoldoutGroups) == 1 && r.HoldoutGroups[0].Id == s.group.Id
 		})
 	assert.NotEqual(t, before.FeatureFlagsId, afterStart.FeatureFlagsId, "Start changes feature_flags_id")
-	assert.False(t, afterStart.ForceUpdate, "a holdout change does not force a full resend")
+	requireHoldoutOnlyDiff(t, "Start", afterStart)
 	delivered := afterStart.HoldoutGroups[0]
 	assert.Equal(t, holdoutEnv.id, delivered.EnvironmentId)
 	assert.Equal(t, featureproto.HoldoutGroup_RUNNING, delivered.Status)
@@ -136,7 +145,7 @@ func TestServerSDKHoldoutDelivery(t *testing.T) {
 			return len(r.HoldoutGroups) == 1 && len(r.HoldoutGroups[0].Features) == 2
 		})
 	assert.NotEqual(t, afterStart.FeatureFlagsId, afterAdd.FeatureFlagsId, "Add changes feature_flags_id")
-	assert.False(t, afterAdd.ForceUpdate, "a holdout change does not force a full resend")
+	requireHoldoutOnlyDiff(t, "Add", afterAdd)
 	assert.Equal(t,
 		map[string]string{s.flag.Id: s.holdoutVariation(), extra.Id: variationID(extra, "C")},
 		holdoutTargets(afterAdd.HoldoutGroups[0]),
@@ -150,7 +159,7 @@ func TestServerSDKHoldoutDelivery(t *testing.T) {
 			return len(r.HoldoutGroups) == 1 && len(r.HoldoutGroups[0].Features) == 1
 		})
 	assert.NotEqual(t, afterAdd.FeatureFlagsId, afterRemove.FeatureFlagsId, "Remove changes feature_flags_id")
-	assert.False(t, afterRemove.ForceUpdate, "a holdout change does not force a full resend")
+	requireHoldoutOnlyDiff(t, "Remove", afterRemove)
 	assert.Equal(t,
 		map[string]string{s.flag.Id: s.holdoutVariation()},
 		holdoutTargets(afterRemove.HoldoutGroups[0]),
@@ -163,7 +172,7 @@ func TestServerSDKHoldoutDelivery(t *testing.T) {
 		func(r *gatewayproto.GetFeatureFlagsResponse) bool {
 			return len(r.HoldoutGroups) == 0 && r.FeatureFlagsId != afterRemove.FeatureFlagsId
 		})
-	assert.False(t, afterStop.ForceUpdate, "a holdout change does not force a full resend")
+	requireHoldoutOnlyDiff(t, "Stop", afterStop)
 	stopped := waitFeatureFlagsPollCaughtUp(t, s.tag, afterStop)
 	assert.Empty(t, stopped.HoldoutGroups)
 }
@@ -233,20 +242,29 @@ func TestServerSDKHoldoutSegment(t *testing.T) {
 	assert.Equal(t, variationID(flag, "A"), otherEval.VariationId)
 	assert.Equal(t, featureproto.Reason_DEFAULT, otherEval.GetReason().GetType())
 
-	// Once the SDK holds the segment it is neither resent nor deleted.
+	// Once the SDK holds the segment it is neither resent nor deleted, and
+	// the SDK is not told to replace its segments.
 	require.Eventually(t, func() bool {
 		again := grpcGetSegmentUsers(t, []string{segment.Id}, afterStart.RequestedAt)
-		return findSegmentUsers(again.SegmentUsers, segment.Id) == nil &&
+		return !again.ForceUpdate &&
+			findSegmentUsers(again.SegmentUsers, segment.Id) == nil &&
 			!containsString(again.DeletedSegmentIds, segment.Id)
 	}, cachePropagationTimeout, pollInterval, "the holdout segment kept being resent or was deleted while serving")
 
-	// After the stop nothing references the segment, so the SDK drops it.
+	// After the stop nothing references the segment, so the SDK drops it. How
+	// it is told depends on the rest of the environment. While another flag
+	// still references some segment, the response is a diff that lists this
+	// one as deleted. When this was the last referenced segment, the response
+	// is a forced replacement that no longer contains it.
 	stopHoldoutGroup(t, client, group.Id)
 	waitForHoldoutCleared(t, tag, member)
 	require.Eventually(t, func() bool {
 		after := grpcGetSegmentUsers(t, []string{segment.Id}, afterStart.RequestedAt)
-		return containsString(after.DeletedSegmentIds, segment.Id)
-	}, cachePropagationTimeout, pollInterval, "the holdout segment was never reported as deleted after the stop")
+		if findSegmentUsers(after.SegmentUsers, segment.Id) != nil {
+			return false
+		}
+		return containsString(after.DeletedSegmentIds, segment.Id) || after.ForceUpdate
+	}, cachePropagationTimeout, pollInterval, "the holdout segment was never dropped after the stop")
 	require.Eventually(t, func() bool {
 		return len(grpcGetFeatureFlags(t, tag, "", 0).HoldoutGroups) == 0
 	}, cachePropagationTimeout, pollInterval, "the stopped group never left the server SDK")

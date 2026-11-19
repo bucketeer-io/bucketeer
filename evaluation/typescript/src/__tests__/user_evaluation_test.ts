@@ -1,7 +1,12 @@
 import test from 'ava';
 import * as userEvaluation from '../userEvaluation';
 import { Evaluation } from '../proto/feature/evaluation_pb';
-import { GenerateFeaturesID, UserEvaluationsID, sortMapKeys } from '../userEvaluation';
+import {
+  FeaturesIDFlagsPart,
+  GenerateFeaturesID,
+  UserEvaluationsID,
+  sortMapKeys,
+} from '../userEvaluation';
 import { Feature } from '../proto/feature/feature_pb';
 import type { HoldoutFeature, HoldoutGroup } from '../bucketeer';
 import { createHoldoutFeature, createHoldoutGroup } from '../modelFactory';
@@ -302,11 +307,18 @@ test('GenerateFeaturesID includes the live holdout group', (t) => {
     ],
   });
 
+  // With a live group the ID is "<flags>:<holdout>".
   const withoutGroup = GenerateFeaturesID(newFeatures());
   t.is(withoutGroup, '17283374094628184689');
-  t.is(GenerateFeaturesID(newFeatures(), [group]), '14425142265092582177');
-  t.is(GenerateFeaturesID(newFeatures(), [withTarget]), '12917488560249604810');
-  t.is(GenerateFeaturesID([], [group]), '16147347951762488293');
+  t.is(GenerateFeaturesID(newFeatures(), [group]), '17283374094628184689:16147347951762488293');
+  t.is(GenerateFeaturesID(newFeatures(), [withTarget]), '17283374094628184689:6966737048624406302');
+  t.is(GenerateFeaturesID([], [group]), '14695981039346656037:16147347951762488293');
+
+  // The flags part does not depend on the groups.
+  t.is(FeaturesIDFlagsPart(withoutGroup), withoutGroup);
+  t.is(FeaturesIDFlagsPart(GenerateFeaturesID(newFeatures(), [group])), withoutGroup);
+  t.is(FeaturesIDFlagsPart(GenerateFeaturesID(newFeatures(), [withTarget])), withoutGroup);
+  t.is(FeaturesIDFlagsPart(''), '');
 
   // A group with no id is a clearance or an unavailable snapshot, not a live group.
   t.is(GenerateFeaturesID(newFeatures(), []), withoutGroup);
@@ -342,7 +354,7 @@ test('GenerateFeaturesID changes when targets change in the same second', (t) =>
     createHoldoutGroup({ id: 'hg-a', updatedAt: 50, features });
 
   const base = GenerateFeaturesID(newFeatures(), [group([row2, row1])]);
-  t.is(base, '12917488560249604810');
+  t.is(base, '17283374094628184689:6966737048624406302');
   t.is(GenerateFeaturesID(newFeatures(), [group([row1, row2])]), base);
   t.not(GenerateFeaturesID(newFeatures(), [group([])]), base);
   t.not(

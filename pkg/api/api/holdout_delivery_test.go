@@ -185,33 +185,6 @@ func TestSDKHoldoutGroups(t *testing.T) {
 	})
 }
 
-func TestHoldoutChangedSince(t *testing.T) {
-	t.Parallel()
-	patterns := []struct {
-		desc     string
-		group    *featureproto.HoldoutGroup
-		since    int64
-		expected bool
-	}{
-		{desc: "no snapshot", group: nil, since: 100, expected: false},
-		{desc: "never stopped a group", group: evaluation.ClearanceSnapshot(0), since: 0, expected: false},
-		{desc: "serving group edited after", group: storedHoldoutGroup("env", 101), since: 100, expected: true},
-		{desc: "serving group edited in the same second", group: storedHoldoutGroup("env", 100), since: 100, expected: true},
-		{desc: "serving group edited before", group: storedHoldoutGroup("env", 99), since: 100, expected: false},
-		{desc: "stopped after", group: evaluation.ClearanceSnapshot(101), since: 100, expected: true},
-		{desc: "stopped before", group: evaluation.ClearanceSnapshot(99), since: 100, expected: false},
-		{
-			desc:     "an unreadable snapshot is not a revision",
-			group:    evaluation.UnavailableHoldoutSnapshot(),
-			since:    time.Now().Add(-secondsToReturnAllFlags * time.Second).Unix(),
-			expected: false,
-		},
-	}
-	for _, p := range patterns {
-		assert.Equal(t, p.expected, holdoutChangedSince(p.group, p.since), p.desc)
-	}
-}
-
 func TestHoldoutCapableSDK(t *testing.T) {
 	t.Parallel()
 	minVersions := map[eventproto.SourceId]semver.Version{
@@ -324,8 +297,8 @@ func TestGrpcGetFeatureFlagsHoldout(t *testing.T) {
 	const environmentID = "holdout-feature-flags"
 	now := time.Now()
 	ago := func(d time.Duration) int64 { return now.Add(-d).Unix() }
-	// Both flags were last edited long before any cursor below, so a response
-	// that carries a flag in a diff is a bug.
+	// Both flags were last edited long before any cursor below, outside the
+	// grace window of the flag diff.
 	newFlags := func() []*featureproto.Feature {
 		return []*featureproto.Feature{
 			{Id: "flag-a", Version: 1, Tags: []string{"web"}, UpdatedAt: ago(2 * time.Hour)},
@@ -365,8 +338,27 @@ func TestGrpcGetFeatureFlagsHoldout(t *testing.T) {
 	retargetedID := evaluation.GenerateFeaturesID(newFlags(), retargetedDelivered)
 	require.NotEqual(t, groupID(ago(time.Minute)), retargetedID)
 
+	// flag-a edited a minute ago: inside the grace window of the cursors below.
 	editedFlags := newFlags()
 	editedFlags[0].UpdatedAt = ago(time.Minute)
+	editedFlagsID := func(holdoutGroups ...*featureproto.HoldoutGroup) string {
+		return evaluation.GenerateFeaturesID(
+			[]*featureproto.Feature{editedFlags[0], editedFlags[1]}, holdoutGroups...,
+		)
+	}
+
+	// flag-a edited an hour ago. An SDK whose cursor is five minutes old and
+	// that still holds the two-hour-old flag-a has missed that edit: it is
+	// older than the cursor minus the grace window, so the flag diff does not
+	// find it. This is what a poll answered by a stale replica leaves behind.
+	missedFlags := newFlags()
+	missedFlags[0].UpdatedAt = ago(time.Hour)
+	missedFlagsID := func(holdoutGroups ...*featureproto.HoldoutGroup) string {
+		return evaluation.GenerateFeaturesID(
+			[]*featureproto.Feature{missedFlags[0], missedFlags[1]}, holdoutGroups...,
+		)
+	}
+	require.NotEqual(t, flagsOnlyID, missedFlagsID())
 
 	patterns := []struct {
 		desc        string
@@ -419,25 +411,28 @@ func TestGrpcGetFeatureFlagsHoldout(t *testing.T) {
 				FeatureFlagsId:         groupID(ago(time.Minute)),
 				Features:               noFlags,
 				ArchivedFeatureFlagIds: noArchived,
+				RequestedAt:            ago(5 * time.Minute),
 				ForceUpdate:            false,
 				HoldoutGroups:          groups(ago(time.Minute)),
 			},
-			requestedAtNow: true,
 		},
 		{
-			desc:        "start just behind the cursor is still inside the grace window",
+			// The SDK was last answered by a replica that had not seen the
+			// group yet. Its flags part proves it holds the current flags, so
+			// the age of the holdout revision does not matter.
+			desc:        "start seen late: still an empty flag diff",
 			flags:       newFlags(),
-			snapshot:    storedHoldoutGroup(environmentID, ago(12*time.Minute)),
+			snapshot:    storedHoldoutGroup(environmentID, ago(time.Hour)),
 			ffID:        flagsOnlyID,
 			requestedAt: ago(5 * time.Minute),
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId:         groupID(ago(12 * time.Minute)),
+				FeatureFlagsId:         groupID(ago(time.Hour)),
 				Features:               noFlags,
 				ArchivedFeatureFlagIds: noArchived,
+				RequestedAt:            ago(5 * time.Minute),
 				ForceUpdate:            false,
-				HoldoutGroups:          groups(ago(12 * time.Minute)),
+				HoldoutGroups:          groups(ago(time.Hour)),
 			},
-			requestedAtNow: true,
 		},
 		{
 			desc:        "stop: an empty list with an empty flag diff",
@@ -449,10 +444,10 @@ func TestGrpcGetFeatureFlagsHoldout(t *testing.T) {
 				FeatureFlagsId:         flagsOnlyID,
 				Features:               noFlags,
 				ArchivedFeatureFlagIds: noArchived,
+				RequestedAt:            ago(5 * time.Minute),
 				ForceUpdate:            false,
 				HoldoutGroups:          nil,
 			},
-			requestedAtNow: true,
 		},
 		{
 			desc:        "target change in the same second: the new targets with an empty flag diff",
@@ -464,10 +459,27 @@ func TestGrpcGetFeatureFlagsHoldout(t *testing.T) {
 				FeatureFlagsId:         retargetedID,
 				Features:               noFlags,
 				ArchivedFeatureFlagIds: noArchived,
+				RequestedAt:            ago(30 * time.Second),
 				ForceUpdate:            false,
 				HoldoutGroups:          []*featureproto.HoldoutGroup{retargetedDelivered},
 			},
-			requestedAtNow: true,
+		},
+		{
+			// The SDK already holds the edited flag, so the grace window of
+			// the flag diff must not send it again.
+			desc:        "start after a recent flag edit the SDK holds: an empty flag diff",
+			flags:       editedFlags,
+			snapshot:    storedHoldoutGroup(environmentID, ago(30*time.Second)),
+			ffID:        editedFlagsID(),
+			requestedAt: ago(45 * time.Second),
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeatureFlagsId:         editedFlagsID(deliveredHoldoutGroup(environmentID, ago(30*time.Second))),
+				Features:               noFlags,
+				ArchivedFeatureFlagIds: noArchived,
+				RequestedAt:            ago(45 * time.Second),
+				ForceUpdate:            false,
+				HoldoutGroups:          groups(ago(30 * time.Second)),
+			},
 		},
 		{
 			desc:        "flag change: the diff carries the group too",
@@ -476,10 +488,7 @@ func TestGrpcGetFeatureFlagsHoldout(t *testing.T) {
 			ffID:        groupID(ago(time.Hour)),
 			requestedAt: ago(5 * time.Minute),
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId: evaluation.GenerateFeaturesID(
-					[]*featureproto.Feature{editedFlags[0], editedFlags[1]},
-					deliveredHoldoutGroup(environmentID, ago(time.Hour)),
-				),
+				FeatureFlagsId:         editedFlagsID(deliveredHoldoutGroup(environmentID, ago(time.Hour))),
 				Features:               []*featureproto.Feature{editedFlags[0]},
 				ArchivedFeatureFlagIds: noArchived,
 				ForceUpdate:            false,
@@ -488,20 +497,65 @@ func TestGrpcGetFeatureFlagsHoldout(t *testing.T) {
 			requestedAtNow: true,
 		},
 		{
-			// The SDK was last answered without the group although it was
-			// already serving. Its cursor is past the revision, so only a
-			// full resend is known to be right.
-			desc:        "revision older than the cursor window: full resend with the group",
-			flags:       newFlags(),
-			snapshot:    storedHoldoutGroup(environmentID, ago(time.Hour)),
+			desc:        "flag change and start together: the diff carries the group",
+			flags:       editedFlags,
+			snapshot:    storedHoldoutGroup(environmentID, ago(time.Minute)),
 			ffID:        flagsOnlyID,
 			requestedAt: ago(5 * time.Minute),
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId:         groupID(ago(time.Hour)),
-				Features:               newFlags(),
+				FeatureFlagsId:         editedFlagsID(deliveredHoldoutGroup(environmentID, ago(time.Minute))),
+				Features:               []*featureproto.Feature{editedFlags[0]},
+				ArchivedFeatureFlagIds: noArchived,
+				ForceUpdate:            false,
+				HoldoutGroups:          groups(ago(time.Minute)),
+			},
+			requestedAtNow: true,
+		},
+		{
+			// A recent holdout change must not hide a flag update the SDK
+			// missed: an empty diff here would hand the SDK the complete ID
+			// and the missed edit would never be sent.
+			desc:        "missed flag update and start together: full resend with the group",
+			flags:       missedFlags,
+			snapshot:    storedHoldoutGroup(environmentID, ago(time.Minute)),
+			ffID:        flagsOnlyID,
+			requestedAt: ago(5 * time.Minute),
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeatureFlagsId:         missedFlagsID(deliveredHoldoutGroup(environmentID, ago(time.Minute))),
+				Features:               []*featureproto.Feature{missedFlags[0], missedFlags[1]},
 				ArchivedFeatureFlagIds: noArchived,
 				ForceUpdate:            true,
-				HoldoutGroups:          groups(ago(time.Hour)),
+				HoldoutGroups:          groups(ago(time.Minute)),
+			},
+			requestedAtNow: true,
+		},
+		{
+			desc:        "missed flag update while the SDK holds the serving group: full resend",
+			flags:       missedFlags,
+			snapshot:    storedHoldoutGroup(environmentID, ago(time.Minute)),
+			ffID:        groupID(ago(time.Minute)),
+			requestedAt: ago(5 * time.Minute),
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeatureFlagsId:         missedFlagsID(deliveredHoldoutGroup(environmentID, ago(time.Minute))),
+				Features:               []*featureproto.Feature{missedFlags[0], missedFlags[1]},
+				ArchivedFeatureFlagIds: noArchived,
+				ForceUpdate:            true,
+				HoldoutGroups:          groups(ago(time.Minute)),
+			},
+			requestedAtNow: true,
+		},
+		{
+			desc:        "missed flag update and stop together: full resend without a group",
+			flags:       missedFlags,
+			snapshot:    evaluation.ClearanceSnapshot(ago(time.Minute)),
+			ffID:        groupID(ago(time.Hour)),
+			requestedAt: ago(5 * time.Minute),
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeatureFlagsId:         missedFlagsID(),
+				Features:               []*featureproto.Feature{missedFlags[0], missedFlags[1]},
+				ArchivedFeatureFlagIds: noArchived,
+				ForceUpdate:            true,
+				HoldoutGroups:          nil,
 			},
 			requestedAtNow: true,
 		},
@@ -528,12 +582,12 @@ func TestGrpcGetFeatureFlagsHoldout(t *testing.T) {
 			requestedAt: ago(5 * time.Minute),
 			expected: &gwproto.GetFeatureFlagsResponse{
 				FeatureFlagsId:         flagsOnlyID,
-				Features:               newFlags(),
+				Features:               noFlags,
 				ArchivedFeatureFlagIds: noArchived,
-				ForceUpdate:            true,
+				RequestedAt:            ago(5 * time.Minute),
+				ForceUpdate:            false,
 				HoldoutGroups:          nil,
 			},
-			requestedAtNow: true,
 		},
 		{
 			desc:        "unreadable snapshot: an SDK without a group is left alone",
@@ -548,6 +602,21 @@ func TestGrpcGetFeatureFlagsHoldout(t *testing.T) {
 				RequestedAt:            ago(5 * time.Minute),
 				HoldoutGroups:          nil,
 			},
+		},
+		{
+			desc:        "unreadable snapshot: a first request still gets all flags",
+			flags:       newFlags(),
+			snapshotErr: errors.New("memory cache failure"),
+			ffID:        "",
+			requestedAt: 0,
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeatureFlagsId:         flagsOnlyID,
+				Features:               newFlags(),
+				ArchivedFeatureFlagIds: noArchived,
+				ForceUpdate:            true,
+				HoldoutGroups:          nil,
+			},
+			requestedAtNow: true,
 		},
 		{
 			desc:        "no flag for the tag: the group is still listed",

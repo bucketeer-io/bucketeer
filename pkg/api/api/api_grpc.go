@@ -934,8 +934,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	// The serving holdout group is delivered with the flags so the SDK applies
 	// it during local evaluation. It is never a diff: every response carries
 	// the full list, and an empty list tells the SDK that nothing is serving.
-	holdoutSnapshot := s.liveHoldoutGroup(ctx, environmentId)
-	servingGroups := sdkHoldoutGroups(holdoutSnapshot)
+	servingGroups := sdkHoldoutGroups(s.liveHoldoutGroup(ctx, environmentId))
 	countHoldoutIncompatibleSDK(servingGroups, holdoutMinSDKVersions, environmentId, req.SourceId, req.SdkVersion)
 	now := time.Now()
 	if len(targetFeatures) == 0 {
@@ -950,9 +949,10 @@ func (s *grpcGatewayService) GetFeatureFlags(
 		}, nil
 	}
 	// We don't include archived flags when generating the Feature Flag IDs.
-	// The serving holdout group is part of the ID: starting or stopping a
-	// group, or changing its targets, changes no flag, and an SDK that already
-	// holds the current flags would otherwise never ask for the new definition.
+	// The serving holdout group is a second part of the ID: starting or
+	// stopping a group, or changing its targets, changes no flag, and an SDK
+	// that already holds the current flags would otherwise never ask for the
+	// new definition.
 	filteredArchivedFlags := s.filterOutArchivedFeatures(targetFeatures)
 	ffID := evaluation.GenerateFeaturesID(filteredArchivedFlags, servingGroups...)
 	// Return an empty response because nothing changed.
@@ -976,6 +976,31 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			Features:               []*featureproto.Feature{},
 			ArchivedFeatureFlagIds: make([]string, 0),
 			RequestedAt:            min(req.RequestedAt, now.Unix()),
+			HoldoutGroups:          servingGroups,
+		}, nil
+	}
+	// Holdout-only change: the flags part of the SDK's ID is the current one,
+	// so the SDK holds the current flags and the two IDs differ only in the
+	// holdout groups (a group started or stopped, or its targets changed).
+	// Send the groups with an empty flag diff. The SDK replaces its holdout
+	// groups and keeps its flags; a full resend would make every server SDK
+	// reload all flags on each holdout edit.
+	//
+	// The flags are verified from the ID, not from timestamps. An SDK that
+	// misses a flag update has a different flags part and takes the diff path
+	// below with its force-recover fallback, whatever the holdout did.
+	// requested_at is preserved as in the unchanged case: no flag data is
+	// sent, so the flag cursor has nothing to advance past.
+	if req.FeatureFlagsId != "" &&
+		evaluation.FeaturesIDFlagsPart(req.FeatureFlagsId) == evaluation.FeaturesIDFlagsPart(ffID) {
+		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
+			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeHoldoutDiff).Inc()
+		return &gwproto.GetFeatureFlagsResponse{
+			FeatureFlagsId:         ffID,
+			Features:               []*featureproto.Feature{},
+			ArchivedFeatureFlagIds: make([]string, 0),
+			RequestedAt:            min(req.RequestedAt, now.Unix()),
+			ForceUpdate:            false,
 			HoldoutGroups:          servingGroups,
 		}, nil
 	}
@@ -1024,29 +1049,6 @@ func (s *grpcGatewayService) GetFeatureFlags(
 		if feature.UpdatedAt >= req.RequestedAt-gracePeriodSeconds {
 			updatedFeatures = append(updatedFeatures, feature)
 		}
-	}
-	// Holdout-only change: no flag changed, and the holdout definition has a
-	// revision inside the same window as the flag diff, so that revision is
-	// why the ffID differs. Send the groups with an empty flag diff. The SDK
-	// replaces its holdout groups and keeps its flags; a full resend would
-	// make every server SDK reload all flags on each holdout edit.
-	//
-	// A revision outside the window does not explain the mismatch (for
-	// example the SDK was last answered by a gateway that had not seen the
-	// group yet), and neither does an unreadable snapshot. Those fall through
-	// to the force-recover fallback, which also carries the groups.
-	if len(updatedFeatures) == 0 && len(archivedIDs) == 0 &&
-		holdoutChangedSince(holdoutSnapshot, req.RequestedAt-gracePeriodSeconds) {
-		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,
-			environmentId, envAPIKey.Environment.UrlCode, req.Tag, codeHoldoutDiff).Inc()
-		return &gwproto.GetFeatureFlagsResponse{
-			FeatureFlagsId:         ffID,
-			Features:               updatedFeatures,
-			ArchivedFeatureFlagIds: archivedIDs,
-			RequestedAt:            now.Unix(),
-			ForceUpdate:            false,
-			HoldoutGroups:          servingGroups,
-		}, nil
 	}
 	// Force-recover fallback: ffID mismatched but the diff filter still
 	// excluded every flag AND there are no archives. Should be rare with

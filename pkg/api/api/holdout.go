@@ -231,22 +231,6 @@ func sdkHoldoutGroups(group *featureproto.HoldoutGroup) []*featureproto.HoldoutG
 	}}
 }
 
-// holdoutChangedSince reports whether the holdout definition has a revision
-// at or after since: the serving group was started or edited, or serving
-// stopped (the clearance snapshot keeps the stop time).
-//
-// GetFeatureFlags uses it to tell why feature_flags_id changed while no flag
-// did. The comparison includes since itself, like the flag diff, because
-// updated_at is whole seconds. The unavailable snapshot is not a revision:
-// its updated_at is earlier than any cursor that reaches the diff, so it
-// reports false and the caller falls back to a full resend.
-func holdoutChangedSince(group *featureproto.HoldoutGroup, since int64) bool {
-	if group == nil || group.UpdatedAt == 0 {
-		return false
-	}
-	return group.UpdatedAt >= since
-}
-
 // holdoutMinSDKVersions lists, per source, the first SDK release that applies
 // the holdout_groups of a GetFeatureFlags response.
 //

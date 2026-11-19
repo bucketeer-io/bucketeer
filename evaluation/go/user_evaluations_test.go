@@ -15,6 +15,7 @@
 package evaluation
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -287,10 +288,30 @@ func TestGenerateFeaturesIDHoldout(t *testing.T) {
 	}
 
 	// The values are pinned so the TypeScript twin can be checked against them.
+	// With a live group the ID is "<flags>:<holdout>".
 	assert.Equal(t, "17283374094628184689", withoutGroup)
-	assert.Equal(t, "14425142265092582177", GenerateFeaturesID(newFeatures(), group))
-	assert.Equal(t, "12917488560249604810", GenerateFeaturesID(newFeatures(), withTarget))
-	assert.Equal(t, "16147347951762488293", GenerateFeaturesID(nil, group))
+	assert.Equal(t, "17283374094628184689:16147347951762488293", GenerateFeaturesID(newFeatures(), group))
+	assert.Equal(t, "17283374094628184689:6966737048624406302", GenerateFeaturesID(newFeatures(), withTarget))
+	assert.Equal(t, "14695981039346656037:16147347951762488293", GenerateFeaturesID(nil, group))
+
+	t.Run("the flags part does not depend on the groups", func(t *testing.T) {
+		t.Parallel()
+		assert.Equal(t, withoutGroup, FeaturesIDFlagsPart(withoutGroup))
+		assert.Equal(t, withoutGroup, FeaturesIDFlagsPart(GenerateFeaturesID(newFeatures(), group)))
+		assert.Equal(t, withoutGroup, FeaturesIDFlagsPart(GenerateFeaturesID(newFeatures(), withTarget)))
+		assert.Equal(t, "", FeaturesIDFlagsPart(""))
+
+		// A flag change moves the flags part and leaves the holdout part.
+		edited := newFeatures()
+		edited[0].UpdatedAt++
+		editedID := GenerateFeaturesID(edited, group)
+		assert.NotEqual(t, withoutGroup, FeaturesIDFlagsPart(editedID))
+		assert.Equal(t, GenerateFeaturesID(edited), FeaturesIDFlagsPart(editedID))
+		assert.Equal(t,
+			strings.TrimPrefix(GenerateFeaturesID(newFeatures(), group), withoutGroup),
+			strings.TrimPrefix(editedID, FeaturesIDFlagsPart(editedID)),
+		)
+	})
 
 	t.Run("a group with no id leaves the id unchanged", func(t *testing.T) {
 		t.Parallel()

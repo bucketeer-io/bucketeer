@@ -20,6 +20,7 @@ import (
 	"io"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -143,14 +144,24 @@ func sortMapKeys(data map[string]string) []string {
 	return keys
 }
 
+// featuresIDHoldoutSeparator separates the flags part of a features ID from
+// its holdout part.
+const featuresIDHoldoutSeparator = ":"
+
 // GenerateFeaturesID returns the ID a server SDK compares to tell whether its
 // cached flag definitions are current.
 //
-// The live holdout groups are part of the ID, hashed the same way as in
-// UserEvaluationsID: a locally evaluating SDK caches the group next to the
-// flags, so starting or stopping a group, or changing its targets, has to
-// change the ID even though no flag changed. Without a live group the ID is
-// the one computed from the flags alone.
+// A locally evaluating SDK caches the live holdout groups next to the flags,
+// so starting or stopping a group, or changing its targets, has to change the
+// ID even though no flag changed. The ID therefore has two parts,
+// "<flags>:<holdout>". Without a live group it is the flags part alone, which
+// is the ID computed before holdout existed.
+//
+// The parts are kept apart, rather than hashed together, so the server can
+// tell a holdout-only change from a flag change: when the flags part of the
+// SDK's ID is the current one, the SDK holds the current flags and only the
+// groups have to be sent. See FeaturesIDFlagsPart. The ID stays opaque to
+// SDKs, which only store it and send it back.
 func GenerateFeaturesID(features []*ftproto.Feature, groups ...*ftproto.HoldoutGroup) string {
 	sort.SliceStable(features, func(i, j int) bool {
 		return features[i].Id < features[j].Id
@@ -163,6 +174,20 @@ func GenerateFeaturesID(features []*ftproto.Feature, groups ...*ftproto.HoldoutG
 	for _, feature := range features {
 		fmt.Fprintf(h, "%s:%d", feature.Id, feature.UpdatedAt)
 	}
-	writeHoldoutGroups(h, groups)
-	return strconv.FormatUint(h.Sum64(), 10)
+	id := strconv.FormatUint(h.Sum64(), 10)
+	if len(sortedHoldoutGroups(groups)) == 0 {
+		return id
+	}
+	// The holdout part hashes the same input as UserEvaluationsID.
+	holdout := fnv.New64a()
+	writeHoldoutGroups(holdout, groups)
+	return id + featuresIDHoldoutSeparator + strconv.FormatUint(holdout.Sum64(), 10)
+}
+
+// FeaturesIDFlagsPart returns the part of a features ID that identifies the
+// flags alone. Two IDs with the same flags part were issued for the same
+// flags and differ only in the holdout groups.
+func FeaturesIDFlagsPart(id string) string {
+	flags, _, _ := strings.Cut(id, featuresIDHoldoutSeparator)
+	return flags
 }
