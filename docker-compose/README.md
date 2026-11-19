@@ -182,7 +182,7 @@ make docker-compose-up
 #### Available Environment Variables
 - `MYSQL_VERSION` (default: 8.0)
 - `REDIS_VERSION` (default: 7-alpine)
-- `NGINX_VERSION` (default: 1.25-alpine)
+- `NGINX_VERSION` (default: 1.31.9-alpine)
 - `BUCKETEER_VERSION` (default: localenv) - Sets version for all Bucketeer services
 - `BUCKETEER_MIGRATION_VERSION` - Override migration service version (default: v0.4.5)
 - `BUCKETEER_WEB_VERSION` - Override web service version

@@ -585,7 +585,7 @@ services:
 
   # Nginx reverse proxy for routing
   nginx:
-    image: nginx:${NGINX_VERSION:-1.25-alpine}
+    image: nginx:${NGINX_VERSION:-1.31.9-alpine}
     container_name: bucketeer-nginx
     ports:
       - "80:80"     # HTTP port
@@ -598,7 +598,10 @@ services:
       - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./config/nginx/bucketeer.conf:/etc/nginx/conf.d/bucketeer.conf:ro
       - ./logs/nginx:/var/log/nginx
-      - ../tools/dev/cert:/etc/nginx/certs:ro
+      # Mount only the TLS pair: tools/dev/cert also holds the OAuth private key,
+      # the service token and the encryption key, which nginx must not see.
+      - ../tools/dev/cert/tls.crt:/etc/nginx/certs/tls.crt:ro
+      - ../tools/dev/cert/tls.key:/etc/nginx/certs/tls.key:ro
     networks:
       - bucketeer
     restart: unless-stopped
