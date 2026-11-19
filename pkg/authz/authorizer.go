@@ -96,7 +96,7 @@ func (a *Authorizer) Authorize(
 	if rule.kind == requirePublic {
 		return nil, nil
 	}
-	if caller.Email == "" {
+	if caller.Email == "" && !caller.Service {
 		return nil, ErrUnauthenticated
 	}
 	if caller.PublicAPI != nil && rule.kind != requirePermission {

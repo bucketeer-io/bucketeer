@@ -285,6 +285,13 @@ func TestAuthorize(t *testing.T) {
 			expected: &eventproto.Editor{Email: "service@example.com", IsAdmin: true},
 		},
 		{
+			desc:     "service identity without an email has full access",
+			caller:   Caller{Service: true},
+			method:   updateFeature,
+			req:      &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
+			expected: &eventproto.Editor{IsAdmin: true},
+		},
+		{
 			desc:     "service identity has full access",
 			caller:   service(),
 			method:   updateFeature,

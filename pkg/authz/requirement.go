@@ -93,8 +93,8 @@ func Public() Requirement {
 	return Requirement{kind: requirePublic}
 }
 
-// Authenticated needs a caller with an account and nothing else, for RPCs
-// that act on the caller's own data.
+// Authenticated needs a verified caller and nothing else, for RPCs that act
+// on the caller's own data and check the account themselves.
 func Authenticated() Requirement {
 	return Requirement{kind: requireAuthenticated}
 }
