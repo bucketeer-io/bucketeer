@@ -266,3 +266,92 @@ func TestGenerateFeaturesID(t *testing.T) {
 		assert.Equal(t, p.expected, id, p.desc)
 	}
 }
+
+func TestGenerateFeaturesIDHoldout(t *testing.T) {
+	t.Parallel()
+	newFeatures := func() []*ftproto.Feature {
+		return []*ftproto.Feature{
+			{Id: "id-2", UpdatedAt: 2},
+			{Id: "id-1", UpdatedAt: 1},
+		}
+	}
+	withoutGroup := GenerateFeaturesID(newFeatures())
+	group := &ftproto.HoldoutGroup{Id: "hg-a", UpdatedAt: 50}
+	withTarget := &ftproto.HoldoutGroup{
+		Id:        "hg-a",
+		UpdatedAt: 50,
+		Features: []*ftproto.HoldoutGroupFeature{
+			{Id: "row-2", FeatureId: "id-2", HoldoutVariationId: "v-off", AddedAt: 20},
+			{Id: "row-1", FeatureId: "id-1", HoldoutVariationId: "v-on", AddedAt: 10},
+		},
+	}
+
+	// The values are pinned so the TypeScript twin can be checked against them.
+	assert.Equal(t, "17283374094628184689", withoutGroup)
+	assert.Equal(t, "14425142265092582177", GenerateFeaturesID(newFeatures(), group))
+	assert.Equal(t, "12917488560249604810", GenerateFeaturesID(newFeatures(), withTarget))
+	assert.Equal(t, "16147347951762488293", GenerateFeaturesID(nil, group))
+
+	t.Run("a group with no id leaves the id unchanged", func(t *testing.T) {
+		t.Parallel()
+		assert.Equal(t, withoutGroup, GenerateFeaturesID(newFeatures(), nil))
+		assert.Equal(t, withoutGroup, GenerateFeaturesID(newFeatures(), ClearanceSnapshot(100)))
+		assert.Equal(t, withoutGroup, GenerateFeaturesID(newFeatures(), UnavailableHoldoutSnapshot()))
+	})
+
+	t.Run("starting, stopping and editing a group change the id", func(t *testing.T) {
+		t.Parallel()
+		started := GenerateFeaturesID(newFeatures(), group)
+		assert.NotEqual(t, withoutGroup, started)
+		assert.NotEqual(t, started, GenerateFeaturesID(
+			newFeatures(), &ftproto.HoldoutGroup{Id: "hg-a", UpdatedAt: 51},
+		))
+		assert.NotEqual(t, started, GenerateFeaturesID(
+			newFeatures(), &ftproto.HoldoutGroup{Id: "hg-b", UpdatedAt: 50},
+		))
+	})
+
+	t.Run("targets are part of the id even within the same second", func(t *testing.T) {
+		t.Parallel()
+		base := GenerateFeaturesID(newFeatures(), withTarget)
+		assert.NotEqual(t, GenerateFeaturesID(newFeatures(), group), base)
+
+		reordered := &ftproto.HoldoutGroup{
+			Id:        "hg-a",
+			UpdatedAt: 50,
+			Features: []*ftproto.HoldoutGroupFeature{
+				withTarget.Features[1],
+				withTarget.Features[0],
+			},
+		}
+		assert.Equal(t, base, GenerateFeaturesID(newFeatures(), reordered))
+
+		otherVariation := &ftproto.HoldoutGroup{
+			Id:        "hg-a",
+			UpdatedAt: 50,
+			Features: []*ftproto.HoldoutGroupFeature{
+				{Id: "row-2", FeatureId: "id-2", HoldoutVariationId: "v-on", AddedAt: 20},
+				{Id: "row-1", FeatureId: "id-1", HoldoutVariationId: "v-on", AddedAt: 10},
+			},
+		}
+		assert.NotEqual(t, base, GenerateFeaturesID(newFeatures(), otherVariation))
+
+		removed := &ftproto.HoldoutGroup{
+			Id:        "hg-a",
+			UpdatedAt: 50,
+			Features: []*ftproto.HoldoutGroupFeature{
+				{Id: "row-2", FeatureId: "id-2", HoldoutVariationId: "v-off", AddedAt: 20, RemovedAt: 30},
+				{Id: "row-1", FeatureId: "id-1", HoldoutVariationId: "v-on", AddedAt: 10},
+			},
+		}
+		onlyOne := &ftproto.HoldoutGroup{
+			Id:        "hg-a",
+			UpdatedAt: 50,
+			Features: []*ftproto.HoldoutGroupFeature{
+				{Id: "row-1", FeatureId: "id-1", HoldoutVariationId: "v-on", AddedAt: 10},
+			},
+		}
+		assert.NotEqual(t, base, GenerateFeaturesID(newFeatures(), removed))
+		assert.Equal(t, GenerateFeaturesID(newFeatures(), onlyOne), GenerateFeaturesID(newFeatures(), removed))
+	})
+}

@@ -22,7 +22,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
@@ -568,54 +567,6 @@ func TestServingStream(t *testing.T) {
 	assert.Empty(t, other.Errors, "non-held-out stream received an error event")
 	held.Close()
 	other.Close()
-}
-
-// RFC §4.4 server SDK path (phase 2 ships no holdout data to server SDKs):
-// GetFeatureFlags and GetSegmentUsers keep working with the server key, the
-// flag is byte-for-byte unchanged by the holdout, and the feature_flags_id
-// is stable across Start and Stop.
-func TestServerSDKUnaffected(t *testing.T) {
-	lockServing(t)
-	client := newFeatureClient(t)
-	s := newServingScenario(t, client)
-	// A segment is delivered to server SDKs only while a flag references it.
-	segment := createSegment(t, client)
-	uploadSegmentUsersAndWait(t, client, segment.Id, []string{newUserID(t)})
-	segmented := createEnabledFeature(t, client, s.tag)
-	addSegmentRule(t, client, segmented.Id, variationID(segmented, "B"), segment.Id)
-	refreshFeatureCache(t, s.tag, segmented.Id)
-
-	var before *gatewayproto.GetFeatureFlagsResponse
-	require.Eventually(t, func() bool {
-		before = grpcGetFeatureFlags(t, s.tag, "", 0)
-		return findFeature(before.Features, s.flag.Id) != nil
-	}, cachePropagationTimeout, pollInterval, "flag not visible to the server SDK")
-	flagBefore := findFeature(before.Features, s.flag.Id)
-	assert.True(t, before.ForceUpdate)
-	assert.NotEmpty(t, before.FeatureFlagsId)
-
-	s.start(t, client)
-	waitFeatureFlagsPollCaughtUp(t, s.tag, before.FeatureFlagsId, before.RequestedAt, before.FeatureFlagsId)
-	full := grpcGetFeatureFlags(t, s.tag, "", 0)
-	assert.True(t, proto.Equal(flagBefore, findFeature(full.Features, s.flag.Id)), "flag unchanged while serving")
-
-	// Segment users reach the server SDK path through the SegmentUserCacher
-	// cron (1 min) and the gateway L1 TTL (1 min). Other segments of the
-	// environment may be delivered too; only this one is checked.
-	var delivered *featureproto.SegmentUsers
-	require.Eventually(t, func() bool {
-		for _, su := range grpcGetSegmentUsers(t, []string{segment.Id}, 0).SegmentUsers {
-			if su.SegmentId == segment.Id {
-				delivered = su
-				return len(su.Users) == 1
-			}
-		}
-		return false
-	}, cachePropagationTimeout, pollInterval, "segment users not visible to the server SDK")
-	assert.Equal(t, segment.Id, delivered.SegmentId)
-
-	s.stop(t, client)
-	waitFeatureFlagsPollCaughtUp(t, s.tag, before.FeatureFlagsId, before.RequestedAt, before.FeatureFlagsId)
 }
 
 func findFeature(features []*featureproto.Feature, id string) *featureproto.Feature {

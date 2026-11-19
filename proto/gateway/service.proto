@@ -26,6 +26,7 @@ import "proto/common/string.proto";
 import "proto/user/user.proto";
 import "proto/feature/evaluation.proto";
 import "proto/feature/feature.proto";
+import "proto/feature/holdout.proto";
 import "proto/feature/service.proto";
 import "proto/feature/scheduled_feature_change.proto";
 import "proto/feature/variation.proto";
@@ -83,6 +84,12 @@ message GetFeatureFlagsResponse {
   repeated string archived_feature_flag_ids = 3;
   int64 requested_at = 4;
   bool force_update = 5;
+  // The holdout groups that are serving in the environment. Unlike `features`,
+  // this is never a diff: the full list is sent on every response, and an
+  // empty list means no group is serving. Only the fields local evaluation
+  // reads are set: the ID, the environment ID, the assignment, the status,
+  // `updated_at` and the current target features.
+  repeated bucketeer.feature.HoldoutGroup holdout_groups = 6;
 }
 
 message GetSegmentUsersRequest {

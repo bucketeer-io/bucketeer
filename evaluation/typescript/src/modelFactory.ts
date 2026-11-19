@@ -9,6 +9,7 @@ import { FixedStrategy, RolloutStrategy, Strategy } from './proto/feature/strate
 import { Target } from './proto/feature/target_pb';
 import { Variation } from './proto/feature/variation_pb';
 import { User } from './proto/user/user_pb';
+import type { HoldoutFeature, HoldoutGroup } from './bucketeer';
 
 // Helper function to create a User instance
 export function createUser(id: string, data: Record<string, string> | null): User {
@@ -254,4 +255,69 @@ export function createReason(
   reason.setRuleId(ruleId);
   reason.setHoldoutGroupId(holdoutGroupId);
   return reason;
+}
+
+// createHoldoutFeature builds one flag targeted by a holdout group.
+//
+// holdout.proto is not compiled into this package, so a server SDK that
+// receives `holdout_groups` from GetFeatureFlags builds the evaluator's input
+// with this function and createHoldoutGroup. removedAt is 0 for a target that
+// is still in the group.
+export function createHoldoutFeature(
+  options: {
+    id?: string;
+    featureId?: string;
+    holdoutVariationId?: string;
+    addedAt?: number;
+    removedAt?: number;
+  } = {},
+): HoldoutFeature {
+  const { id = '', featureId = '', holdoutVariationId = '', addedAt = 0, removedAt = 0 } = options;
+  return {
+    getId: () => id,
+    getFeatureId: () => featureId,
+    getHoldoutVariationId: () => holdoutVariationId,
+    getAddedAt: () => addedAt,
+    getRemovedAt: () => removedAt,
+  };
+}
+
+// createHoldoutGroup builds a holdout group for Evaluator.evaluateFeatures and
+// holdoutSegmentIds. assignmentType is a HoldoutAssignment value; samplingSeed,
+// bucketStart and percentage apply to HASH, segmentId to SEGMENT.
+export function createHoldoutGroup(
+  options: {
+    id?: string;
+    environmentId?: string;
+    assignmentType?: number;
+    samplingSeed?: string;
+    bucketStart?: number;
+    percentage?: number;
+    segmentId?: string;
+    updatedAt?: number;
+    features?: HoldoutFeature[];
+  } = {},
+): HoldoutGroup {
+  const {
+    id = '',
+    environmentId = '',
+    assignmentType = 0,
+    samplingSeed = '',
+    bucketStart = 0,
+    percentage = 0,
+    segmentId = '',
+    updatedAt = 0,
+    features = [],
+  } = options;
+  return {
+    getId: () => id,
+    getEnvironmentId: () => environmentId,
+    getAssignmentType: () => assignmentType,
+    getSamplingSeed: () => samplingSeed,
+    getBucketStart: () => bucketStart,
+    getPercentage: () => percentage,
+    getSegmentId: () => segmentId,
+    getUpdatedAt: () => updatedAt,
+    getFeaturesList: () => features,
+  };
 }
