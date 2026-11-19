@@ -58,13 +58,17 @@ func requireSameAsServer(
 	return localEval
 }
 
-// requireHoldoutOnlyDiff requires the response to a holdout-only change: the
-// groups come with an empty flag diff, not with a full resend.
-func requireHoldoutOnlyDiff(t *testing.T, change string, resp *gatewayproto.GetFeatureFlagsResponse) {
-	t.Helper()
-	assert.False(t, resp.ForceUpdate, "%s does not force a full resend", change)
-	assert.Empty(t, resp.Features, "%s changes no flag", change)
-	assert.Empty(t, resp.ArchivedFeatureFlagIds, "%s archives no flag", change)
+// isHoldoutOnlyDiff reports whether the response has the shape of the answer
+// to a holdout-only change: an empty flag diff, not a full resend.
+//
+// It is part of the poll condition and not an assertion on the first response
+// that carries the change. Each gateway replica keeps its own copy of the
+// flags, so a replica that is still behind on a flag this test just created
+// answers with a flag diff. The poll is retried until a replica that holds
+// the SDK's flags answers. A gateway that never sends a holdout-only diff
+// fails the poll.
+func isHoldoutOnlyDiff(resp *gatewayproto.GetFeatureFlagsResponse) bool {
+	return !resp.ForceUpdate && len(resp.Features) == 0 && len(resp.ArchivedFeatureFlagIds) == 0
 }
 
 // RFC §4.3.2 local-evaluation path: GetFeatureFlags with the server key
@@ -96,12 +100,12 @@ func TestServerSDKHoldoutDelivery(t *testing.T) {
 
 	// Start.
 	s.start(t, client)
-	afterStart := waitFeatureFlagsPoll(t, s.tag, before, "the started group never reached the server SDK",
+	afterStart := waitFeatureFlagsPoll(t, s.tag, before,
+		"the started group never reached the server SDK as a holdout-only diff",
 		func(r *gatewayproto.GetFeatureFlagsResponse) bool {
-			return len(r.HoldoutGroups) == 1 && r.HoldoutGroups[0].Id == s.group.Id
+			return isHoldoutOnlyDiff(r) && len(r.HoldoutGroups) == 1 && r.HoldoutGroups[0].Id == s.group.Id
 		})
 	assert.NotEqual(t, before.FeatureFlagsId, afterStart.FeatureFlagsId, "Start changes feature_flags_id")
-	requireHoldoutOnlyDiff(t, "Start", afterStart)
 	delivered := afterStart.HoldoutGroups[0]
 	assert.Equal(t, holdoutEnv.id, delivered.EnvironmentId)
 	assert.Equal(t, featureproto.HoldoutGroup_RUNNING, delivered.Status)
@@ -140,12 +144,12 @@ func TestServerSDKHoldoutDelivery(t *testing.T) {
 
 	// Add a flag while RUNNING.
 	addHoldoutFeatures(t, client, s.group.Id, target(extra, "C"))
-	afterAdd := waitFeatureFlagsPoll(t, s.tag, afterStart, "the added target never reached the server SDK",
+	afterAdd := waitFeatureFlagsPoll(t, s.tag, afterStart,
+		"the added target never reached the server SDK as a holdout-only diff",
 		func(r *gatewayproto.GetFeatureFlagsResponse) bool {
-			return len(r.HoldoutGroups) == 1 && len(r.HoldoutGroups[0].Features) == 2
+			return isHoldoutOnlyDiff(r) && len(r.HoldoutGroups) == 1 && len(r.HoldoutGroups[0].Features) == 2
 		})
 	assert.NotEqual(t, afterStart.FeatureFlagsId, afterAdd.FeatureFlagsId, "Add changes feature_flags_id")
-	requireHoldoutOnlyDiff(t, "Add", afterAdd)
 	assert.Equal(t,
 		map[string]string{s.flag.Id: s.holdoutVariation(), extra.Id: variationID(extra, "C")},
 		holdoutTargets(afterAdd.HoldoutGroups[0]),
@@ -154,12 +158,12 @@ func TestServerSDKHoldoutDelivery(t *testing.T) {
 
 	// Remove it again.
 	removeHoldoutFeatures(t, client, s.group.Id, extra.Id)
-	afterRemove := waitFeatureFlagsPoll(t, s.tag, afterAdd, "the removed target never left the server SDK",
+	afterRemove := waitFeatureFlagsPoll(t, s.tag, afterAdd,
+		"the removed target never left the server SDK as a holdout-only diff",
 		func(r *gatewayproto.GetFeatureFlagsResponse) bool {
-			return len(r.HoldoutGroups) == 1 && len(r.HoldoutGroups[0].Features) == 1
+			return isHoldoutOnlyDiff(r) && len(r.HoldoutGroups) == 1 && len(r.HoldoutGroups[0].Features) == 1
 		})
 	assert.NotEqual(t, afterAdd.FeatureFlagsId, afterRemove.FeatureFlagsId, "Remove changes feature_flags_id")
-	requireHoldoutOnlyDiff(t, "Remove", afterRemove)
 	assert.Equal(t,
 		map[string]string{s.flag.Id: s.holdoutVariation()},
 		holdoutTargets(afterRemove.HoldoutGroups[0]),
@@ -168,11 +172,11 @@ func TestServerSDKHoldoutDelivery(t *testing.T) {
 
 	// Stop.
 	s.stop(t, client)
-	afterStop := waitFeatureFlagsPoll(t, s.tag, afterRemove, "the stopped group never left the server SDK",
+	afterStop := waitFeatureFlagsPoll(t, s.tag, afterRemove,
+		"the stopped group never left the server SDK as a holdout-only diff",
 		func(r *gatewayproto.GetFeatureFlagsResponse) bool {
-			return len(r.HoldoutGroups) == 0 && r.FeatureFlagsId != afterRemove.FeatureFlagsId
+			return isHoldoutOnlyDiff(r) && len(r.HoldoutGroups) == 0 && r.FeatureFlagsId != afterRemove.FeatureFlagsId
 		})
-	requireHoldoutOnlyDiff(t, "Stop", afterStop)
 	stopped := waitFeatureFlagsPollCaughtUp(t, s.tag, afterStop)
 	assert.Empty(t, stopped.HoldoutGroups)
 }
