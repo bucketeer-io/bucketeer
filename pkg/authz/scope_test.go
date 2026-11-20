@@ -15,22 +15,42 @@
 package authz
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	insightsproto "github.com/bucketeer-io/bucketeer/v2/proto/insights"
+	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
-func TestFieldScopeResolve(t *testing.T) {
+var errProjectNotFound = status.Error(codes.NotFound, "project not found")
+
+// fakeLookups maps project IDs to organization IDs.
+type fakeLookups map[string]string
+
+func (f fakeLookups) OrganizationOfProject(_ context.Context, projectID string) (string, error) {
+	org, ok := f[projectID]
+	if !ok {
+		return "", errProjectNotFound
+	}
+	return org, nil
+}
+
+func TestScopeResolve(t *testing.T) {
 	t.Parallel()
+	lookups := fakeLookups{"proj-1": "org-1"}
 	patterns := []struct {
 		desc        string
 		scope       Scope
 		req         proto.Message
+		lookups     Lookups
 		expected    []ScopeID
 		expectedErr error
 	}{
@@ -91,10 +111,67 @@ func TestFieldScopeResolve(t *testing.T) {
 			req:         &accountproto.ListAccountsV2Request{},
 			expectedErr: ErrRule,
 		},
+		{
+			desc:     "organization of environment",
+			scope:    InOrgOfEnv("id"),
+			req:      &environmentproto.GetEnvironmentV2Request{Id: "env-1"},
+			expected: []ScopeID{{Kind: OrganizationOfEnvironmentScope, ID: "env-1"}},
+		},
+		{
+			desc:     "organization of project",
+			scope:    InOrgOfProject("id"),
+			req:      &environmentproto.GetProjectRequest{Id: "proj-1"},
+			lookups:  lookups,
+			expected: []ScopeID{{Kind: OrganizationScope, ID: "org-1"}},
+		},
+		{
+			desc:        "organization of an unknown project",
+			scope:       InOrgOfProject("id"),
+			req:         &environmentproto.GetProjectRequest{Id: "proj-2"},
+			lookups:     lookups,
+			expectedErr: errProjectNotFound,
+		},
+		{
+			desc:        "organization of project without lookups",
+			scope:       InOrgOfProject("id"),
+			req:         &environmentproto.GetProjectRequest{Id: "proj-1"},
+			expectedErr: ErrRule,
+		},
+		{
+			desc:        "organization of project with an empty field",
+			scope:       InOrgOfProject("id"),
+			req:         &environmentproto.GetProjectRequest{},
+			lookups:     lookups,
+			expectedErr: ErrMissingScope,
+		},
+		{
+			desc:     "first set: organization",
+			scope:    FirstSet(InOrg("organization_id"), InEnv("environment_id")),
+			req:      &pushproto.ListPushesRequest{OrganizationId: "org-1", EnvironmentId: "env-1"},
+			expected: []ScopeID{{Kind: OrganizationScope, ID: "org-1"}},
+		},
+		{
+			desc:     "first set: environment",
+			scope:    FirstSet(InOrg("organization_id"), InEnv("environment_id")),
+			req:      &pushproto.ListPushesRequest{EnvironmentId: "env-1"},
+			expected: []ScopeID{{Kind: EnvironmentScope, ID: "env-1"}},
+		},
+		{
+			desc:        "first set: neither",
+			scope:       FirstSet(InOrg("organization_id"), InEnv("environment_id")),
+			req:         &pushproto.ListPushesRequest{},
+			expectedErr: ErrMissingScope,
+		},
+		{
+			desc:        "first set: invalid rule",
+			scope:       FirstSet(InOrg("namespace"), InEnv("environment_id")),
+			req:         &pushproto.ListPushesRequest{EnvironmentId: "env-1"},
+			expectedErr: ErrRule,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual, err := p.scope.Resolve(p.req)
+			actual, err := p.scope.Resolve(context.Background(), p.req, p.lookups)
 			assert.ErrorIs(t, err, p.expectedErr)
 			assert.Equal(t, p.expected, actual)
 		})

@@ -41,6 +41,8 @@ type Server struct {
 	verifier      token.Verifier
 	services      []Service
 	handlers      []httpHandler
+	unaryInts     []grpc.UnaryServerInterceptor
+	streamInts    []grpc.StreamServerInterceptor
 	rpcServer     *grpc.Server
 	httpServer    *http.Server
 	grpcWebServer *grpcweb.WrappedGrpcServer // DEPRECATED: Remove once Node.js SDK migrates away from grpc-web
@@ -97,6 +99,20 @@ func WithTimeouts(readTimeout, writeTimeout, idleTimeout time.Duration) Option {
 func WithHandler(path string, handler http.Handler) Option {
 	return func(s *Server) {
 		s.handlers = append(s.handlers, httpHandler{Handler: handler, path: path})
+	}
+}
+
+// WithUnaryInterceptor adds an interceptor that runs after the token was verified.
+func WithUnaryInterceptor(interceptor grpc.UnaryServerInterceptor) Option {
+	return func(s *Server) {
+		s.unaryInts = append(s.unaryInts, interceptor)
+	}
+}
+
+// WithStreamInterceptor adds an interceptor for streaming RPCs.
+func WithStreamInterceptor(interceptor grpc.StreamServerInterceptor) Option {
+	return func(s *Server) {
+		s.streamInts = append(s.streamInts, interceptor)
 	}
 }
 
@@ -176,15 +192,18 @@ func (s *Server) setupRPC() {
 	if s.verifier != nil {
 		interceptors = append(interceptors, AuthUnaryServerInterceptor(s.verifier))
 	}
+	interceptors = append(interceptors, s.unaryInts...)
 
 	// The recovery interceptor must stay last so it wraps the handler directly
 	// and the interceptors above still see the resulting error.
 	interceptors = append(interceptors, RecoveryUnaryServerInterceptor(s.logger))
+	streamInterceptors := append(append([]grpc.StreamServerInterceptor(nil), s.streamInts...),
+		RecoveryStreamServerInterceptor(s.logger))
 
 	s.rpcServer = grpc.NewServer(
 		grpc.Creds(creds),
 		grpc.ChainUnaryInterceptor(interceptors...),
-		grpc.ChainStreamInterceptor(RecoveryStreamServerInterceptor(s.logger)),
+		grpc.ChainStreamInterceptor(streamInterceptors...),
 		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 	)
 	for _, service := range s.services {

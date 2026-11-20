@@ -63,10 +63,24 @@ type AccountLoader interface {
 type Authorizer struct {
 	rules    Rules
 	accounts AccountLoader
+	lookups  Lookups
 }
 
-func New(rules Rules, accounts AccountLoader) *Authorizer {
-	return &Authorizer{rules: rules, accounts: accounts}
+type Option func(*Authorizer)
+
+// WithLookups provides the lookups that scopes such as InOrgOfProject need.
+func WithLookups(lookups Lookups) Option {
+	return func(a *Authorizer) {
+		a.lookups = lookups
+	}
+}
+
+func New(rules Rules, accounts AccountLoader, opts ...Option) *Authorizer {
+	a := &Authorizer{rules: rules, accounts: accounts}
+	for _, o := range opts {
+		o(a)
+	}
+	return a
 }
 
 // Rule returns the requirement of method.
@@ -96,7 +110,7 @@ func (a *Authorizer) Authorize(
 	if rule.kind == requirePublic {
 		return nil, nil
 	}
-	if caller.Email == "" && !caller.Service {
+	if caller.Email == "" && caller.Service == "" {
 		return nil, ErrUnauthenticated
 	}
 	if caller.PublicAPI != nil && rule.kind != requirePermission {
@@ -136,7 +150,7 @@ func (a *Authorizer) Authorize(
 	// of a clone, as the handlers choose today.
 	var target *Account
 	for _, n := range rule.needs {
-		scopes, err := n.scope.Resolve(req)
+		scopes, err := n.scope.Resolve(ctx, req, a.lookups)
 		if err != nil {
 			return nil, statusOf(err)
 		}
