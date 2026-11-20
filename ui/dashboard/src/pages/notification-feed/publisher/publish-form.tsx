@@ -6,7 +6,7 @@ import useFormSchema from 'hooks/use-form-schema';
 import { getLanguage, Language, useTranslation } from 'i18n';
 import Button from 'components/button';
 import Form from 'components/form';
-import Input from 'components/input';
+import InputWithTooltip from 'elements/input-with-tooltip';
 import {
   usePublishNotification,
   useSaveDraft,
@@ -237,7 +237,7 @@ const PublishForm = ({
             <Form.Item>
               <Form.Label required>{t('title')}</Form.Label>
               <Form.Control>
-                <Input
+                <InputWithTooltip
                   {...field}
                   placeholder={t('form:notification-title-placeholder')}
                 />

@@ -6,6 +6,7 @@ import { FlagFormSchema } from 'pages/create-flag/form-schema';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Dropdown from 'components/dropdown';
 import Form from 'components/form';
+import VariationLabel from 'elements/variation-label';
 
 const makeVariationTrigger = (
   variations: FeatureVariation[],
@@ -17,10 +18,11 @@ const makeVariationTrigger = (
   const variation = variations[idx];
 
   return (
-    <div className="flex items-center gap-x-2 w-0 flex-1 text-gray-700 typo-para-medium">
-      <FlagVariationPolygon index={idx} />
-      <p className="truncate">{variation.name || fallbackLabel(idx)}</p>
-    </div>
+    <VariationLabel
+      label={variation.name || fallbackLabel(idx)}
+      index={idx}
+      className="w-0 flex-1"
+    />
   );
 };
 

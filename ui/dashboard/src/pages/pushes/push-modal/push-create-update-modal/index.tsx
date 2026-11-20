@@ -21,13 +21,13 @@ import { ButtonBar } from 'components/button-bar';
 import { CreatableSelect } from 'components/creatable-select';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { Tooltip } from 'components/tooltip';
 import UploadFiles from 'components/upload-files';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import EnvironmentEditorList from 'elements/environment-editor-list';
 import FormLoading from 'elements/form-loading';
+import InputWithTooltip from 'elements/input-with-tooltip';
 
 interface PushCreateUpdateModalProps {
   disabled?: boolean;
@@ -220,7 +220,7 @@ const PushCreateUpdateModal = ({
                   <Form.Item>
                     <Form.Label required>{t('name')}</Form.Label>
                     <Form.Control>
-                      <Input
+                      <InputWithTooltip
                         placeholder={`${t('form:placeholder-name')}`}
                         disabled={disabled}
                         {...field}

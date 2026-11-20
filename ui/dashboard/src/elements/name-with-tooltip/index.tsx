@@ -1,4 +1,10 @@
-import { forwardRef, ReactNode, useEffect, useState } from 'react';
+import {
+  forwardRef,
+  HTMLAttributes,
+  ReactNode,
+  useEffect,
+  useState
+} from 'react';
 import { cn } from 'utils/style';
 import { Tooltip } from 'components/tooltip';
 
@@ -11,7 +17,10 @@ interface Props {
   asChild?: boolean;
 }
 
-interface DefaultTriggerProps {
+interface DefaultTriggerProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'id' | 'onClick'
+> {
   id: string;
   name: ReactNode;
   maxLines?: number;
@@ -27,12 +36,17 @@ interface DefaultContentProps {
 }
 
 const DefaultTrigger = forwardRef<HTMLDivElement, DefaultTriggerProps>(
-  ({ id, name, maxLines = 2, className, haveAction = true, onClick }, ref) => {
+  (
+    { id, name, maxLines = 2, className, haveAction = true, onClick, ...props },
+    ref
+  ) => {
     const parentId = `parent-${id}`;
     const childrenId = `children-${id}`;
 
     return (
       <div
+        // Forward the hover handlers and data-state that Radix Tooltip injects via asChild
+        {...props}
         ref={ref}
         id={parentId}
         className={cn(
@@ -43,7 +57,7 @@ const DefaultTrigger = forwardRef<HTMLDivElement, DefaultTriggerProps>(
         onClick={onClick}
       >
         <div
-          className="text-start break-all"
+          className="text-start break-all whitespace-normal"
           style={{
             display: '-webkit-box',
             WebkitLineClamp: maxLines,
@@ -55,7 +69,7 @@ const DefaultTrigger = forwardRef<HTMLDivElement, DefaultTriggerProps>(
         </div>
         <div
           id={childrenId}
-          className="w-full break-all -z-10 invisible absolute left-0 right-0 text-transparent"
+          className="w-full break-all whitespace-normal -z-10 invisible absolute left-0 right-0 text-transparent"
         >
           {name}
         </div>
@@ -109,8 +123,16 @@ const NameWithTooltip = ({
     };
     hasMoreThanMaxLines();
 
+    // Re-measure when the name or container width changes, not only on window resize
+    const observedElement = document.getElementById(childrenId);
+    const resizeObserver = new ResizeObserver(hasMoreThanMaxLines);
+    if (observedElement) resizeObserver.observe(observedElement);
+
     window.addEventListener('resize', hasMoreThanMaxLines);
-    return () => window.removeEventListener('resize', hasMoreThanMaxLines);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', hasMoreThanMaxLines);
+    };
   }, [childrenId, maxLines]);
 
   return (
@@ -121,6 +143,9 @@ const NameWithTooltip = ({
       hidden={!isTruncate}
       trigger={trigger}
       triggerCls={'relative cursor-default select-text'}
+      // Read-only name preview: never let it cover and block clicks on what's beneath
+      disableHoverableContent
+      className="pointer-events-none"
     />
   );
 };

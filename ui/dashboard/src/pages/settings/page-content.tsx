@@ -16,10 +16,10 @@ import { Organization } from '@types';
 import Button from 'components/button';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import TextArea from 'components/textarea';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import InputWithTooltip from 'elements/input-with-tooltip';
 import PageLayout from 'elements/page-layout';
 
 const formSchema = ({ requiredMessage }: FormSchemaProps) =>
@@ -115,7 +115,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                 <Form.Item>
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       disabled={disabled}
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
@@ -133,7 +133,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                 <Form.Item>
                   <Form.Label required>{t('form:url-code')}</Form.Label>
                   <Form.Control>
-                    <Input
+                    <InputWithTooltip
                       disabled
                       placeholder={`${t('form:placeholder-code')}`}
                       {...field}

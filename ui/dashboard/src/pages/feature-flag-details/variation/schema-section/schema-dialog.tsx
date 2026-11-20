@@ -16,9 +16,9 @@ import Button from 'components/button';
 import ReactCodeEditor from 'components/code-editor';
 import { CreatableSelect } from 'components/creatable-select';
 import Icon from 'components/icon';
-import Input from 'components/input';
 import DialogModal from 'components/modal/dialog';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
+import InputWithTooltip from 'elements/input-with-tooltip';
 import { VariationForm } from '../form-schema';
 
 interface SchemaDialogProps {
@@ -213,7 +213,7 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
             <p className="typo-para-small text-gray-600">
               {t('form:feature-flags.value-schema.regex-pattern')}
             </p>
-            <Input
+            <InputWithTooltip
               value={regexPattern}
               placeholder={t(
                 'form:feature-flags.value-schema.regex-pattern-placeholder'
@@ -254,7 +254,7 @@ const SchemaDialog = ({ isOpen, feature, onClose }: SchemaDialogProps) => {
           <p className="typo-para-small text-gray-600">
             {t('form:description')}
           </p>
-          <Input
+          <InputWithTooltip
             value={description}
             placeholder={t(
               'form:feature-flags.value-schema.description-placeholder'

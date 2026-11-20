@@ -9,9 +9,9 @@ import * as yup from 'yup';
 import { Goal } from '@types';
 import Button from 'components/button';
 import Form from 'components/form';
-import Input from 'components/input';
 import TextArea from 'components/textarea';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import InputWithTooltip from 'elements/input-with-tooltip';
 
 export interface GoalDetailsForm {
   name: string;
@@ -81,7 +81,7 @@ const GoalUpdateForm = ({
               <Form.Item>
                 <Form.Label required>{t('name')}</Form.Label>
                 <Form.Control>
-                  <Input
+                  <InputWithTooltip
                     disabled={disabled}
                     placeholder={`${t('form:placeholder-name')}`}
                     {...field}
@@ -99,7 +99,7 @@ const GoalUpdateForm = ({
               <Form.Item>
                 <Form.Label required>{t('form:goal-id')}</Form.Label>
                 <Form.Control>
-                  <Input
+                  <InputWithTooltip
                     disabled
                     placeholder={`${t('form:placeholder-goal-id')}`}
                     {...field}
