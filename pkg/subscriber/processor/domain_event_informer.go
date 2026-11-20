@@ -157,6 +157,7 @@ func (d domainEventInformer) createNotificationEvent(
 				EntityType:         event.EntityType,
 				EntityId:           event.EntityId,
 				EntityData:         event.EntityData,
+				PreviousEntityData: event.PreviousEntityData,
 				Type:               event.Type,
 			},
 		},

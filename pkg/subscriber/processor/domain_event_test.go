@@ -44,13 +44,15 @@ func TestCreateNotificationEvent(t *testing.T) {
 		{
 			desc: "success: DomainEvent",
 			input: &domaineventproto.Event{
-				Id:            "did",
-				EntityType:    domaineventproto.Event_FEATURE,
-				EntityId:      "fid",
-				Type:          domaineventproto.Event_FEATURE_CREATED,
-				Editor:        &domaineventproto.Editor{Email: "test@test.com"},
-				EnvironmentId: "ns0",
-				IsAdminEvent:  false,
+				Id:                 "did",
+				EntityType:         domaineventproto.Event_FEATURE,
+				EntityId:           "fid",
+				Type:               domaineventproto.Event_FEATURE_CREATED,
+				Editor:             &domaineventproto.Editor{Email: "test@test.com"},
+				EnvironmentId:      "ns0",
+				IsAdminEvent:       false,
+				EntityData:         `{"id":"fid","enabled":true}`,
+				PreviousEntityData: `{"id":"fid","enabled":false}`,
 			},
 			environmentName:    envName,
 			environmentURLCode: envURLCode,
@@ -67,6 +69,8 @@ func TestCreateNotificationEvent(t *testing.T) {
 						EntityType:         domaineventproto.Event_FEATURE,
 						EntityId:           "fid",
 						Type:               domaineventproto.Event_FEATURE_CREATED,
+						EntityData:         `{"id":"fid","enabled":true}`,
+						PreviousEntityData: `{"id":"fid","enabled":false}`,
 					},
 				},
 				IsAdminEvent: false,
@@ -122,6 +126,10 @@ func TestCreateNotificationEvent(t *testing.T) {
 				assert.Equal(t, p.expected.Notification.DomainEventNotification.EntityType, actual.Notification.DomainEventNotification.EntityType)
 				assert.Equal(t, p.expected.Notification.DomainEventNotification.EntityId, actual.Notification.DomainEventNotification.EntityId)
 				assert.Equal(t, p.expected.Notification.DomainEventNotification.Type, actual.Notification.DomainEventNotification.Type)
+				assert.Equal(t, p.expected.Notification.DomainEventNotification.EntityData,
+					actual.Notification.DomainEventNotification.EntityData)
+				assert.Equal(t, p.expected.Notification.DomainEventNotification.PreviousEntityData,
+					actual.Notification.DomainEventNotification.PreviousEntityData)
 			}
 		})
 	}
