@@ -885,6 +885,40 @@ func TestGetMyOrganizationsMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			desc: "success: a disabled account in the system admin organization lists only the enabled ones",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), gomock.Any(),
+				).Return([]*domain.AccountWithOrganization{
+					{
+						Organization: &environmentproto.Organization{
+							Id:          "org0",
+							SystemAdmin: true,
+						},
+						AccountV2: &accountproto.AccountV2{
+							Email:    "bucketeer@example.com",
+							Disabled: true,
+						},
+					},
+					{
+						Organization: &environmentproto.Organization{
+							Id: "org1",
+						},
+						AccountV2: &accountproto.AccountV2{
+							Email: "bucketeer@example.com",
+						},
+					},
+				}, nil)
+			},
+			input: &accountproto.GetMyOrganizationsRequest{},
+			expected: &accountproto.GetMyOrganizationsResponse{Organizations: []*environmentproto.Organization{
+				{
+					Id: "org1",
+				},
+			}},
+			expectedErr: nil,
+		},
+		{
 			desc: "success: including system admin organization",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(

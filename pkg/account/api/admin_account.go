@@ -444,11 +444,16 @@ func (s *AccountService) getMyOrganizations(
 	return myOrgs, nil
 }
 
+// containsSystemAdminOrganization reports whether an enabled account belongs to
+// an enabled, unarchived system admin organization.
 func (s *AccountService) containsSystemAdminOrganization(
-	organizations []*domain.AccountWithOrganization,
+	accountsWithOrg []*domain.AccountWithOrganization,
 ) bool {
-	for _, org := range organizations {
-		if org.SystemAdmin {
+	for _, accWithOrg := range accountsWithOrg {
+		if accWithOrg.AccountV2.Disabled || accWithOrg.Organization.Disabled || accWithOrg.Archived {
+			continue
+		}
+		if accWithOrg.SystemAdmin {
 			return true
 		}
 	}
