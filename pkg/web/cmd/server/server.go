@@ -993,10 +993,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
-	// authz interceptor in shadow mode: handlers keep their own checks.
+	// authz interceptor: enforced for the services whose handlers no longer check, shadow for the others.
 	authorizer := authz.New(authz.WebRules, authz.NewAccountLoader(accountClient),
 		authz.WithLookups(authz.NewLookups(environmentClient)))
-	authzInterceptor := authz.NewInterceptor(authorizer, authz.Shadow, logger)
+	authzInterceptor := authz.NewInterceptor(authorizer, authz.EnforcedWebServices, logger)
 	// authService
 	authService, err := s.createAuthService(
 		ctx,

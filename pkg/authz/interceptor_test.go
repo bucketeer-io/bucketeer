@@ -77,7 +77,11 @@ func newTestInterceptor(t *testing.T, mode Mode) (*Interceptor, *observer.Observ
 	core, logs := observer.New(zapcore.DebugLevel)
 	accounts := &fakeAccounts{accounts: testAccounts()}
 	authorizer := New(testRules(guardFunc(func(context.Context, *Access) error { return nil })), accounts)
-	return NewInterceptor(authorizer, mode, zap.New(core)), logs
+	var enforced []string
+	if mode == Enforce {
+		enforced = []string{FeatureService}
+	}
+	return NewInterceptor(authorizer, enforced, zap.New(core)), logs
 }
 
 func entries(logs *observer.ObservedLogs) []loggedEntry {
@@ -171,6 +175,11 @@ func TestUnaryInterceptor(t *testing.T) {
 		{
 			desc: "enforce: health check is skipped", mode: Enforce, method: healthCheck, ctx: context.Background(), req: req,
 			expectedHandled: true,
+		},
+		{
+			desc: "enforce: a service not listed stays in shadow", mode: Enforce, method: listNotifications,
+			ctx: context.Background(), req: req, expectedHandled: true,
+			expectedLogs: []loggedEntry{{level: zapcore.WarnLevel, message: "Would deny"}},
 		},
 	}
 	for _, p := range patterns {
