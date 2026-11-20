@@ -1,4 +1,4 @@
-h1:jwbtgSvTmyB/cscZvCRgLs3qBpMU98Vyqe7FMv+LKow=
+h1:cebBBHDkDEpbVbQ+ATDijWr2V3DhnqSu1LfXLTNNGNQ=
 20260226174000_initialization.sql h1:orWPjklxeOP046jFps+1UhJDdaSDPwDjlODiSe/479c=
 20260514000000_update_feature_variation_value_schema.sql h1:Jp91HETgQvAvqNGTgSBip8ipx3aAI5C4Tsa2z8eplB4=
 20260713000000_create_notification_tables.sql h1:TqsueyglKP41Towy2FsYTGyxI3+h4bRbpGS4MZLLNhw=
@@ -10,3 +10,4 @@ h1:jwbtgSvTmyB/cscZvCRgLs3qBpMU98Vyqe7FMv+LKow=
 20261109000000_add_feature_last_used_at.sql h1:o9mRUuuTNL3caGjS91SaiuVyimAprZ59Op02wwk69GU=
 20261124000000_add_experiment_kind.sql h1:nc1XkTkQFv3vmU7abnlHthkVqEsfQv8XxE0tV+nbJ0Q=
 20261125000000_create_holdout_group_segment_user_table.sql h1:MLHsOx7/I4j6LN80AHhOKIbn/ay3at1TKqISW1pZ3Gg=
+20261126000000_sync_organization_owner_role.sql h1:KwPXGnBZGy8/+Yti4+ui4ljsPZ5xHmZacirjYo24v8Q=
