@@ -92,8 +92,8 @@ type maintainerAccount struct {
 
 // reportMaintainerRead counts a public API read that would be denied as the
 // API key's maintainer (RFC 0050 step 11). A cached maintainer is judged in
-// place; otherwise the lookup runs once per maintainer off the response path
-// and counts the read that started it.
+// place; otherwise the lookup runs once per key off the response path and
+// counts the read that started it.
 func (s *grpcGatewayService) reportMaintainerRead(
 	ctx context.Context,
 	envAPIKey *accountproto.EnvironmentAPIKey,
@@ -136,8 +136,11 @@ func (s *grpcGatewayService) reportMaintainerRead(
 	})
 }
 
+// maintainerAccountCacheKey names the key's maintainer, so a changed
+// maintainer is looked up again and each key warns on its own.
 func maintainerAccountCacheKey(envAPIKey *accountproto.EnvironmentAPIKey) string {
-	return "maintainer-read:" + envAPIKey.Environment.OrganizationId + ":" + envAPIKey.ApiKey.Maintainer
+	return "maintainer-read:" + envAPIKey.Environment.OrganizationId + ":" +
+		envAPIKey.ApiKey.Maintainer + ":" + envAPIKey.ApiKey.Id
 }
 
 func (s *grpcGatewayService) countMaintainerRead(

@@ -128,7 +128,7 @@ func countedMaintainerReads(id, method, reason string) float64 {
 	return testutil.ToFloat64(maintainerReadDeniedCounter.WithLabelValues("org-"+id, "env-"+id, method, reason))
 }
 
-// waitMaintainerLookup returns once no lookup is in flight for the maintainer.
+// waitMaintainerLookup returns once no lookup is in flight for the key.
 func waitMaintainerLookup(gs *grpcGatewayService, envAPIKey *accountproto.EnvironmentAPIKey) {
 	_, _, _ = gs.flightgroup.Do(maintainerAccountCacheKey(envAPIKey), func() (interface{}, error) { return nil, nil })
 }
@@ -274,4 +274,27 @@ func TestReportMaintainerReadAfterMaintainerChange(t *testing.T) {
 		waitMaintainerLookup(gs, envAPIKey)
 	}
 	assert.Equal(t, float64(1), countedMaintainerReads("changed", "GetFeature", maintainerReadReasonNoAccount))
+}
+
+func TestReportMaintainerReadPerKey(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	gs := newGrpcGatewayServiceWithMock(t, mockController)
+	gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2(
+		gomock.Any(), &accountproto.GetAccountV2Request{Email: "shared@example.com", OrganizationId: "org-shared"},
+	).Return(nil, status.Error(codes.NotFound, "not found")).Times(2)
+
+	ctx := metadata.NewIncomingContext(contextWithMethod("GetFeature"), metadata.MD{})
+	for _, id := range []string{"first", "second"} {
+		envAPIKey := &accountproto.EnvironmentAPIKey{
+			ApiKey:      &accountproto.APIKey{Id: id, Maintainer: "shared@example.com"},
+			Environment: &environmentproto.EnvironmentV2{Id: "env-shared", OrganizationId: "org-shared"},
+		}
+		gs.reportMaintainerRead(ctx, envAPIKey)
+		waitMaintainerLookup(gs, envAPIKey)
+		assert.True(t, gs.cachedMaintainerAccount(maintainerAccountCacheKey(envAPIKey)).logged.Load(), id)
+	}
+	assert.Equal(t, float64(2), countedMaintainerReads("shared", "GetFeature", maintainerReadReasonNoAccount))
 }
