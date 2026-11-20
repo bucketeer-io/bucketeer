@@ -1,4 +1,4 @@
-h1:KkicfOKXKTo3mhChCLArZSVv+aQEJPrebRZl8GCnVoA=
+h1:H+tXU7VfohBgpjGEk/quSvLDmXGewLbUglQpHHeLnm8=
 20260226174000_initialization.sql h1:orWPjklxeOP046jFps+1UhJDdaSDPwDjlODiSe/479c=
 20260514000000_update_feature_variation_value_schema.sql h1:Jp91HETgQvAvqNGTgSBip8ipx3aAI5C4Tsa2z8eplB4=
 20260713000000_create_notification_tables.sql h1:TqsueyglKP41Towy2FsYTGyxI3+h4bRbpGS4MZLLNhw=
@@ -8,3 +8,4 @@ h1:KkicfOKXKTo3mhChCLArZSVv+aQEJPrebRZl8GCnVoA=
 20261030000000_update_push_fcm_service_account_type.sql h1:0g7C/yzcm18zXXb0a+Fqttj3fjqVKYvAMO+uXead3NE=
 20261031000000_add_api_key_hash.sql h1:pgePl9PxQ3XAAqFr1jj8kAAWjx2ofv6i+a7hHNcgWVY=
 20261109000000_add_feature_last_used_at.sql h1:o9mRUuuTNL3caGjS91SaiuVyimAprZ59Op02wwk69GU=
+20261110000000_drop_feature_last_used_info.sql h1:58yc+V2O9euDgQveAVaXUO9aMAuD+upkPJ1xmfir/LA=
