@@ -29,7 +29,7 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
-// Mode is what the interceptor does with the decision.
+// Mode is what the interceptor does with the decision for a service.
 type Mode int
 
 const (
@@ -39,19 +39,38 @@ const (
 	Enforce
 )
 
-// Interceptor authorizes every RPC of a server with Table 2.
+// Interceptor authorizes every RPC of a server with Table 2: it enforces the
+// decision for the services listed in enforced and shadows the others.
 type Interceptor struct {
 	authorizer *Authorizer
-	mode       Mode
+	enforced   map[string]bool
 	logger     *zap.Logger
 }
 
-func NewInterceptor(authorizer *Authorizer, mode Mode, logger *zap.Logger) *Interceptor {
+func NewInterceptor(authorizer *Authorizer, enforced []string, logger *zap.Logger) *Interceptor {
+	set := make(map[string]bool, len(enforced))
+	for _, service := range enforced {
+		set[service] = true
+	}
 	return &Interceptor{
 		authorizer: authorizer,
-		mode:       mode,
+		enforced:   set,
 		logger:     logger.Named("authz"),
 	}
+}
+
+// mode is Enforce for the methods of an enforced service.
+func (i *Interceptor) mode(method string) Mode {
+	if i.enforced[serviceOf(method)] {
+		return Enforce
+	}
+	return Shadow
+}
+
+// serviceOf returns the proto service of a full method name "/package.Service/Method".
+func serviceOf(method string) string {
+	service, _, _ := strings.Cut(strings.TrimPrefix(method, "/"), "/")
+	return service
 }
 
 // CallerFromContext builds the caller from the verified access token; false for an anonymous request.
@@ -81,7 +100,7 @@ func (i *Interceptor) Unary() grpc.UnaryServerInterceptor {
 		}
 		caller, _ := CallerFromContext(ctx)
 		editor, authzErr := i.authorize(ctx, caller, info.FullMethod, req)
-		if i.mode == Enforce {
+		if i.mode(info.FullMethod) == Enforce {
 			if authzErr != nil {
 				return nil, authzErr
 			}
@@ -109,7 +128,7 @@ func (i *Interceptor) Stream() grpc.StreamServerInterceptor {
 		if stream.denied != nil {
 			return stream.denied
 		}
-		if i.mode == Shadow && stream.authorized {
+		if i.mode(info.FullMethod) == Shadow && stream.authorized {
 			i.compare(stream.caller, info.FullMethod, stream.authzErr, err)
 		}
 		return err
@@ -146,7 +165,7 @@ func (s *authorizedStream) RecvMsg(m interface{}) error {
 	s.caller, _ = CallerFromContext(ctx)
 	editor, err := s.interceptor.authorize(ctx, s.caller, s.method, m)
 	s.authzErr = err
-	if s.interceptor.mode != Enforce {
+	if s.interceptor.mode(s.method) != Enforce {
 		return nil
 	}
 	if err != nil {
