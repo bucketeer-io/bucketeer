@@ -268,6 +268,7 @@ type grpcGatewayService struct {
 	environmentAPIKeyCache      cachev3.EnvironmentAPIKeyCache
 	environmentAPIKeyRedisCache cachev3.EnvironmentAPIKeyCache
 	apiKeyLastUsedInfoCacher    sync.Map
+	maintainerAccountCache      sync.Map
 	flightgroup                 singleflight.Group
 	metricsJobs                 chan metricsJob
 	metricsPoolWg               sync.WaitGroup
@@ -2042,6 +2043,7 @@ func (s *grpcGatewayService) checkRequest(
 	}
 
 	go s.cacheAPIKeyLastUsedAt(envAPIKey, time.Now().Unix())
+	s.reportMaintainerRead(ctx, envAPIKey)
 
 	return envAPIKey, nil
 }
