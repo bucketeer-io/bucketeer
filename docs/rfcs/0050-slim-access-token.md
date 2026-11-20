@@ -84,8 +84,9 @@ Goals
 - A public API request reaches the web services with one signed credential
   that names the API key and its maintainer. No request metadata is trusted
   for identity.
-- A change of role, system admin status or name applies on the next request,
-  not when the token expires.
+- A change of system admin status or name applies on the next request, not
+  when the token expires. A change of role already does, because roles are
+  read from the database for each request.
 - An access token that leaks on its own stops working when it expires.
 - A stolen refresh token stops working after a maximum sign-in age.
 - No new storage. Users sign in and switch organization as today, and sign
@@ -579,7 +580,8 @@ with a leaked token. That needs the network controls in §7.
 | --- | --- | --- |
 | Access token leaks on its own | Every organization of the user; can be traded for a refresh token through `SwitchOrganization` | Every organization of the user, until it expires. While `SwitchOrganization` exists it can still be traded for a refresh token, which now ends at the maximum sign-in age. |
 | Both tokens are stolen | Every organization of the user, renewable without limit | Every organization of the user, until the maximum sign-in age |
-| Role or system admin status is removed | Applies when the token expires | Applies on the next request |
+| System admin status is removed | Applies when the token expires | Applies on the next request |
+| A role is removed | Applies on the next request; roles are already read from the database | Unchanged |
 | A service token leaks | Full access for up to 100 years. The holder cannot be identified, and cancelling the token rotates the signing key, which signs out every user and replaces the token everywhere. | Full access from inside the cluster only, until the tokens of its service are cancelled or it expires, one year at most by default. The token names its service, and only that service gets a new one. |
 | The key that signs service tokens leaks | It is the key that signs user tokens. Replacing it signs out every user and replaces every service token. | With a service token key: full access until it is replaced, which replaces the service tokens only. Without one: as before. |
 | A service token is used to name a user as the editor | Any holder can, on any request, through the relay metadata | Not on a request of its own. A delegated token is issued only for a valid API key and names that key's maintainer. An indirect way remains, described below. |
