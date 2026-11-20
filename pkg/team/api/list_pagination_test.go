@@ -77,7 +77,7 @@ func TestListTeamsPaginationValidation(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			ctx := createContextWithToken(t)
+			ctx := createContextWithEditor(t)
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{"accept-language": []string{"en"}})
 
 			service := createTeamService(mockController)
