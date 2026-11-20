@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -199,6 +200,19 @@ func TestReportMaintainerRead(t *testing.T) {
 			expected: 0,
 		},
 		{
+			desc:   "empty maintainer: counted as no account",
+			keyID:  "empty",
+			method: "GetFeature",
+			calls:  1,
+			setup: func(s *grpcGatewayService) {
+				s.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, status.Error(codes.InvalidArgument, "email is empty")).Times(1)
+			},
+			reason:   maintainerReadReasonNoAccount,
+			expected: 1,
+		},
+		{
 			desc:   "lookup error: not counted",
 			keyID:  "error",
 			method: "GetFeature",
@@ -225,4 +239,30 @@ func TestReportMaintainerRead(t *testing.T) {
 			assert.Equal(t, p.expected, counted(p.keyID, p.method, p.reason))
 		})
 	}
+}
+
+func TestEvictExpiredMaintainerAccounts(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	gs := newGrpcGatewayServiceWithMock(t, mockController)
+	gs.maintainerAccountCache.Store("expired", &maintainerAccount{expiresAt: time.Now().Add(-time.Second)})
+	gs.maintainerAccountCache.Store("valid", &maintainerAccount{expiresAt: time.Now().Add(maintainerReadTTL)})
+	gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2(
+		gomock.Any(), gomock.Any(),
+	).Return(nil, status.Error(codes.NotFound, "not found")).Times(1)
+
+	ctx := metadata.NewIncomingContext(contextWithMethod("GetFeature"), metadata.MD{})
+	gs.reportMaintainerRead(ctx, &accountproto.EnvironmentAPIKey{
+		ApiKey:      &accountproto.APIKey{Id: "new", Maintainer: "maintainer@example.com"},
+		Environment: &environmentproto.EnvironmentV2{Id: "env", OrganizationId: "org"},
+	})
+
+	_, ok := gs.maintainerAccountCache.Load("expired")
+	assert.False(t, ok)
+	_, ok = gs.maintainerAccountCache.Load("valid")
+	assert.True(t, ok)
+	_, ok = gs.maintainerAccountCache.Load("new")
+	assert.True(t, ok)
 }

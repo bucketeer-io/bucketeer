@@ -2043,7 +2043,7 @@ func (s *grpcGatewayService) checkRequest(
 	}
 
 	go s.cacheAPIKeyLastUsedAt(envAPIKey, time.Now().Unix())
-	s.reportMaintainerRead(ctx, envAPIKey)
+	go s.reportMaintainerRead(context.WithoutCancel(ctx), envAPIKey)
 
 	return envAPIKey, nil
 }

@@ -92,7 +92,8 @@ type maintainerAccount struct {
 }
 
 // reportMaintainerRead counts a public API read that would be denied as the
-// API key's maintainer (RFC 0050 step 11). The request itself is unchanged.
+// API key's maintainer (RFC 0050 step 11). It runs off the response path;
+// the lookup is bounded by singleflightFetchTimeout.
 func (s *grpcGatewayService) reportMaintainerRead(
 	ctx context.Context,
 	envAPIKey *accountproto.EnvironmentAPIKey,
@@ -165,30 +166,58 @@ func (s *grpcGatewayService) getMaintainerAccount(
 	envAPIKey *accountproto.EnvironmentAPIKey,
 ) (*maintainerAccount, error) {
 	keyID := envAPIKey.ApiKey.Id
-	if cached, ok := s.maintainerAccountCache.Load(keyID); ok {
-		if entry := cached.(*maintainerAccount); time.Now().Before(entry.expiresAt) {
-			return entry, nil
-		}
+	if entry := s.cachedMaintainerAccount(keyID); entry != nil {
+		return entry, nil
 	}
 	v, err := s.singleflightFetch(ctx, "maintainer-read:"+keyID, func(ctx context.Context) (interface{}, error) {
+		// A fetch that finished while this caller was waiting already filled the cache.
+		if entry := s.cachedMaintainerAccount(keyID); entry != nil {
+			return entry, nil
+		}
 		resp, err := s.accountClient.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
 			Email:          envAPIKey.ApiKey.Maintainer,
 			OrganizationId: envAPIKey.Environment.OrganizationId,
 		})
 		entry := &maintainerAccount{expiresAt: time.Now().Add(maintainerReadTTL)}
-		switch {
-		case err == nil:
+		switch status.Code(err) {
+		case codes.OK:
 			entry.account = resp.Account
-		case status.Code(err) != codes.NotFound:
+		case codes.NotFound, codes.InvalidArgument:
+			// An empty or malformed maintainer has no account either.
+		default:
 			return nil, err
 		}
 		s.maintainerAccountCache.Store(keyID, entry)
+		s.evictExpiredMaintainerAccounts()
 		return entry, nil
 	})
 	if err != nil {
 		return nil, err
 	}
 	return v.(*maintainerAccount), nil
+}
+
+func (s *grpcGatewayService) cachedMaintainerAccount(keyID string) *maintainerAccount {
+	cached, ok := s.maintainerAccountCache.Load(keyID)
+	if !ok {
+		return nil
+	}
+	if entry := cached.(*maintainerAccount); time.Now().Before(entry.expiresAt) {
+		return entry
+	}
+	return nil
+}
+
+// evictExpiredMaintainerAccounts drops the expired entries, so the cache
+// follows the keys in use. An entry replaced meanwhile is left alone.
+func (s *grpcGatewayService) evictExpiredMaintainerAccounts() {
+	now := time.Now()
+	s.maintainerAccountCache.Range(func(key, value any) bool {
+		if entry := value.(*maintainerAccount); !now.Before(entry.expiresAt) {
+			s.maintainerAccountCache.CompareAndDelete(key, value)
+		}
+		return true
+	})
 }
 
 func methodName(ctx context.Context) string {
