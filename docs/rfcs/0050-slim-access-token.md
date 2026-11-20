@@ -13,7 +13,10 @@ one token with users today, get their own credentials.
 
 The console signs in with Google and receives two JWTs signed with the same
 key: an access token (10 minutes by default) and a refresh token (7 days by
-default). The access token carries more than the caller's identity:
+default). When this RFC was written the access token carried more than the
+caller's identity. PR #3021 has since removed `organization_id` and `name`
+from the access token and `organization_id` from the refresh token (§6, step
+3); the other claims are unchanged:
 
 | Claim | Read by | Problem |
 | --- | --- | --- |
@@ -26,9 +29,9 @@ default). The access token carries more than the caller's identity:
 An account is one row of `account_v2`, keyed by `(email, organization_id)`,
 so one email may hold accounts in several organizations. Anything in the
 token that depends on the organization is therefore either a guess or has to
-be reissued on every switch. The backend already ignores the claim: every
-request names its organization or environment, and the account is looked up
-for that request.
+be reissued on every switch. The backend never read the claim: every request
+names its organization or environment, and the account is looked up for that
+request.
 
 Three further problems were found while reviewing the token:
 
@@ -74,6 +77,9 @@ Goals
   privilege flags.
 - Each service has its own token, which names the service and can be
   cancelled without rotating the signing key.
+- A service token works only inside the cluster. It is refused when it
+  arrives through the public address.
+- Of the deployments, only web holds the key that signs user tokens.
 - A public API request reaches the web services with one signed credential
   that names the API key and its maintainer. No request metadata is trusted
   for identity.
@@ -92,13 +98,14 @@ Non-Goals
 - Moving the refresh token out of local storage into an HttpOnly cookie (§7).
 - A user table with a stable ID. `sub` is the email until one exists.
 - Changing `exp` and `iat` to numeric dates (they are written as RFC 3339
-  strings today), or a separate signing key for service tokens.
+  strings today).
 - The authorization rules themselves, which are RFC 0049. That includes
   limiting which RPCs each service may call: this RFC gives every service a
   name, and a service token keeps full access until RFC 0049 has rules for
   it.
-- Network controls: which ports are reachable from outside the cluster, and
-  mutual TLS between services (§7).
+- Network controls other than refusing service tokens on the public
+  listener: removing the public service routes, restricting the service
+  ports, and mutual TLS between services (§7).
 
 ## 3. Design Overview
 
@@ -121,9 +128,9 @@ flowchart LR
    status come from `account_v2` for that request.
 
 Every request that reaches a web service carries exactly one of three
-tokens. All are signed with the same key and verified by the same
-interceptor on the gRPC server, so the REST gateway, direct gRPC and calls
-from other services are checked in one place.
+tokens. All are verified by the same interceptor on the gRPC server, so the
+REST gateway, direct gRPC and calls from other services are checked in one
+place.
 
 ```mermaid
 flowchart LR
@@ -135,7 +142,7 @@ flowchart LR
     Tools[Operator tools] -->|"service token of each"| Web
 ```
 
-| Caller | Today | Proposed |
+| Caller | Before this RFC | Proposed |
 | --- | --- | --- |
 | A user in the console | Access token with the organization, name and two flags | Access token with the identity only |
 | A service acting on its own, including web services calling each other | One shared access token with both flags, valid for 100 years | A service token per service |
@@ -143,14 +150,14 @@ flowchart LR
 
 The access token changes as follows; the other two are described in §4.
 
-| Claim | Today | Proposed |
+| Claim | Before this RFC | Proposed |
 | --- | --- | --- |
 | `iss`, `aud`, `exp`, `iat` | yes | yes |
 | `sub` | no | the email |
 | `email` | yes | yes |
 | `token_use` | `access` | `access` |
-| `organization_id` | yes | removed |
-| `name` | yes | removed |
+| `organization_id` | yes | removed (done in PR #3021) |
+| `name` | yes | removed (done in PR #3021) |
 | `is_system_admin` | yes | removed |
 | `is_service_token` | yes | removed; service tokens are their own type |
 
@@ -199,16 +206,41 @@ type ServiceToken struct {
   `serviceToken.secret`, so a deployment gives each chart a different Secret.
   The Docker Compose and development setups generate one file per service. A
   CronJob uses the token of its chart.
-- **Cancelling a token.** `jti` identifies one token. A server option lists
-  the IDs that are no longer accepted, and the verifier rejects them. A
-  leaked token is cancelled by adding its ID and issuing a new token to that
-  one service; users stay signed in and the other services are not touched.
-- **Lifetime.** The generator gains a `--ttl` flag. The default does not
-  change at first, so no deployment is broken by an unexpected expiry. A
-  service reads its token at startup, so rotating it means replacing the
-  Secret and restarting. The default is lowered to one year at the end of
-  the rollout (§6), after a service warns when its own token is close to
-  expiry. An operator can set a shorter lifetime with `--ttl`.
+- **Cancelling a token.** A server option gives, for each service name, a
+  time before which its tokens are not accepted, and the verifier rejects a
+  service token whose `iat` is earlier. A leaked token is cancelled by
+  issuing a new token to that one service and then setting the time to the
+  new token's `iat`. Users stay signed in and the other services are not
+  touched. One value per service covers every copy of the old token, needs
+  no token ID and never grows. Rotation is the same two actions, so it also
+  ends the old token. A separate value applies to legacy tokens, which carry
+  no name. `jti` stays as the identifier of one token in logs and is not
+  used to cancel.
+- **Lifetime.** The generator gains a `--ttl` flag. A token issued with
+  `--service` lasts one year by default, so the tokens issued in step 6 of
+  §6 do not inherit today's 100 years. A service reads its token at startup,
+  so rotating it means replacing the Secret and restarting. From the release
+  in which the per-service tokens are issued, a service logs a warning and
+  reports a metric when its own token is close to expiry, so none expires
+  unnoticed. Legacy tokens already issued keep their expiry until the legacy
+  form is dropped.
+- **Signing key.** A deployment may give service tokens their own key pair.
+  The generator then signs with that private key, and every verifier checks
+  service tokens against its public key: a token verified with the service
+  token key is accepted only as a service token, and a `service` token
+  signed with the shared key is rejected. Legacy service tokens are still
+  verified with the shared key. When no service token key is configured,
+  service tokens use the shared key, so a deployment that does not need the
+  separation adds no Secret.
+  - The private key is needed only where tokens are generated. It does not
+    have to be stored in the cluster, and the key that signs user tokens no
+    longer has to leave the web deployment to issue a service token.
+  - Replacing it means issuing the service tokens again. Users stay signed
+    in.
+  - It does not limit what a leaked key allows: whoever holds it can sign a
+    service token with full access, so it is protected like the shared key.
+  - A deployment configures it before issuing the per-service tokens.
+    Adding it later means issuing them again.
 - **Access.** A service token keeps the full access it has today. Naming the
   service is what allows RFC 0049 to later give each one only the RPCs it
   calls.
@@ -319,9 +351,9 @@ from every service token.
 
 ### Refresh token
 
-The refresh token loses `organization_id` and gains `auth_time`, the time of
-the original sign-in. The request does not change: it carries only the
-refresh token.
+The refresh token gains `auth_time`, the time of the original sign-in. Its
+`organization_id` is already removed (PR #3021). The request does not
+change: it carries only the refresh token.
 
 `RefreshToken` does not act on any organization, so it needs none. It
 answers one question, whether this person may stay signed in:
@@ -335,8 +367,16 @@ answers one question, whether this person may stay signed in:
    `auth_time`.
 
 A refresh token without `auth_time`, issued before this change, is treated
-as signed in at its own `iat`. The maximum sign-in age is a new option next
-to `accessTokenTTL` and `refreshTokenTTL`.
+as signed in at its own `iat`, but only in the release that introduces
+`auth_time`. A pod of an older release still issues refresh tokens without
+it, so during a rolling update or after a rollback a refresh through such a
+pod would start the sign-in age again. From the next release, a refresh
+token without `auth_time` is rejected and the user signs in again. That
+release is deployed no sooner than the refresh token lifetime after the
+first one, so the tokens issued before the change have expired by then.
+
+The maximum sign-in age is a new option next to `accessTokenTTL` and
+`refreshTokenTTL`.
 
 ### One claims type for every kind
 
@@ -366,8 +406,8 @@ is decided in one place:
 | Kind | `token_use` | Required claims | Accepted by |
 | --- | --- | --- | --- |
 | access | `access`, or absent on a token issued before the claim existed | `email` | Every RPC except `CreateDemoOrganization` |
-| service | `service`, or the legacy form described under Service token | `sub`, `jti` (not required in the legacy form) | The same RPCs, as a service identity |
-| delegated | `delegated` | `email`, the API key claims, `environment_id`, `organization_id` | Only the RPCs listed for the public API, within the key's role and scope, as the maintainer acting through the API key |
+| service | `service`, or the legacy form described under Service token | `sub`, `jti` (not required in the legacy form) | The same RPCs, as a service identity, but not through the public listener |
+| delegated | `delegated` | `email`, the API key claims, `environment_id`, `organization_id` | Only the RPCs listed for the public API, within the key's role and scope, as the maintainer acting through the API key, but not through the public listener |
 | demo | `demo` | `email` | `CreateDemoOrganization` only |
 
 The demo token on the wire does not change, except that it also carries
@@ -454,6 +494,39 @@ this in the engine. Until every service uses the engine, `pkg/role` still
 trusts the claim, so its derivation is fixed first: disabled accounts are
 left out before the system admin check.
 
+### Service and delegated tokens on the public listener
+
+The Ingress sends every request from outside to the public listener of the
+web deployment's Envoy (port 9003). That listener serves the REST gateway,
+and it also routes the `/bucketeer.<package>.<Service>` paths, `BatchService`
+included, straight to the services. A service token that leaks therefore
+works from the internet today.
+
+Service and delegated tokens are for calls inside the cluster, so they are
+refused when they arrive through the public listener:
+
+- **Marking.** The public listener sets a request header on everything it
+  forwards and removes any value a client sent for it. The interceptor on
+  the gRPC server refuses a service token, in either form, and a delegated
+  token on a request that carries the header. Access and demo tokens are not
+  affected.
+- **Callers inside the cluster.** Calls between services use the gRPC
+  listener (port 9000), which the Ingress does not target, and are not
+  affected. Two callers send a service token to the public listener today:
+  the batch CronJobs call port 9003 inside the cluster, and the operator
+  tools (the `hack/` commands such as `create-api-key`, which the test setup
+  also runs) go through the public address. They move first, to a listener
+  that the Ingress does not target and that does not set the header: the
+  gRPC listener, or a new one for callers that need the REST form. The tools
+  reach it from inside the cluster or through a port-forward. The tests
+  themselves use access tokens and are not affected.
+- **Report before refusing.** One release logs and counts the service and
+  delegated tokens that arrive through the public listener. A later release
+  refuses them, once the report is empty.
+
+This does not stop a pod inside the cluster from calling a service directly
+with a leaked token. That needs the network controls in §7.
+
 ### What a stolen token gives
 
 | | Today | Proposed |
@@ -461,17 +534,19 @@ left out before the system admin check.
 | Access token leaks on its own | Every organization of the user; can be traded for a refresh token through `SwitchOrganization` | Every organization of the user, until it expires |
 | Both tokens are stolen | Every organization of the user, renewable without limit | Every organization of the user, until the maximum sign-in age |
 | Role or system admin status is removed | Applies when the token expires | Applies on the next request |
-| A service token leaks | Full access for up to 100 years. The holder cannot be identified, and cancelling the token rotates the signing key, which signs out every user and replaces the token everywhere. | Full access until its ID is cancelled or it expires. The token names its service, and only that service gets a new one. |
+| A service token leaks | Full access for up to 100 years. The holder cannot be identified, and cancelling the token rotates the signing key, which signs out every user and replaces the token everywhere. | Full access from inside the cluster only, until the tokens of its service are cancelled or it expires, one year at most by default. The token names its service, and only that service gets a new one. |
+| The key that signs service tokens leaks | It is the key that signs user tokens. Replacing it signs out every user and replaces every service token. | With a service token key: full access until it is replaced, which replaces the service tokens only. Without one: as before. |
 | A service token is used to name a user as the editor | Any holder can, on any request, through the relay metadata | Not on a request of its own. A delegated token is issued only for a valid API key and names that key's maintainer. An indirect way remains, described below. |
 | A delegated token leaks | No such token exists | What the API key itself allows: the RPCs open to its role, in its environment or organization, as its maintainer, for at most 5 minutes |
 
-A leaked service token still gives full access until it is cancelled. That
-includes creating an API key with another user as its maintainer and then
-using the key through the public API, which acts as that user. Unlike the
-relay metadata, this leaves a record: creating the key is written to the
-audit log with the service token as the editor. What narrows a service token
-is outside this RFC: rules per service in RFC 0049, so that only the
-services that need to can manage API keys, and the network controls in §7.
+A leaked service token still gives full access to a holder inside the
+cluster until it is cancelled. That includes creating an API key with
+another user as its maintainer and then using the key through the public
+API, which acts as that user. Unlike the relay metadata, this leaves a
+record: creating the key is written to the audit log with the service token
+as the editor. What narrows a service token further is outside this RFC:
+rules per service in RFC 0049, so that only the services that need to can
+manage API keys, and the network controls in §7.
 
 ## 5. Alternatives Considered
 
@@ -506,7 +581,21 @@ services that need to can manage API keys, and the network controls in §7.
   passes through it.
 - **Signing the delegated token in the API service.** It saves the exchange
   call, but the signing key would have to be mounted in the API service,
-  which faces the internet. Today only the web deployment holds it.
+  which faces the internet. Only the web deployment needs it. The batch
+  deployment also mounts it today, without using it, and stops doing so
+  (§6, step 15).
+- **Cancelling service tokens by ID.** A list of cancelled `jti` values
+  cancels one token at a time. It needs the ID of the leaked token, grows
+  with every entry, and leaves a rotated token valid until it expires. A
+  time per service has none of these limits.
+- **A service token key required in every deployment.** Every installation
+  would need a second key pair, including those that run with the defaults.
+  Making it optional gives the separation to the deployments that want it.
+- **Issuing service tokens inside the cluster.** No operator would handle a
+  signing key, but a component in the cluster would have to hold the key and
+  be allowed to write Secrets. This RFC keeps tokens issued by the
+  generator; Kubernetes service account tokens are the longer-term direction
+  (§7).
 - **Forwarding the API key to the web services.** They could look the key up
   themselves, with no new token. The long-lived key would then travel to
   every service and its logs, where it is deliberately obfuscated today.
@@ -526,10 +615,15 @@ Split the user and service tokens:
 1. **Fix the system admin derivation.** Independent of everything else.
 2. **Read both forms.** The signer adds `sub` and `auth_time`. The verifier
    accepts tokens with or without them, and service tokens in the new and
-   the legacy form, and rejects the service token IDs listed as cancelled.
+   the legacy form. It rejects a service token issued before the time set
+   for its service, and checks service tokens against the service token key
+   when one is configured. The generator gains `--service` and `--ttl`, with
+   one year as the default for a token that names a service.
    `RefreshToken` enforces the maximum sign-in age. The service and demo
    tokens use the shared claims type, and every kind is signed and verified
-   through one path.
+   through one path. The next release rejects a refresh token without
+   `auth_time`, and is deployed no sooner than the refresh token lifetime
+   after this one.
 3. **Console, `organization_id` and `name`.** The console stops decoding the
    token and stops calling `SwitchOrganization`. Mark the RPC deprecated.
    The signer stops writing `organization_id` and `name` in the same
@@ -559,8 +653,12 @@ Give each service its own token:
 
 6. **Issue one token per service** once the release after step 2 is
    deployed. The release before step 2 rejects the new type; waiting one
-   release means a rollback lands on a version that accepts it. The legacy
-   token stays valid, and putting it back is the way to roll back further.
+   release means a rollback lands on a version that accepts it. The new
+   tokens last one year. From this release a service warns when its own
+   token is close to expiry, and the rotation steps are documented. A
+   deployment that wants a service token key configures it before issuing
+   the tokens. The legacy token stays valid, and putting it back is the way
+   to roll back further.
 7. **Accept the relay metadata from `api` only.** The legacy token may still
    relay until it is dropped.
 
@@ -595,11 +693,22 @@ Clean up:
     `pkg/role`, so a rollback target does not need them. The access token
     then moves to the shared claims type.
 14. **Drop the legacy service token** in a later release, announced in the
-    release notes.
-15. **Shorten the service token.** Services warn when their own token is
-    close to expiry, the rotation steps are documented, and the generator's
-    default lifetime is lowered to one year. Tokens already issued keep
-    their expiry.
+    release notes. A deployment can stop accepting it earlier by setting the
+    time for legacy tokens.
+
+Keep the signing key and the service tokens inside. These steps do not wait
+for the steps above:
+
+15. **Mount only the public key outside the web deployment.** The batch
+    chart mounts the whole key Secret and reads only `public.pem`. This step
+    depends on nothing else and can ship in any release.
+16. **Report service and delegated tokens on the public listener.** The
+    public listener marks what it forwards. The CronJobs and the operator
+    tools move to a listener that the Ingress does not target. The
+    interceptor logs and counts the service and delegated tokens that still
+    arrive through the public listener.
+17. **Refuse them** no earlier than one release after step 16, once the
+    report is empty.
 
 ## 7. Future Work
 
@@ -611,11 +720,11 @@ Clean up:
 - **Rules per service.** With a name in every service token, RFC 0049 can
   list the RPCs each service may call instead of giving all of them full
   access.
-- **Close the public service routes.** The public listener routes
-  `/bucketeer.<package>.<Service>` paths straight to the services. Once the
-  tests, operator tools and CronJobs use the REST gateway or the internal
-  port, those routes can be removed, and a service token can be refused on
-  the public listener.
+- **Remove the public service routes.** The public listener routes
+  `/bucketeer.<package>.<Service>` paths straight to the services. After
+  step 17 of §6 they no longer accept a service token, but they still offer
+  every RPC to a user token next to the REST gateway. They can be removed
+  once nothing outside the cluster uses them.
 - **Restrict the service ports.** The Go servers listen on every interface
   and the charts define no NetworkPolicy, so nothing in the charts stops
   another pod from reaching them without passing Envoy.
@@ -643,3 +752,5 @@ Clean up:
    verifier, or in Table 2 from the start.
 5. PR #2061 (password login) changes the same auth service and has not been
    checked against this design.
+6. How the operator tools reach a listener inside the cluster (§6, step
+   16): through a port-forward, or by running inside the cluster.
