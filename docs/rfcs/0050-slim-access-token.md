@@ -529,7 +529,7 @@ refused when they arrive through the public listener:
   token on a request that carries the header. Access and demo tokens are not
   affected.
 - **Every way in.** A request from the public listener reaches a token check
-  by three paths, and the mark has to arrive on each:
+  by four paths, and the rule has to hold on each:
   - *Direct gRPC:* the listener routes to the service, and the interceptor
     sees the header.
   - *The REST gateway:* it forwards only the `authorization` header to the
@@ -537,6 +537,14 @@ refused when they arrive through the public listener:
   - *HTTP handlers that verify the token themselves:* the AI chat endpoint
     does not pass the gRPC interceptor. It makes the same check, and so does
     any handler added later.
+  - *The auth service:* its server has no token interceptor, because signing
+    in needs no token. Two of its RPCs verify a token themselves.
+    `SwitchOrganization` takes an access token in the request body. It
+    accepts a user's access token only and refuses a service token in either
+    form, wherever the request comes from, so a leaked service token cannot
+    be traded for user tokens that the public listener accepts. The
+    delegated token exchange requires the `api` service token and checks the
+    mark like the interceptor.
 - **Callers inside the cluster.** Calls between services use the gRPC
   listener (port 9000), which the Ingress does not target, and are not
   affected. Two callers send a service token to the public listener today:
@@ -548,11 +556,12 @@ refused when they arrive through the public listener:
   reach it from inside the cluster or through a port-forward. The tests
   themselves use access tokens and are not affected.
 - **Report before refusing.** One release logs and counts the service and
-  delegated tokens that arrive through the public listener, on all three
-  paths. A later release refuses them, once the report is empty. A test
-  sends a service token through each path of the public listener and
-  expects it to be reported, then refused, so a path that loses the mark
-  is found before the report is trusted.
+  delegated tokens that arrive through the public listener, on every path.
+  A later release refuses them, once the report is empty. A test sends a
+  service token through each path of the public listener and expects it to
+  be reported, then refused, so a path that loses the mark is found before
+  the report is trusted. Another test gives a service token to
+  `SwitchOrganization` and expects it to be refused.
 
 This does not stop a pod inside the cluster from calling a service directly
 with a leaked token. That needs the network controls in §7.
@@ -650,8 +659,9 @@ Split the user and service tokens:
    and checks service tokens against the service token key when one is
    configured. The generator gains `--service` and `--ttl`, with one year as
    the default for a token that names a service. `RefreshToken` and
-   `SwitchOrganization` enforce the maximum sign-in age. The service and
-   demo tokens use the shared claims type, and every kind is signed and
+   `SwitchOrganization` enforce the maximum sign-in age, and
+   `SwitchOrganization` refuses a service token in either form. The service
+   and demo tokens use the shared claims type, and every kind is signed and
    verified through one path. The next release rejects a refresh token, and
    an access token given to `SwitchOrganization`, without `auth_time`. It is
    deployed no sooner than the refresh token lifetime after this one.
@@ -735,10 +745,11 @@ for the steps above:
     depends on nothing else and can ship in any release.
 16. **Report service and delegated tokens on the public listener.** The
     public listener marks what it forwards, the REST gateway forwards the
-    mark, and the AI chat endpoint checks it like the interceptor. The
-    CronJobs and the operator tools move to a listener that the Ingress does
-    not target. The service and delegated tokens that still arrive through
-    the public listener are logged and counted on every path.
+    mark, and the AI chat endpoint and the delegated token exchange check it
+    like the interceptor. The CronJobs and the operator tools move to a
+    listener that the Ingress does not target. The service and delegated
+    tokens that still arrive through the public listener are logged and
+    counted on every path.
 17. **Refuse them** no earlier than one release after step 16, once the
     report is empty.
 
