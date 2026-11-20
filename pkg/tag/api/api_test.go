@@ -304,6 +304,14 @@ func TestListTagsMySQL(t *testing.T) {
 		expected    *proto.ListTagsResponse
 	}{
 		{
+			desc:        "errMissingEnvironmentOrOrganization",
+			service:     createTagService(mockController),
+			setup:       func(s *TagService) {},
+			req:         &proto.ListTagsRequest{PageSize: 10, Cursor: "0"},
+			expectedErr: statusMissingEnvironmentOrOrganization.Err(),
+			expected:    nil,
+		},
+		{
 			desc:        "errPermissionDenied",
 			service:     createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			setup:       func(s *TagService) {},

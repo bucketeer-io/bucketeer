@@ -291,6 +291,9 @@ func (s *auditlogService) ListFeatureHistory(
 	req *proto.ListFeatureHistoryRequest,
 ) (*proto.ListFeatureHistoryResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
+	if req.EnvironmentId == "" {
+		return nil, statusMissingEnvironmentID.Err()
+	}
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
 		req.EnvironmentId)

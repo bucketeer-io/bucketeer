@@ -81,6 +81,9 @@ func (s *auditLogStorage) GetAuditLog(
 	ctx context.Context,
 	id, environmentID, organizationID string,
 ) (*proto.AuditLog, error) {
+	if environmentID == "" && organizationID == "" {
+		return nil, v2als.ErrMissingScope
+	}
 	scopeFilters, orFilters := auditLogScopeFilters(environmentID, organizationID)
 	filters := append([]*mysqlstorage.FilterV2{
 		{Column: "id", Operator: mysqlstorage.OperatorEqual, Value: id},
@@ -186,6 +189,9 @@ func (s *auditLogStorage) ListAuditLogs(
 	ctx context.Context,
 	params v2als.ListAuditLogsParams,
 ) ([]*proto.AuditLog, int, int64, error) {
+	if params.EnvironmentID == "" && params.OrganizationID == "" {
+		return nil, 0, 0, v2als.ErrMissingScope
+	}
 	options, err := listAuditLogsOptionsFromParams(params)
 	if err != nil {
 		return nil, 0, 0, err

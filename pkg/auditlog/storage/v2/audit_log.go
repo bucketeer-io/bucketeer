@@ -28,6 +28,7 @@ var (
 	ErrAuditLogAlreadyExists = pkgErr.NewErrorAlreadyExists(pkgErr.AuditlogPackageName, "auditlog already exists")
 	ErrAuditLogNotFound      = pkgErr.NewErrorNotFound(pkgErr.AuditlogPackageName, "auditlog not found", "auditlog")
 	ErrInvalidOrderBy        = errors.New("auditlog storage: invalid order by")
+	ErrMissingScope          = errors.New("auditlog storage: missing environment_id or organization_id")
 )
 
 // ListAuditLogsParams carries list intent for ListAuditLogs without database-specific types.
