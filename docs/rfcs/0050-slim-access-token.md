@@ -221,9 +221,13 @@ type ServiceToken struct {
   new token's `iat`. Users stay signed in and the other services are not
   touched. One value per service covers every copy of the old token, needs
   no token ID and never grows. Rotation is the same two actions, so it also
-  ends the old token. A separate value applies to legacy tokens, which carry
-  no name. `jti` stays as the identifier of one token in logs and is not
-  used to cancel.
+  ends the old token. The order matters: the time is set only after every
+  pod of that service runs with the new token. Both tokens are valid until
+  then, so a rolling restart interrupts no call; setting the time earlier
+  rejects the calls of the pods that still hold the old token, which is the
+  price of cutting off a leaked token at once. A separate value applies to
+  legacy tokens, which carry no name. `jti` stays as the identifier of one
+  token in logs and is not used to cancel.
 - **Lifetime.** The generator gains a `--ttl` flag. A token issued with
   `--service` lasts one year by default, so the tokens issued in step 6 of
   §6 do not inherit today's 100 years. A service reads its token at startup,
@@ -244,7 +248,10 @@ type ServiceToken struct {
     have to be stored in the cluster, and the key that signs user tokens no
     longer has to leave the web deployment to issue a service token.
   - Replacing it means issuing the service tokens again. Users stay signed
-    in.
+    in. A verifier accepts more than one service token public key, so the
+    key is replaced without interrupting calls between services: add the new
+    public key to every verifier, issue and deploy the new tokens, then
+    remove the old public key.
   - It does not limit what a leaked key allows: whoever holds it can sign a
     service token with full access, so it is protected like the shared key.
   - A deployment configures it before issuing the per-service tokens.
