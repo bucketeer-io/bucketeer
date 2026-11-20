@@ -86,14 +86,14 @@ var maintainerReads = map[string]maintainerReadScope{
 
 // maintainerAccount is the maintainer's account in the key's organization, nil when there is none.
 type maintainerAccount struct {
-	account   *accountproto.AccountV2
-	expiresAt time.Time
-	logged    atomic.Bool
+	account *accountproto.AccountV2
+	logged  atomic.Bool
 }
 
 // reportMaintainerRead counts a public API read that would be denied as the
-// API key's maintainer (RFC 0050 step 11). It runs off the response path;
-// the lookup is bounded by singleflightFetchTimeout.
+// API key's maintainer (RFC 0050 step 11). A cached maintainer is judged in
+// place; otherwise the lookup runs once per maintainer off the response path
+// and counts the read that started it.
 func (s *grpcGatewayService) reportMaintainerRead(
 	ctx context.Context,
 	envAPIKey *accountproto.EnvironmentAPIKey,
@@ -103,25 +103,58 @@ func (s *grpcGatewayService) reportMaintainerRead(
 	if !ok {
 		return
 	}
-	cached, err := s.getMaintainerAccount(ctx, envAPIKey)
-	if err != nil {
-		s.logger.Warn("Failed to check the API key maintainer",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
-				zap.String("method", method),
-			)...,
-		)
+	key := maintainerAccountCacheKey(envAPIKey)
+	if entry := s.cachedMaintainerAccount(key); entry != nil {
+		s.countMaintainerRead(ctx, envAPIKey, entry, method, scope)
 		return
 	}
-	reason := maintainerReadDenial(cached.account, scope, envAPIKey.Environment.Id)
+	// The result is not awaited: singleflight runs one lookup per key and the
+	// reads that arrive meanwhile are left to the next one.
+	s.flightgroup.DoChan(key, func() (interface{}, error) {
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), singleflightFetchTimeout)
+		defer cancel()
+		// A lookup that finished while this read was on its way already filled the cache.
+		entry := s.cachedMaintainerAccount(key)
+		if entry == nil {
+			var err error
+			if entry, err = s.lookupMaintainerAccount(ctx, envAPIKey); err != nil {
+				s.logger.Warn("Failed to check the API key maintainer",
+					log.FieldsFromIncomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
+						zap.String("method", method),
+					)...,
+				)
+				return nil, err
+			}
+			if err := s.maintainerAccountCache.Put(key, entry, maintainerReadTTL); err != nil {
+				return nil, err
+			}
+		}
+		s.countMaintainerRead(ctx, envAPIKey, entry, method, scope)
+		return nil, nil
+	})
+}
+
+func maintainerAccountCacheKey(envAPIKey *accountproto.EnvironmentAPIKey) string {
+	return "maintainer-read:" + envAPIKey.Environment.OrganizationId + ":" + envAPIKey.ApiKey.Maintainer
+}
+
+func (s *grpcGatewayService) countMaintainerRead(
+	ctx context.Context,
+	envAPIKey *accountproto.EnvironmentAPIKey,
+	entry *maintainerAccount,
+	method string,
+	scope maintainerReadScope,
+) {
+	reason := maintainerReadDenial(entry.account, scope, envAPIKey.Environment.Id)
 	if reason == "" {
 		return
 	}
 	maintainerReadDeniedCounter.WithLabelValues(
 		envAPIKey.Environment.OrganizationId, envAPIKey.Environment.Id, method, reason,
 	).Inc()
-	if cached.logged.CompareAndSwap(false, true) {
+	if entry.logged.CompareAndSwap(false, true) {
 		s.logger.Warn("Public API read would be denied as the API key maintainer",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.String("apiKey", obfuscateString(envAPIKey.ApiKey.Id, obfuscateAPIKeyLength)),
@@ -161,63 +194,32 @@ func maintainerReadDenial(
 	return maintainerReadReasonNoEnvironmentRole
 }
 
-func (s *grpcGatewayService) getMaintainerAccount(
+func (s *grpcGatewayService) lookupMaintainerAccount(
 	ctx context.Context,
 	envAPIKey *accountproto.EnvironmentAPIKey,
 ) (*maintainerAccount, error) {
-	keyID := envAPIKey.ApiKey.Id
-	if entry := s.cachedMaintainerAccount(keyID); entry != nil {
-		return entry, nil
-	}
-	v, err := s.singleflightFetch(ctx, "maintainer-read:"+keyID, func(ctx context.Context) (interface{}, error) {
-		// A fetch that finished while this caller was waiting already filled the cache.
-		if entry := s.cachedMaintainerAccount(keyID); entry != nil {
-			return entry, nil
-		}
-		resp, err := s.accountClient.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-			Email:          envAPIKey.ApiKey.Maintainer,
-			OrganizationId: envAPIKey.Environment.OrganizationId,
-		})
-		entry := &maintainerAccount{expiresAt: time.Now().Add(maintainerReadTTL)}
-		switch status.Code(err) {
-		case codes.OK:
-			entry.account = resp.Account
-		case codes.NotFound, codes.InvalidArgument:
-			// An empty or malformed maintainer has no account either.
-		default:
-			return nil, err
-		}
-		s.maintainerAccountCache.Store(keyID, entry)
-		s.evictExpiredMaintainerAccounts()
-		return entry, nil
+	resp, err := s.accountClient.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          envAPIKey.ApiKey.Maintainer,
+		OrganizationId: envAPIKey.Environment.OrganizationId,
 	})
-	if err != nil {
+	switch status.Code(err) {
+	case codes.OK:
+		return &maintainerAccount{account: resp.Account}, nil
+	case codes.NotFound, codes.InvalidArgument:
+		// An empty or malformed maintainer has no account either.
+		return &maintainerAccount{}, nil
+	default:
 		return nil, err
 	}
-	return v.(*maintainerAccount), nil
 }
 
-func (s *grpcGatewayService) cachedMaintainerAccount(keyID string) *maintainerAccount {
-	cached, ok := s.maintainerAccountCache.Load(keyID)
-	if !ok {
+func (s *grpcGatewayService) cachedMaintainerAccount(key string) *maintainerAccount {
+	cached, err := s.maintainerAccountCache.Get(key)
+	if err != nil {
 		return nil
 	}
-	if entry := cached.(*maintainerAccount); time.Now().Before(entry.expiresAt) {
-		return entry
-	}
-	return nil
-}
-
-// evictExpiredMaintainerAccounts drops the expired entries, so the cache
-// follows the keys in use. An entry replaced meanwhile is left alone.
-func (s *grpcGatewayService) evictExpiredMaintainerAccounts() {
-	now := time.Now()
-	s.maintainerAccountCache.Range(func(key, value any) bool {
-		if entry := value.(*maintainerAccount); !now.Before(entry.expiresAt) {
-			s.maintainerAccountCache.CompareAndDelete(key, value)
-		}
-		return true
-	})
+	entry, _ := cached.(*maintainerAccount)
+	return entry
 }
 
 func methodName(ctx context.Context) string {

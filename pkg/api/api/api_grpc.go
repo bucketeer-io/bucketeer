@@ -268,7 +268,7 @@ type grpcGatewayService struct {
 	environmentAPIKeyCache      cachev3.EnvironmentAPIKeyCache
 	environmentAPIKeyRedisCache cachev3.EnvironmentAPIKeyCache
 	apiKeyLastUsedInfoCacher    sync.Map
-	maintainerAccountCache      sync.Map
+	maintainerAccountCache      cache.Cache
 	flightgroup                 singleflight.Group
 	metricsJobs                 chan metricsJob
 	metricsPoolWg               sync.WaitGroup
@@ -335,6 +335,7 @@ func NewGrpcGatewayService(
 		segmentUsersCache:           cachev3.NewSegmentUsersCache(inMemoryCache, options.segmentUsersMemoryCacheTTL),
 		segmentUsersRedisCache:      cachev3.NewSegmentUsersCache(redisV3Cache, 0),
 		environmentAPIKeyCache:      cachev3.NewEnvironmentAPIKeyCache(inMemoryCache, options.apiKeyMemoryCacheTTL),
+		maintainerAccountCache:      inMemoryCache,
 		environmentAPIKeyRedisCache: cachev3.NewEnvironmentAPIKeyCache(redisV3Cache, 0),
 		apiKeyLastUsedInfoCacher:    sync.Map{},
 		opts:                        &options,
@@ -2043,7 +2044,7 @@ func (s *grpcGatewayService) checkRequest(
 	}
 
 	go s.cacheAPIKeyLastUsedAt(envAPIKey, time.Now().Unix())
-	go s.reportMaintainerRead(context.WithoutCancel(ctx), envAPIKey)
+	s.reportMaintainerRead(ctx, envAPIKey)
 
 	return envAPIKey, nil
 }

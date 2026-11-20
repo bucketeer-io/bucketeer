@@ -17,7 +17,6 @@ package api
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -118,20 +117,27 @@ func TestMaintainerReadDenial(t *testing.T) {
 	}
 }
 
+func testEnvAPIKey(id, maintainer string) *accountproto.EnvironmentAPIKey {
+	return &accountproto.EnvironmentAPIKey{
+		ApiKey:      &accountproto.APIKey{Id: id, Maintainer: maintainer},
+		Environment: &environmentproto.EnvironmentV2{Id: "env-" + id, OrganizationId: "org-" + id},
+	}
+}
+
+func countedMaintainerReads(id, method, reason string) float64 {
+	return testutil.ToFloat64(maintainerReadDeniedCounter.WithLabelValues("org-"+id, "env-"+id, method, reason))
+}
+
+// waitMaintainerLookup returns once no lookup is in flight for the maintainer.
+func waitMaintainerLookup(gs *grpcGatewayService, envAPIKey *accountproto.EnvironmentAPIKey) {
+	_, _, _ = gs.flightgroup.Do(maintainerAccountCacheKey(envAPIKey), func() (interface{}, error) { return nil, nil })
+}
+
 func TestReportMaintainerRead(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	envAPIKey := func(id string) *accountproto.EnvironmentAPIKey {
-		return &accountproto.EnvironmentAPIKey{
-			ApiKey:      &accountproto.APIKey{Id: id, Maintainer: "maintainer@example.com"},
-			Environment: &environmentproto.EnvironmentV2{Id: "env-" + id, OrganizationId: "org-" + id},
-		}
-	}
-	counted := func(id, method, reason string) float64 {
-		return testutil.ToFloat64(maintainerReadDeniedCounter.WithLabelValues("org-"+id, "env-"+id, method, reason))
-	}
 	patterns := []struct {
 		desc     string
 		keyID    string
@@ -233,36 +239,39 @@ func TestReportMaintainerRead(t *testing.T) {
 				p.setup(gs)
 			}
 			ctx := metadata.NewIncomingContext(contextWithMethod(p.method), metadata.MD{})
+			envAPIKey := testEnvAPIKey(p.keyID, "maintainer@example.com")
 			for i := 0; i < p.calls; i++ {
-				gs.reportMaintainerRead(ctx, envAPIKey(p.keyID))
+				gs.reportMaintainerRead(ctx, envAPIKey)
+				if _, ok := maintainerReads[p.method]; ok {
+					waitMaintainerLookup(gs, envAPIKey)
+				}
 			}
-			assert.Equal(t, p.expected, counted(p.keyID, p.method, p.reason))
+			assert.Equal(t, p.expected, countedMaintainerReads(p.keyID, p.method, p.reason))
 		})
 	}
 }
 
-func TestEvictExpiredMaintainerAccounts(t *testing.T) {
+func TestReportMaintainerReadAfterMaintainerChange(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
 	gs := newGrpcGatewayServiceWithMock(t, mockController)
-	gs.maintainerAccountCache.Store("expired", &maintainerAccount{expiresAt: time.Now().Add(-time.Second)})
-	gs.maintainerAccountCache.Store("valid", &maintainerAccount{expiresAt: time.Now().Add(maintainerReadTTL)})
-	gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2(
-		gomock.Any(), gomock.Any(),
+	client := gs.accountClient.(*accountclientmock.MockClient)
+	client.EXPECT().GetAccountV2(
+		gomock.Any(), &accountproto.GetAccountV2Request{Email: "old@example.com", OrganizationId: "org-changed"},
 	).Return(nil, status.Error(codes.NotFound, "not found")).Times(1)
+	client.EXPECT().GetAccountV2(
+		gomock.Any(), &accountproto.GetAccountV2Request{Email: "new@example.com", OrganizationId: "org-changed"},
+	).Return(&accountproto.GetAccountV2Response{Account: &accountproto.AccountV2{
+		OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+	}}, nil).Times(1)
 
 	ctx := metadata.NewIncomingContext(contextWithMethod("GetFeature"), metadata.MD{})
-	gs.reportMaintainerRead(ctx, &accountproto.EnvironmentAPIKey{
-		ApiKey:      &accountproto.APIKey{Id: "new", Maintainer: "maintainer@example.com"},
-		Environment: &environmentproto.EnvironmentV2{Id: "env", OrganizationId: "org"},
-	})
-
-	_, ok := gs.maintainerAccountCache.Load("expired")
-	assert.False(t, ok)
-	_, ok = gs.maintainerAccountCache.Load("valid")
-	assert.True(t, ok)
-	_, ok = gs.maintainerAccountCache.Load("new")
-	assert.True(t, ok)
+	for _, maintainer := range []string{"old@example.com", "new@example.com"} {
+		envAPIKey := testEnvAPIKey("changed", maintainer)
+		gs.reportMaintainerRead(ctx, envAPIKey)
+		waitMaintainerLookup(gs, envAPIKey)
+	}
+	assert.Equal(t, float64(1), countedMaintainerReads("changed", "GetFeature", maintainerReadReasonNoAccount))
 }
