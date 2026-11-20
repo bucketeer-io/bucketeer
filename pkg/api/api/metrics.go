@@ -259,6 +259,13 @@ var (
 			"project_id", "project_url_code", "environment_id", "environment_url_code",
 			"source_id", "sdk_version", "response_type",
 		})
+	maintainerReadDeniedCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_maintainer_read_denied_total",
+			Help:      "Total number of public API reads that would be denied as the API key maintainer",
+		}, []string{"organization_id", "environment_id", "method", "reason"})
 	requestTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -392,6 +399,7 @@ func registerMetrics(r metrics.Registerer) {
 			getFeatureFlagsCounter,
 			getSegmentUsersCounter,
 			requestTotal,
+			maintainerReadDeniedCounter,
 			sdkGetEvaluationsLatencyHistogram,
 			sdkGetEvaluationsSizeHistogram,
 			sdkTimeoutErrorCounter,

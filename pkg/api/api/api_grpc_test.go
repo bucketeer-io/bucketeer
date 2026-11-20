@@ -40,6 +40,7 @@ import (
 	auditlogclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/client/mock"
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
+	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	coderefclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/client/mock"
 	environmentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
@@ -4571,6 +4572,7 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 		segmentUsersRedisCache:      redisSegmentUsersCache,
 		environmentAPIKeyCache:      cachev3mock.NewMockEnvironmentAPIKeyCache(mockController),
 		environmentAPIKeyRedisCache: redisAPIKeyCache,
+		maintainerAccountCache:      cachev3.NewInMemoryCache(),
 		apiKeyLastUsedInfoCacher:    sync.Map{},
 		opts:                        &defaultOptions,
 		logger:                      logger,
