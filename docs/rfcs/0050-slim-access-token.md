@@ -72,7 +72,8 @@ token side of that change.
 
 Goals
 
-- The access token says who the caller is and nothing else.
+- The access token says who the caller is and when they signed in, and
+  nothing else.
 - Service identities get their own token type. User tokens carry no
   privilege flags.
 - Each service has its own token, which names the service and can be
@@ -156,6 +157,7 @@ The access token changes as follows; the other two are described in §4.
 | `sub` | no | the email |
 | `email` | yes | yes |
 | `token_use` | `access` | `access` |
+| `auth_time` | no | the time of the original sign-in |
 | `organization_id` | yes | removed (done in PR #3021) |
 | `name` | yes | removed (done in PR #3021) |
 | `is_system_admin` | yes | removed |
@@ -173,6 +175,7 @@ type AccessToken struct {
 	Expiry   time.Time `json:"exp"`
 	IssuedAt time.Time `json:"iat"`
 	Email    string    `json:"email"`
+	AuthTime time.Time `json:"auth_time"`
 	TokenUse string    `json:"token_use"`
 }
 ```
@@ -181,6 +184,11 @@ type AccessToken struct {
 ID if a user table is added. `email` stays because verifiers of the previous
 version require it and handlers read it. There is no `jti`: nothing stores or
 looks up user tokens.
+
+`auth_time` is the time of the original sign-in, copied unchanged on every
+refresh. It is not used to authorize. It is there because
+`SwitchOrganization` issues a refresh token from an access token, and
+without it that RPC would start the sign-in age again (see Refresh token).
 
 ### Service token
 
@@ -375,6 +383,15 @@ token without `auth_time` is rejected and the user signs in again. That
 release is deployed no sooner than the refresh token lifetime after the
 first one, so the tokens issued before the change have expired by then.
 
+`SwitchOrganization` also returns a refresh token, and it is given only an
+access token. While the RPC exists (§6, step 4) it follows the same rules:
+it copies `auth_time` from the access token into the tokens it returns, and
+rejects the request when `auth_time` is older than the maximum sign-in age.
+An access token without `auth_time` is handled like a refresh token without
+it: treated as signed in at its own `iat` in the first release, and rejected
+from the next. Without this, a stolen refresh token could be refreshed and
+the new access token traded for a refresh token with a new sign-in time.
+
 The maximum sign-in age is a new option next to `accessTokenTTL` and
 `refreshTokenTTL`.
 
@@ -394,6 +411,7 @@ type Claims struct {
 	IssuedAt time.Time `json:"iat"`
 	Email    string    `json:"email,omitempty"`
 	ID       string    `json:"jti,omitempty"`
+	AuthTime time.Time `json:"auth_time,omitempty"` // access tokens only
 	TokenUse string    `json:"token_use"`
 }
 ```
@@ -468,7 +486,7 @@ sequenceDiagram
 
     C->>A: ExchangeToken with the Google code
     A->>D: Accounts of the email
-    A-->>C: Access token (email) and refresh token (email, auth_time)
+    A-->>C: Access token and refresh token (email, auth_time)
     Note over C: The selected organization is kept in local storage
     C->>W: Request with organization_id or environment_id
     W->>D: Account of the email in that organization
@@ -510,6 +528,15 @@ refused when they arrive through the public listener:
   the gRPC server refuses a service token, in either form, and a delegated
   token on a request that carries the header. Access and demo tokens are not
   affected.
+- **Every way in.** A request from the public listener reaches a token check
+  by three paths, and the mark has to arrive on each:
+  - *Direct gRPC:* the listener routes to the service, and the interceptor
+    sees the header.
+  - *The REST gateway:* it forwards only the `authorization` header to the
+    services today, so it would drop the mark. It forwards the mark as well.
+  - *HTTP handlers that verify the token themselves:* the AI chat endpoint
+    does not pass the gRPC interceptor. It makes the same check, and so does
+    any handler added later.
 - **Callers inside the cluster.** Calls between services use the gRPC
   listener (port 9000), which the Ingress does not target, and are not
   affected. Two callers send a service token to the public listener today:
@@ -521,8 +548,11 @@ refused when they arrive through the public listener:
   reach it from inside the cluster or through a port-forward. The tests
   themselves use access tokens and are not affected.
 - **Report before refusing.** One release logs and counts the service and
-  delegated tokens that arrive through the public listener. A later release
-  refuses them, once the report is empty.
+  delegated tokens that arrive through the public listener, on all three
+  paths. A later release refuses them, once the report is empty. A test
+  sends a service token through each path of the public listener and
+  expects it to be reported, then refused, so a path that loses the mark
+  is found before the report is trusted.
 
 This does not stop a pod inside the cluster from calling a service directly
 with a leaked token. That needs the network controls in §7.
@@ -531,7 +561,7 @@ with a leaked token. That needs the network controls in §7.
 
 | | Today | Proposed |
 | --- | --- | --- |
-| Access token leaks on its own | Every organization of the user; can be traded for a refresh token through `SwitchOrganization` | Every organization of the user, until it expires |
+| Access token leaks on its own | Every organization of the user; can be traded for a refresh token through `SwitchOrganization` | Every organization of the user, until it expires. While `SwitchOrganization` exists it can still be traded for a refresh token, which now ends at the maximum sign-in age. |
 | Both tokens are stolen | Every organization of the user, renewable without limit | Every organization of the user, until the maximum sign-in age |
 | Role or system admin status is removed | Applies when the token expires | Applies on the next request |
 | A service token leaks | Full access for up to 100 years. The holder cannot be identified, and cancelling the token rotates the signing key, which signs out every user and replaces the token everywhere. | Full access from inside the cluster only, until the tokens of its service are cancelled or it expires, one year at most by default. The token names its service, and only that service gets a new one. |
@@ -613,17 +643,18 @@ form is accepted one release before anything sends it. `organization_id` and
 Split the user and service tokens:
 
 1. **Fix the system admin derivation.** Independent of everything else.
-2. **Read both forms.** The signer adds `sub` and `auth_time`. The verifier
-   accepts tokens with or without them, and service tokens in the new and
-   the legacy form. It rejects a service token issued before the time set
-   for its service, and checks service tokens against the service token key
-   when one is configured. The generator gains `--service` and `--ttl`, with
-   one year as the default for a token that names a service.
-   `RefreshToken` enforces the maximum sign-in age. The service and demo
-   tokens use the shared claims type, and every kind is signed and verified
-   through one path. The next release rejects a refresh token without
-   `auth_time`, and is deployed no sooner than the refresh token lifetime
-   after this one.
+2. **Read both forms.** The signer adds `sub` to the access token and
+   `auth_time` to the access and refresh tokens. The verifier accepts tokens
+   with or without them, and service tokens in the new and the legacy form.
+   It rejects a service token issued before the time set for its service,
+   and checks service tokens against the service token key when one is
+   configured. The generator gains `--service` and `--ttl`, with one year as
+   the default for a token that names a service. `RefreshToken` and
+   `SwitchOrganization` enforce the maximum sign-in age. The service and
+   demo tokens use the shared claims type, and every kind is signed and
+   verified through one path. The next release rejects a refresh token, and
+   an access token given to `SwitchOrganization`, without `auth_time`. It is
+   deployed no sooner than the refresh token lifetime after this one.
 3. **Console, `organization_id` and `name`.** The console stops decoding the
    token and stops calling `SwitchOrganization`. Mark the RPC deprecated.
    The signer stops writing `organization_id` and `name` in the same
@@ -703,10 +734,11 @@ for the steps above:
     chart mounts the whole key Secret and reads only `public.pem`. This step
     depends on nothing else and can ship in any release.
 16. **Report service and delegated tokens on the public listener.** The
-    public listener marks what it forwards. The CronJobs and the operator
-    tools move to a listener that the Ingress does not target. The
-    interceptor logs and counts the service and delegated tokens that still
-    arrive through the public listener.
+    public listener marks what it forwards, the REST gateway forwards the
+    mark, and the AI chat endpoint checks it like the interceptor. The
+    CronJobs and the operator tools move to a listener that the Ingress does
+    not target. The service and delegated tokens that still arrive through
+    the public listener are logged and counted on every path.
 17. **Refuse them** no earlier than one release after step 16, once the
     report is empty.
 
