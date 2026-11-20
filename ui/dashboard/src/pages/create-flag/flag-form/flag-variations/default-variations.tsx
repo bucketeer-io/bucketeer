@@ -3,24 +3,27 @@ import { Trans } from 'react-i18next';
 import { getLanguage, Language, useTranslation } from 'i18n';
 import { FeatureVariation } from '@types';
 import { FlagFormSchema } from 'pages/create-flag/form-schema';
-import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Dropdown from 'components/dropdown';
 import Form from 'components/form';
+import VariationLabel from 'elements/variation-label';
 
 const makeVariationTrigger = (
   variations: FeatureVariation[],
   selectedId: string,
-  fallbackLabel: (index: number) => string
+  fallbackLabel: (index: number) => string,
+  idPrefix: string
 ) => {
   const idx = variations?.findIndex(v => v.id === selectedId) ?? -1;
   if (idx < 0) return undefined;
   const variation = variations[idx];
 
   return (
-    <div className="flex items-center gap-x-2 w-0 flex-1 text-gray-700 typo-para-medium">
-      <FlagVariationPolygon index={idx} />
-      <p className="truncate">{variation.name || fallbackLabel(idx)}</p>
-    </div>
+    <VariationLabel
+      label={variation.name || fallbackLabel(idx)}
+      index={idx}
+      className="w-0 flex-1"
+      idPrefix={idPrefix}
+    />
   );
 };
 
@@ -34,12 +37,14 @@ const DefaultVariations = () => {
     currentVariations?.map((item, index) => ({
       value: item.id,
       label: (
-        <div className="flex items-center gap-x-2 text-gray-700 typo-para-medium">
-          <FlagVariationPolygon index={index} />
-          {item.name || t('feature-flags.variation', { index: index + 1 })}
-        </div>
+        <VariationLabel
+          label={
+            item.name || t('feature-flags.variation', { index: index + 1 })
+          }
+          index={index}
+        />
       )
-    })) ?? [];
+    })) || [];
 
   const fallbackLabel = (index: number) =>
     t('feature-flags.variation', { index: index + 1 });
@@ -72,7 +77,8 @@ const DefaultVariations = () => {
                   trigger={makeVariationTrigger(
                     currentVariations,
                     field.value,
-                    fallbackLabel
+                    fallbackLabel,
+                    'default-on-variation-trigger'
                   )}
                 />
               </Form.Control>
@@ -107,7 +113,8 @@ const DefaultVariations = () => {
                   trigger={makeVariationTrigger(
                     currentVariations,
                     field.value,
-                    fallbackLabel
+                    fallbackLabel,
+                    'default-off-variation-trigger'
                   )}
                 />
               </Form.Control>
