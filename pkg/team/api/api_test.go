@@ -17,7 +17,6 @@ package api
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -26,15 +25,15 @@ import (
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/team/storage"
 	teamstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/team/storage/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/team"
 )
 
@@ -62,7 +61,7 @@ func TestTeamService_CreateTeam(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"en"},
 	})
@@ -74,15 +73,6 @@ func TestTeamService_CreateTeam(t *testing.T) {
 		req         *proto.CreateTeamRequest
 		expectedErr error
 	}{
-		{
-			desc: "err: unauthenticated",
-			ctx:  context.TODO(),
-			req: &proto.CreateTeamRequest{
-				OrganizationId: "ns0",
-				Name:           "test-team",
-			},
-			expectedErr: statusUnauthenticated.Err(),
-		},
 		{
 			desc: "err: ErrNameRequired",
 			ctx:  ctx,
@@ -172,7 +162,7 @@ func TestTeamService_ListTeams(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"en"},
 	})
@@ -185,15 +175,6 @@ func TestTeamService_ListTeams(t *testing.T) {
 		expectedRes *proto.ListTeamsResponse
 		expectedErr error
 	}{
-		{
-			desc: "err: unauthenticated",
-			ctx:  context.TODO(),
-			req: &proto.ListTeamsRequest{
-				OrganizationId: "ns0",
-			},
-			expectedRes: nil,
-			expectedErr: statusUnauthenticated.Err(),
-		},
 		{
 			desc: "err: invalid cursor",
 			ctx:  ctx,
@@ -290,7 +271,7 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"en"},
 	})
@@ -303,16 +284,6 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 		expectedRes *proto.DeleteTeamResponse
 		expectedErr error
 	}{
-		{
-			desc: "err: unauthenticated",
-			ctx:  context.TODO(),
-			req: &proto.DeleteTeamRequest{
-				OrganizationId: "ns0",
-				Id:             "team1",
-			},
-			expectedRes: nil,
-			expectedErr: statusUnauthenticated.Err(),
-		},
 		{
 			desc: "err: team id required",
 			ctx:  ctx,
@@ -532,13 +503,6 @@ func TestTeamService_DeleteTeam(t *testing.T) {
 func createTeamService(c *gomock.Controller) *TeamService {
 	dbClientMock := databasemock.NewMockClient(c)
 	accountClientMock := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountV2Response{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-		},
-	}
-	accountClientMock.EXPECT().GetAccountV2(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	p := publishermock.NewMockPublisher(c)
 	logger := zap.NewNop()
 	return &TeamService{
@@ -553,16 +517,8 @@ func createTeamService(c *gomock.Controller) *TeamService {
 	}
 }
 
-func createContextWithToken(t *testing.T) context.Context {
+// createContextWithEditor is a context after the authz interceptor allowed the request.
+func createContextWithEditor(t *testing.T) context.Context {
 	t.Helper()
-	accessToken := &token.AccessToken{
-		Issuer:        "issuer",
-		Audience:      "audience",
-		Expiry:        time.Now().AddDate(100, 0, 0),
-		IssuedAt:      time.Now(),
-		Email:         "email",
-		IsSystemAdmin: false,
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, accessToken)
+	return authz.WithEditor(context.TODO(), &eventproto.Editor{Email: "email"})
 }
