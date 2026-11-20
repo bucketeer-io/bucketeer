@@ -1,3 +1,4 @@
+{{- if and .Values.enabled (not .Values.rollback.enabled) }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -39,3 +40,4 @@ spec:
                   key: {{ .Values.existingSecretKey | default "db-url" | quote }}
           {{- end }}
       restartPolicy: Never
+{{- end }}
