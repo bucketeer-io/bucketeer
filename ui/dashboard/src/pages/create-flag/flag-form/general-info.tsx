@@ -140,6 +140,10 @@ const GeneralInfo = ({
                 </Form.Label>
                 <Form.Control>
                   <SelectMenu
+                    collapseOverflow
+                    overflowSummary={count =>
+                      t('common:show-count-tags', { count })
+                    }
                     fieldValues={field.value || []}
                     onChange={field.onChange}
                     options={tagOptions}

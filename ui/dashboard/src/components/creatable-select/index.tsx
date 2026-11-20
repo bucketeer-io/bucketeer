@@ -1,4 +1,12 @@
-import { memo, ReactNode } from 'react';
+import {
+  createContext,
+  memo,
+  ReactNode,
+  useContext,
+  useLayoutEffect,
+  useRef,
+  useState
+} from 'react';
 import {
   StylesConfig,
   ActionMeta,
@@ -6,10 +14,16 @@ import {
   GroupBase,
   components,
   MenuListProps,
+  MultiValueProps,
   CSSObjectWithLabel,
   OptionProps
 } from 'react-select';
 import ReactCreatableSelect, { CreatableProps } from 'react-select/creatable';
+import {
+  OVERFLOW_BADGE_WIDTH,
+  useOverflowCount
+} from 'hooks/use-overflow-count';
+import OverflowValuesPopover from 'components/overflow-values-popover';
 import Spinner from 'components/spinner';
 
 export interface Option {
@@ -39,6 +53,10 @@ export interface CreatableSelectProps extends CreatableProps<
   placeholder?: string;
   className?: string;
   isHiddenCreateNewOption?: boolean;
+  // Keep values on one line when unfocused and show "+n" for the ones that don't fit
+  collapseOverflow?: boolean;
+  // Text below the input, shown when values are hidden, that opens the full list
+  overflowSummary?: (count: number) => ReactNode;
   onChange: (
     options: MultiValue<Option>,
     actionMeta: ActionMeta<Option>
@@ -146,6 +164,48 @@ export const CustomMenuList = ({
   );
 };
 
+// Space kept free for the inline search input
+const INPUT_RESERVE_WIDTH = 8;
+const VALUE_CONTAINER_SELECTOR = '.react-select__value-container';
+
+const OverflowContext = createContext<{
+  visibleCount: number;
+  hiddenLabels: string[];
+  // Removing is done from the overflow popup instead
+  hideRemove: boolean;
+}>({ visibleCount: Infinity, hiddenLabels: [], hideRemove: false });
+
+const NoRemove = () => null;
+
+const CollapsibleMultiValue = (
+  props: MultiValueProps<Option, true, GroupBase<Option>>
+) => {
+  const { visibleCount, hiddenLabels, hideRemove } =
+    useContext(OverflowContext);
+  if (props.index >= visibleCount) return null;
+
+  return (
+    <>
+      <components.MultiValue
+        {...props}
+        components={
+          hideRemove
+            ? { ...props.components, Remove: NoRemove }
+            : props.components
+        }
+      />
+      {props.index === visibleCount - 1 && hiddenLabels.length > 0 && (
+        <span
+          title={hiddenLabels.join(', ')}
+          className="flex-center shrink-0 h-[22px] px-1.5 mx-0.5 rounded bg-gray-200 typo-para-small text-gray-600"
+        >
+          +{hiddenLabels.length}
+        </span>
+      )}
+    </>
+  );
+};
+
 export const CreatableSelect = memo<CreatableSelectProps>(
   ({
     isMulti = true,
@@ -165,11 +225,65 @@ export const CreatableSelect = memo<CreatableSelectProps>(
     components,
     styles,
     isHiddenCreateNewOption = false,
+    collapseOverflow = false,
+    overflowSummary,
     ...props
   }) => {
-    return (
-      <ReactCreatableSelect
+    const [isFocused, setIsFocused] = useState(false);
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    // Track the selection when uncontrolled so overflow measurement and
+    // popover removals always see what is actually rendered
+    const [uncontrolledValue, setUncontrolledValue] = useState<
+      MultiValue<Option>
+    >(defaultValues ?? []);
+    const selectedValues = value ?? uncontrolledValue;
+    const handleChange = (
+      newValue: MultiValue<Option>,
+      actionMeta: ActionMeta<Option>
+    ) => {
+      if (!value) setUncontrolledValue(newValue);
+      onChange(newValue, actionMeta);
+    };
+    const labels = selectedValues.map(item => item.label);
+    const getValueContainer = () =>
+      wrapperRef.current?.querySelector(VALUE_CONTAINER_SELECTOR);
+    const { visibleCount, hiddenLabels } = useOverflowCount({
+      labels,
+      getContainer: getValueContainer,
+      itemSelector: '.react-select__multi-value',
+      enabled: collapseOverflow,
+      expanded: isFocused,
+      reservedWidth: INPUT_RESERVE_WIDTH
+    });
+    const labelsKey = labels.join('\u0000');
+
+    // Keep the input in view while editing on a single scrollable line
+    const scrollToEnd = () => {
+      const valueContainer = getValueContainer();
+      if (valueContainer)
+        valueContainer.scrollLeft = valueContainer.scrollWidth;
+    };
+    useLayoutEffect(() => {
+      if (collapseOverflow && isFocused) scrollToEnd();
+    }, [collapseOverflow, isFocused, labelsKey]);
+
+    const isCollapsed = visibleCount !== Infinity;
+
+    const select = (
+      <ReactCreatableSelect<Option, true>
         {...props}
+        onFocus={e => {
+          setIsFocused(true);
+          props.onFocus?.(e);
+        }}
+        onBlur={e => {
+          setIsFocused(false);
+          props.onBlur?.(e);
+        }}
+        onInputChange={(newValue, actionMeta) => {
+          if (collapseOverflow) requestAnimationFrame(scrollToEnd);
+          return props.onInputChange?.(newValue, actionMeta);
+        }}
         isMulti={isMulti}
         options={options}
         placeholder={placeholder}
@@ -179,26 +293,76 @@ export const CreatableSelect = memo<CreatableSelectProps>(
           option: (styles, props) =>
             optionStyle(styles, props, isHiddenCreateNewOption),
           ...colorStyles,
+          ...(collapseOverflow && {
+            // Always a single line: collapsed to "+n" when blurred,
+            // horizontally scrollable while focused
+            valueContainer: base => ({
+              ...base,
+              flexWrap: 'nowrap',
+              overflowX: isFocused ? 'auto' : 'hidden',
+              scrollbarWidth: 'none',
+              '&::-webkit-scrollbar': { display: 'none' },
+              '& .react-select__multi-value': {
+                flexShrink: 0,
+                maxWidth: isCollapsed
+                  ? `calc(100% - ${OVERFLOW_BADGE_WIDTH}px)`
+                  : '100%'
+              }
+            })
+          }),
           ...styles
         }}
         components={{
           ...components,
+          ...(collapseOverflow && { MultiValue: CollapsibleMultiValue }),
           DropdownIndicator: null,
           LoadingIndicator: () => <Spinner className="size-5 mr-4" />
         }}
         isDisabled={disabled}
         isLoading={loading}
         isSearchable={isSearchable}
-        value={value}
-        defaultValue={defaultValues}
+        value={selectedValues}
         onCreateOption={onCreateOption}
         onChange={(newValue, actionMeta) =>
-          onChange(newValue as MultiValue<Option>, actionMeta)
+          handleChange(newValue as MultiValue<Option>, actionMeta)
         }
         closeMenuOnSelect={closeMenuOnSelect}
         formatCreateLabel={formatCreateLabel}
         noOptionsMessage={noOptionsMessage}
       />
+    );
+
+    if (!collapseOverflow) return select;
+
+    return (
+      <OverflowContext.Provider
+        value={{
+          visibleCount,
+          hiddenLabels,
+          hideRemove: !!overflowSummary && isCollapsed
+        }}
+      >
+        <div ref={wrapperRef} className="w-full min-w-0">
+          {select}
+          {overflowSummary && hiddenLabels.length > 0 && (
+            <OverflowValuesPopover
+              labels={labels}
+              text={overflowSummary(labels.length)}
+              onRemove={
+                disabled
+                  ? undefined
+                  : index => {
+                      const removedValue = selectedValues[index];
+                      handleChange(
+                        selectedValues.filter((_, i) => i !== index),
+                        { action: 'remove-value', removedValue }
+                      );
+                    }
+              }
+            />
+          )}
+        </div>
+      </OverflowContext.Provider>
     );
   }
 );
