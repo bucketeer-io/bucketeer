@@ -30,6 +30,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
@@ -192,10 +193,11 @@ type getEvaluationsResponse struct {
 }
 
 type getEvaluationRequest struct {
-	Tag       string              `json:"tag,omitempty"`
-	User      *userproto.User     `json:"user,omitempty"`
-	FeatureID string              `json:"feature_id,omitempty"`
-	SourceId  eventproto.SourceId `json:"source_id,omitempty"`
+	Tag            string              `json:"tag,omitempty"`
+	User           *userproto.User     `json:"user,omitempty"`
+	FeatureID      string              `json:"feature_id,omitempty"`
+	SourceId       eventproto.SourceId `json:"source_id,omitempty"`
+	FeatureVersion *int32              `json:"feature_version,omitempty"`
 }
 
 type registerEventsRequest struct {
@@ -365,7 +367,30 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 	}
 	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
 	group := s.liveHoldoutGroup(req.Context(), envAPIKey.Environment.Id)
-	features, err := s.getTargetFeatures(fs, reqBody.FeatureID)
+	var features []*featureproto.Feature
+	if reqBody.FeatureVersion == nil {
+		features, err = s.getTargetFeatures(fs, reqBody.FeatureID)
+	} else {
+		features, err = getVersionedEvaluationFeatures(
+			req.Context(), s.featureClient, fs, envAPIKey.Environment.Id, reqBody.FeatureID, *reqBody.FeatureVersion,
+		)
+		if err != nil {
+			switch status.Code(err) {
+			case codes.NotFound:
+				err = errFeatureNotFound
+			case codes.Canceled, codes.DeadlineExceeded:
+				err = errContextCanceled
+			default:
+				s.logger.Error("Failed to get feature version", log.FieldsFromIncomingContext(req.Context()).AddFields(
+					zap.Error(err),
+					zap.String("environmentID", envAPIKey.Environment.Id),
+					zap.String("featureId", reqBody.FeatureID),
+					zap.Int32("featureVersion", *reqBody.FeatureVersion),
+				)...)
+				err = errInternal
+			}
+		}
+	}
 	if err != nil {
 		rest.ReturnFailureResponse(w, err)
 		return
@@ -477,6 +502,32 @@ func (s *gatewayService) evaluateFeaturesForStream(
 	}
 	ueid = evaluation.UserEvaluationsID(user.Id, user.Data, features, holdoutGroups(group)...)
 	return ueid, evaluations, nil
+}
+
+func getVersionedEvaluationFeatures(
+	ctx context.Context,
+	client featureclient.Client,
+	currentFeatures []*featureproto.Feature,
+	environmentID, featureID string,
+	version int32,
+) ([]*featureproto.Feature, error) {
+	resp, err := client.GetFeature(ctx, &featureproto.GetFeatureRequest{
+		EnvironmentId:  environmentID,
+		Id:             featureID,
+		FeatureVersion: wrapperspb.Int32(version),
+	})
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return nil, ErrFeatureNotFound
+		}
+		return nil, err
+	}
+	feature := resp.GetFeature()
+	if feature == nil || feature.Archived || feature.Deleted {
+		return nil, ErrFeatureNotFound
+	}
+	// Resolve the saved flag's dependencies from the current flags.
+	return evaluation.NewEvaluator().GetPrerequisiteDownwards([]*featureproto.Feature{feature}, currentFeatures)
 }
 
 func (s *gatewayService) getTargetFeatures(fs []*featureproto.Feature, id string) ([]*featureproto.Feature, error) {

@@ -39114,6 +39114,12 @@
                 "id": 5,
                 "name": "sdk_version",
                 "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "feature_version",
+                "type": "int32",
+                "optional": true
               }
             ]
           },
