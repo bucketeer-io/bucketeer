@@ -32,8 +32,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	accountdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
@@ -47,6 +49,7 @@ import (
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 )
 
@@ -2039,6 +2042,151 @@ func TestGetEvaluation(t *testing.T) {
 			err := json.Unmarshal(decoded, &respBody)
 			assert.NoError(t, err)
 			assert.Equal(t, p.expectedFeatureID, respBody.Evaluation.FeatureId)
+		})
+	}
+}
+
+func TestGetEvaluationByVersion(t *testing.T) {
+	t.Parallel()
+	const (
+		environmentID = "ns0"
+		featureID     = "target"
+		tag           = "test"
+	)
+	newFeature := func(id string, version int32, variation string) *featureproto.Feature {
+		return &featureproto.Feature{
+			Id:         id,
+			Version:    version,
+			Enabled:    true,
+			Tags:       []string{tag},
+			Variations: []*featureproto.Variation{{Id: "on"}, {Id: "off"}},
+			DefaultStrategy: &featureproto.Strategy{
+				Type:          featureproto.Strategy_FIXED,
+				FixedStrategy: &featureproto.FixedStrategy{Variation: variation},
+			},
+		}
+	}
+	var unavailablePrerequisiteVersion, savedVersion, currentVersion, missingVersion int32 = 1, 2, 5, 0
+	featureWithUnavailablePrerequisite := newFeature(featureID, unavailablePrerequisiteVersion, "on")
+	featureWithUnavailablePrerequisite.Prerequisites = []*featureproto.Prerequisite{
+		{FeatureId: "removed-flag", VariationId: "on"},
+	}
+	savedFeature := newFeature(featureID, savedVersion, "on")
+	savedFeature.OffVariation = "off"
+	savedFeature.Prerequisites = []*featureproto.Prerequisite{{FeatureId: "prerequisite", VariationId: "on"}}
+	currentFeatures := &featureproto.Features{
+		Features: []*featureproto.Feature{
+			newFeature(featureID, currentVersion, "off"),
+			newFeature("prerequisite", 3, "on"),
+		},
+	}
+	envAPIKey := &accountproto.EnvironmentAPIKey{
+		Environment: &environmentproto.EnvironmentV2{Id: environmentID},
+		ApiKey:      &accountproto.APIKey{Id: "id-0", Role: accountproto.APIKey_SDK_CLIENT},
+	}
+	user := &userproto.User{Id: "user-id"}
+	for _, test := range []struct {
+		name          string
+		version       *int32
+		savedFeature  *featureproto.Feature
+		wantVersion   int32
+		wantVariation string
+		wantGRPCErr   error
+		wantHTTPCode  int
+	}{
+		{name: "current version", wantVersion: currentVersion, wantVariation: "off", wantHTTPCode: http.StatusOK},
+		{
+			name:          "explicit current version before audit entry is written",
+			version:       &currentVersion,
+			wantVersion:   currentVersion,
+			wantVariation: "off",
+			wantHTTPCode:  http.StatusOK,
+		},
+		{
+			name:          "saved version with a current prerequisite",
+			version:       &savedVersion,
+			savedFeature:  savedFeature,
+			wantVersion:   2,
+			wantVariation: "on",
+			wantHTTPCode:  http.StatusOK,
+		},
+		{
+			name:         "missing version",
+			version:      &missingVersion,
+			wantGRPCErr:  ErrFeatureNotFound,
+			wantHTTPCode: http.StatusNotFound,
+		},
+		{
+			name:         "saved version with a removed prerequisite",
+			version:      &unavailablePrerequisiteVersion,
+			savedFeature: featureWithUnavailablePrerequisite,
+			wantGRPCErr:  ErrInternal,
+			wantHTTPCode: http.StatusInternalServerError,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			setup := func(
+				keys *cachev3mock.MockEnvironmentAPIKeyCache,
+				features *cachev3mock.MockFeaturesCache,
+				client *featureclientmock.MockClient,
+			) {
+				keys.EXPECT().Get("test-key").Return(envAPIKey, nil)
+				features.EXPECT().Get(environmentID).Return(currentFeatures, nil)
+				if test.version == nil {
+					return
+				}
+				call := client.EXPECT().GetFeature(gomock.Any(), &featureproto.GetFeatureRequest{
+					EnvironmentId:  environmentID,
+					Id:             featureID,
+					FeatureVersion: wrapperspb.Int32(*test.version),
+				})
+				if test.savedFeature == nil {
+					call.Return(nil, status.Error(codes.NotFound, "feature: feature not found"))
+				} else {
+					call.Return(&featureproto.GetFeatureResponse{Feature: test.savedFeature}, nil)
+				}
+			}
+			t.Run("gRPC", func(t *testing.T) {
+				s := newGrpcGatewayServiceWithMock(t, gomock.NewController(t))
+				setup(
+					s.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache),
+					s.featuresCache.(*cachev3mock.MockFeaturesCache),
+					s.featureClient.(*featureclientmock.MockClient),
+				)
+				ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs(authorizationKey, "test-key"))
+				resp, err := s.GetEvaluation(ctx, &gwproto.GetEvaluationRequest{
+					Tag: tag, User: user, FeatureId: featureID, FeatureVersion: test.version,
+				})
+				if test.wantGRPCErr != nil {
+					require.ErrorIs(t, err, test.wantGRPCErr)
+					return
+				}
+				require.NoError(t, err)
+				assert.Equal(t, test.wantVersion, resp.Evaluation.FeatureVersion)
+				assert.Equal(t, test.wantVariation, resp.Evaluation.VariationId)
+			})
+			t.Run("legacy HTTP", func(t *testing.T) {
+				s := newGatewayServiceWithMock(t, gomock.NewController(t))
+				setup(
+					s.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache),
+					s.featuresCache.(*cachev3mock.MockFeaturesCache),
+					s.featureClient.(*featureclientmock.MockClient),
+				)
+				req := httptest.NewRequest(http.MethodPost, dummyURL, renderBody(t, getEvaluationRequest{
+					Tag: tag, User: user, FeatureID: featureID, FeatureVersion: test.version,
+				}))
+				req.Header.Set(authorizationKey, "test-key")
+				rec := httptest.NewRecorder()
+				s.getEvaluation(rec, req)
+				require.Equal(t, test.wantHTTPCode, rec.Code)
+				if rec.Code != http.StatusOK {
+					return
+				}
+				var resp getEvaluationResponse
+				require.NoError(t, json.Unmarshal(decodeSuccessResponse(t, rec.Body), &resp))
+				assert.Equal(t, test.wantVersion, resp.Evaluation.FeatureVersion)
+				assert.Equal(t, test.wantVariation, resp.Evaluation.VariationId)
+			})
 		})
 	}
 }

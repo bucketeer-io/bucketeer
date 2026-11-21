@@ -801,7 +801,14 @@ func (s *grpcGatewayService) GetEvaluation(
 	}
 	fs := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
 	group := s.liveHoldoutGroup(ctx, envAPIKey.Environment.Id)
-	features, err := s.getTargetFeatures(fs, req.FeatureId)
+	var features []*featureproto.Feature
+	if req.FeatureVersion == nil {
+		features, err = s.getTargetFeatures(fs, req.FeatureId)
+	} else {
+		features, err = getVersionedEvaluationFeatures(
+			ctx, s.featureClient, fs, envAPIKey.Environment.Id, req.FeatureId, *req.FeatureVersion,
+		)
+	}
 	if err != nil {
 		return nil, err
 	}

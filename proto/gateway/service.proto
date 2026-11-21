@@ -132,6 +132,10 @@ message GetEvaluationRequest {
   string feature_id = 3;
   bucketeer.event.client.SourceId source_id = 4;
   string sdk_version = 5;
+  // Evaluates the saved flag version using the supplied user attributes and
+  // current prerequisite flags, segments, and holdout groups. Omit to use the
+  // current flag version. Returns NotFound if the requested version is missing.
+  optional int32 feature_version = 6;
 }
 
 message GetEvaluationResponse {
