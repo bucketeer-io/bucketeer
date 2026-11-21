@@ -2066,7 +2066,11 @@ func TestGetEvaluationByVersion(t *testing.T) {
 			},
 		}
 	}
-	var savedVersion, missingVersion int32 = 2, 0
+	var unavailablePrerequisiteVersion, savedVersion, missingVersion int32 = 1, 2, 0
+	featureWithUnavailablePrerequisite := newFeature(featureID, unavailablePrerequisiteVersion, "on")
+	featureWithUnavailablePrerequisite.Prerequisites = []*featureproto.Prerequisite{
+		{FeatureId: "removed-flag", VariationId: "on"},
+	}
 	savedFeature := newFeature(featureID, savedVersion, "on")
 	savedFeature.OffVariation = "off"
 	savedFeature.Prerequisites = []*featureproto.Prerequisite{{FeatureId: "prerequisite", VariationId: "on"}}
@@ -2084,12 +2088,34 @@ func TestGetEvaluationByVersion(t *testing.T) {
 	for _, test := range []struct {
 		name          string
 		version       *int32
+		savedFeature  *featureproto.Feature
 		wantVersion   int32
 		wantVariation string
+		wantGRPCErr   error
+		wantHTTPCode  int
 	}{
-		{name: "current version", wantVersion: 5, wantVariation: "off"},
-		{name: "saved version with a current prerequisite", version: &savedVersion, wantVersion: 2, wantVariation: "on"},
-		{name: "missing version", version: &missingVersion},
+		{name: "current version", wantVersion: 5, wantVariation: "off", wantHTTPCode: http.StatusOK},
+		{
+			name:          "saved version with a current prerequisite",
+			version:       &savedVersion,
+			savedFeature:  savedFeature,
+			wantVersion:   2,
+			wantVariation: "on",
+			wantHTTPCode:  http.StatusOK,
+		},
+		{
+			name:         "missing version",
+			version:      &missingVersion,
+			wantGRPCErr:  ErrFeatureNotFound,
+			wantHTTPCode: http.StatusNotFound,
+		},
+		{
+			name:         "saved version with a removed prerequisite",
+			version:      &unavailablePrerequisiteVersion,
+			savedFeature: featureWithUnavailablePrerequisite,
+			wantGRPCErr:  ErrInternal,
+			wantHTTPCode: http.StatusInternalServerError,
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			setup := func(
@@ -2107,10 +2133,10 @@ func TestGetEvaluationByVersion(t *testing.T) {
 					Id:             featureID,
 					FeatureVersion: wrapperspb.Int32(*test.version),
 				})
-				if test.wantVersion == 0 {
+				if test.savedFeature == nil {
 					call.Return(nil, status.Error(codes.NotFound, "feature: feature not found"))
 				} else {
-					call.Return(&featureproto.GetFeatureResponse{Feature: savedFeature}, nil)
+					call.Return(&featureproto.GetFeatureResponse{Feature: test.savedFeature}, nil)
 				}
 			}
 			t.Run("gRPC", func(t *testing.T) {
@@ -2124,8 +2150,8 @@ func TestGetEvaluationByVersion(t *testing.T) {
 				resp, err := s.GetEvaluation(ctx, &gwproto.GetEvaluationRequest{
 					Tag: tag, User: user, FeatureId: featureID, FeatureVersion: test.version,
 				})
-				if test.wantVersion == 0 {
-					require.ErrorIs(t, err, ErrFeatureNotFound)
+				if test.wantGRPCErr != nil {
+					require.ErrorIs(t, err, test.wantGRPCErr)
 					return
 				}
 				require.NoError(t, err)
@@ -2145,11 +2171,10 @@ func TestGetEvaluationByVersion(t *testing.T) {
 				req.Header.Set(authorizationKey, "test-key")
 				rec := httptest.NewRecorder()
 				s.getEvaluation(rec, req)
-				if test.wantVersion == 0 {
-					require.Equal(t, http.StatusNotFound, rec.Code)
+				require.Equal(t, test.wantHTTPCode, rec.Code)
+				if rec.Code != http.StatusOK {
 					return
 				}
-				require.Equal(t, http.StatusOK, rec.Code)
 				var resp getEvaluationResponse
 				require.NoError(t, json.Unmarshal(decodeSuccessResponse(t, rec.Body), &resp))
 				assert.Equal(t, test.wantVersion, resp.Evaluation.FeatureVersion)

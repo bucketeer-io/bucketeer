@@ -813,6 +813,7 @@ func (s *gatewayService) evaluateFeatures(
 				zap.String("environmentID", environmentId),
 			)...,
 		)
+		return nil, err
 	}
 	return userEvaluations, nil
 }
