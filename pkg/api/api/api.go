@@ -516,17 +516,25 @@ func getVersionedEvaluationFeatures(
 		Id:             featureID,
 		FeatureVersion: wrapperspb.Int32(version),
 	})
-	if err != nil {
-		if status.Code(err) == codes.NotFound {
-			return nil, ErrFeatureNotFound
+	var feature *featureproto.Feature
+	switch status.Code(err) {
+	case codes.OK:
+		feature = resp.GetFeature()
+	case codes.NotFound:
+		// The current flag can be visible before its audit entry is written.
+		for _, current := range currentFeatures {
+			if current.Id == featureID && current.Version == version {
+				feature = current
+				break
+			}
 		}
+	default:
 		return nil, err
 	}
-	feature := resp.GetFeature()
 	if feature == nil || feature.Archived || feature.Deleted {
 		return nil, ErrFeatureNotFound
 	}
-	// Resolve the saved flag's dependencies from the current flags.
+	// Resolve dependencies from the current flags.
 	return evaluation.NewEvaluator().GetPrerequisiteDownwards([]*featureproto.Feature{feature}, currentFeatures)
 }
 

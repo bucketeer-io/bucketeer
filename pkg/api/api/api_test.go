@@ -2066,7 +2066,7 @@ func TestGetEvaluationByVersion(t *testing.T) {
 			},
 		}
 	}
-	var unavailablePrerequisiteVersion, savedVersion, missingVersion int32 = 1, 2, 0
+	var unavailablePrerequisiteVersion, savedVersion, currentVersion, missingVersion int32 = 1, 2, 5, 0
 	featureWithUnavailablePrerequisite := newFeature(featureID, unavailablePrerequisiteVersion, "on")
 	featureWithUnavailablePrerequisite.Prerequisites = []*featureproto.Prerequisite{
 		{FeatureId: "removed-flag", VariationId: "on"},
@@ -2076,7 +2076,7 @@ func TestGetEvaluationByVersion(t *testing.T) {
 	savedFeature.Prerequisites = []*featureproto.Prerequisite{{FeatureId: "prerequisite", VariationId: "on"}}
 	currentFeatures := &featureproto.Features{
 		Features: []*featureproto.Feature{
-			newFeature(featureID, 5, "off"),
+			newFeature(featureID, currentVersion, "off"),
 			newFeature("prerequisite", 3, "on"),
 		},
 	}
@@ -2094,7 +2094,14 @@ func TestGetEvaluationByVersion(t *testing.T) {
 		wantGRPCErr   error
 		wantHTTPCode  int
 	}{
-		{name: "current version", wantVersion: 5, wantVariation: "off", wantHTTPCode: http.StatusOK},
+		{name: "current version", wantVersion: currentVersion, wantVariation: "off", wantHTTPCode: http.StatusOK},
+		{
+			name:          "explicit current version before audit entry is written",
+			version:       &currentVersion,
+			wantVersion:   currentVersion,
+			wantVariation: "off",
+			wantHTTPCode:  http.StatusOK,
+		},
 		{
 			name:          "saved version with a current prerequisite",
 			version:       &savedVersion,
