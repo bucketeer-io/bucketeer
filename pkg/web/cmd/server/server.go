@@ -1964,6 +1964,11 @@ func (s *server) createDWHMySQLClient(
 		host = *s.mysqlHost
 		port = *s.mysqlPort
 		database = *s.mysqlDBName
+		if host == "" || database == "" || user == "" {
+			return nil, fmt.Errorf(
+				"data warehouse useMainConnection needs the mysql-user, mysql-host, and mysql-db-name flags",
+			)
+		}
 	}
 	if host == "" || database == "" || user == "" {
 		return nil, fmt.Errorf("mysql host, database, and user are required for data warehouse connection")

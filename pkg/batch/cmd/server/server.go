@@ -225,7 +225,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		mysqlHost:        cmd.Flag("mysql-host", "MySQL host. Required when storage-type=mysql.").String(),
 		mysqlPort:        cmd.Flag("mysql-port", "MySQL port. Required when storage-type=mysql.").Int(),
 		mysqlDBName:      cmd.Flag("mysql-db-name", "MySQL database name. Required when storage-type=mysql.").String(),
-		mysqlDBOpenConns: cmd.Flag("mysql-db-open-conns", "MySQL open connections.").Int(),
+		mysqlDBOpenConns: cmd.Flag("mysql-db-open-conns", "MySQL max open connections (default 10).").Int(),
 		postgresUser:     cmd.Flag("postgres-user", "PostgreSQL user.").String(),
 		postgresPass:     cmd.Flag("postgres-pass", "PostgreSQL password.").String(),
 		postgresHost:     cmd.Flag("postgres-host", "PostgreSQL host.").String(),
@@ -941,14 +941,19 @@ func (s *server) createMySQLClient(
 ) (mysql.Client, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
+	opts := []mysql.Option{
+		mysql.WithLogger(logger),
+		mysql.WithMetrics(registerer),
+	}
+	if *s.mysqlDBOpenConns > 0 {
+		opts = append(opts, mysql.WithMaxOpenConns(*s.mysqlDBOpenConns))
+	}
 	return mysql.NewClient(
 		ctx,
 		*s.mysqlUser, *s.mysqlPass, *s.mysqlHost,
 		*s.mysqlPort,
 		*s.mysqlDBName,
-		mysql.WithLogger(logger),
-		mysql.WithMetrics(registerer),
-		mysql.WithMaxOpenConns(*s.mysqlDBOpenConns),
+		opts...,
 	)
 }
 

@@ -199,7 +199,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		mysqlHost:        cmd.Flag("mysql-host", "MySQL host. Required when storage-type=mysql.").String(),
 		mysqlPort:        cmd.Flag("mysql-port", "MySQL port. Required when storage-type=mysql.").Int(),
 		mysqlDBName:      cmd.Flag("mysql-db-name", "MySQL database name. Required when storage-type=mysql.").String(),
-		mysqlDBOpenConns: cmd.Flag("mysql-db-open-conns", "MySQL open connections.").Int(),
+		mysqlDBOpenConns: cmd.Flag("mysql-db-open-conns", "MySQL max open connections (default 10).").Int(),
 		postgresUser:     cmd.Flag("postgres-user", "PostgreSQL user.").String(),
 		postgresPass:     cmd.Flag("postgres-pass", "PostgreSQL password.").String(),
 		postgresHost:     cmd.Flag("postgres-host", "PostgreSQL host.").String(),
@@ -844,14 +844,19 @@ func (s *server) createMySQLClient(
 ) (mysql.Client, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
+	opts := []mysql.Option{
+		mysql.WithLogger(logger),
+		mysql.WithMetrics(registerer),
+	}
+	if *s.mysqlDBOpenConns > 0 {
+		opts = append(opts, mysql.WithMaxOpenConns(*s.mysqlDBOpenConns))
+	}
 	return mysql.NewClient(
 		ctx,
 		*s.mysqlUser, *s.mysqlPass, *s.mysqlHost,
 		*s.mysqlPort,
 		*s.mysqlDBName,
-		mysql.WithLogger(logger),
-		mysql.WithMetrics(registerer),
-		mysql.WithMaxOpenConns(*s.mysqlDBOpenConns),
+		opts...,
 	)
 }
 
@@ -904,17 +909,22 @@ func (s *server) initDataWarehouseStorages(
 	case "mysql":
 		client := mainMySQLClient
 		var cleanup func()
-		if dwhConfig.MySQL.UseMainConnection {
-			if mainMySQLClient == nil {
-				return nil, nil, nil, nil, fmt.Errorf(
-					"data warehouse mysql.useMainConnection requires storage-type=mysql; " +
-						"set useMainConnection to false and configure a dedicated MySQL connection",
-				)
-			}
+		if dwhConfig.MySQL.UseMainConnection && mainMySQLClient != nil {
 			logger.Info("Using main MySQL connection for data warehouse")
 		} else {
-			dedicated, err := createDWHMySQLClient(ctx, &dwhConfig.MySQL, logger)
+			mysqlConfig := &dwhConfig.MySQL
+			if dwhConfig.MySQL.UseMainConnection {
+				// No main MySQL client when storage-type=postgres, so open one from the --mysql-* flags.
+				mysqlConfig = s.mainMySQLConfig()
+			}
+			dedicated, err := createDWHMySQLClient(ctx, mysqlConfig, logger)
 			if err != nil {
+				if dwhConfig.MySQL.UseMainConnection {
+					return nil, nil, nil, nil, fmt.Errorf(
+						"data warehouse mysql.useMainConnection needs the --mysql-* flags when storage-type is not mysql: %w",
+						err,
+					)
+				}
 				return nil, nil, nil, nil, fmt.Errorf("failed to create dedicated MySQL client: %w", err)
 			}
 			client = dedicated
@@ -975,6 +985,17 @@ func (s *server) initDataWarehouseStorages(
 			ecbigquery.NewBigQueryEventStorage(eventQuerier, dataset, logger),
 			cleanup,
 			nil
+	}
+}
+
+// mainMySQLConfig returns the operational --mysql-* flags as a data-warehouse MySQL config.
+func (s *server) mainMySQLConfig() *MySQLConfig {
+	return &MySQLConfig{
+		Host:     *s.mysqlHost,
+		Port:     *s.mysqlPort,
+		User:     *s.mysqlUser,
+		Password: *s.mysqlPass,
+		Database: *s.mysqlDBName,
 	}
 }
 

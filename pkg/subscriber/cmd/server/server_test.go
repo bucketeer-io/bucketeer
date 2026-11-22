@@ -23,9 +23,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql"
+	mysqlmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/processor"
 )
@@ -293,21 +297,65 @@ func TestEventPersisterConfigs(t *testing.T) {
 	}
 }
 
-func TestInitDataWarehouseStoragesMySQLMainConnectionWithoutMainClient(t *testing.T) {
+func TestInitDataWarehouseStoragesMySQL(t *testing.T) {
 	t.Parallel()
 
-	s := &server{}
-	dwhConfig := DataWarehouseConfig{
-		Type:  "mysql",
-		MySQL: MySQLConfig{UseMainConnection: true},
+	empty := ""
+	zero := 0
+	emptyFlags := &server{
+		mysqlUser:   &empty,
+		mysqlPass:   &empty,
+		mysqlHost:   &empty,
+		mysqlPort:   &zero,
+		mysqlDBName: &empty,
 	}
-	evalWriter, goalWriter, goalStorage, cleanup, err := s.initDataWarehouseStorages(
-		context.Background(), dwhConfig, nil, nil, zap.NewNop(),
-	)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "requires storage-type=mysql")
-	assert.Nil(t, evalWriter)
-	assert.Nil(t, goalWriter)
-	assert.Nil(t, goalStorage)
-	assert.Nil(t, cleanup)
+	patterns := []struct {
+		desc        string
+		mysqlConfig MySQLConfig
+		mainClient  func(ctrl *gomock.Controller) mysql.Client
+		expectedErr string
+	}{
+		{
+			desc:        "main connection without main client or mysql flags fails",
+			mysqlConfig: MySQLConfig{UseMainConnection: true},
+			mainClient:  func(*gomock.Controller) mysql.Client { return nil },
+			expectedErr: "needs the --mysql-* flags when storage-type is not mysql",
+		},
+		{
+			desc:        "dedicated connection without host fails before dialling",
+			mysqlConfig: MySQLConfig{User: "user", Database: "db"},
+			mainClient:  func(*gomock.Controller) mysql.Client { return nil },
+			expectedErr: "failed to create dedicated MySQL client",
+		},
+		{
+			desc:        "main connection reuses the main client and has no cleanup",
+			mysqlConfig: MySQLConfig{UseMainConnection: true},
+			mainClient: func(ctrl *gomock.Controller) mysql.Client {
+				return mysqlmock.NewMockClient(ctrl)
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			dwhConfig := DataWarehouseConfig{Type: "mysql", MySQL: p.mysqlConfig}
+			evalWriter, goalWriter, goalStorage, cleanup, err := emptyFlags.initDataWarehouseStorages(
+				context.Background(), dwhConfig, p.mainClient(ctrl), nil, zap.NewNop(),
+			)
+			assert.Nil(t, cleanup)
+			if p.expectedErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), p.expectedErr)
+				assert.Nil(t, evalWriter)
+				assert.Nil(t, goalWriter)
+				assert.Nil(t, goalStorage)
+				return
+			}
+			require.NoError(t, err)
+			assert.NotNil(t, evalWriter)
+			assert.NotNil(t, goalWriter)
+			assert.NotNil(t, goalStorage)
+		})
+	}
 }
