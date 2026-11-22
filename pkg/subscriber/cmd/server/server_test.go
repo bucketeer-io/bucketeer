@@ -16,6 +16,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"strings"
@@ -290,4 +291,23 @@ func TestEventPersisterConfigs(t *testing.T) {
 			assert.Equal(t, p.expectedOPS, ops)
 		})
 	}
+}
+
+func TestInitDataWarehouseStoragesMySQLMainConnectionWithoutMainClient(t *testing.T) {
+	t.Parallel()
+
+	s := &server{}
+	dwhConfig := DataWarehouseConfig{
+		Type:  "mysql",
+		MySQL: MySQLConfig{UseMainConnection: true},
+	}
+	evalWriter, goalWriter, goalStorage, cleanup, err := s.initDataWarehouseStorages(
+		context.Background(), dwhConfig, nil, nil, zap.NewNop(),
+	)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "requires storage-type=mysql")
+	assert.Nil(t, evalWriter)
+	assert.Nil(t, goalWriter)
+	assert.Nil(t, goalStorage)
+	assert.Nil(t, cleanup)
 }
