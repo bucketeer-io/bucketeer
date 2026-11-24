@@ -138,17 +138,32 @@ func TestAuthService_SwitchOrganization_SignInAge(t *testing.T) {
 	const email = "user@example.com"
 	now := time.Now()
 	patterns := []struct {
-		desc        string
-		authTime    time.Time
-		expectedErr error
+		desc           string
+		issuedAt       time.Time
+		authTime       time.Time
+		expectedSignIn time.Time
+		expectedErr    error
 	}{
 		{
-			desc:     "success: within the age, the sign-in time is carried over",
-			authTime: now.Add(-29 * 24 * time.Hour),
+			desc:           "success: within the age, the sign-in time is carried over",
+			issuedAt:       now,
+			authTime:       now.Add(-29 * 24 * time.Hour),
+			expectedSignIn: now.Add(-29 * 24 * time.Hour),
 		},
 		{
 			desc:        "err: past the age",
+			issuedAt:    now,
 			authTime:    now.Add(-31 * 24 * time.Hour),
+			expectedErr: statusUnauthenticated.Err(),
+		},
+		{
+			desc:           "success: without auth_time, the issued time counts as the sign-in",
+			issuedAt:       now.Add(-time.Hour),
+			expectedSignIn: now.Add(-time.Hour),
+		},
+		{
+			desc:        "err: without auth_time and issued past the age",
+			issuedAt:    now.Add(-31 * 24 * time.Hour),
 			expectedErr: statusUnauthenticated.Err(),
 		},
 	}
@@ -165,7 +180,7 @@ func TestAuthService_SwitchOrganization_SignInAge(t *testing.T) {
 				Audience: "test-audience",
 				Email:    email,
 				Expiry:   now.Add(time.Hour),
-				IssuedAt: now,
+				IssuedAt: p.issuedAt,
 				AuthTime: p.authTime,
 			})
 			require.NoError(t, err)
@@ -180,7 +195,7 @@ func TestAuthService_SwitchOrganization_SignInAge(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assertSignInTime(t, service, resp.Token, email, p.authTime)
+			assertSignInTime(t, service, resp.Token, email, p.expectedSignIn)
 		})
 	}
 }
