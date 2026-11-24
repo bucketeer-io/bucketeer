@@ -17,6 +17,7 @@ package mysql
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -515,4 +516,22 @@ func TestGetClearedHoldoutUpdatedAt(t *testing.T) {
 func newHoldoutStorageWithMock(t *testing.T, controller *gomock.Controller) *holdoutStorage {
 	t.Helper()
 	return &holdoutStorage{qe: mock.NewMockQueryExecer(controller)}
+}
+
+// The snapshot is looked up by user ID the way evaluation compares user IDs:
+// byte for byte, so case and trailing spaces count. No test here runs against
+// a database, so this pins the column definition that gives that comparison
+// on MySQL. utf8mb4_bin pads trailing spaces: a lookup of "alice " would find
+// "alice", and a segment holding both could not be copied.
+func TestSegmentUserSnapshotComparesUserIDsExactly(t *testing.T) {
+	t.Parallel()
+	migration, err := os.ReadFile(
+		"../../../../../migration/mysql/20261125000000_create_holdout_group_segment_user_table.sql",
+	)
+	require.NoError(t, err)
+	assert.Contains(
+		t,
+		string(migration),
+		"user_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin NOT NULL",
+	)
 }
