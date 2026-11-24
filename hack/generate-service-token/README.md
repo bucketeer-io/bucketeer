@@ -19,3 +19,7 @@ is issued in the legacy form.
 
 `--ttl` is how long the token is valid, such as `8760h`. The default is one
 year with `--service` and 100 years without.
+
+`--key` is the OAuth private key, or the service token private key when the
+deployment verifies service tokens with their own key
+(`serviceToken.key.secret` in the web and batch charts).
