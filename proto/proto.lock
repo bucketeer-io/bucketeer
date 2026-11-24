@@ -6373,6 +6373,10 @@
                 "out_type": "SwitchOrganizationResponse",
                 "options": [
                   {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
@@ -6394,7 +6398,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Switch to a different organization."
+                        "value": "Deprecated: send the selected organization with each request and call GetMe for it instead. This RPC is removed once no calls are observed."
                       },
                       {
                         "name": "tags",
@@ -6403,6 +6407,10 @@
                       {
                         "name": "operation_id",
                         "value": "web.v1.auth.switch_organization"
+                      },
+                      {
+                        "name": "deprecated",
+                        "value": "true"
                       },
                       {
                         "name": "responses",
