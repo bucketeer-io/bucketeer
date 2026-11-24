@@ -935,7 +935,6 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	// it during local evaluation. It is never a diff: every response carries
 	// the full list, and an empty list tells the SDK that nothing is serving.
 	servingGroups := sdkHoldoutGroups(s.liveHoldoutGroup(ctx, environmentId))
-	countHoldoutIncompatibleSDK(servingGroups, holdoutMinSDKVersions, environmentId, req.SourceId, req.SdkVersion)
 	now := time.Now()
 	if len(targetFeatures) == 0 {
 		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode,

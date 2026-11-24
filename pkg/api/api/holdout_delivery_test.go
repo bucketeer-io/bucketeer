@@ -20,8 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/blang/semver"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -183,102 +181,6 @@ func TestSDKHoldoutGroups(t *testing.T) {
 			evaluation.GenerateFeaturesID(nil, sdkHoldoutGroups(stored)...),
 		)
 	})
-}
-
-func TestHoldoutCapableSDK(t *testing.T) {
-	t.Parallel()
-	minVersions := map[eventproto.SourceId]semver.Version{
-		eventproto.SourceId_GO_SERVER:   semver.MustParse("1.9.0"),
-		eventproto.SourceId_NODE_SERVER: semver.MustParse("0.5.0"),
-	}
-	patterns := []struct {
-		desc       string
-		sourceID   eventproto.SourceId
-		sdkVersion string
-		expected   bool
-	}{
-		{desc: "minimum version", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.9.0", expected: true},
-		{desc: "newer patch", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.9.1", expected: true},
-		{desc: "newer major", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "2.0.0", expected: true},
-		{desc: "v prefix", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "v1.9.0", expected: true},
-		{desc: "older", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.8.9", expected: false},
-		{desc: "older with v prefix", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "v1.8.0", expected: false},
-		{desc: "pre-release of the minimum", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.9.0-rc.1", expected: false},
-		{desc: "numeric, not lexical", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.10.0", expected: true},
-		{desc: "another source has its own minimum", sourceID: eventproto.SourceId_NODE_SERVER, sdkVersion: "0.5.0", expected: true},
-		{desc: "another source below its minimum", sourceID: eventproto.SourceId_NODE_SERVER, sdkVersion: "0.4.6", expected: false},
-		{desc: "not a version", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "latest", expected: false},
-		{desc: "empty version", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "", expected: false},
-		{desc: "a wrapper is not listed", sourceID: eventproto.SourceId_OPEN_FEATURE_GO, sdkVersion: "9.9.9", expected: false},
-	}
-	for _, p := range patterns {
-		assert.Equal(t, p.expected, holdoutCapableSDK(minVersions, p.sourceID, p.sdkVersion), p.desc)
-	}
-
-}
-
-func TestHoldoutMinSDKVersions(t *testing.T) {
-	t.Parallel()
-	// Only the SDKs that have released holdout support are listed. A new entry
-	// must come with the release that ships it, so the table is pinned here.
-	assert.Equal(t,
-		map[eventproto.SourceId]semver.Version{
-			eventproto.SourceId_GO_SERVER: semver.MustParse("1.9.0"),
-		},
-		holdoutMinSDKVersions,
-	)
-
-	patterns := []struct {
-		desc       string
-		sourceID   eventproto.SourceId
-		sdkVersion string
-		expected   bool
-	}{
-		{desc: "go: first release with holdout", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.9.0", expected: true},
-		{desc: "go: later release", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.10.0", expected: true},
-		{desc: "go: last release without holdout", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.8.0", expected: false},
-		// A source that is not listed is not capable, whatever it reports.
-		{desc: "node: not listed", sourceID: eventproto.SourceId_NODE_SERVER, sdkVersion: "999.0.0", expected: false},
-		// An OpenFeature provider reports its own version, not the SDK's.
-		{desc: "openfeature go", sourceID: eventproto.SourceId_OPEN_FEATURE_GO, sdkVersion: "999.0.0", expected: false},
-		{desc: "openfeature node", sourceID: eventproto.SourceId_OPEN_FEATURE_NODE, sdkVersion: "999.0.0", expected: false},
-	}
-	for _, p := range patterns {
-		assert.Equal(t, p.expected, holdoutCapableSDK(holdoutMinSDKVersions, p.sourceID, p.sdkVersion), p.desc)
-	}
-}
-
-func TestCountHoldoutIncompatibleSDK(t *testing.T) {
-	t.Parallel()
-	const environmentID = "holdout-incompatible-unit"
-	minVersions := map[eventproto.SourceId]semver.Version{
-		eventproto.SourceId_GO_SERVER: semver.MustParse("1.9.0"),
-	}
-	count := func(sourceID eventproto.SourceId, sdkVersion string) float64 {
-		return testutil.ToFloat64(
-			holdoutIncompatibleSDKCounter.WithLabelValues(environmentID, sourceID.String(), sdkVersion),
-		)
-	}
-	targeted := sdkHoldoutGroups(storedHoldoutGroup(environmentID, 50))
-	untargeted := []*featureproto.HoldoutGroup{{Id: "hg-1", Status: featureproto.HoldoutGroup_RUNNING}}
-
-	// Nothing is held out, so an old SDK contaminates nothing.
-	countHoldoutIncompatibleSDK(nil, minVersions, environmentID, eventproto.SourceId_GO_SERVER, "1.8.0")
-	countHoldoutIncompatibleSDK(untargeted, minVersions, environmentID, eventproto.SourceId_GO_SERVER, "1.8.0")
-	assert.Equal(t, float64(0), count(eventproto.SourceId_GO_SERVER, "1.8.0"))
-
-	// A capable SDK is not counted.
-	countHoldoutIncompatibleSDK(targeted, minVersions, environmentID, eventproto.SourceId_GO_SERVER, "1.9.0")
-	assert.Equal(t, float64(0), count(eventproto.SourceId_GO_SERVER, "1.9.0"))
-
-	// An old SDK and an unlisted source are counted per source and version.
-	countHoldoutIncompatibleSDK(targeted, minVersions, environmentID, eventproto.SourceId_GO_SERVER, "1.8.0")
-	countHoldoutIncompatibleSDK(targeted, minVersions, environmentID, eventproto.SourceId_GO_SERVER, "1.8.0")
-	countHoldoutIncompatibleSDK(targeted, minVersions, environmentID, eventproto.SourceId_GO_SERVER, "1.7.0")
-	countHoldoutIncompatibleSDK(targeted, minVersions, environmentID, eventproto.SourceId_NODE_SERVER, "0.4.6")
-	assert.Equal(t, float64(2), count(eventproto.SourceId_GO_SERVER, "1.8.0"))
-	assert.Equal(t, float64(1), count(eventproto.SourceId_GO_SERVER, "1.7.0"))
-	assert.Equal(t, float64(1), count(eventproto.SourceId_NODE_SERVER, "0.4.6"))
 }
 
 // holdoutDeliveryService returns a gateway whose in-memory caches hold the
@@ -693,66 +595,48 @@ func TestGrpcGetFeatureFlagsHoldout(t *testing.T) {
 	}
 }
 
-func TestGrpcGetFeatureFlagsCountsIncompatibleSDK(t *testing.T) {
+// The gateway does not look at the SDK's source or version when it delivers
+// the serving group: an SDK that cannot apply the group ignores the field.
+func TestGrpcGetFeatureFlagsHoldoutIgnoresSDKVersion(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
 
-	const environmentID = "holdout-feature-flags-compat"
-	const sdkVersion = "1.8.0"
-	metric := holdoutIncompatibleSDKCounter.WithLabelValues(
-		environmentID, eventproto.SourceId_GO_SERVER.String(), sdkVersion,
-	)
+	const environmentID = "holdout-feature-flags-sdk-version"
 	flags := func() []*featureproto.Feature {
 		return []*featureproto.Feature{{Id: "flag-a", Version: 1, UpdatedAt: 10}}
 	}
-	request := func() *gwproto.GetFeatureFlagsRequest {
-		return &gwproto.GetFeatureFlagsRequest{
-			SourceId:   eventproto.SourceId_GO_SERVER,
-			SdkVersion: sdkVersion,
-		}
+	patterns := []struct {
+		desc       string
+		sourceID   eventproto.SourceId
+		sdkVersion string
+	}{
+		{desc: "an sdk that applies holdout groups", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.9.0"},
+		{desc: "an sdk released before holdout groups", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.8.0"},
+		{desc: "another server sdk", sourceID: eventproto.SourceId_NODE_SERVER, sdkVersion: "0.4.7"},
+		{desc: "a wrapper", sourceID: eventproto.SourceId_OPEN_FEATURE_GO, sdkVersion: "0.1.0"},
+		{desc: "a version that is not semver", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "latest"},
 	}
 
-	// No group is serving.
-	gs, ctx := holdoutDeliveryService(t, controller, environmentID, flags(), evaluation.ClearanceSnapshot(100), nil)
-	_, err := gs.GetFeatureFlags(ctx, request())
-	require.NoError(t, err)
-	assert.Equal(t, float64(0), testutil.ToFloat64(metric))
-
-	// A group is serving, but it holds no flag out yet.
-	untargeted := storedHoldoutGroup(environmentID, 100)
-	untargeted.Features = nil
-	gs, ctx = holdoutDeliveryService(t, controller, environmentID, flags(), untargeted, nil)
-	_, err = gs.GetFeatureFlags(ctx, request())
-	require.NoError(t, err)
-	assert.Equal(t, float64(0), testutil.ToFloat64(metric))
-
-	// A group with targets is serving and the SDK is older than the first
-	// release that applies it. The request is counted and still answered in
-	// full.
-	gs, ctx = holdoutDeliveryService(t, controller, environmentID, flags(), storedHoldoutGroup(environmentID, 100), nil)
-	resp, err := gs.GetFeatureFlags(ctx, request())
-	require.NoError(t, err)
-	assert.Len(t, resp.Features, 1)
-	assert.Len(t, resp.HoldoutGroups, 1)
-	assert.Equal(t, float64(1), testutil.ToFloat64(metric))
-
-	// The first release that applies the group is not counted, and gets the
-	// same answer.
-	const capableSDKVersion = "1.9.0"
-	capableMetric := holdoutIncompatibleSDKCounter.WithLabelValues(
-		environmentID, eventproto.SourceId_GO_SERVER.String(), capableSDKVersion,
-	)
-	gs, ctx = holdoutDeliveryService(t, controller, environmentID, flags(), storedHoldoutGroup(environmentID, 100), nil)
-	resp, err = gs.GetFeatureFlags(ctx, &gwproto.GetFeatureFlagsRequest{
-		SourceId:   eventproto.SourceId_GO_SERVER,
-		SdkVersion: capableSDKVersion,
-	})
-	require.NoError(t, err)
-	assert.Len(t, resp.Features, 1)
-	assert.Len(t, resp.HoldoutGroups, 1)
-	assert.Equal(t, float64(0), testutil.ToFloat64(capableMetric))
-	assert.Equal(t, float64(1), testutil.ToFloat64(metric))
-
+	var expected *gwproto.GetFeatureFlagsResponse
+	for _, p := range patterns {
+		gs, ctx := holdoutDeliveryService(
+			t, controller, environmentID, flags(), storedHoldoutGroup(environmentID, 100), nil,
+		)
+		resp, err := gs.GetFeatureFlags(ctx, &gwproto.GetFeatureFlagsRequest{
+			SourceId:   p.sourceID,
+			SdkVersion: p.sdkVersion,
+		})
+		require.NoError(t, err, p.desc)
+		require.Len(t, resp.Features, 1, p.desc)
+		require.Len(t, resp.HoldoutGroups, 1, p.desc)
+		// requested_at is the time of the request, so it is not compared.
+		resp.RequestedAt = 0
+		if expected == nil {
+			expected = resp
+			continue
+		}
+		assert.True(t, proto.Equal(expected, resp), "%s\nexpected %v\nactual   %v", p.desc, expected, resp)
+	}
 }
 
 func TestGrpcGetSegmentUsersHoldout(t *testing.T) {
