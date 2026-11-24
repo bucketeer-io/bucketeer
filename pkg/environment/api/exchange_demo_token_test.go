@@ -204,6 +204,7 @@ func TestExchangeDemoToken_AuthType(t *testing.T) {
 			require.NoError(t, vErr)
 			assert.Equal(t, token.TokenUseDemo, parsed.TokenUse)
 			assert.Equal(t, email, parsed.Email)
+			assert.Equal(t, email, parsed.Subject)
 			_, vErr = verifier.VerifyAccessToken(resp.DemoCreationToken.AccessToken)
 			assert.Error(t, vErr)
 		})

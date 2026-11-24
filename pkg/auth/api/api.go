@@ -373,6 +373,14 @@ func (s *authService) SwitchOrganization(
 		)
 		return nil, statusUnauthenticated.Err()
 	}
+	// A service token in the new form does not verify as an access token.
+	if accessToken.IsSystemAdmin && accessToken.IsServiceToken {
+		s.logger.Error(
+			"Service token cannot switch organization",
+			log.FieldsFromIncomingContext(ctx).AddFields(zap.String("email", accessToken.Email))...,
+		)
+		return nil, statusAccessDenied.Err()
+	}
 
 	// Get the organizations that the user belongs to
 	organizations, err := s.getOrganizationsByEmail(ctx, accessToken.Email)

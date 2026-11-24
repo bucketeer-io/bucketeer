@@ -28,6 +28,7 @@ import (
 type Signer interface {
 	SignAccessToken(*AccessToken) (string, error)
 	SignRefreshToken(*RefreshToken) (string, error)
+	SignServiceToken(*ServiceToken) (string, error)
 	SignDemoCreationToken(*DemoCreationToken) (string, error)
 }
 
@@ -82,9 +83,16 @@ func (s *signer) SignRefreshToken(token *RefreshToken) (string, error) {
 	return jwt.Signed(s.sig).Claims(claims).Serialize()
 }
 
+func (s *signer) SignServiceToken(token *ServiceToken) (string, error) {
+	return s.signClaims(Claims(*token), TokenUseService)
+}
+
 func (s *signer) SignDemoCreationToken(token *DemoCreationToken) (string, error) {
-	claims := *token
-	claims.TokenUse = TokenUseDemo
+	return s.signClaims(Claims(*token), TokenUseDemo)
+}
+
+func (s *signer) signClaims(claims Claims, tokenUse string) (string, error) {
+	claims.TokenUse = tokenUse
 	return jwt.Signed(s.sig).Claims(claims).Serialize()
 }
 

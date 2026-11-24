@@ -25,6 +25,12 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cli"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
+)
+
+const (
+	defaultServiceTokenYears = 1
+	defaultLegacyTokenYears  = 100
 )
 
 type command struct {
@@ -34,6 +40,8 @@ type command struct {
 	audience *string
 	email    *string
 	role     *string
+	service  *string
+	ttl      *time.Duration
 	output   *string
 }
 
@@ -46,7 +54,16 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		audience:  cmd.Flag("audience", "The oauth audience registered in the token").Required().String(),
 		email:     cmd.Flag("email", "Email will be set in token.").Required().String(),
 		// FIXME: This should be removed in the future
-		role:   cmd.Flag("role", "Role will be set in token.").Default("VIEWER").Enum("VIEWER", "EDITOR", "OWNER"),
+		role: cmd.Flag("role", "Role will be set in token.").Default("VIEWER").Enum("VIEWER", "EDITOR", "OWNER"),
+		service: cmd.Flag(
+			"service",
+			"Name of the service the token is issued to (web, api, batch, subscriber, or an operator tool). "+
+				"Without it, the token is issued in the legacy form.",
+		).String(),
+		ttl: cmd.Flag(
+			"ttl",
+			"How long the token is valid. One year by default with --service, 100 years without.",
+		).Duration(),
 		output: cmd.Flag("output", "Path of file to write service token.").Required().String(),
 	}
 	r.RegisterCommand(command)
@@ -59,21 +76,12 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		logger.Error("Failed to create signer", zap.Error(err))
 		return err
 	}
-	accessToken := &token.AccessToken{
-		Issuer:         *c.issuer,
-		Audience:       *c.audience,
-		Expiry:         time.Now().AddDate(100, 0, 0),
-		IssuedAt:       time.Now(),
-		Email:          *c.email,
-		IsSystemAdmin:  true,
-		IsServiceToken: true,
-	}
-	signedAccessToken, err := signer.SignAccessToken(accessToken)
+	signedToken, err := c.sign(signer, time.Now())
 	if err != nil {
 		logger.Error("Failed to sign token", zap.Error(err))
 		return err
 	}
-	if err := os.WriteFile(*c.output, []byte(signedAccessToken), 0600); err != nil {
+	if err := os.WriteFile(*c.output, []byte(signedToken), 0600); err != nil {
 		logger.Error("Failed to write token to file", zap.Error(err), zap.String("output", *c.output))
 		return err
 	}
@@ -86,4 +94,38 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	}
 	logger.Info("Token generated")
 	return nil
+}
+
+func (c *command) sign(signer token.Signer, now time.Time) (string, error) {
+	if *c.service == "" {
+		return signer.SignAccessToken(&token.AccessToken{
+			Issuer:         *c.issuer,
+			Audience:       *c.audience,
+			Expiry:         c.expiry(now, defaultLegacyTokenYears),
+			IssuedAt:       now,
+			Email:          *c.email,
+			IsSystemAdmin:  true,
+			IsServiceToken: true,
+		})
+	}
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return "", err
+	}
+	return signer.SignServiceToken(&token.ServiceToken{
+		Issuer:   *c.issuer,
+		Subject:  *c.service,
+		Audience: *c.audience,
+		Expiry:   c.expiry(now, defaultServiceTokenYears),
+		IssuedAt: now,
+		Email:    *c.email,
+		ID:       id.String(),
+	})
+}
+
+func (c *command) expiry(now time.Time, defaultYears int) time.Time {
+	if *c.ttl > 0 {
+		return now.Add(*c.ttl)
+	}
+	return now.AddDate(defaultYears, 0, 0)
 }

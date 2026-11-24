@@ -57,10 +57,32 @@ var specificAuthMethods = map[string]methodAuth{
 }
 
 var defaultAuth = methodAuth{
-	authFunc: func(v token.Verifier, token string) (interface{}, error) {
-		return v.VerifyAccessToken(token)
+	authFunc: func(v token.Verifier, raw string) (interface{}, error) {
+		accessToken, err := v.VerifyAccessToken(raw)
+		if err == nil {
+			return accessToken, nil
+		}
+		if serviceToken, serviceErr := v.VerifyServiceToken(raw); serviceErr == nil {
+			return legacyServiceToken(serviceToken), nil
+		}
+		return nil, err
 	},
 	key: AccessTokenKey,
+}
+
+// legacyServiceToken presents a service token in the form pkg/role reads,
+// until the authorizer builds the caller from the token.
+func legacyServiceToken(t *token.ServiceToken) *token.AccessToken {
+	return &token.AccessToken{
+		Issuer:         t.Issuer,
+		Audience:       t.Audience,
+		Expiry:         t.Expiry,
+		IssuedAt:       t.IssuedAt,
+		Email:          t.Email,
+		IsSystemAdmin:  true,
+		IsServiceToken: true,
+		TokenUse:       t.TokenUse,
+	}
 }
 
 var (

@@ -379,6 +379,26 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 		IssuedAt:       now,
 		OrganizationID: "org-1",
 	})
+	serviceRaw, err := signer.SignServiceToken(&ServiceToken{
+		Issuer:   issuer,
+		Subject:  "batch",
+		Audience: audience,
+		Email:    email,
+		Expiry:   now.Add(time.Hour),
+		IssuedAt: now,
+		ID:       "token-1",
+	})
+	require.NoError(t, err)
+	legacyService, err := signer.SignAccessToken(&AccessToken{
+		Issuer:         issuer,
+		Audience:       audience,
+		Email:          email,
+		Expiry:         now.Add(time.Hour),
+		IssuedAt:       now,
+		IsSystemAdmin:  true,
+		IsServiceToken: true,
+	})
+	require.NoError(t, err)
 
 	access, err := verifier.VerifyAccessToken(accessRaw)
 	require.NoError(t, err)
@@ -416,6 +436,19 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 	assert.Empty(t, legacyRefreshParsed.Issuer)
 	assert.Empty(t, legacyRefreshParsed.Audience)
 
+	service, err := verifier.VerifyServiceToken(serviceRaw)
+	require.NoError(t, err)
+	assert.Equal(t, TokenUseService, service.TokenUse)
+	assert.Equal(t, "batch", service.Subject)
+	assert.Equal(t, "token-1", service.ID)
+	assert.Equal(t, email, service.Email)
+
+	// A service token issued before the kind existed is still an access token.
+	legacyServiceParsed, err := verifier.VerifyAccessToken(legacyService)
+	require.NoError(t, err)
+	assert.True(t, legacyServiceParsed.IsSystemAdmin)
+	assert.True(t, legacyServiceParsed.IsServiceToken)
+
 	verifyAccess := func(raw string) error {
 		_, err := verifier.VerifyAccessToken(raw)
 		return err
@@ -426,6 +459,10 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 	}
 	verifyDemo := func(raw string) error {
 		_, err := verifier.VerifyDemoCreationToken(raw)
+		return err
+	}
+	verifyService := func(raw string) error {
+		_, err := verifier.VerifyServiceToken(raw)
 		return err
 	}
 
@@ -469,6 +506,48 @@ func TestVerifierAcceptsOnlyMatchingTokenUse(t *testing.T) {
 			name:          "demo creation token is rejected as a refresh token",
 			raw:           demoRaw,
 			verify:        verifyRefresh,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "service token is rejected as an access token",
+			raw:           serviceRaw,
+			verify:        verifyAccess,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "service token is rejected as a refresh token",
+			raw:           serviceRaw,
+			verify:        verifyRefresh,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "service token is rejected as a demo creation token",
+			raw:           serviceRaw,
+			verify:        verifyDemo,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "access token is rejected as a service token",
+			raw:           accessRaw,
+			verify:        verifyService,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "legacy service token is rejected as a service token",
+			raw:           legacyService,
+			verify:        verifyService,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "refresh token is rejected as a service token",
+			raw:           refreshRaw,
+			verify:        verifyService,
+			wantSubstring: "token_use",
+		},
+		{
+			name:          "demo creation token is rejected as a service token",
+			raw:           demoRaw,
+			verify:        verifyService,
 			wantSubstring: "token_use",
 		},
 		{

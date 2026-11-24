@@ -55,6 +55,10 @@ func (m *mockVerifier) VerifyRefreshToken(string) (*token.RefreshToken, error) {
 	return nil, nil
 }
 
+func (m *mockVerifier) VerifyServiceToken(string) (*token.ServiceToken, error) {
+	return nil, nil
+}
+
 func (m *mockVerifier) VerifyDemoCreationToken(string) (*token.DemoCreationToken, error) {
 	return nil, nil
 }
