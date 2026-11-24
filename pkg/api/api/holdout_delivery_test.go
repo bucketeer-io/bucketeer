@@ -237,10 +237,8 @@ func TestHoldoutMinSDKVersions(t *testing.T) {
 		{desc: "go: first release with holdout", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.9.0", expected: true},
 		{desc: "go: later release", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.10.0", expected: true},
 		{desc: "go: last release without holdout", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.8.0", expected: false},
-		// Holdout support is merged in the Node SDK but not released, so no
-		// version is capable, whatever it reports.
-		{desc: "node: latest release", sourceID: eventproto.SourceId_NODE_SERVER, sdkVersion: "0.4.7", expected: false},
-		{desc: "node: any version", sourceID: eventproto.SourceId_NODE_SERVER, sdkVersion: "999.0.0", expected: false},
+		// A source that is not listed is not capable, whatever it reports.
+		{desc: "node: not listed", sourceID: eventproto.SourceId_NODE_SERVER, sdkVersion: "999.0.0", expected: false},
 		// An OpenFeature provider reports its own version, not the SDK's.
 		{desc: "openfeature go", sourceID: eventproto.SourceId_OPEN_FEATURE_GO, sdkVersion: "999.0.0", expected: false},
 		{desc: "openfeature node", sourceID: eventproto.SourceId_OPEN_FEATURE_NODE, sdkVersion: "999.0.0", expected: false},
@@ -755,18 +753,6 @@ func TestGrpcGetFeatureFlagsCountsIncompatibleSDK(t *testing.T) {
 	assert.Equal(t, float64(0), testutil.ToFloat64(capableMetric))
 	assert.Equal(t, float64(1), testutil.ToFloat64(metric))
 
-	// The Node SDK has not released holdout support, so it is still counted.
-	const nodeSDKVersion = "0.4.7"
-	nodeMetric := holdoutIncompatibleSDKCounter.WithLabelValues(
-		environmentID, eventproto.SourceId_NODE_SERVER.String(), nodeSDKVersion,
-	)
-	gs, ctx = holdoutDeliveryService(t, controller, environmentID, flags(), storedHoldoutGroup(environmentID, 100), nil)
-	_, err = gs.GetFeatureFlags(ctx, &gwproto.GetFeatureFlagsRequest{
-		SourceId:   eventproto.SourceId_NODE_SERVER,
-		SdkVersion: nodeSDKVersion,
-	})
-	require.NoError(t, err)
-	assert.Equal(t, float64(1), testutil.ToFloat64(nodeMetric))
 }
 
 func TestGrpcGetSegmentUsersHoldout(t *testing.T) {
