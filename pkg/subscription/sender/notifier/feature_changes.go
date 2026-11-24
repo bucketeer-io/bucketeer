@@ -30,6 +30,7 @@ import (
 const (
 	maxFeatureChanges          = 10
 	maxFeatureChangeValueRunes = 180
+	maxFeatureChangeLabelRunes = 80
 )
 
 // Domain events use encoding/json for snapshots. Keep the schema as JSON
@@ -47,6 +48,17 @@ func featureChangeSummary(n *senderproto.DomainEventNotification, l locale.Local
 		json.Unmarshal([]byte(n.EntityData), &after) != nil ||
 		before.Id == "" || before.Id != after.Id || after.Id != n.EntityId {
 		return ""
+	}
+	oldVariations, newVariations := variationMap(&before.Feature), variationMap(&after.Feature)
+	resolveVariation := func(id string, previous bool) string {
+		feature, fallback, variations := &after.Feature, &before.Feature, newVariations
+		if previous {
+			feature, fallback, variations = &before.Feature, &after.Feature, oldVariations
+		}
+		if variations[id] == nil {
+			feature = fallback
+		}
+		return variationLabel(feature, id)
 	}
 	lines := make([]string, 0, maxFeatureChanges+1)
 	add := func(label string, oldValue, newValue interface{}) {
@@ -81,16 +93,22 @@ func featureChangeSummary(n *senderproto.DomainEventNotification, l locale.Local
 			variationReference(&after.Feature, after.OffVariation))
 	}
 	addFeatureStrategyChanges(l.MustLocalize(locale.DefaultStrategy),
-		before.DefaultStrategy, after.DefaultStrategy, l, add)
-	addFeatureRuleChanges(before.Rules, after.Rules, l, add)
+		before.DefaultStrategy, after.DefaultStrategy, l, resolveVariation, add)
+	addFeatureRuleChanges(before.Rules, after.Rules, l, resolveVariation, add)
 	// Match variations by stable ID so adding one does not report unrelated
 	// variations as changed just because their array positions moved.
-	oldVariations, newVariations := variationMap(&before.Feature), variationMap(&after.Feature)
 	for _, id := range sortedKeys(oldVariations, newVariations) {
 		oldVariation, newVariation := oldVariations[id], newVariations[id]
-		label := l.MustLocalize(locale.Variation) + " (" + slackEscape(limitChangeValue(id)) + ")"
+		label := l.MustLocalize(locale.Variation) + " (" + featureChangeLabel(resolveVariation(id, false)) + ")"
 		if oldVariation == nil || newVariation == nil {
-			add(l.MustLocalize(locale.Variation), featureItemID(oldVariation), featureItemID(newVariation))
+			var oldLabel, newLabel interface{}
+			if oldVariation != nil {
+				oldLabel = resolveVariation(id, true)
+			}
+			if newVariation != nil {
+				newLabel = resolveVariation(id, false)
+			}
+			add(l.MustLocalize(locale.Variation), oldLabel, newLabel)
 		}
 		add(label+" / "+l.MustLocalize(locale.NotificationFeatureName), oldVariation.GetName(), newVariation.GetName())
 		add(label+" / "+l.MustLocalize(locale.NotificationFeatureDescription),
@@ -129,8 +147,21 @@ func addFeatureStrategyChanges(
 	label string,
 	before, after *featureproto.Strategy,
 	l locale.Localizer,
+	resolveVariation func(string, bool) string,
 	add func(string, interface{}, interface{}),
 ) {
+	oldRollout, newRollout := before.GetRolloutStrategy(), after.GetRolloutStrategy()
+	oldAudience, newAudience := oldRollout.GetAudience(), newRollout.GetAudience()
+	var oldPercentage, newPercentage interface{}
+	if oldAudience != nil {
+		oldPercentage = oldAudience.Percentage
+	}
+	if newAudience != nil {
+		newPercentage = newAudience.Percentage
+	}
+	add(label+" / "+l.MustLocalize(locale.NotificationFeatureAudiencePercentage), oldPercentage, newPercentage)
+	addFeatureVariationChange(label+" / "+l.MustLocalize(locale.NotificationFeatureAudienceDefaultVariation),
+		oldAudience.GetDefaultVariation(), newAudience.GetDefaultVariation(), resolveVariation, add)
 	var oldType, newType interface{}
 	if before != nil {
 		oldType = before.Type.String()
@@ -139,9 +170,8 @@ func addFeatureStrategyChanges(
 		newType = after.Type.String()
 	}
 	add(label+" / "+l.MustLocalize(locale.NotificationFeatureStrategyType), oldType, newType)
-	add(label+" / "+l.MustLocalize(locale.Variation),
-		before.GetFixedStrategy().GetVariation(), after.GetFixedStrategy().GetVariation())
-	oldRollout, newRollout := before.GetRolloutStrategy(), after.GetRolloutStrategy()
+	addFeatureVariationChange(label+" / "+l.MustLocalize(locale.Variation),
+		before.GetFixedStrategy().GetVariation(), after.GetFixedStrategy().GetVariation(), resolveVariation, add)
 	oldWeights, newWeights := featureRolloutWeights(oldRollout), featureRolloutWeights(newRollout)
 	for _, id := range sortedKeys(oldWeights, newWeights) {
 		var oldWeight, newWeight interface{}
@@ -152,27 +182,42 @@ func addFeatureStrategyChanges(
 			newWeight = weight
 		}
 		weightLabel := label + " / " + l.MustLocalize(locale.NotificationFeatureRolloutWeight) +
-			" (" + slackEscape(limitChangeValue(id)) + ")"
+			" (" + featureChangeLabel(resolveVariation(id, false)) + ")"
 		add(weightLabel, oldWeight, newWeight)
 	}
 	oldPositions := featureRolloutPositions(oldRollout, newWeights)
 	newPositions := featureRolloutPositions(newRollout, oldWeights)
 	for _, id := range sortedKeys(oldPositions, newPositions) {
 		orderLabel := label + " / " + l.MustLocalize(locale.NotificationFeatureRolloutOrder) +
-			" (" + slackEscape(limitChangeValue(id)) + ")"
+			" (" + featureChangeLabel(resolveVariation(id, false)) + ")"
 		add(orderLabel, oldPositions[id], newPositions[id])
 	}
-	oldAudience, newAudience := oldRollout.GetAudience(), newRollout.GetAudience()
-	var oldPercentage, newPercentage interface{}
-	if oldAudience != nil {
-		oldPercentage = oldAudience.Percentage
+}
+
+// Compare the reference IDs before resolving display labels. Renaming a
+// variation must not look like a change to an unchanged strategy reference.
+func addFeatureVariationChange(
+	label, beforeID, afterID string,
+	resolveVariation func(string, bool) string,
+	add func(string, interface{}, interface{}),
+) {
+	if beforeID == afterID {
+		return
 	}
-	if newAudience != nil {
-		newPercentage = newAudience.Percentage
+	oldLabel, newLabel := resolveVariation(beforeID, true), resolveVariation(afterID, false)
+	if featureChangeValue(oldLabel) == featureChangeValue(newLabel) {
+		// Identical or equally truncated labels must still reveal an ID switch.
+		oldLabel, newLabel = beforeID+" ("+oldLabel+")", afterID+" ("+newLabel+")"
 	}
-	add(label+" / "+l.MustLocalize(locale.NotificationFeatureAudiencePercentage), oldPercentage, newPercentage)
-	add(label+" / "+l.MustLocalize(locale.NotificationFeatureAudienceDefaultVariation),
-		oldAudience.GetDefaultVariation(), newAudience.GetDefaultVariation())
+	add(label, oldLabel, newLabel)
+}
+
+// Keep context labels compact and single-line, leaving room for changed values.
+func featureChangeLabel(value string) string {
+	if runes := []rune(value); len(runes) > maxFeatureChangeLabelRunes {
+		value = string(runes[:maxFeatureChangeLabelRunes]) + "…"
+	}
+	return strings.TrimSuffix(strings.TrimPrefix(featureChangeValue(value), "\""), "\"")
 }
 
 func featureRolloutWeights(rollout *featureproto.RolloutStrategy) map[string]int32 {
@@ -203,6 +248,7 @@ func featureRolloutPositions(rollout *featureproto.RolloutStrategy, shared map[s
 func addFeatureRuleChanges(
 	before, after []*featureproto.Rule,
 	l locale.Localizer,
+	resolveVariation func(string, bool) string,
 	add func(string, interface{}, interface{}),
 ) {
 	oldRules, newRules := featureItemsByID(before), featureItemsByID(after)
@@ -215,7 +261,7 @@ func addFeatureRuleChanges(
 			add(l.MustLocalize(locale.Rule), featureItemID(oldRule), featureItemID(newRule))
 		}
 		addFeatureStrategyChanges(label+" / "+l.MustLocalize(locale.RuleStrategy),
-			oldRule.GetStrategy(), newRule.GetStrategy(), l, add)
+			oldRule.GetStrategy(), newRule.GetStrategy(), l, resolveVariation, add)
 		oldClauses := featureItemsByID(oldRule.GetClauses())
 		newClauses := featureItemsByID(newRule.GetClauses())
 		for _, clauseID := range sortedKeys(oldClauses, newClauses) {

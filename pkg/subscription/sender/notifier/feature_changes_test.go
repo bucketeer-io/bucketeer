@@ -112,15 +112,15 @@ func TestFeatureChangeConfiguration(t *testing.T) {
 	summary := featureChangeSummary(n, newTestLocalizer(locale.En))
 	assert.Contains(t, summary, "Default strategy / Strategy type:")
 	assert.Contains(t, summary, "Rule:")
-	assert.Contains(t, summary, "Variation (v1) / Value:")
+	assert.Contains(t, summary, "Variation (new) / Value:")
 	assert.Contains(t, summary, `"old"`)
 	assert.Contains(t, summary, `"new"`)
-	assert.Contains(t, summary, `Variation: null → "v2"`)
+	assert.Contains(t, summary, `Variation: null → "other"`)
 	assert.NotContains(t, summary, "updated_at")
 	assert.NotContains(t, summary, "version")
 	n.EntityData, n.PreviousEntityData = n.PreviousEntityData, n.EntityData
-	assert.Contains(t, featureChangeSummary(n, newTestLocalizer(locale.En)), `Variation: "v2" → null`)
-	assert.Contains(t, featureChangeSummary(n, newTestLocalizer(locale.En)), `Variation (v2) / Value: "other" → ""`)
+	assert.Contains(t, featureChangeSummary(n, newTestLocalizer(locale.En)), `Variation: "other" → null`)
+	assert.Contains(t, featureChangeSummary(n, newTestLocalizer(locale.En)), `Variation (other) / Value: "other" → ""`)
 }
 
 func TestFeatureChangeIgnoresBookkeepingAndTargetOrder(t *testing.T) {
@@ -505,10 +505,11 @@ func TestFeatureChangeVariationMetadataWithLongValue(t *testing.T) {
 			for _, lang := range []string{locale.En, locale.Ja} {
 				l := newTestLocalizer(lang)
 				summary := featureChangeSummary(n, l)
-				assert.Contains(t, summary, variationID)
+				assert.NotContains(t, summary, variationID)
+				assert.Contains(t, summary, after.Variations[0].Name)
 				assert.Contains(t, summary, l.MustLocalize(labelID)+`: "`+oldValue+`" → "`+newValue+`"`)
 				assert.NotContains(t, summary, l.MustLocalize(locale.OffVariation))
-				assert.NotContains(t, summary, "界")
+				assert.NotContains(t, summary, value)
 				assert.Len(t, strings.Split(summary, "\n"), 1)
 			}
 		})
@@ -588,4 +589,215 @@ func TestFeatureChangeTagsAsSet(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFeatureChangeStrategyPresentationOrder(t *testing.T) {
+	t.Parallel()
+	const (
+		firstID  = "3749d3ec-6273-428c-8c41-1d5ea0998911"
+		secondID = "d48293e5-b591-4e62-a72d-3f61ce371277"
+	)
+	for _, scope := range []string{"default", "rule"} {
+		t.Run(scope, func(t *testing.T) {
+			t.Parallel()
+			variations := []*featureproto.Variation{
+				{Id: firstID, Name: "Off", Value: "false"},
+				{Id: secondID, Name: "On", Value: "true"},
+			}
+			before := &featureproto.Feature{Id: "flag", Variations: variations}
+			after := &featureproto.Feature{Id: "flag", Variations: variations}
+			oldStrategy := &featureproto.Strategy{
+				Type:          featureproto.Strategy_FIXED,
+				FixedStrategy: &featureproto.FixedStrategy{Variation: firstID},
+			}
+			newStrategy := &featureproto.Strategy{
+				Type: featureproto.Strategy_ROLLOUT,
+				RolloutStrategy: &featureproto.RolloutStrategy{
+					Audience: &featureproto.Audience{Percentage: 20, DefaultVariation: secondID},
+					Variations: []*featureproto.RolloutStrategy_Variation{
+						{Variation: firstID, Weight: 50000}, {Variation: secondID, Weight: 50000},
+					},
+				},
+			}
+			if scope == "default" {
+				before.DefaultStrategy, after.DefaultStrategy = oldStrategy, newStrategy
+			} else {
+				before.Rules = []*featureproto.Rule{{Id: "rule", Strategy: oldStrategy}}
+				after.Rules = []*featureproto.Rule{{Id: "rule", Strategy: newStrategy}}
+			}
+			n := &senderproto.DomainEventNotification{
+				EntityId: "flag", PreviousEntityData: featureSnapshot(t, before), EntityData: featureSnapshot(t, after),
+			}
+			for _, lang := range []string{locale.En, locale.Ja} {
+				l := newTestLocalizer(lang)
+				summary := featureChangeSummary(n, l)
+				lastPosition := -1
+				for _, key := range []string{
+					locale.NotificationFeatureAudiencePercentage,
+					locale.NotificationFeatureAudienceDefaultVariation,
+					locale.NotificationFeatureStrategyType,
+					locale.Variation,
+					locale.NotificationFeatureRolloutWeight,
+				} {
+					position := strings.Index(summary, " / "+l.MustLocalize(key))
+					require.NotEqual(t, -1, position, summary)
+					assert.Greater(t, position, lastPosition, summary)
+					lastPosition = position
+				}
+				assert.Contains(t, summary, `"On (true)"`)
+				assert.Contains(t, summary, `"Off (false)"`)
+				assert.Contains(t, summary, "(Off (false)): null → 50000")
+				assert.NotContains(t, summary, firstID)
+				assert.NotContains(t, summary, secondID)
+			}
+		})
+	}
+}
+
+func TestFeatureChangeVariationLabels(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		name, before, after string
+		want, absent        []string
+	}{
+		{
+			name:   "fixed reference uses both snapshots",
+			before: `{"id":"flag","variations":[{"id":"a","name":"Old","value":"false"}],"default_strategy":{"fixed_strategy":{"variation":"a"}}}`,
+			after:  `{"id":"flag","variations":[{"id":"b","name":"New","value":"true"}],"default_strategy":{"fixed_strategy":{"variation":"b"}}}`,
+			want: []string{`Default strategy / Variation: "Old (false)" → "New (true)"`,
+				`Variation: "Old (false)" → null`, `Variation: null → "New (true)"`,
+				`Variation (New (true)) / Name: "" → "New"`},
+		},
+		{
+			name:   "fixed reference falls back to missing ID",
+			before: `{"id":"flag","variations":[{"id":"a","name":"Off","value":"false"}],"default_strategy":{"fixed_strategy":{"variation":"a"}}}`,
+			after:  `{"id":"flag","variations":[{"id":"a","name":"Off","value":"false"}],"default_strategy":{"fixed_strategy":{"variation":"missing"}}}`,
+			want:   []string{`Variation: "Off (false)" → "missing"`},
+		},
+		{
+			name:   "unchanged fixed reference ignores rename",
+			before: `{"id":"flag","variations":[{"id":"a","name":"Old","value":"false"}],"default_strategy":{"fixed_strategy":{"variation":"a"}}}`,
+			after:  `{"id":"flag","variations":[{"id":"a","name":"New","value":"false"}],"default_strategy":{"fixed_strategy":{"variation":"a"}}}`,
+			want:   []string{`Variation (New (false)) / Name: "Old" → "New"`},
+			absent: []string{"Default strategy"},
+		},
+		{
+			name:   "unchanged audience reference ignores rename",
+			before: `{"id":"flag","variations":[{"id":"a","name":"Old","value":"false"}],"default_strategy":{"type":1,"rollout_strategy":{"audience":{"percentage":10,"default_variation":"a"}}}}`,
+			after:  `{"id":"flag","variations":[{"id":"a","name":"New","value":"false"}],"default_strategy":{"type":1,"rollout_strategy":{"audience":{"percentage":10,"default_variation":"a"}}}}`,
+			want:   []string{`Variation (New (false)) / Name: "Old" → "New"`},
+			absent: []string{"Audience default variation"},
+		},
+		{
+			name:   "different IDs with identical labels still show a switch",
+			before: `{"id":"flag","variations":[{"id":"a","value":"false"},{"id":"b","value":"false"}],"default_strategy":{"fixed_strategy":{"variation":"a"}}}`,
+			after:  `{"id":"flag","variations":[{"id":"a","value":"false"},{"id":"b","value":"false"}],"default_strategy":{"fixed_strategy":{"variation":"b"}}}`,
+			want:   []string{`Variation: "a (false)" → "b (false)"`},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			n := &senderproto.DomainEventNotification{
+				EntityId: "flag", PreviousEntityData: tt.before, EntityData: tt.after,
+			}
+			summary := featureChangeSummary(n, newTestLocalizer(locale.En))
+			for _, want := range tt.want {
+				assert.Contains(t, summary, want)
+			}
+			for _, absent := range tt.absent {
+				assert.NotContains(t, summary, absent)
+			}
+		})
+	}
+}
+
+func TestFeatureChangeRolloutLabels(t *testing.T) {
+	t.Parallel()
+	before := &featureproto.Feature{
+		Id: "flag",
+		Variations: []*featureproto.Variation{
+			{Id: "a", Name: "Off", Value: "false"},
+			{Id: "b", Name: "On", Value: "true"},
+		},
+		DefaultStrategy: &featureproto.Strategy{
+			Type: featureproto.Strategy_ROLLOUT,
+			RolloutStrategy: &featureproto.RolloutStrategy{
+				Audience: &featureproto.Audience{Percentage: 10, DefaultVariation: "a"},
+				Variations: []*featureproto.RolloutStrategy_Variation{
+					{Variation: "a", Weight: 10000}, {Variation: "b", Weight: 90000},
+				},
+			},
+		},
+	}
+	var after featureproto.Feature
+	require.NoError(t, json.Unmarshal([]byte(featureSnapshot(t, before)), &after))
+	after.DefaultStrategy.RolloutStrategy.Audience.DefaultVariation = "b"
+	after.DefaultStrategy.RolloutStrategy.Variations = []*featureproto.RolloutStrategy_Variation{
+		{Variation: "b", Weight: 80000}, {Variation: "a", Weight: 20000},
+	}
+	n := &senderproto.DomainEventNotification{
+		EntityId: "flag", PreviousEntityData: featureSnapshot(t, before), EntityData: featureSnapshot(t, &after),
+	}
+	summary := featureChangeSummary(n, newTestLocalizer(locale.En))
+	assert.Contains(t, summary, `Audience default variation: "Off (false)" → "On (true)"`)
+	assert.Contains(t, summary, "Rollout weight (Off (false)): 10000 → 20000")
+	assert.Contains(t, summary, "Rollout weight (On (true)): 90000 → 80000")
+	assert.Contains(t, summary, "Rollout order (Off (false)): 1 → 2")
+	assert.Contains(t, summary, "Rollout order (On (true)): 2 → 1")
+	assert.NotContains(t, summary, "Rollout weight (a)")
+	assert.NotContains(t, summary, "Rollout order (b)")
+}
+
+func TestFeatureChangeStrategyReferenceWithLongLabels(t *testing.T) {
+	t.Parallel()
+	const firstID = "3749d3ec-6273-428c-8c41-1d5ea0998911"
+	const secondID = "d48293e5-b591-4e62-a72d-3f61ce371277"
+	value := strings.Repeat("x", 300)
+	before := &featureproto.Feature{
+		Id: "flag",
+		Variations: []*featureproto.Variation{
+			{Id: firstID, Name: "Long", Value: value + "old"},
+			{Id: secondID, Name: "Long", Value: value + "new"},
+		},
+		DefaultStrategy: &featureproto.Strategy{
+			FixedStrategy: &featureproto.FixedStrategy{Variation: firstID},
+		},
+	}
+	var after featureproto.Feature
+	require.NoError(t, json.Unmarshal([]byte(featureSnapshot(t, before)), &after))
+	after.DefaultStrategy.FixedStrategy.Variation = secondID
+	assert.Equal(t, featureChangeValue(variationLabel(before, firstID)),
+		featureChangeValue(variationLabel(&after, secondID)))
+	n := &senderproto.DomainEventNotification{
+		EntityId: "flag", PreviousEntityData: featureSnapshot(t, before), EntityData: featureSnapshot(t, &after),
+	}
+	summary := featureChangeSummary(n, newTestLocalizer(locale.En))
+	assert.Contains(t, summary, firstID)
+	assert.Contains(t, summary, secondID)
+	assert.Contains(t, summary, " → ")
+	assert.Len(t, strings.Split(summary, "\n"), 1)
+}
+
+func TestFeatureChangeEscapesVariationContext(t *testing.T) {
+	t.Parallel()
+	before := &featureproto.Feature{
+		Id:         "flag",
+		Variations: []*featureproto.Variation{{Id: "a", Name: "Off\n<!channel>&", Value: "false"}},
+		DefaultStrategy: &featureproto.Strategy{
+			Type: featureproto.Strategy_ROLLOUT,
+			RolloutStrategy: &featureproto.RolloutStrategy{
+				Variations: []*featureproto.RolloutStrategy_Variation{{Variation: "a", Weight: 10000}},
+			},
+		},
+	}
+	var after featureproto.Feature
+	require.NoError(t, json.Unmarshal([]byte(featureSnapshot(t, before)), &after))
+	after.DefaultStrategy.RolloutStrategy.Variations[0].Weight = 20000
+	n := &senderproto.DomainEventNotification{
+		EntityId: "flag", PreviousEntityData: featureSnapshot(t, before), EntityData: featureSnapshot(t, &after),
+	}
+	summary := featureChangeSummary(n, newTestLocalizer(locale.En))
+	assert.Contains(t, summary, `Off\n&lt;!channel&gt;&amp; (false)`)
+	assert.NotContains(t, summary, "<!channel>")
+	assert.Len(t, strings.Split(summary, "\n"), 1)
 }
