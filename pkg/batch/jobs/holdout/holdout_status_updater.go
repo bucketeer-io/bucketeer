@@ -46,6 +46,7 @@ type statusUpdater struct {
 	featureClient     featureclient.Client
 	opts              *jobs.Options
 	logger            *zap.Logger
+	now               func() time.Time
 }
 
 func NewHoldoutGroupStatusUpdater(
@@ -65,6 +66,7 @@ func NewHoldoutGroupStatusUpdater(
 		featureClient:     featureClient,
 		opts:              dopts,
 		logger:            dopts.Logger.Named("holdout-status-updater"),
+		now:               time.Now,
 	}
 }
 
@@ -106,7 +108,12 @@ func (u *statusUpdater) Run(ctx context.Context) (lastErr error) {
 		// Stops run before starts. List order is by name, so a due waiting group
 		// can appear ahead of the expired group that still occupies its period.
 		// Stopping that predecessor in this run lets the successor start now.
-		now := time.Now()
+		//
+		// The clock is read once per environment. Which transition a group is
+		// due for, and whether its start is set aside, are decided with that
+		// one value, so a group that becomes due while an earlier transition
+		// is running waits for the next run instead of being decided twice.
+		now := u.now()
 		var stops, rest []*featureproto.HoldoutGroup
 		for _, group := range groups {
 			if domain.DueForScheduledStop(group, now) {
@@ -121,7 +128,7 @@ func (u *statusUpdater) Run(ctx context.Context) (lastErr error) {
 					segmentStarts = append(segmentStarts, segmentStart{environmentID: env.Id, group: group})
 					continue
 				}
-				if err = u.updateStatus(ctx, env.Id, group); err != nil {
+				if err = u.updateStatus(ctx, env.Id, group, now); err != nil {
 					lastErr = err
 				}
 			}
@@ -167,13 +174,14 @@ func withShareOfRemainingTime(ctx context.Context, shares int) (context.Context,
 	return context.WithTimeout(ctx, time.Until(deadline)/time.Duration(shares))
 }
 
-// updateStatus advances a group by at most one transition per run.
+// updateStatus advances a group by at most one transition per run. now is the
+// time the run read for the environment of the group.
 func (u *statusUpdater) updateStatus(
 	ctx context.Context,
 	environmentID string,
 	group *featureproto.HoldoutGroup,
+	now time.Time,
 ) error {
-	now := time.Now()
 	switch {
 	case domain.DueForScheduledStart(group, now):
 		return u.start(ctx, environmentID, group)
