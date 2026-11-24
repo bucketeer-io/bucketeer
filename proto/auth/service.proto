@@ -210,17 +210,21 @@ service AuthService {
     };
   }
 
+  // Deprecated: the console sends the selected organization with each
+  // request and calls GetMe for it. Removed once no calls are observed.
   rpc SwitchOrganization(SwitchOrganizationRequest)
       returns (SwitchOrganizationResponse) {
+    option deprecated = true;
     option (google.api.http) = {
       post: "/v1/auth/switch_organization"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Switch Organization",
-      description: "Switch to a different organization.",
+      description: "Deprecated: send the selected organization with each request and call GetMe for it instead. This RPC is removed once no calls are observed.",
       tags: "Authentication",
       operation_id: "web.v1.auth.switch_organization",
+      deprecated: true,
       responses: {
         key: "400"
         value: {
