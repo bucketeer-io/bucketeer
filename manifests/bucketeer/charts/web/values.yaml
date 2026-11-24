@@ -152,6 +152,15 @@ tls:
     secrets:
 serviceToken:
   secret:
+  # Existing Secret holding the public key that verifies service tokens under
+  # `public.pem`, one or more PEM blocks. Without it, the OAuth public key is used.
+  key:
+    secret:
+  # Service name to RFC 3339 time. Service tokens of that service issued before
+  # the time are rejected, which cancels a leaked token once the service has a new one.
+  notBefore: {}
+  # The same for service tokens issued without a service name.
+  legacyNotBefore:
 # Rendered as oauth-config.json into a Secret.
 oauth:
   # Existing Secret holding the complete OAuth configuration under the

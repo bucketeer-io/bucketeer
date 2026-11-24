@@ -57,6 +57,11 @@ spec:
         - name: oauth-key-secret
           secret:
             secretName: {{ template "oauth-key-secret" . }}
+        {{- if .Values.serviceToken.key.secret }}
+        - name: service-token-key-secret
+          secret:
+            secretName: {{ .Values.serviceToken.key.secret }}
+        {{- end }}
       {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "batch-server.fullname" . }}
       {{- end }}
@@ -174,6 +179,22 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_BATCH_SERVICE_TOKEN
               value: /usr/local/service-token/token
+            {{- if .Values.serviceToken.key.secret }}
+            - name: BUCKETEER_BATCH_SERVICE_TOKEN_PUBLIC_KEY
+              value: /usr/local/service-token-key/public.pem
+            {{- end }}
+            {{- if .Values.serviceToken.notBefore }}
+            {{- $notBefore := list }}
+            {{- range $service, $time := .Values.serviceToken.notBefore }}
+            {{- $notBefore = append $notBefore (printf "%s=%s" $service $time) }}
+            {{- end }}
+            - name: BUCKETEER_BATCH_SERVICE_TOKEN_NOT_BEFORE
+              value: {{ join "\n" $notBefore | quote }}
+            {{- end }}
+            {{- if .Values.serviceToken.legacyNotBefore }}
+            - name: BUCKETEER_BATCH_LEGACY_SERVICE_TOKEN_NOT_BEFORE
+              value: "{{ .Values.serviceToken.legacyNotBefore }}"
+            {{- end }}
             - name: BUCKETEER_BATCH_CERT
               value: /usr/local/certs/service/tls.crt
             - name: BUCKETEER_BATCH_KEY
@@ -265,6 +286,11 @@ spec:
             - name: oauth-key-secret
               mountPath: /usr/local/oauth-key
               readOnly: true
+            {{- if .Values.serviceToken.key.secret }}
+            - name: service-token-key-secret
+              mountPath: /usr/local/service-token-key
+              readOnly: true
+            {{- end }}
           ports:
             - name: service
               containerPort: {{ .Values.env.port }}

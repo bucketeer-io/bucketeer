@@ -62,6 +62,11 @@ spec:
         - name: oauth-key-secret
           secret:
             secretName: {{ template "oauth-key-secret" . }}
+        {{- if .Values.serviceToken.key.secret }}
+        - name: service-token-key-secret
+          secret:
+            secretName: {{ .Values.serviceToken.key.secret }}
+        {{- end }}
         {{- if include "web.encryption-enabled" . }}
         - name: encryption-key-secret
           secret:
@@ -290,6 +295,22 @@ spec:
               value: /usr/local/email-config/email-config.json
             - name: BUCKETEER_WEB_SERVICE_TOKEN
               value: /usr/local/service-token/token
+            {{- if .Values.serviceToken.key.secret }}
+            - name: BUCKETEER_WEB_SERVICE_TOKEN_PUBLIC_KEY
+              value: /usr/local/service-token-key/public.pem
+            {{- end }}
+            {{- if .Values.serviceToken.notBefore }}
+            {{- $notBefore := list }}
+            {{- range $service, $time := .Values.serviceToken.notBefore }}
+            {{- $notBefore = append $notBefore (printf "%s=%s" $service $time) }}
+            {{- end }}
+            - name: BUCKETEER_WEB_SERVICE_TOKEN_NOT_BEFORE
+              value: {{ join "\n" $notBefore | quote }}
+            {{- end }}
+            {{- if .Values.serviceToken.legacyNotBefore }}
+            - name: BUCKETEER_WEB_LEGACY_SERVICE_TOKEN_NOT_BEFORE
+              value: "{{ .Values.serviceToken.legacyNotBefore }}"
+            {{- end }}
             - name: BUCKETEER_WEB_DATA_WAREHOUSE_TYPE
               value: "{{ .Values.global.dataWarehouse.type }}"
             - name: BUCKETEER_WEB_DATA_WAREHOUSE_CONFIG_PATH
@@ -351,6 +372,11 @@ spec:
             - name: oauth-key-secret
               mountPath: /usr/local/oauth-key
               readOnly: true
+            {{- if .Values.serviceToken.key.secret }}
+            - name: service-token-key-secret
+              mountPath: /usr/local/service-token-key
+              readOnly: true
+            {{- end }}
             {{- if include "web.encryption-enabled" . }}
             - name: encryption-key-secret
               mountPath: /usr/local/encryption-key

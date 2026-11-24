@@ -246,6 +246,9 @@ type server struct {
 	emailFilter                             *string
 	oauthConfigPath                         *string
 	oauthPublicKeyPath                      *string
+	serviceTokenPublicKeyPath               *string
+	serviceTokenNotBefore                   *map[string]string
+	legacyServiceTokenNotBefore             *string
 	oauthPrivateKeyPath                     *string
 	webhookBaseURL                          *string
 	webhookKMSResourceName                  *string
@@ -562,6 +565,19 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"oauth-public-key",
 			"Path to public key used to verify oauth token.",
 		).Required().String(),
+		serviceTokenPublicKeyPath: cmd.Flag(
+			"service-token-public-key",
+			"Path to the public key used to verify service tokens, one or more PEM blocks. "+
+				"The oauth public key is used without it.",
+		).String(),
+		serviceTokenNotBefore: cmd.Flag(
+			"service-token-not-before",
+			"Service name and RFC 3339 time, as name=time; service tokens of that service issued before it are rejected.",
+		).StringMap(),
+		legacyServiceTokenNotBefore: cmd.Flag(
+			"legacy-service-token-not-before",
+			"RFC 3339 time; service tokens without a service name issued before it are rejected.",
+		).String(),
 		accessTokenTTL: cmd.Flag(
 			"access-token-ttl",
 			"TTL for access token.",
@@ -696,10 +712,19 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// verifier
 	// TODO: refactor to support multiple issuers
+	verifierOpts, err := token.ServiceTokenVerifierOptions(
+		*s.serviceTokenPublicKeyPath,
+		*s.serviceTokenNotBefore,
+		*s.legacyServiceTokenNotBefore,
+	)
+	if err != nil {
+		return err
+	}
 	verifier, err := token.NewVerifier(
 		*s.oauthPublicKeyPath,
 		oAuthConfig.Issuer,
 		oAuthConfig.Audience,
+		verifierOpts...,
 	)
 	if err != nil {
 		return err
