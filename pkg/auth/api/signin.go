@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"crypto/subtle"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -81,7 +82,7 @@ func (s *authService) SignIn(
 	}
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	token, err := s.generateToken(ctx, config.Email, isSystemAdmin)
+	token, err := s.generateToken(ctx, config.Email, isSystemAdmin, time.Now())
 	if err != nil {
 		return nil, err
 	}

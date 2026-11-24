@@ -314,6 +314,8 @@ spec:
               value: "{{ .Values.env.accessTokenTTL }}"
             - name: BUCKETEER_WEB_REFRESH_TOKEN_TTL
               value: "{{ .Values.env.refreshTokenTTL }}"
+            - name: BUCKETEER_WEB_MAX_SIGN_IN_AGE
+              value: "{{ .Values.env.maxSignInAge }}"
             {{- if .Values.env.aichat.openaiApiKeySecret.name }}
             - name: BUCKETEER_WEB_OPENAI_API_KEY
               valueFrom:

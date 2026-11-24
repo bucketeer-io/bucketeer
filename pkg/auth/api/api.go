@@ -52,6 +52,7 @@ import (
 type options struct {
 	accessTokenTTL    time.Duration
 	refreshTokenTTL   time.Duration
+	maxSignInAge      time.Duration
 	emailFilter       *regexp.Regexp
 	logger            *zap.Logger
 	isDemoSiteEnabled bool
@@ -65,6 +66,7 @@ type options struct {
 var defaultOptions = options{
 	accessTokenTTL:    10 * time.Minute,
 	refreshTokenTTL:   7 * 24 * time.Hour,
+	maxSignInAge:      30 * 24 * time.Hour,
 	logger:            zap.NewNop(),
 	isDemoSiteEnabled: false,
 }
@@ -80,6 +82,12 @@ func WithAccessTokenTTL(ttl time.Duration) Option {
 func WithRefreshTokenTTL(ttl time.Duration) Option {
 	return func(opts *options) {
 		opts.refreshTokenTTL = ttl
+	}
+}
+
+func WithMaxSignInAge(age time.Duration) Option {
+	return func(opts *options) {
+		opts.maxSignInAge = age
 	}
 }
 
@@ -285,7 +293,7 @@ func (s *authService) ExchangeToken(
 	}
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	token, err := s.generateToken(ctx, userInfo.Email, isSystemAdmin)
+	token, err := s.generateToken(ctx, userInfo.Email, isSystemAdmin, time.Now())
 	if err != nil {
 		s.logger.Error("Failed to generate token",
 			zap.Error(err),
@@ -323,6 +331,9 @@ func (s *authService) RefreshToken(
 		}
 		return nil, statusUnauthenticated.Err()
 	}
+	if err := s.checkSignInAge(ctx, refreshToken.SignedInAt(), refreshToken.Email); err != nil {
+		return nil, err
+	}
 	organizations, err := s.getOrganizationsByEmail(ctx, refreshToken.Email)
 	if err != nil {
 		s.logger.Error("Failed to get organizations by email",
@@ -344,7 +355,7 @@ func (s *authService) RefreshToken(
 	}
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	newToken, err := s.generateToken(ctx, refreshToken.Email, isSystemAdmin)
+	newToken, err := s.generateToken(ctx, refreshToken.Email, isSystemAdmin, refreshToken.SignedInAt())
 	if err != nil {
 		s.logger.Error(
 			"Failed to generate token",
@@ -373,6 +384,9 @@ func (s *authService) SwitchOrganization(
 		)
 		return nil, statusUnauthenticated.Err()
 	}
+	if err := s.checkSignInAge(ctx, accessToken.SignedInAt(), accessToken.Email); err != nil {
+		return nil, err
+	}
 
 	// Get the organizations that the user belongs to
 	organizations, err := s.getOrganizationsByEmail(ctx, accessToken.Email)
@@ -394,7 +408,7 @@ func (s *authService) SwitchOrganization(
 				zap.String("organizationID", newOrganizationID),
 			)
 		}
-		token, err := s.generateToken(ctx, accessToken.Email, isSystemAdmin)
+		token, err := s.generateToken(ctx, accessToken.Email, isSystemAdmin, accessToken.SignedInAt())
 		if err != nil {
 			return nil, err
 		}
@@ -424,7 +438,7 @@ func (s *authService) SwitchOrganization(
 		return nil, statusUnauthenticated.Err()
 	}
 
-	newToken, err := s.generateToken(ctx, accessToken.Email, isSystemAdmin)
+	newToken, err := s.generateToken(ctx, accessToken.Email, isSystemAdmin, accessToken.SignedInAt())
 	if err != nil {
 		return nil, err
 	}
@@ -616,6 +630,7 @@ func (s *authService) generateToken(
 	ctx context.Context,
 	userEmail string,
 	isSystemAdmin bool,
+	authTime time.Time,
 ) (*authproto.Token, error) {
 	if err := s.checkEmail(userEmail); err != nil {
 		s.logger.Error(
@@ -629,10 +644,12 @@ func (s *authService) generateToken(
 	timeNow := time.Now()
 	accessToken := &token.AccessToken{
 		Issuer:        s.issuer,
+		Subject:       userEmail,
 		Audience:      s.audience,
 		Expiry:        timeNow.Add(s.opts.accessTokenTTL),
 		IssuedAt:      timeNow,
 		Email:         userEmail,
+		AuthTime:      authTime,
 		IsSystemAdmin: isSystemAdmin,
 	}
 
@@ -650,6 +667,7 @@ func (s *authService) generateToken(
 		Email:    userEmail,
 		Expiry:   timeNow.Add(s.opts.refreshTokenTTL),
 		IssuedAt: timeNow,
+		AuthTime: authTime,
 	}
 
 	signedRefreshToken, err := s.signer.SignRefreshToken(refreshToken)
@@ -667,6 +685,19 @@ func (s *authService) generateToken(
 		TokenType:    "Bearer",
 		Expiry:       timeNow.Add(s.opts.accessTokenTTL).Unix(),
 	}, nil
+}
+
+func (s *authService) checkSignInAge(ctx context.Context, signedInAt time.Time, email string) error {
+	if time.Since(signedInAt) <= s.opts.maxSignInAge {
+		return nil
+	}
+	s.logger.Info("Sign-in is older than the maximum sign-in age",
+		log.FieldsFromIncomingContext(ctx).AddFields(
+			zap.String("email", email),
+			zap.Time("signedInAt", signedInAt),
+		)...,
+	)
+	return statusUnauthenticated.Err()
 }
 
 func (s *authService) checkEmail(email string) error {

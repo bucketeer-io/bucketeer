@@ -243,6 +243,7 @@ type server struct {
 	codeReferenceService                    *string
 	accessTokenTTL                          *time.Duration
 	refreshTokenTTL                         *time.Duration
+	maxSignInAge                            *time.Duration
 	emailFilter                             *string
 	oauthConfigPath                         *string
 	oauthPublicKeyPath                      *string
@@ -570,6 +571,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"refresh-token-ttl",
 			"TTL for refresh token.",
 		).Default("168h").Duration(),
+		maxSignInAge: cmd.Flag(
+			"max-sign-in-age",
+			"How long after signing in a session can still be refreshed.",
+		).Default("720h").Duration(),
 		emailFilter:     cmd.Flag("email-filter", "Regexp pattern for filtering email.").String(),
 		oauthConfigPath: cmd.Flag("oauth-config-path", "Path to oauth config.").Required().String(),
 		oauthPrivateKeyPath: cmd.Flag(
@@ -1664,6 +1669,7 @@ func (s *server) createAuthService(
 		authapi.WithLogger(logger),
 		authapi.WithAccessTokenTTL(*s.accessTokenTTL),
 		authapi.WithRefreshTokenTTL(*s.refreshTokenTTL),
+		authapi.WithMaxSignInAge(*s.maxSignInAge),
 		authapi.WithDemoSiteEnabled(*s.isDemoSiteEnabled),
 		// Sign-in attempts share a bucket per targeted account, so the limit
 		// is deliberately tight. Token exchanges and rejected token refreshes
