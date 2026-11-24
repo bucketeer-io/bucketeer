@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -56,7 +57,7 @@ func (m *mockVerifier) VerifyRefreshToken(string) (*token.RefreshToken, error) {
 }
 
 func (m *mockVerifier) VerifyServiceToken(string) (*token.ServiceToken, error) {
-	return nil, nil
+	return nil, errors.New("not a service token")
 }
 
 func (m *mockVerifier) VerifyDemoCreationToken(string) (*token.DemoCreationToken, error) {

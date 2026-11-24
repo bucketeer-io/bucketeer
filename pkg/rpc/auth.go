@@ -58,31 +58,37 @@ var specificAuthMethods = map[string]methodAuth{
 
 var defaultAuth = methodAuth{
 	authFunc: func(v token.Verifier, raw string) (interface{}, error) {
-		accessToken, err := v.VerifyAccessToken(raw)
-		if err == nil {
-			return accessToken, nil
-		}
-		if serviceToken, serviceErr := v.VerifyServiceToken(raw); serviceErr == nil {
-			return legacyServiceToken(serviceToken), nil
-		}
-		return nil, err
+		return VerifyCallerToken(v, raw)
 	},
 	key: AccessTokenKey,
 }
 
-// legacyServiceToken presents a service token in the form pkg/role reads,
-// until the authorizer builds the caller from the token.
-func legacyServiceToken(t *token.ServiceToken) *token.AccessToken {
+// VerifyCallerToken accepts an access token or a service token. A service
+// token is presented in the form pkg/role reads, until the authorizer builds
+// the caller from the token.
+func VerifyCallerToken(v token.Verifier, raw string) (*token.AccessToken, error) {
+	accessToken, err := v.VerifyAccessToken(raw)
+	if err == nil {
+		return accessToken, nil
+	}
+	serviceToken, serviceErr := v.VerifyServiceToken(raw)
+	if serviceErr != nil {
+		return nil, err
+	}
+	email := serviceToken.Email
+	if email == "" {
+		email = serviceToken.Subject
+	}
 	return &token.AccessToken{
-		Issuer:         t.Issuer,
-		Audience:       t.Audience,
-		Expiry:         t.Expiry,
-		IssuedAt:       t.IssuedAt,
-		Email:          t.Email,
+		Issuer:         serviceToken.Issuer,
+		Audience:       serviceToken.Audience,
+		Expiry:         serviceToken.Expiry,
+		IssuedAt:       serviceToken.IssuedAt,
+		Email:          email,
 		IsSystemAdmin:  true,
 		IsServiceToken: true,
-		TokenUse:       t.TokenUse,
-	}
+		TokenUse:       serviceToken.TokenUse,
+	}, nil
 }
 
 var (

@@ -71,6 +71,15 @@ func TestAuthUnaryServerInterceptor(t *testing.T) {
 		ID:       "token-1",
 	})
 	require.NoError(t, err)
+	serviceTokenWithoutEmail, err := signer.SignServiceToken(&token.ServiceToken{
+		Issuer:   issuer,
+		Subject:  "batch",
+		Audience: audience,
+		Expiry:   now.Add(time.Hour),
+		IssuedAt: now,
+		ID:       "token-2",
+	})
+	require.NoError(t, err)
 	refreshToken, err := signer.SignRefreshToken(&token.RefreshToken{
 		Email:    email,
 		Expiry:   now.Add(time.Hour),
@@ -113,6 +122,18 @@ func TestAuthUnaryServerInterceptor(t *testing.T) {
 				Issuer:         issuer,
 				Audience:       audience,
 				Email:          email,
+				IsSystemAdmin:  true,
+				IsServiceToken: true,
+				TokenUse:       token.TokenUseService,
+			},
+		},
+		{
+			desc:          "success: service token without an email is identified by its subject",
+			authorization: "bearer " + serviceTokenWithoutEmail,
+			expected: &token.AccessToken{
+				Issuer:         issuer,
+				Audience:       audience,
+				Email:          "batch",
 				IsSystemAdmin:  true,
 				IsServiceToken: true,
 				TokenUse:       token.TokenUseService,

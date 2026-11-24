@@ -44,7 +44,19 @@ func TestCommandSign(t *testing.T) {
 		service        string
 		ttl            time.Duration
 		expectedExpiry time.Time
+		expectedErr    string
 	}{
+		{
+			desc:        "err: legacy form with a negative ttl",
+			ttl:         -time.Hour,
+			expectedErr: "ttl must not be negative",
+		},
+		{
+			desc:        "err: service token with a negative ttl",
+			service:     "batch",
+			ttl:         -time.Hour,
+			expectedErr: "ttl must not be negative",
+		},
 		{
 			desc:           "legacy form lasts 100 years",
 			expectedExpiry: now.AddDate(100, 0, 0),
@@ -79,6 +91,12 @@ func TestCommandSign(t *testing.T) {
 				ttl:      &ttlFlag,
 			}
 			raw, err := c.sign(signer, now)
+			if p.expectedErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), p.expectedErr)
+				assert.Empty(t, raw)
+				return
+			}
 			require.NoError(t, err)
 			if p.service == "" {
 				accessToken, err := verifier.VerifyAccessToken(raw)

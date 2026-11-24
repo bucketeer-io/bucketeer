@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -97,6 +98,9 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 }
 
 func (c *command) sign(signer token.Signer, now time.Time) (string, error) {
+	if *c.ttl < 0 {
+		return "", fmt.Errorf("ttl must not be negative: %s", *c.ttl)
+	}
 	if *c.service == "" {
 		return signer.SignAccessToken(&token.AccessToken{
 			Issuer:         *c.issuer,
