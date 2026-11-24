@@ -234,11 +234,15 @@ func sdkHoldoutGroups(group *featureproto.HoldoutGroup) []*featureproto.HoldoutG
 // holdoutMinSDKVersions lists, per source, the first SDK release that applies
 // the holdout_groups of a GetFeatureFlags response.
 //
-// It is empty because no released SDK does yet. A source that is not listed
-// is reported as incompatible, which is also right for a wrapper such as an
-// OpenFeature provider: it reports its own version, so it needs its own
+// A source that is not listed is reported as incompatible. That is right for
+// an SDK that has not released holdout support, and also for a wrapper such
+// as an OpenFeature provider: it reports its own version, so it needs its own
 // entry. Add an entry when an SDK release ships holdout support.
-var holdoutMinSDKVersions = map[eventproto.SourceId]semver.Version{}
+//
+// NODE_SERVER is not listed: its holdout support is merged but not released.
+var holdoutMinSDKVersions = map[eventproto.SourceId]semver.Version{
+	eventproto.SourceId_GO_SERVER: semver.MustParse("1.9.0"),
+}
 
 // holdoutCapableSDK reports whether the SDK applies holdout groups when it
 // evaluates locally. A version that cannot be parsed is not capable.

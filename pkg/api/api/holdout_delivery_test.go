@@ -215,9 +215,39 @@ func TestHoldoutCapableSDK(t *testing.T) {
 		assert.Equal(t, p.expected, holdoutCapableSDK(minVersions, p.sourceID, p.sdkVersion), p.desc)
 	}
 
-	// No released SDK applies holdout groups yet.
-	assert.False(t, holdoutCapableSDK(holdoutMinSDKVersions, eventproto.SourceId_GO_SERVER, "999.0.0"))
-	assert.False(t, holdoutCapableSDK(holdoutMinSDKVersions, eventproto.SourceId_NODE_SERVER, "999.0.0"))
+}
+
+func TestHoldoutMinSDKVersions(t *testing.T) {
+	t.Parallel()
+	// Only the SDKs that have released holdout support are listed. A new entry
+	// must come with the release that ships it, so the table is pinned here.
+	assert.Equal(t,
+		map[eventproto.SourceId]semver.Version{
+			eventproto.SourceId_GO_SERVER: semver.MustParse("1.9.0"),
+		},
+		holdoutMinSDKVersions,
+	)
+
+	patterns := []struct {
+		desc       string
+		sourceID   eventproto.SourceId
+		sdkVersion string
+		expected   bool
+	}{
+		{desc: "go: first release with holdout", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.9.0", expected: true},
+		{desc: "go: later release", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.10.0", expected: true},
+		{desc: "go: last release without holdout", sourceID: eventproto.SourceId_GO_SERVER, sdkVersion: "1.8.0", expected: false},
+		// Holdout support is merged in the Node SDK but not released, so no
+		// version is capable, whatever it reports.
+		{desc: "node: latest release", sourceID: eventproto.SourceId_NODE_SERVER, sdkVersion: "0.4.7", expected: false},
+		{desc: "node: any version", sourceID: eventproto.SourceId_NODE_SERVER, sdkVersion: "999.0.0", expected: false},
+		// An OpenFeature provider reports its own version, not the SDK's.
+		{desc: "openfeature go", sourceID: eventproto.SourceId_OPEN_FEATURE_GO, sdkVersion: "999.0.0", expected: false},
+		{desc: "openfeature node", sourceID: eventproto.SourceId_OPEN_FEATURE_NODE, sdkVersion: "999.0.0", expected: false},
+	}
+	for _, p := range patterns {
+		assert.Equal(t, p.expected, holdoutCapableSDK(holdoutMinSDKVersions, p.sourceID, p.sdkVersion), p.desc)
+	}
 }
 
 func TestCountHoldoutIncompatibleSDK(t *testing.T) {
@@ -698,14 +728,45 @@ func TestGrpcGetFeatureFlagsCountsIncompatibleSDK(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, float64(0), testutil.ToFloat64(metric))
 
-	// A group with targets is serving and no released SDK applies it. The
-	// request is counted and still answered in full.
+	// A group with targets is serving and the SDK is older than the first
+	// release that applies it. The request is counted and still answered in
+	// full.
 	gs, ctx = holdoutDeliveryService(t, controller, environmentID, flags(), storedHoldoutGroup(environmentID, 100), nil)
 	resp, err := gs.GetFeatureFlags(ctx, request())
 	require.NoError(t, err)
 	assert.Len(t, resp.Features, 1)
 	assert.Len(t, resp.HoldoutGroups, 1)
 	assert.Equal(t, float64(1), testutil.ToFloat64(metric))
+
+	// The first release that applies the group is not counted, and gets the
+	// same answer.
+	const capableSDKVersion = "1.9.0"
+	capableMetric := holdoutIncompatibleSDKCounter.WithLabelValues(
+		environmentID, eventproto.SourceId_GO_SERVER.String(), capableSDKVersion,
+	)
+	gs, ctx = holdoutDeliveryService(t, controller, environmentID, flags(), storedHoldoutGroup(environmentID, 100), nil)
+	resp, err = gs.GetFeatureFlags(ctx, &gwproto.GetFeatureFlagsRequest{
+		SourceId:   eventproto.SourceId_GO_SERVER,
+		SdkVersion: capableSDKVersion,
+	})
+	require.NoError(t, err)
+	assert.Len(t, resp.Features, 1)
+	assert.Len(t, resp.HoldoutGroups, 1)
+	assert.Equal(t, float64(0), testutil.ToFloat64(capableMetric))
+	assert.Equal(t, float64(1), testutil.ToFloat64(metric))
+
+	// The Node SDK has not released holdout support, so it is still counted.
+	const nodeSDKVersion = "0.4.7"
+	nodeMetric := holdoutIncompatibleSDKCounter.WithLabelValues(
+		environmentID, eventproto.SourceId_NODE_SERVER.String(), nodeSDKVersion,
+	)
+	gs, ctx = holdoutDeliveryService(t, controller, environmentID, flags(), storedHoldoutGroup(environmentID, 100), nil)
+	_, err = gs.GetFeatureFlags(ctx, &gwproto.GetFeatureFlagsRequest{
+		SourceId:   eventproto.SourceId_NODE_SERVER,
+		SdkVersion: nodeSDKVersion,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, float64(1), testutil.ToFloat64(nodeMetric))
 }
 
 func TestGrpcGetSegmentUsersHoldout(t *testing.T) {
