@@ -73,18 +73,18 @@ func (mr *MockExperimentStorageMockRecorder) GetExperiment(ctx, id, environmentI
 }
 
 // GetExperimentSummary mocks base method.
-func (m *MockExperimentStorage) GetExperimentSummary(ctx context.Context, environmentID string) (*v2.ExperimentSummary, error) {
+func (m *MockExperimentStorage) GetExperimentSummary(ctx context.Context, environmentID string, kinds []experiment.Experiment_Kind) (*v2.ExperimentSummary, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetExperimentSummary", ctx, environmentID)
+	ret := m.ctrl.Call(m, "GetExperimentSummary", ctx, environmentID, kinds)
 	ret0, _ := ret[0].(*v2.ExperimentSummary)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetExperimentSummary indicates an expected call of GetExperimentSummary.
-func (mr *MockExperimentStorageMockRecorder) GetExperimentSummary(ctx, environmentID any) *gomock.Call {
+func (mr *MockExperimentStorageMockRecorder) GetExperimentSummary(ctx, environmentID, kinds any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExperimentSummary", reflect.TypeOf((*MockExperimentStorage)(nil).GetExperimentSummary), ctx, environmentID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExperimentSummary", reflect.TypeOf((*MockExperimentStorage)(nil).GetExperimentSummary), ctx, environmentID, kinds)
 }
 
 // ListExperiments mocks base method.

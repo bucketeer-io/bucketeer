@@ -82,7 +82,8 @@ const ProgressiveRolloutModal = ({
       cursor: String(0),
       environmentId,
       featureId: feature.id,
-      statuses: ['WAITING', 'RUNNING']
+      statuses: ['WAITING', 'RUNNING'],
+      kinds: ['KIND_EXPERIMENT']
     },
     refetchOnMount: 'always'
   });

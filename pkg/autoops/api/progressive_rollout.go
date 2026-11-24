@@ -690,6 +690,10 @@ func (s *AutoOpsService) checkIfHasExperiment(
 			exprpto.Experiment_WAITING,
 			exprpto.Experiment_RUNNING,
 		},
+		// Only an experiment on the feature flag blocks a progressive rollout.
+		Kinds: []exprpto.Experiment_Kind{
+			exprpto.Experiment_KIND_EXPERIMENT,
+		},
 	})
 	if err != nil {
 		return api.NewGRPCStatus(err).Err()

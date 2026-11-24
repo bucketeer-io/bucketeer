@@ -89,6 +89,11 @@ Two new tables, added to `migration/mysql/` and `migration/postgres/` (Atlas). B
 
 Indexes: `(environment_id, status)` on `holdout_group`; `(holdout_group_id, environment_id)` and `(feature_id, environment_id, removed_at)` on `holdout_group_feature`.
 
+Measurement (§4.4) changes one existing table, `experiment`:
+
+- A new column `kind` (INT, NOT NULL, default `0`): `0=KIND_EXPERIMENT`, an experiment on a feature flag, and `1=HOLDOUT`, an internal experiment that measures a group. Every row that exists when the column is added is `KIND_EXPERIMENT`. `kind` is written on insert only and never updated.
+- On PostgreSQL the foreign key `foreign_experiment_feature` (`experiment(feature_id, environment_id)` to `feature(id, environment_id)`, from `migration/postgres/20260226174000_initialization.sql`) is dropped in the same migration. An internal experiment stores the group's UUID in `feature_id`, and that UUID is not a row in `feature`, so the insert would fail with the key in place. MySQL has had no such key since `migration/mysql/20241113142932_update_environment_id_table.sql`. The index `idx_experiment_feature` stays. That a `KIND_EXPERIMENT` row points at an existing flag is still checked by `CreateExperiment`, as it already is on MySQL.
+
 ### 4.2 Membership
 
 `IsHeldOut(group, user)` lives in the shared evaluation library. Membership is flag-independent, so the evaluator resolves it at most once per group per evaluation, on the first flag the group targets, and reuses the answer for every other flag; an evaluation that touches no targeted flag never computes it.
@@ -131,7 +136,7 @@ Its costs are real and are surfaced in the UI when the mode is selected:
 ★ holdout ★  →  prerequisites  →  enabled / off-variation  →  targets  →  rules  →  default strategy
 ```
 
-If the environment has a live group that targets this flag and `IsHeldOut` returns true, evaluation returns the group's `holdout_variation_id` for that flag immediately, with `Reason.Type = HOLDOUT` and the group ID attached. `Reason` gains `HOLDOUT = 7` (unused today) and a `holdout_group_id` field; proto3 enums are open, so older SDKs surface it as an unrecognized value rather than failing. The reason is carried through `EvaluationEvent` and is what makes holdout serving visible in the debug evaluator and in `DebugEvaluateFeatures`.
+If the environment has a live group that targets this flag and `IsHeldOut` returns true, evaluation returns the group's `holdout_variation_id` for that flag immediately, with `Reason.Type = HOLDOUT` and the group ID attached. `Reason` gains `HOLDOUT = 7` (unused today) and a `holdout_group_id` field; proto3 enums are open, so the value passes through the protobuf layer, but an SDK that does not know it does not always pass it through: depending on the SDK and its version it reports `HOLDOUT`, replaces it with another reason, or fails to decode the whole `GetEvaluations` response (§4.3.2). The reason is carried through `EvaluationEvent` and is what makes holdout serving visible in the debug evaluator and in `DebugEvaluateFeatures`.
 
 Why the holdout is evaluated first:
 
@@ -211,12 +216,36 @@ When measurement is enabled, the service creates an **internal experiment row** 
 
 - The subscriber links goal events by goal ID against `listExperiments`, and the internal experiment is returned by that same call. **`listExperiments` itself is unchanged**, but the linker in `goal_events_dwh.go` gains holdout-aware branches (§4.4, goal linking and retry).
 - The experiment calculator picks it up and produces a standard `experiment_result`.
-- `ListExperimentsRequest` gains `repeated Kind kinds`. An empty list means no filter, so the existing internal callers — the subscriber (`goal_events_dwh.go`, `evaluation_events_dwh.go`, `cache_refresher.go`) and the experiment calculator — keep receiving the internal row unchanged. The dashboard's Experiments page sends `kinds = [KIND_EXPERIMENT]`, so internal rows never appear there. The internal row is created through the domain layer, bypassing the public API's feature-existence validation.
+- `ListExperimentsRequest` gains `repeated Kind kinds`. An empty list means no filter, and the `summary` in the response counts the same kinds as the list. The rule for who sends the filter: a reader in the data pipeline keeps the internal row; anything that shows experiments to users, or acts on them for users, sends `kinds = [KIND_EXPERIMENT]`.
+
+  | Reader of experiments | Gets `kind = HOLDOUT` rows | Reason |
+  |---|---|---|
+  | Experiment cacher (`pkg/batch/jobs/cacher/experimentcacher.go`) | Yes | It fills the experiments cache that the subscriber and the gateway read. |
+  | Experiment calculator (`pkg/batch/jobs/calculator/experiment_calculate.go`) | Yes | It produces the `experiment_result` of the internal experiment. |
+  | Subscriber: `evaluation_events_dwh.go`, `goal_events_dwh.go`, `goal_events_dwh_retry.go` (same `listExperiments` as `goal_events_dwh.go`), `cache_refresher.go` | Yes | Derived rows, goal linking and the cache refresh all need the internal row. |
+  | Subscriber: `CountRunningExperiments`, read by `Switch` in `events_dwh_persister.go` | Yes | The DWH persisters must run while an internal experiment is the only one running or inside the grace window. The query has no `kind` condition. |
+  | Gateway `LinkedEventPublisher` (`pkg/api/api/linked_events.go`) | Yes | Goal events of the group's goals are routed to the dedicated DWH topic through the internal row (below). |
+  | Web `GetExperiment` | Yes | The results tab of the group reads the internal experiment by ID (phase 5). |
+  | Web `ListExperiments` | The caller decides | The three dashboard callers below send `kinds = [KIND_EXPERIMENT]`. |
+  | Dashboard: Experiments page, the variation tab of the flag details page, the rollout operation modal | No | They show the experiments of the environment or of one flag. The summary counts on the Experiments page follow the same filter. |
+  | Public API (API key) `ListExperiments` in `pkg/api/api/experiment.go` | No | Always sends `kinds = [KIND_EXPERIMENT]`. |
+  | Public API `GetExperiment` | No | Answers not found for an internal row, the same answer as for an ID that does not exist. |
+  | Experiment status updater (`pkg/batch/jobs/experiment/experiment_status_updater.go`) | No | It starts and finishes experiments through `UpdateExperiment`, which rejects the internal row. The holdout service moves the internal experiments with the group (below). |
+  | Experiment running watcher (`pkg/batch/jobs/notification/experiment_running_watcher.go`) | No | It notifies users about their running experiments. |
+  | `ListExperimentResults` (`pkg/eventcounter/api/api.go`) | No | It lists the experiments of one flag to return their results. |
+  | `checkIfHasExperiment` (`pkg/autoops/api/progressive_rollout.go`) | No | Only an experiment on the flag blocks a progressive rollout. |
+  | `existsRunningExperiment` (`pkg/feature/api/feature.go`), called by `validateFeatureStatus` from `UpdateFeature` and from the execution of a scheduled flag change | No | Only a waiting or running experiment on the flag blocks an update of the flag. |
+  | Feature list filter `has_experiment` (`select_features_by_experiment.sql`, `count_features_by_experiment.sql`) | No | The join on `experiment.feature_id` carries `kind = 0`. Without it a flag whose ID equals a group's UUID would be listed as having an experiment. |
+  | `Goal.experiments` (`select_goal.sql`, `select_goals.sql`) | No | The subquery carries `kind = 0`. It joins `feature` on `feature_id`, which already leaves the internal row out unless a flag has the same ID as the group. |
+  | `Goal.is_in_use_status` (same two files, and `count_goals.sql`) | Yes, counted | It counts every experiment whose `goal_ids` contain the goal, whatever the `kind`. A goal measured only by a holdout group is in use, and the `is_in_use_status` filter of `ListGoals` treats it so. The dashboard disables the archive and delete actions of a goal that is in use; `UpdateGoal` and `DeleteGoal` do not check the field. `Goal.experiments` does not list the internal row, so such a goal shows as in use with an empty experiment list until the Holdout Groups page (phase 5) shows which group uses it. |
+  | `GetExperimentResult` (`pkg/eventcounter/api/api.go`; web and public API) | Yes | It reads `experiment_result` by experiment ID and does not load the experiment, so it does not know the `kind`. The results tab needs it on the web API. On the public API it means a caller that knows the ID of an internal experiment can read its result. |
+
+  The internal row is created through the domain layer by the holdout service, not through `CreateExperiment`, so the feature-existence validation of that RPC does not run. `CreateExperimentRequest` has no `kind` field: the experiment API can only create `KIND_EXPERIMENT`.
 - Places that would otherwise treat the internal row as an ordinary experiment branch on `kind = HOLDOUT`:
 
   | Place | Behavior for `kind = HOLDOUT` |
   |---|---|
-  | `UpdateExperiment`, `DeleteExperiment` | Rejected with `FailedPrecondition` for any role, so an `Environment_EDITOR` cannot get around §4.5. The row changes only through the holdout service. |
+  | `UpdateExperiment`, `DeleteExperiment` | Rejected with `FailedPrecondition` for any role, so an `Environment_EDITOR` cannot get around §4.5. The check runs inside the transaction, after the row is read and before any field of the request is applied, so it covers every change `UpdateExperiment` can make (name, description, period, status, archive). The row changes only through the holdout service. These are the only two RPCs on `ExperimentService` that change an existing experiment; the public API `UpdateExperiment` calls the same RPC and gets the same error. |
   | SRM (`getFeatureForSRM`) | Variations and expected weights come from the group, not `GetFeature`. With the matched comparison sample the expected split is **50/50** — the symmetric case the SRM check handles best. SEGMENT mode: `SKIPPED` with a reason. |
   | Results tab | Variation labels come from the group, not `GetFeature`. |
 
@@ -417,7 +446,7 @@ Materialize the holdout into each target flag when the group is saved — a syst
 
 ### 6.2 A dedicated holdout analysis pipeline
 
-Compute holdout vs. non-holdout aggregates in a purpose-built query instead of the synthetic-feature trick. Rejected for v1: it duplicates the winsorization, Bayesian modelling and result storage that the existing calculator already implements across three data warehouses. The synthetic identity is a small, reversible amount of cleverness (one `kind` column, a list filter, a write guard and two `kind`-aware readers, §4.4) in exchange for reusing that whole stack. If holdout-specific statistics — variance reduction, segment breakdowns — become necessary, a dedicated pipeline can be added later without changing the serving design.
+Compute holdout vs. non-holdout aggregates in a purpose-built query instead of the synthetic-feature trick. Rejected for v1: it duplicates the winsorization, Bayesian modelling and result storage that the existing calculator already implements across three data warehouses. The synthetic identity is a small, reversible amount of cleverness (one `kind` column, a list filter sent by the readers that act for users, a write guard and two `kind`-aware readers, §4.4) in exchange for reusing that whole stack. If holdout-specific statistics — variance reduction, segment breakdowns — become necessary, a dedicated pipeline can be added later without changing the serving design.
 
 ### 6.3 Holdout below prerequisites and the `enabled` check
 

@@ -32,6 +32,7 @@ SELECT
             AND ex2.environment_id = ft.environment_id
         WHERE
             ex2.environment_id = ? AND
+            ex2.kind = 0 AND
             JSON_CONTAINS(ex2.goal_ids, CONCAT('"', goal.id, '"'), '$')
     ) AS experiments
 FROM

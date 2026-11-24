@@ -862,6 +862,11 @@ func (s *eventCounterService) listExperiments(
 			PageSize:       listRequestPageSize,
 			Cursor:         cursor,
 			EnvironmentId:  environmentId,
+			// The results are listed by feature flag. An experiment whose kind is
+			// HOLDOUT stores a holdout group ID in feature_id, not a feature flag ID.
+			Kinds: []experimentproto.Experiment_Kind{
+				experimentproto.Experiment_KIND_EXPERIMENT,
+			},
 		})
 		if err != nil {
 			return nil, err

@@ -188,6 +188,11 @@ func (u *experimentStatusUpdater) listExperiments(
 				experimentproto.Experiment_WAITING,
 				experimentproto.Experiment_RUNNING,
 			},
+			// An experiment whose kind is HOLDOUT follows its holdout group.
+			// The holdout service changes its status, not this job.
+			Kinds: []experimentproto.Experiment_Kind{
+				experimentproto.Experiment_KIND_EXPERIMENT,
+			},
 		})
 		if err != nil {
 			return nil, err

@@ -152,6 +152,11 @@ func (w *experimentRunningWatcher) listExperiments(
 			Statuses: []experimentproto.Experiment_Status{
 				experimentproto.Experiment_RUNNING,
 			},
+			// The notification lists the experiments users run.
+			// An experiment whose kind is HOLDOUT is not one of them.
+			Kinds: []experimentproto.Experiment_Kind{
+				experimentproto.Experiment_KIND_EXPERIMENT,
+			},
 			Archived: wrapperspb.Bool(false),
 		})
 		if err != nil {

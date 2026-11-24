@@ -67,6 +67,11 @@ func (s *grpcGatewayService) GetExperiment(
 		)
 		return nil, ErrInternal
 	}
+	// An experiment whose kind is HOLDOUT is internal to a holdout group.
+	// The public API does not expose it.
+	if resp.Experiment.GetKind() == experimentproto.Experiment_HOLDOUT {
+		return nil, ErrNotFound
+	}
 	return &gwproto.GetExperimentResponse{
 		Experiment: resp.Experiment,
 	}, nil
@@ -106,6 +111,11 @@ func (s *grpcGatewayService) ListExperiments(
 		SearchKeyword:  req.SearchKeyword,
 		Archived:       req.Archived,
 		Statuses:       req.Statuses,
+		// An experiment whose kind is HOLDOUT is internal to a holdout group.
+		// The public API does not expose it.
+		Kinds: []experimentproto.Experiment_Kind{
+			experimentproto.Experiment_KIND_EXPERIMENT,
+		},
 	})
 	if err != nil {
 		s.logger.Error("Failed to list experiments",

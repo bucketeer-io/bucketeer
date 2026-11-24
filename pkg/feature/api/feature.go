@@ -1522,6 +1522,10 @@ func (s *FeatureService) listExperiments(
 			PageSize:      listRequestSize,
 			Cursor:        cursor,
 			EnvironmentId: EnvironmentId,
+			// Only an experiment on the feature flag counts as running on it.
+			Kinds: []experimentproto.Experiment_Kind{
+				experimentproto.Experiment_KIND_EXPERIMENT,
+			},
 		})
 		if err != nil {
 			return nil, err

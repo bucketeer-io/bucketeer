@@ -121,7 +121,7 @@ func TestListExperimentsMySQL(t *testing.T) {
 					{Id: "id-1"},
 				}, 0, int64(0), nil)
 				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperimentSummary(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&v2es.ExperimentSummary{}, nil)
 
 			},

@@ -268,6 +268,10 @@ func TestListExperiments(t *testing.T) {
 					PageSize:       listRequestPageSize,
 					Cursor:         "",
 					EnvironmentId:  "ns0",
+					// An experiment whose kind is HOLDOUT is never listed by feature flag.
+					Kinds: []experimentproto.Experiment_Kind{
+						experimentproto.Experiment_KIND_EXPERIMENT,
+					},
 				}).Return(&experimentproto.ListExperimentsResponse{}, nil)
 			},
 			inputFeatureID:      "fid",
@@ -285,6 +289,10 @@ func TestListExperiments(t *testing.T) {
 					PageSize:       listRequestPageSize,
 					Cursor:         "",
 					EnvironmentId:  "ns0",
+					// An experiment whose kind is HOLDOUT is never listed by feature flag.
+					Kinds: []experimentproto.Experiment_Kind{
+						experimentproto.Experiment_KIND_EXPERIMENT,
+					},
 				}).Return(nil, errors.New("test"))
 			},
 			inputFeatureID:      "fid",

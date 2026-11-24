@@ -204,6 +204,10 @@ func TestExecuteScheduledFlagChangeAppliesUpdatePreconditions(t *testing.T) {
 					FeatureId:     featureID,
 					EnvironmentId: envID,
 					PageSize:      listRequestSize,
+					// An experiment whose kind is HOLDOUT does not block a flag change.
+					Kinds: []experimentproto.Experiment_Kind{
+						experimentproto.Experiment_KIND_EXPERIMENT,
+					},
 				})
 			if tc.experimentsErr != nil {
 				experiments.Return(nil, tc.experimentsErr)

@@ -89,6 +89,7 @@ func (s *experimentService) ListExperiments(
 		StopAt:         req.StopAt,
 		Maintainer:     req.Maintainer,
 		Statuses:       req.Statuses,
+		Kinds:          req.Kinds,
 		SearchKeyword:  req.SearchKeyword,
 		OrderBy:        req.OrderBy,
 		OrderDirection: req.OrderDirection,
@@ -122,7 +123,8 @@ func (s *experimentService) ListExperiments(
 		return nil, api.NewGRPCStatus(err).Err()
 	}
 
-	summary, err := s.experimentStorage.GetExperimentSummary(ctx, req.EnvironmentId)
+	// The summary counts the same kinds as the list.
+	summary, err := s.experimentStorage.GetExperimentSummary(ctx, req.EnvironmentId, req.Kinds)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get experiment summary",
@@ -330,6 +332,9 @@ func (s *experimentService) UpdateExperiment(
 		if err != nil {
 			return err
 		}
+		if experiment.Kind == proto.Experiment_HOLDOUT {
+			return statusExperimentOwnedByHoldoutGroup.Err()
+		}
 		updated, err := experiment.Update(
 			req.Name,
 			req.Description,
@@ -379,6 +384,9 @@ func (s *experimentService) UpdateExperiment(
 	if err != nil {
 		if errors.Is(err, v2es.ErrExperimentNotFound) || errors.Is(err, v2es.ErrExperimentUnexpectedAffectedRows) {
 			return nil, statusExperimentNotFound.Err()
+		}
+		if errors.Is(err, statusExperimentOwnedByHoldoutGroup.Err()) {
+			return nil, statusExperimentOwnedByHoldoutGroup.Err()
 		}
 		s.logger.Error(
 			"Failed to update experiment",
@@ -449,6 +457,9 @@ func (s *experimentService) DeleteExperiment(
 			)
 			return err
 		}
+		if experiment.Kind == proto.Experiment_HOLDOUT {
+			return statusExperimentOwnedByHoldoutGroup.Err()
+		}
 		experimentPb = experiment
 
 		err = experiment.SetDeleted()
@@ -467,6 +478,9 @@ func (s *experimentService) DeleteExperiment(
 		return s.experimentStorage.UpdateExperiment(ctxWithTx, experiment, req.EnvironmentId)
 	})
 	if err != nil {
+		if errors.Is(err, statusExperimentOwnedByHoldoutGroup.Err()) {
+			return nil, statusExperimentOwnedByHoldoutGroup.Err()
+		}
 		s.logger.Error(
 			"Failed to delete experiment",
 			log.FieldsFromIncomingContext(ctx).AddFields(
