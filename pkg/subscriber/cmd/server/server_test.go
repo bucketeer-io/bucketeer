@@ -319,7 +319,7 @@ func TestInitDataWarehouseStoragesMySQL(t *testing.T) {
 			desc:        "main connection without main client or mysql flags fails",
 			mysqlConfig: MySQLConfig{UseMainConnection: true},
 			mainClient:  func(*gomock.Controller) mysql.Client { return nil },
-			expectedErr: "needs the --mysql-* flags when storage-type is not mysql",
+			expectedErr: "needs the mysql-user, mysql-host, mysql-port, and mysql-db-name flags when storage-type is not mysql",
 		},
 		{
 			desc:        "dedicated connection without host fails before dialling",

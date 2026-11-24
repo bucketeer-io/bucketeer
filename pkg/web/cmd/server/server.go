@@ -1108,7 +1108,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// (separate from mysqlClient / postgresClient) so the closer is non-nil
 	// for the MySQL/Postgres backends and must be closed on shutdown.
 	eventDWHStorage, dwhCloser, err := s.createDWHEventStorage(
-		ctx, dataWarehouseConfig, bigQueryQuerier, bigQueryDataSet, logger,
+		ctx, dataWarehouseConfig, bigQueryQuerier, bigQueryDataSet, registerer, logger,
 	)
 	if err != nil {
 		return err
@@ -1912,13 +1912,14 @@ func (s *server) createDWHEventStorage(
 	config *DataWarehouseConfig,
 	bigQueryQuerier bqquerier.Client,
 	bigQueryDataSet string,
+	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (dwhdatabase.EventStorage, io.Closer, error) {
 	switch config.Type {
 	case "mysql":
 		clientCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
-		client, err := s.createDWHMySQLClient(clientCtx, config.MySQL, logger)
+		client, err := s.createDWHMySQLClient(clientCtx, config.MySQL, registerer, logger)
 		if err != nil {
 			logger.Error("Failed to create MySQL client for data warehouse",
 				zap.Error(err),
@@ -1951,6 +1952,7 @@ func (s *server) createDWHEventStorage(
 func (s *server) createDWHMySQLClient(
 	ctx context.Context,
 	config DataWarehouseMySQLConfig,
+	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (mysql.Client, error) {
 	user := config.User
@@ -1976,6 +1978,11 @@ func (s *server) createDWHMySQLClient(
 	if port == 0 {
 		port = 3306
 	}
+	opts := []mysql.Option{mysql.WithLogger(logger)}
+	// The operational MySQL client registers the shared MySQL metrics; register them here only without it.
+	if registerer != nil && *s.operationalDatabaseType == "postgres" {
+		opts = append(opts, mysql.WithMetrics(registerer))
+	}
 	client, err := mysql.NewClient(
 		ctx,
 		user,
@@ -1983,7 +1990,7 @@ func (s *server) createDWHMySQLClient(
 		host,
 		port,
 		database,
-		mysql.WithLogger(logger),
+		opts...,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create data warehouse MySQL client: %w", err)

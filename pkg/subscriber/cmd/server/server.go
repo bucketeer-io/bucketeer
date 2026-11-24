@@ -909,22 +909,31 @@ func (s *server) initDataWarehouseStorages(
 	case "mysql":
 		client := mainMySQLClient
 		var cleanup func()
-		if dwhConfig.MySQL.UseMainConnection && mainMySQLClient != nil {
+		switch {
+		case dwhConfig.MySQL.UseMainConnection && mainMySQLClient != nil:
 			logger.Info("Using main MySQL connection for data warehouse")
-		} else {
-			mysqlConfig := &dwhConfig.MySQL
-			if dwhConfig.MySQL.UseMainConnection {
-				// No main MySQL client when storage-type=postgres, so open one from the --mysql-* flags.
-				mysqlConfig = s.mainMySQLConfig()
+		case dwhConfig.MySQL.UseMainConnection:
+			// No main MySQL client when storage-type=postgres, so open it here from the --mysql-* flags.
+			if *s.mysqlUser == "" || *s.mysqlHost == "" || *s.mysqlPort == 0 || *s.mysqlDBName == "" {
+				return nil, nil, nil, nil, fmt.Errorf(
+					"data warehouse mysql.useMainConnection needs the mysql-user, mysql-host, mysql-port, " +
+						"and mysql-db-name flags when storage-type is not mysql",
+				)
 			}
-			dedicated, err := createDWHMySQLClient(ctx, mysqlConfig, logger)
+			mainClient, err := s.createMySQLClient(ctx, registerer, logger)
 			if err != nil {
-				if dwhConfig.MySQL.UseMainConnection {
-					return nil, nil, nil, nil, fmt.Errorf(
-						"data warehouse mysql.useMainConnection needs the --mysql-* flags when storage-type is not mysql: %w",
-						err,
-					)
-				}
+				return nil, nil, nil, nil, fmt.Errorf("failed to create main MySQL client for data warehouse: %w", err)
+			}
+			client = mainClient
+			cleanup = func() { mainClient.Close() }
+		default:
+			// The main MySQL client registers the shared MySQL metrics; register them here only without it.
+			var dwhRegisterer metrics.Registerer
+			if mainMySQLClient == nil {
+				dwhRegisterer = registerer
+			}
+			dedicated, err := createDWHMySQLClient(ctx, &dwhConfig.MySQL, dwhRegisterer, logger)
+			if err != nil {
 				return nil, nil, nil, nil, fmt.Errorf("failed to create dedicated MySQL client: %w", err)
 			}
 			client = dedicated
@@ -988,21 +997,11 @@ func (s *server) initDataWarehouseStorages(
 	}
 }
 
-// mainMySQLConfig returns the operational --mysql-* flags as a data-warehouse MySQL config.
-func (s *server) mainMySQLConfig() *MySQLConfig {
-	return &MySQLConfig{
-		Host:     *s.mysqlHost,
-		Port:     *s.mysqlPort,
-		User:     *s.mysqlUser,
-		Password: *s.mysqlPass,
-		Database: *s.mysqlDBName,
-	}
-}
-
 // createDWHMySQLClient creates a dedicated MySQL client for the data warehouse.
 func createDWHMySQLClient(
 	ctx context.Context,
 	config *MySQLConfig,
+	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (mysql.Client, error) {
 	if config == nil {
@@ -1015,6 +1014,10 @@ func createDWHMySQLClient(
 	if port == 0 {
 		port = 3306 // Default MySQL port
 	}
+	opts := []mysql.Option{mysql.WithLogger(logger)}
+	if registerer != nil {
+		opts = append(opts, mysql.WithMetrics(registerer))
+	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	client, err := mysql.NewClient(
@@ -1024,7 +1027,7 @@ func createDWHMySQLClient(
 		config.Host,
 		port,
 		config.Database,
-		mysql.WithLogger(logger),
+		opts...,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create MySQL client: %w", err)

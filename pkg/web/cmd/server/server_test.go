@@ -54,7 +54,7 @@ func TestCreateDWHMySQLClientMissingConfig(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			client, err := s.createDWHMySQLClient(context.Background(), p.config, zap.NewNop())
+			client, err := s.createDWHMySQLClient(context.Background(), p.config, nil, zap.NewNop())
 			require.Error(t, err)
 			assert.Equal(t, p.expectedErr, err.Error())
 			assert.Nil(t, client)
