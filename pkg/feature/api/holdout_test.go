@@ -29,6 +29,7 @@ import (
 
 	envclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
+	experimentstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	featurestoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
@@ -902,6 +903,9 @@ func newHoldoutService(t *testing.T, controller *gomock.Controller) (*FeatureSer
 	service := createFeatureService(controller)
 	storage := holdoutmock.NewMockHoldoutStorage(controller)
 	service.holdoutStorage = storage
+	// No expectation is set here, so a test that sets none fails when the
+	// holdout service reads or writes an experiment.
+	service.experimentStorage = experimentstoragemock.NewMockExperimentStorage(controller)
 	return service, storage
 }
 

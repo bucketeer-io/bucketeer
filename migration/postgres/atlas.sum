@@ -1,4 +1,4 @@
-h1:K980dryfQz2UkOJ0IhyvHltc6Cnz1hKlLtixymg5T9o=
+h1:FGZ2F+xDxUpQWn0dlVUr52Z+djExW0pIKkoJ1XErAPs=
 20260226174000_initialization.sql h1:orWPjklxeOP046jFps+1UhJDdaSDPwDjlODiSe/479c=
 20260514000000_update_feature_variation_value_schema.sql h1:Jp91HETgQvAvqNGTgSBip8ipx3aAI5C4Tsa2z8eplB4=
 20260713000000_create_notification_tables.sql h1:TqsueyglKP41Towy2FsYTGyxI3+h4bRbpGS4MZLLNhw=
@@ -9,3 +9,4 @@ h1:K980dryfQz2UkOJ0IhyvHltc6Cnz1hKlLtixymg5T9o=
 20261031000000_add_api_key_hash.sql h1:pgePl9PxQ3XAAqFr1jj8kAAWjx2ofv6i+a7hHNcgWVY=
 20261109000000_add_feature_last_used_at.sql h1:o9mRUuuTNL3caGjS91SaiuVyimAprZ59Op02wwk69GU=
 20261124000000_add_experiment_kind.sql h1:nc1XkTkQFv3vmU7abnlHthkVqEsfQv8XxE0tV+nbJ0Q=
+20261125000000_create_holdout_group_segment_user_table.sql h1:nwmqdaOjj0ecBoWTIX2yMv8HTIdse61gKcvQUxSyoHM=

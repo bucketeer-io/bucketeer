@@ -16,6 +16,7 @@ package processor
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -38,6 +39,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	domaineventdomain "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/holdout/domain"
@@ -858,6 +860,7 @@ func TestCacheRefresherHoldoutGroup(t *testing.T) {
 		EnvironmentId: "env-1",
 		EntityId:      "hg",
 		Type:          domaineventproto.Event_HOLDOUT_GROUP_STOPPED,
+		EntityData:    holdoutEntityData(t, &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1"}),
 	}
 
 	t.Run("writes the snapshot then publishes the invalidation", func(t *testing.T) {
@@ -945,5 +948,255 @@ func TestCacheRefresherHoldoutEventDoesNotTouchFeatureCache(t *testing.T) {
 		EnvironmentId: "env-1",
 		EntityId:      "hg",
 		Type:          domaineventproto.Event_HOLDOUT_GROUP_STARTED,
+		EntityData:    holdoutEntityData(t, group),
 	}))
+}
+
+// holdoutEntityData encodes a group the way domainevent.NewEvent encodes the
+// entity of a HOLDOUT_GROUP event.
+func holdoutEntityData(t *testing.T, group *featureproto.HoldoutGroup) string {
+	t.Helper()
+	data, err := json.MarshalIndent(group, "", "  ")
+	require.NoError(t, err)
+	return string(data)
+}
+
+// The check reads the entity data that the holdout service puts on its
+// events, so it is tested against events built by domainevent.NewEvent.
+func TestHoldoutGroupHasExperiments(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		group    *featureproto.HoldoutGroup
+		expected bool
+	}{
+		{
+			desc:     "no goals",
+			group:    &featureproto.HoldoutGroup{Id: "hg", Status: featureproto.HoldoutGroup_RUNNING},
+			expected: false,
+		},
+		{
+			desc:     "goals on a group that has not started",
+			group:    &featureproto.HoldoutGroup{Id: "hg", GoalIds: []string{"goal"}},
+			expected: false,
+		},
+		{
+			desc:     "experiment of the whole period",
+			group:    &featureproto.HoldoutGroup{Id: "hg", GoalIds: []string{"goal"}, ExperimentId: "e1"},
+			expected: true,
+		},
+		{
+			desc:     "experiment of the analysis period only",
+			group:    &featureproto.HoldoutGroup{Id: "hg", GoalIds: []string{"goal"}, AnalysisExperimentId: "e2"},
+			expected: true,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			event, err := domaineventdomain.NewEvent(
+				&domaineventproto.Editor{Email: "admin@example.com"},
+				domaineventproto.Event_HOLDOUT_GROUP,
+				p.group.Id,
+				domaineventproto.Event_HOLDOUT_GROUP_UPDATED,
+				&domaineventproto.HoldoutGroupUpdatedEvent{Id: p.group.Id},
+				"env-1",
+				p.group,
+				p.group,
+			)
+			require.NoError(t, err)
+			assert.Equal(t, p.expected, holdoutGroupHasExperiments(event))
+		})
+	}
+
+	t.Run("entity data that cannot be read counts as having one", func(t *testing.T) {
+		t.Parallel()
+		assert.True(t, holdoutGroupHasExperiments(&domaineventproto.Event{}))
+		assert.True(t, holdoutGroupHasExperiments(&domaineventproto.Event{EntityData: "not json"}))
+	})
+}
+
+type holdoutExperimentsRefresher struct {
+	refresher        *cacheRefresher
+	storage          *holdoutmock.MockHoldoutStorage
+	holdoutCache     *cachev3mock.MockHoldoutGroupCache
+	experimentClient *experimentclientmock.MockClient
+	experimentsCache *cachev3mock.MockExperimentsCache
+	publisher        *publishermock.MockPublisher
+}
+
+func newHoldoutExperimentsRefresher(t *testing.T) *holdoutExperimentsRefresher {
+	t.Helper()
+	controller := gomock.NewController(t)
+	h := &holdoutExperimentsRefresher{
+		storage:          holdoutmock.NewMockHoldoutStorage(controller),
+		holdoutCache:     cachev3mock.NewMockHoldoutGroupCache(controller),
+		experimentClient: experimentclientmock.NewMockClient(controller),
+		experimentsCache: cachev3mock.NewMockExperimentsCache(controller),
+		publisher:        publishermock.NewMockPublisher(controller),
+	}
+	h.refresher = NewCacheRefresher(
+		nil, h.experimentClient, nil, nil,
+		nil, nil, nil, h.experimentsCache, nil,
+		h.storage, h.holdoutCache,
+		h.publisher,
+		zap.NewNop(),
+	).(*cacheRefresher)
+	h.refresher.now = func() time.Time { return refresherFixedNow }
+	return h
+}
+
+// expectHoldoutSnapshot expects the serving snapshot of the group to be read
+// and cached, and returns the cache write.
+func (h *holdoutExperimentsRefresher) expectHoldoutSnapshot(group *featureproto.HoldoutGroup) *gomock.Call {
+	h.storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").
+		Return(&domain.HoldoutGroup{HoldoutGroup: group}, nil)
+	return h.holdoutCache.EXPECT().
+		PutIfNewer(group, "env-1", refresherFixedGeneration).
+		Return(true, nil)
+}
+
+func holdoutGroupEvent(t *testing.T, group *featureproto.HoldoutGroup) *domaineventproto.Event {
+	t.Helper()
+	return &domaineventproto.Event{
+		EntityType:    domaineventproto.Event_HOLDOUT_GROUP,
+		EnvironmentId: "env-1",
+		EntityId:      group.Id,
+		Type:          domaineventproto.Event_HOLDOUT_GROUP_STARTED,
+		EntityData:    holdoutEntityData(t, group),
+	}
+}
+
+// The holdout service writes the internal experiments of a group and
+// publishes no EXPERIMENT event, so a HOLDOUT_GROUP event of a group that has
+// an internal experiment refreshes the experiments cache before the
+// invalidation is published.
+func TestCacheRefresherHoldoutEventRefreshesExperiments(t *testing.T) {
+	t.Parallel()
+	internal := &experimentproto.Experiment{
+		Id:        "internal",
+		Kind:      experimentproto.Experiment_HOLDOUT,
+		FeatureId: "hg",
+		Status:    experimentproto.Experiment_RUNNING,
+	}
+	groups := map[string]*featureproto.HoldoutGroup{
+		"a group with the experiment of the whole period": {
+			Id: "hg", EnvironmentId: "env-1", GoalIds: []string{"goal"}, ExperimentId: "internal",
+		},
+		"a group with only the experiment of the analysis period": {
+			Id: "hg", EnvironmentId: "env-1", GoalIds: []string{"goal"}, AnalysisExperimentId: "internal",
+		},
+	}
+	for name, group := range groups {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			h := newHoldoutExperimentsRefresher(t)
+			holdoutPut := h.expectHoldoutSnapshot(group)
+			list := h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).DoAndReturn(
+				func(
+					_ context.Context,
+					req *experimentproto.ListExperimentsRequest,
+					_ ...grpc.CallOption,
+				) (*experimentproto.ListExperimentsResponse, error) {
+					assert.Equal(t, "env-1", req.EnvironmentId)
+					assert.Equal(t, []experimentproto.Experiment_Status{
+						experimentproto.Experiment_RUNNING,
+						experimentproto.Experiment_STOPPED,
+					}, req.Statuses)
+					assert.False(t, req.Archived.Value)
+					// No kind filter: the internal experiments are part of the cache.
+					assert.Empty(t, req.Kinds)
+					return &experimentproto.ListExperimentsResponse{
+						Experiments: []*experimentproto.Experiment{internal},
+					}, nil
+				},
+			).After(holdoutPut)
+			experimentsPut := h.experimentsCache.EXPECT().PutIfNewer(
+				&experimentproto.Experiments{Experiments: []*experimentproto.Experiment{internal}},
+				"env-1",
+				refresherFixedGeneration,
+			).Return(true, nil).After(list)
+			h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).After(experimentsPut)
+			require.NoError(t, h.refresher.refresh(context.Background(), holdoutGroupEvent(t, group)))
+		})
+	}
+
+	t.Run("unreadable entity data refreshes the experiments", func(t *testing.T) {
+		t.Parallel()
+		h := newHoldoutExperimentsRefresher(t)
+		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1"}
+		h.expectHoldoutSnapshot(group)
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
+			Return(&experimentproto.ListExperimentsResponse{}, nil)
+		h.experimentsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).Return(true, nil)
+		h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		event := holdoutGroupEvent(t, group)
+		event.EntityData = ""
+		require.NoError(t, h.refresher.refresh(context.Background(), event))
+	})
+
+	t.Run("a failed experiments read still publishes the invalidation", func(t *testing.T) {
+		t.Parallel()
+		h := newHoldoutExperimentsRefresher(t)
+		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1", ExperimentId: "internal"}
+		h.expectHoldoutSnapshot(group)
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
+			Return(nil, context.DeadlineExceeded)
+		// The experiments cache is not written.
+		h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		err := h.refresher.refresh(context.Background(), holdoutGroupEvent(t, group))
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+		assert.True(t, isRepeatable(err))
+	})
+
+	t.Run("a refused experiments cache write is repeatable and still publishes", func(t *testing.T) {
+		t.Parallel()
+		h := newHoldoutExperimentsRefresher(t)
+		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1", ExperimentId: "internal"}
+		h.expectHoldoutSnapshot(group)
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
+			Return(&experimentproto.ListExperimentsResponse{}, nil)
+		h.experimentsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+			Return(false, errors.New("OOM command not allowed"))
+		h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		err := h.refresher.refresh(context.Background(), holdoutGroupEvent(t, group))
+		require.Error(t, err)
+		assert.True(t, isRepeatable(err))
+	})
+}
+
+// A group without goals has no internal experiment, and its events must not
+// reach the experiments cache: the experiment client and the experiments
+// cache have no expectation, so a call to either fails the test.
+func TestCacheRefresherHoldoutEventWithoutExperimentsLeavesExperimentsCache(t *testing.T) {
+	t.Parallel()
+	types := []domaineventproto.Event_Type{
+		domaineventproto.Event_HOLDOUT_GROUP_CREATED,
+		domaineventproto.Event_HOLDOUT_GROUP_UPDATED,
+		domaineventproto.Event_HOLDOUT_GROUP_FEATURE_ADDED,
+		domaineventproto.Event_HOLDOUT_GROUP_FEATURE_REMOVED,
+		domaineventproto.Event_HOLDOUT_GROUP_STARTED,
+		domaineventproto.Event_HOLDOUT_GROUP_ANALYSIS_STARTED,
+		domaineventproto.Event_HOLDOUT_GROUP_STOPPED,
+		domaineventproto.Event_HOLDOUT_GROUP_ARCHIVED,
+		domaineventproto.Event_HOLDOUT_GROUP_DELETED,
+	}
+	for _, eventType := range types {
+		t.Run(eventType.String(), func(t *testing.T) {
+			t.Parallel()
+			h := newHoldoutExperimentsRefresher(t)
+			group := &featureproto.HoldoutGroup{
+				Id:            "hg",
+				EnvironmentId: "env-1",
+				Status:        featureproto.HoldoutGroup_RUNNING,
+				GoalIds:       []string{},
+				Features:      []*featureproto.HoldoutGroupFeature{{FeatureId: "targeted"}},
+			}
+			holdoutPut := h.expectHoldoutSnapshot(group)
+			h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).After(holdoutPut)
+			event := holdoutGroupEvent(t, group)
+			event.Type = eventType
+			require.NoError(t, h.refresher.refresh(context.Background(), event))
+		})
+	}
 }

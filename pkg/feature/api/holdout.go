@@ -260,6 +260,9 @@ func (s *FeatureService) UpdateHoldoutGroup(
 				return holdoutdomain.NewPeriodOverlapError(conflict)
 			}
 		}
+		if err := s.syncHoldoutExperiments(txCtx, current, previous.Status, now); err != nil {
+			return err
+		}
 		event, err = newHoldoutEvent(
 			editor,
 			req.EnvironmentId,
@@ -603,6 +606,12 @@ func (s *FeatureService) transitionHoldout(
 		if err := s.revalidateSegmentForActivation(txCtx, previous, group); err != nil {
 			return err
 		}
+		if err := s.snapshotSegmentUsersForActivation(txCtx, previous, group); err != nil {
+			return err
+		}
+		if err := s.syncHoldoutExperiments(txCtx, group, previous.Status, now); err != nil {
+			return err
+		}
 		group.UpdatedBy = editor.Email
 		event, err = newHoldoutEvent(
 			editor, environmentID, group.Id, eventType, eventMessage(group), group.HoldoutGroup, previous.HoldoutGroup,
@@ -732,9 +741,7 @@ func (s *FeatureService) revalidateSegmentForActivation(
 	ctx context.Context,
 	previous, group *holdoutdomain.HoldoutGroup,
 ) error {
-	if previous.Status != featureproto.HoldoutGroup_WAITING ||
-		group.Status != featureproto.HoldoutGroup_RUNNING ||
-		group.AssignmentType != featureproto.HoldoutGroup_SEGMENT {
+	if !activatesSegmentGroup(previous, group) {
 		return nil
 	}
 	segment, _, err := s.segmentStorage.GetSegmentForUpdate(ctx, group.SegmentId, group.EnvironmentId)
@@ -751,6 +758,76 @@ func (s *FeatureService) revalidateSegmentForActivation(
 		return pkgErr.NewErrorFailedPrecondition(
 			pkgErr.FeaturePackageName, "segment users already uploading",
 		).WithMessageKey("SegmentUsersAlreadyUploading")
+	}
+	return nil
+}
+
+// activatesSegmentGroup reports whether the transition starts a SEGMENT group.
+func activatesSegmentGroup(previous, group *holdoutdomain.HoldoutGroup) bool {
+	return previous.Status == featureproto.HoldoutGroup_WAITING &&
+		group.Status == featureproto.HoldoutGroup_RUNNING &&
+		group.AssignmentType == featureproto.HoldoutGroup_SEGMENT
+}
+
+// snapshotSegmentUsersForActivation stores the users the segment includes at
+// the moment a SEGMENT group starts. It runs after
+// revalidateSegmentForActivation, which holds the lock on the segment row, so
+// no upload can change the users between the copy and the commit. From the
+// commit on, the segment is locked by the serving group, so the copy is the
+// membership of the whole serving period. A group with or without goals gets
+// one. The database copies the rows in one statement; the cost grows with the
+// number of users and is paid inside the transaction.
+func (s *FeatureService) snapshotSegmentUsersForActivation(
+	ctx context.Context,
+	previous, group *holdoutdomain.HoldoutGroup,
+) error {
+	if !activatesSegmentGroup(previous, group) {
+		return nil
+	}
+	_, err := s.holdoutStorage.CreateSegmentUserSnapshot(ctx, group.Id, group.SegmentId, group.EnvironmentId)
+	return err
+}
+
+// syncHoldoutExperiments keeps the internal experiments of the group in step
+// with it, inside the transaction that changes the group. It creates the
+// experiment the group needs and does not have, then writes the state of the
+// group onto the experiments it already had. The experiment storage is used
+// directly: the experiment API rejects every write to an internal experiment
+// and would not run in this transaction. The rows are read without a lock of
+// their own, because the lock on the group row serializes every writer.
+//
+// A group without goals has no internal experiment, so nothing is read or
+// written for it.
+func (s *FeatureService) syncHoldoutExperiments(
+	ctx context.Context,
+	group *holdoutdomain.HoldoutGroup,
+	previousStatus featureproto.HoldoutGroup_Status,
+	now int64,
+) error {
+	existing := []string{group.ExperimentId, group.AnalysisExperimentId}
+	created, err := group.NewInternalExperiment(previousStatus, now)
+	if err != nil {
+		return err
+	}
+	if created != nil {
+		if err := s.experimentStorage.CreateExperiment(ctx, created, group.EnvironmentId); err != nil {
+			return err
+		}
+	}
+	for _, id := range existing {
+		if id == "" {
+			continue
+		}
+		experiment, err := s.experimentStorage.GetExperiment(ctx, id, group.EnvironmentId)
+		if err != nil {
+			return err
+		}
+		if !group.MirrorToExperiment(experiment, now) {
+			continue
+		}
+		if err := s.experimentStorage.UpdateExperiment(ctx, experiment, group.EnvironmentId); err != nil {
+			return err
+		}
 	}
 	return nil
 }

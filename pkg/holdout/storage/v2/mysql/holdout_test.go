@@ -16,6 +16,7 @@ package mysql
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -330,6 +331,34 @@ func TestEnvironmentLockAndSeed(t *testing.T) {
 		seed, err := storage.GetEnvironmentSamplingSeed(context.Background(), "env")
 		require.NoError(t, err)
 		assert.Equal(t, "seed", seed)
+	})
+}
+
+func TestCreateSegmentUserSnapshot(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+
+	t.Run("copies the included users in one statement and returns the count", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		result := mock.NewMockResult(controller)
+		result.EXPECT().RowsAffected().Return(int64(3), nil)
+		storage.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+			gomock.Any(),
+			insertHoldoutGroupSegmentUsersSQL,
+			"hg", "seg", "env", int32(proto.SegmentUser_INCLUDED),
+		).Return(result, nil)
+		count, err := storage.CreateSegmentUserSnapshot(context.Background(), "hg", "seg", "env")
+		require.NoError(t, err)
+		assert.Equal(t, int64(3), count)
+	})
+	t.Run("statement error", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		storage.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).Return(nil, errors.New("db"))
+		count, err := storage.CreateSegmentUserSnapshot(context.Background(), "hg", "seg", "env")
+		assert.EqualError(t, err, "db")
+		assert.Zero(t, count)
 	})
 }
 

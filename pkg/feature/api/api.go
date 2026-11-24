@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
 	v2ts "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage"
@@ -60,6 +61,7 @@ type FeatureService struct {
 	segmentUserStorage         v2fs.SegmentUserStorage
 	scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage
 	holdoutStorage             v2hs.HoldoutStorage
+	experimentStorage          v2es.ExperimentStorage
 	tagStorage                 v2ts.TagStorage
 	dbClient                   database.Client
 	accountClient              accountclient.Client
@@ -87,6 +89,7 @@ func NewFeatureService(
 	flagTriggerStorage v2fs.FlagTriggerStorage,
 	scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage,
 	holdoutStorage v2hs.HoldoutStorage,
+	experimentStorage v2es.ExperimentStorage,
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	autoOpsClient autoopsclient.Client,
@@ -111,6 +114,7 @@ func NewFeatureService(
 		segmentUserStorage:         segmentUserStorage,
 		scheduledFlagChangeStorage: scheduledFlagChangeStorage,
 		holdoutStorage:             holdoutStorage,
+		experimentStorage:          experimentStorage,
 		tagStorage:                 tagStorage,
 		dbClient:                   dbClient,
 		accountClient:              accountClient,

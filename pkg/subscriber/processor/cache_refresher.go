@@ -16,6 +16,7 @@ package processor
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -356,7 +357,34 @@ func (c *cacheRefresher) refreshHoldoutGroup(
 			zap.Int64("generation", generation),
 		)
 	}
-	return c.publishCacheInvalidation(ctx, event)
+	// The holdout service writes the internal experiments of a group together
+	// with the group and publishes no EXPERIMENT event for them, so the
+	// experiments cache is refreshed here, before the invalidation tells the
+	// gateways to read again. A group without internal experiments leaves the
+	// experiments cache alone.
+	var experimentsErr error
+	if holdoutGroupHasExperiments(event) {
+		_, experimentsErr = c.putExperiments(ctx, event)
+	}
+	if err := c.publishCacheInvalidation(ctx, event); err != nil {
+		return err
+	}
+	return experimentsErr
+}
+
+// holdoutGroupHasExperiments reports whether the group carried by a
+// HOLDOUT_GROUP event has an internal experiment. The IDs are never cleared
+// once set, so the current entity data is enough. An event whose entity data
+// cannot be read is treated as having one.
+func holdoutGroupHasExperiments(event *domaineventproto.Event) bool {
+	var group struct {
+		ExperimentID         string `json:"experiment_id"`
+		AnalysisExperimentID string `json:"analysis_experiment_id"`
+	}
+	if err := json.Unmarshal([]byte(event.EntityData), &group); err != nil {
+		return true
+	}
+	return group.ExperimentID != "" || group.AnalysisExperimentID != ""
 }
 
 func (c *cacheRefresher) refreshFeatures(
@@ -565,6 +593,26 @@ func (c *cacheRefresher) refreshExperiments(
 	ctx context.Context,
 	event *domaineventproto.Event,
 ) error {
+	count, err := c.putExperiments(ctx, event)
+	if err != nil {
+		return err
+	}
+	c.logger.Debug("Refreshed experiments redis cache",
+		zap.String("environmentId", event.EnvironmentId),
+		zap.String("entityId", event.EntityId),
+		zap.String("type", event.Type.String()),
+		zap.Int("experimentsCount", count),
+	)
+	return c.publishCacheInvalidation(ctx, event)
+}
+
+// putExperiments reads the experiments of the event's environment that the
+// analytics pipeline uses and writes them to the experiments cache. It
+// returns how many it read.
+func (c *cacheRefresher) putExperiments(
+	ctx context.Context,
+	event *domaineventproto.Event,
+) (int, error) {
 	fetchCtx, cancel := context.WithTimeout(ctx, cacheRefresherFetchTimeout)
 	defer cancel()
 	// Captured before reading so the batch cacher cannot overwrite a newer snapshot
@@ -580,19 +628,13 @@ func (c *cacheRefresher) refreshExperiments(
 		Archived: &wrapperspb.BoolValue{Value: false},
 	})
 	if err != nil {
-		return err
+		return 0, err
 	}
 	experiments := &experimentproto.Experiments{Experiments: resp.Experiments}
 	if _, err := c.experimentsCache.PutIfNewer(experiments, event.EnvironmentId, generation); err != nil {
-		return writeError(err)
+		return 0, writeError(err)
 	}
-	c.logger.Debug("Refreshed experiments redis cache",
-		zap.String("environmentId", event.EnvironmentId),
-		zap.String("entityId", event.EntityId),
-		zap.String("type", event.Type.String()),
-		zap.Int("experimentsCount", len(experiments.Experiments)),
-	)
-	return c.publishCacheInvalidation(ctx, event)
+	return len(experiments.Experiments), nil
 }
 
 // refreshAutoOpsRules rebuilds the auto-ops-rules L2 cache for the

@@ -70,6 +70,21 @@ func (mr *MockHoldoutStorageMockRecorder) CreateHoldoutGroupFeatures(ctx, featur
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateHoldoutGroupFeatures", reflect.TypeOf((*MockHoldoutStorage)(nil).CreateHoldoutGroupFeatures), ctx, features)
 }
 
+// CreateSegmentUserSnapshot mocks base method.
+func (m *MockHoldoutStorage) CreateSegmentUserSnapshot(ctx context.Context, groupID, segmentID, environmentID string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSegmentUserSnapshot", ctx, groupID, segmentID, environmentID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateSegmentUserSnapshot indicates an expected call of CreateSegmentUserSnapshot.
+func (mr *MockHoldoutStorageMockRecorder) CreateSegmentUserSnapshot(ctx, groupID, segmentID, environmentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSegmentUserSnapshot", reflect.TypeOf((*MockHoldoutStorage)(nil).CreateSegmentUserSnapshot), ctx, groupID, segmentID, environmentID)
+}
+
 // GetClearedHoldoutUpdatedAt mocks base method.
 func (m *MockHoldoutStorage) GetClearedHoldoutUpdatedAt(ctx context.Context, environmentID string) (int64, error) {
 	m.ctrl.T.Helper()

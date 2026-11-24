@@ -298,6 +298,13 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 	// using the same feature flag id and goal id
 	var exps []*exproto.Experiment
 	for _, exp := range experiments {
+		// Goal events are linked to experiments on feature flags only. An
+		// internal experiment of a holdout group is left out, so it neither
+		// links the event nor fails the link to a flag experiment that has
+		// the same goal.
+		if exp.Kind == exproto.Experiment_HOLDOUT {
+			continue
+		}
 		if w.findGoalID(event.GoalId, exp.GoalIds) {
 			// If the goal event was issued before the experiment started running,
 			// we ignore those events to avoid issues in the conversion rate

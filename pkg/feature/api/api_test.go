@@ -121,6 +121,7 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 		mock.NewMockSegmentUserStorage(c),
 		mock.NewMockScheduledFlagChangeStorage(c),
 		nil,
+		nil,
 		tagstoragemock.NewMockTagStorage(c),
 		databasemock.NewMockClient(c),
 		a,

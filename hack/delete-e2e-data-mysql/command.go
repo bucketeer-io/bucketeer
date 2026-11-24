@@ -64,6 +64,7 @@ var (
 	// parents, then the environments themselves are deleted.
 	holdoutEnvironmentTables = []string{
 		"holdout_group_feature",
+		"holdout_group_segment_user",
 		"holdout_group",
 		"segment_user",
 		"segment",

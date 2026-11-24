@@ -55,6 +55,8 @@ var (
 	selectClearedHoldoutUpdatedAtSQL string
 	//go:embed sql/holdout/select_live_feature_targets.sql
 	selectLiveFeatureTargetsSQL string
+	//go:embed sql/holdout/insert_holdout_group_segment_users.sql
+	insertHoldoutGroupSegmentUsersSQL string
 )
 
 type holdoutStorage struct {
@@ -320,6 +322,24 @@ func (s *holdoutStorage) GetEnvironmentSamplingSeed(ctx context.Context, environ
 		return "", err
 	}
 	return seed, nil
+}
+
+func (s *holdoutStorage) CreateSegmentUserSnapshot(
+	ctx context.Context,
+	groupID, segmentID, environmentID string,
+) (int64, error) {
+	result, err := s.qe.ExecContext(
+		ctx,
+		insertHoldoutGroupSegmentUsersSQL,
+		groupID,
+		segmentID,
+		environmentID,
+		int32(proto.SegmentUser_INCLUDED),
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 func (s *holdoutStorage) ListActiveGroups(
