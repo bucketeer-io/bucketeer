@@ -26735,6 +26735,18 @@
                 "integer": 3
               }
             ]
+          },
+          {
+            "name": "Experiment.Kind",
+            "enum_fields": [
+              {
+                "name": "KIND_EXPERIMENT"
+              },
+              {
+                "name": "HOLDOUT",
+                "integer": 1
+              }
+            ]
           }
         ],
         "messages": [
@@ -26861,6 +26873,11 @@
                 "name": "goals",
                 "type": "GoalReference",
                 "is_repeated": true
+              },
+              {
+                "id": 22,
+                "name": "kind",
+                "type": "Kind"
               }
             ],
             "reserved_ids": [
@@ -27549,6 +27566,12 @@
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 16,
+                "name": "kinds",
+                "type": "Experiment.Kind",
+                "is_repeated": true
               }
             ],
             "reserved_ids": [

@@ -25,8 +25,10 @@ message Reason {
     CLIENT = 4 [deprecated = true];
     OFF_VARIATION = 5;
     PREREQUISITE = 6;
-    // HOLDOUT is assigned before any flag state is consulted. Older SDKs
-    // surface the unknown enum value rather than failing.
+    // HOLDOUT is assigned before any flag state is consulted. An SDK that
+    // does not know this value does not always pass it through: depending on
+    // the SDK and its version it reports HOLDOUT, replaces it with another
+    // reason, or fails to decode the whole GetEvaluations response.
     HOLDOUT = 7;
     ERROR_NO_EVALUATIONS = 20;
     ERROR_FLAG_NOT_FOUND = 21;

@@ -65,6 +65,32 @@ func TestGrpcGatewayService_GetExperiment(t *testing.T) {
 			expectedErr: ErrInternal,
 		},
 		{
+			desc: "fail: an experiment whose kind is HOLDOUT is not found",
+			ctx:  context.Background(),
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_ADMIN,
+							Disabled: false,
+						},
+					}, nil)
+				gs.experimentClient.(*mockexperimentclient.MockClient).EXPECT().
+					GetExperiment(gomock.Any(), gomock.Any()).
+					Return(&experiment.GetExperimentResponse{
+						Experiment: &experiment.Experiment{
+							Id:   "sub-1",
+							Name: "Holdout experiment",
+							Kind: experiment.Experiment_HOLDOUT,
+						},
+					}, nil)
+			},
+			expected:    nil,
+			expectedErr: ErrNotFound,
+		},
+		{
 			desc: "success",
 			ctx:  context.Background(),
 			setup: func(gs *grpcGatewayService) {
@@ -168,8 +194,16 @@ func TestGrpcGatewayService_ListExperiments(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
+				// The route always asks for experiments on feature flags only,
+				// so an experiment whose kind is HOLDOUT is never listed.
 				gs.experimentClient.(*mockexperimentclient.MockClient).EXPECT().ListExperiments(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(),
+					&experiment.ListExperimentsRequest{
+						EnvironmentId: "ns0",
+						Kinds: []experiment.Experiment_Kind{
+							experiment.Experiment_KIND_EXPERIMENT,
+						},
+					},
 				).Return(&experiment.ListExperimentsResponse{
 					Experiments: []*experiment.Experiment{
 						{

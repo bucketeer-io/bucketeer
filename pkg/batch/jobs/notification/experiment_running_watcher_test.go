@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/batch/jobs"
 	environmentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
@@ -29,6 +30,7 @@ import (
 	sendermock "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/sender/mock"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
+	senderproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription/sender"
 )
 
 func TestCreateExperimentRunningNotification(t *testing.T) {
@@ -93,6 +95,44 @@ func TestCreateExperimentRunningNotification(t *testing.T) {
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
+}
+
+// The notification must not include an experiment whose kind is HOLDOUT:
+// it is internal to a holdout group, and no user runs it.
+func TestRunListsOnlyExperimentsOnFeatureFlags(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	w := newExperimentRunningWatcherWithMock(t, mockController)
+	w.environmentClient.(*environmentclientmock.MockClient).EXPECT().ListEnvironmentsV2(
+		gomock.Any(), gomock.Any(),
+	).Return(&environmentproto.ListEnvironmentsV2Response{
+		Environments: []*environmentproto.EnvironmentV2{{Id: "ns0", Name: "ns0"}},
+	}, nil)
+	experiments := []*experimentproto.Experiment{{Id: "eid", Name: "ename"}}
+	w.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(
+		gomock.Any(),
+		&experimentproto.ListExperimentsRequest{
+			PageSize:      listRequestSize,
+			EnvironmentId: "ns0",
+			Statuses: []experimentproto.Experiment_Status{
+				experimentproto.Experiment_RUNNING,
+			},
+			Kinds: []experimentproto.Experiment_Kind{
+				experimentproto.Experiment_KIND_EXPERIMENT,
+			},
+			Archived: wrapperspb.Bool(false),
+		},
+	).Return(&experimentproto.ListExperimentsResponse{Experiments: experiments}, nil)
+	w.sender.(*sendermock.MockSender).EXPECT().Send(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, ne *senderproto.NotificationEvent) error {
+			assert.Equal(t, experiments, ne.Notification.ExperimentRunningNotification.Experiments)
+			return nil
+		},
+	)
+
+	assert.NoError(t, w.Run(context.Background()))
 }
 
 func newExperimentRunningWatcherWithMock(t *testing.T, c *gomock.Controller) *experimentRunningWatcher {

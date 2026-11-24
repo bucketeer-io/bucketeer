@@ -70,7 +70,8 @@ const Variation = ({ feature, editable }: VariationProps) => {
       cursor: String(0),
       environmentId: currentEnvironment.id,
       featureId: feature.id,
-      statuses: ['WAITING', 'RUNNING']
+      statuses: ['WAITING', 'RUNNING'],
+      kinds: ['KIND_EXPERIMENT']
     }
   });
 

@@ -937,6 +937,52 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 	}
 }
 
+// An experiment whose kind is HOLDOUT is internal to a holdout group.
+// It must not block a progressive rollout, so it is not listed.
+func TestCheckIfHasExperimentListsOnlyExperimentsOnFeatureFlags(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		experiments []*experimentproto.Experiment
+		expectedErr error
+	}{
+		{
+			desc:        "no experiment",
+			experiments: nil,
+			expectedErr: nil,
+		},
+		{
+			desc:        "a waiting or running experiment exists",
+			experiments: []*experimentproto.Experiment{{Id: "eid"}},
+			expectedErr: statusProgressiveRolloutWaitingOrRunningExperimentExists.Err(),
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createAutoOpsService(mockController)
+			s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(
+				gomock.Any(),
+				&experimentproto.ListExperimentsRequest{
+					FeatureId: "fid",
+					Statuses: []experimentproto.Experiment_Status{
+						experimentproto.Experiment_WAITING,
+						experimentproto.Experiment_RUNNING,
+					},
+					Kinds: []experimentproto.Experiment_Kind{
+						experimentproto.Experiment_KIND_EXPERIMENT,
+					},
+				},
+			).Return(&experimentproto.ListExperimentsResponse{Experiments: p.experiments}, nil)
+
+			err := s.checkIfHasExperiment(context.Background(), "fid")
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestGetProgressiveRolloutMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

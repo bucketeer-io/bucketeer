@@ -77,6 +77,7 @@ func (s *experimentStorage) CreateExperiment(
 		int32(e.Status),
 		e.Maintainer,
 		environmentId,
+		int32(e.Kind),
 	)
 	if err != nil {
 		if errors.Is(err, mysqlstorage.ErrDuplicateEntry) {
@@ -134,7 +135,7 @@ func (s *experimentStorage) GetExperiment(
 	id, environmentId string,
 ) (*domain.Experiment, error) {
 	experiment := proto.Experiment{}
-	var status int32
+	var status, kind int32
 	err := s.qe.QueryRowContext(
 		ctx,
 		selectExperimentSQL,
@@ -160,6 +161,7 @@ func (s *experimentStorage) GetExperiment(
 		&experiment.BaseVariationId,
 		&experiment.Maintainer,
 		&status,
+		&kind,
 		&mysqlstorage.JSONObject{Val: &experiment.Goals},
 	)
 	if err != nil {
@@ -169,6 +171,7 @@ func (s *experimentStorage) GetExperiment(
 		return nil, err
 	}
 	experiment.Status = proto.Experiment_Status(status)
+	experiment.Kind = proto.Experiment_Kind(kind)
 	return &domain.Experiment{Experiment: &experiment}, nil
 }
 
@@ -191,7 +194,7 @@ func (s *experimentStorage) ListExperiments(
 	experiments := make([]*proto.Experiment, 0, limit)
 	for rows.Next() {
 		experiment := proto.Experiment{}
-		var status int32
+		var status, kind int32
 		err := rows.Scan(
 			&experiment.Id,
 			&experiment.GoalId,
@@ -212,12 +215,14 @@ func (s *experimentStorage) ListExperiments(
 			&experiment.BaseVariationId,
 			&experiment.Maintainer,
 			&status,
+			&kind,
 			&mysqlstorage.JSONObject{Val: &experiment.Goals},
 		)
 		if err != nil {
 			return nil, 0, 0, err
 		}
 		experiment.Status = proto.Experiment_Status(status)
+		experiment.Kind = proto.Experiment_Kind(kind)
 		experiments = append(experiments, &experiment)
 	}
 	if rows.Err() != nil {
@@ -237,9 +242,19 @@ func (s *experimentStorage) ListExperiments(
 func (s *experimentStorage) GetExperimentSummary(
 	ctx context.Context,
 	environmentID string,
+	kinds []proto.Experiment_Kind,
 ) (*v2es.ExperimentSummary, error) {
+	whereParts := []mysqlstorage.WherePart{
+		&mysqlstorage.FilterV2{Column: "environment_id", Operator: mysqlstorage.OperatorEqual, Value: environmentID},
+		&mysqlstorage.FilterV2{Column: "deleted", Operator: mysqlstorage.OperatorEqual, Value: false},
+		&mysqlstorage.FilterV2{Column: "archived", Operator: mysqlstorage.OperatorEqual, Value: false},
+	}
+	if kindFilter := experimentKindInFilter(kinds); kindFilter != nil {
+		whereParts = append(whereParts, kindFilter)
+	}
+	whereSQL, whereArgs := mysqlstorage.ConstructWhereSQLString(whereParts)
 	summary := &v2es.ExperimentSummary{}
-	err := s.qe.QueryRowContext(ctx, summarizeExperimentSQL, environmentID).Scan(
+	err := s.qe.QueryRowContext(ctx, summarizeExperimentSQL+whereSQL, whereArgs...).Scan(
 		&summary.TotalWaitingCount,
 		&summary.TotalRunningCount,
 		&summary.TotalStoppedCount,
@@ -248,6 +263,19 @@ func (s *experimentStorage) GetExperimentSummary(
 		return nil, err
 	}
 	return summary, nil
+}
+
+// experimentKindInFilter returns the filter for the given kinds,
+// or nil when the kinds are empty, which means every kind.
+func experimentKindInFilter(kinds []proto.Experiment_Kind) *mysqlstorage.InFilter {
+	if len(kinds) == 0 {
+		return nil
+	}
+	values := make([]interface{}, 0, len(kinds))
+	for _, k := range kinds {
+		values = append(values, int32(k))
+	}
+	return &mysqlstorage.InFilter{Column: "kind", Values: values}
 }
 
 func listExperimentsOptionsFromParams(
@@ -332,6 +360,9 @@ func listExperimentsOptionsFromParams(
 			Column: "status",
 			Values: statuses,
 		})
+	}
+	if kindFilter := experimentKindInFilter(p.Kinds); kindFilter != nil {
+		inFilters = append(inFilters, kindFilter)
 	}
 	var searchQuery *mysqlstorage.SearchQuery
 	if p.SearchKeyword != "" {

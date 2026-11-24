@@ -18,6 +18,7 @@ SELECT
     ex.base_variation_id,
     ex.maintainer,
     ex.status,
+    ex.kind,
     (
         SELECT
             JSON_ARRAYAGG(JSON_OBJECT('id', goal.id, 'name', goal.name))

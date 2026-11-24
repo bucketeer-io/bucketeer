@@ -56,6 +56,13 @@ var (
 		pkgErr.NewErrorNotFound(pkgErr.ExperimentPackageName, "goal not found", "Goal"))
 	statusFeatureNotFound = api.NewGRPCStatus(
 		pkgErr.NewErrorNotFound(pkgErr.ExperimentPackageName, "feature not found", "FeatureFlag"))
+	// statusExperimentOwnedByHoldoutGroup rejects a write to an experiment whose kind is HOLDOUT.
+	// Only the holdout service changes such an experiment.
+	statusExperimentOwnedByHoldoutGroup = api.NewGRPCStatus(
+		pkgErr.NewErrorFailedPrecondition(
+			pkgErr.ExperimentPackageName,
+			"experiment is owned by a holdout group and cannot be changed through the experiment API",
+		))
 	statusAlreadyExists = api.NewGRPCStatus(
 		pkgErr.NewErrorAlreadyExists(pkgErr.ExperimentPackageName, "already exists"))
 	statusUnauthenticated = api.NewGRPCStatus(

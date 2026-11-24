@@ -304,7 +304,7 @@ func TestCountExperimentByStatus(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			summary, err := storage.GetExperimentSummary(context.Background(), "ns0")
+			summary, err := storage.GetExperimentSummary(context.Background(), "ns0", nil)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, summary)
 		})

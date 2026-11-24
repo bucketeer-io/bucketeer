@@ -49,7 +49,8 @@ export const useFetchExperiments = ({
       environmentId,
       ..._params,
       archived: isArchived,
-      statuses
+      statuses,
+      kinds: ['KIND_EXPERIMENT']
     }
   });
 };

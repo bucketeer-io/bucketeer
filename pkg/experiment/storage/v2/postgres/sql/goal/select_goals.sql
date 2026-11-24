@@ -33,6 +33,7 @@ SELECT * FROM (
                 AND ex2.environment_id = ft.environment_id
             WHERE
                 ex2.environment_id = goal.environment_id AND
+                ex2.kind = 0 AND
                 jsonb_exists(ex2.goal_ids, goal.id)
         ) AS experiments
     FROM

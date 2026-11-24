@@ -3,6 +3,7 @@ import pickBy from 'lodash/pickBy';
 import {
   CollectionParams,
   ExperimentCollection,
+  ExperimentKind,
   ExperimentStatus
 } from '@types';
 import { isNotEmpty } from 'utils/data-type';
@@ -15,6 +16,8 @@ export interface ExperimentsFetcherParams extends CollectionParams {
   from?: string;
   to?: string;
   statuses?: ExperimentStatus[];
+  // Empty means every kind, including the internal experiments of holdout groups.
+  kinds?: ExperimentKind[];
   maintainer?: string;
   archived?: boolean;
 }

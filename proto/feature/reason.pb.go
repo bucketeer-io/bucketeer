@@ -44,8 +44,10 @@ const (
 	Reason_CLIENT        Reason_Type = 4
 	Reason_OFF_VARIATION Reason_Type = 5
 	Reason_PREREQUISITE  Reason_Type = 6
-	// HOLDOUT is assigned before any flag state is consulted. Older SDKs
-	// surface the unknown enum value rather than failing.
+	// HOLDOUT is assigned before any flag state is consulted. An SDK that
+	// does not know this value does not always pass it through: depending on
+	// the SDK and its version it reports HOLDOUT, replaces it with another
+	// reason, or fails to decode the whole GetEvaluations response.
 	Reason_HOLDOUT                             Reason_Type = 7
 	Reason_ERROR_NO_EVALUATIONS                Reason_Type = 20
 	Reason_ERROR_FLAG_NOT_FOUND                Reason_Type = 21

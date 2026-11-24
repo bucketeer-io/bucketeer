@@ -60,7 +60,12 @@ type ExperimentStorage interface {
 		params ListExperimentsParams,
 	) ([]*proto.Experiment, int, int64, error)
 	// GetExperimentSummary returns the total count of experiments by status.
-	GetExperimentSummary(ctx context.Context, environmentID string) (*ExperimentSummary, error)
+	// It counts only the given kinds; empty kinds means every kind.
+	GetExperimentSummary(
+		ctx context.Context,
+		environmentID string,
+		kinds []proto.Experiment_Kind,
+	) (*ExperimentSummary, error)
 }
 
 type ListExperimentsParams struct {
@@ -72,6 +77,8 @@ type ListExperimentsParams struct {
 	StopAt         int64
 	Maintainer     string
 	Statuses       []proto.Experiment_Status
+	// Kinds filters by experiment kind. Empty means every kind.
+	Kinds          []proto.Experiment_Kind
 	SearchKeyword  string
 	OrderBy        proto.ListExperimentsRequest_OrderBy
 	OrderDirection proto.ListExperimentsRequest_OrderDirection

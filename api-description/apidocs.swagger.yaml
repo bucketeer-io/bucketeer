@@ -4968,6 +4968,20 @@ definitions:
         type: string
       name:
         type: string
+  ExperimentKind:
+    type: string
+    enum:
+      - KIND_EXPERIMENT
+      - HOLDOUT
+    default: KIND_EXPERIMENT
+    description: |-
+      Kind tells an experiment created by a user from one that the holdout
+      service owns.
+
+       - KIND_EXPERIMENT: An experiment on a feature flag, created through the experiment API.
+       - HOLDOUT: An internal experiment that measures a holdout group. Its feature_id is
+      the holdout group ID, not a feature flag ID. Only the holdout service
+      writes it.
   FeatureVariationType:
     type: string
     enum:
@@ -7686,6 +7700,8 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/ExperimentGoalReference'
+      kind:
+        $ref: '#/definitions/ExperimentKind'
   experimentExperimentStatus:
     type: string
     enum:
@@ -8163,8 +8179,10 @@ definitions:
       - ERROR_CACHE_NOT_FOUND
     default: TARGET
     description: |2-
-       - HOLDOUT: HOLDOUT is assigned before any flag state is consulted. Older SDKs
-      surface the unknown enum value rather than failing.
+       - HOLDOUT: HOLDOUT is assigned before any flag state is consulted. An SDK that
+      does not know this value does not always pass it through: depending on
+      the SDK and its version it reports HOLDOUT, replaces it with another
+      reason, or fails to decode the whole GetEvaluations response.
   featureRolloutStrategy:
     type: object
     properties:

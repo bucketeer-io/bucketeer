@@ -30,6 +30,16 @@ message Experiment {
     STOPPED = 2;
     FORCE_STOPPED = 3;
   }
+  // Kind tells an experiment created by a user from one that the holdout
+  // service owns.
+  enum Kind {
+    // An experiment on a feature flag, created through the experiment API.
+    KIND_EXPERIMENT = 0;
+    // An internal experiment that measures a holdout group. Its feature_id is
+    // the holdout group ID, not a feature flag ID. Only the holdout service
+    // writes it.
+    HOLDOUT = 1;
+  }
   string id = 1;
   string goal_id = 2 [deprecated = true];
   string feature_id = 3;
@@ -51,6 +61,7 @@ message Experiment {
   string maintainer = 19;
   bool archived = 20;
   repeated GoalReference goals = 21;
+  Kind kind = 22;
 }
 
 message Experiments {

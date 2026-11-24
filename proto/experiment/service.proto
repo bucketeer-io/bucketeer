@@ -147,6 +147,9 @@ message ListExperimentsRequest {
   google.protobuf.BoolValue archived = 13;
   repeated Experiment.Status statuses = 14;
   string environment_id = 15 [(google.api.field_behavior) = REQUIRED];
+  // The experiment kinds to return. Empty means no filter. The summary in the
+  // response counts the same kinds.
+  repeated Experiment.Kind kinds = 16;
 }
 
 message ListExperimentsResponse {
