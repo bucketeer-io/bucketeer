@@ -1767,6 +1767,33 @@ func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 	}
 }
 
+func TestGetEvaluationsEvaluatorError(t *testing.T) {
+	t.Parallel()
+	s := newGatewayServiceWithMock(t, gomock.NewController(t))
+	s.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get("test-key").Return(
+		&accountproto.EnvironmentAPIKey{
+			Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+			ApiKey:      &accountproto.APIKey{Id: "id-0", Role: accountproto.APIKey_SDK_CLIENT},
+		}, nil)
+	s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get("ns0").Return(
+		&featureproto.Features{Features: []*featureproto.Feature{{
+			Id:            "target",
+			Enabled:       true,
+			Prerequisites: []*featureproto.Prerequisite{{FeatureId: "missing-flag", VariationId: "on"}},
+		}}}, nil)
+	req := httptest.NewRequest(http.MethodPost, dummyURL, renderBody(t, getEvaluationsRequest{
+		Tag:  "test",
+		User: &userproto.User{Id: "user-id"},
+	}))
+	req.Header.Set(authorizationKey, "test-key")
+	rec := httptest.NewRecorder()
+
+	s.getEvaluations(rec, req)
+
+	require.Equal(t, http.StatusInternalServerError, rec.Code)
+	assert.JSONEq(t, newErrResponse(t, errInternal), rec.Body.String())
+}
+
 func TestGetEvaluation(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
