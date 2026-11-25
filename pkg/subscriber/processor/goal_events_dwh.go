@@ -332,7 +332,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 		)
 		if err != nil {
 			if ecdwh.IsNoResultsFound(err) {
-				w.logger.Error("Evaluation not found",
+				w.logger.Debug("Evaluation not found",
 					zap.Error(err),
 					zap.String("environmentId", environmentID),
 					zap.Any("goalEvent", event),
@@ -356,11 +356,13 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 				}
 				return nil, false, err
 			}
-			w.logger.Error("failed to get user evaluation",
-				zap.Error(err),
-				zap.String("environmentId", environmentID),
-				zap.Any("goalEvent", event),
-			)
+			if !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
+				w.logger.Error("failed to get user evaluation",
+					zap.Error(err),
+					zap.String("environmentId", environmentID),
+					zap.Any("goalEvent", event),
+				)
+			}
 			subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToGetUserEvaluation).Inc()
 			return nil, true, err
 		}
@@ -376,7 +378,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 		// so it must be discarded instead of retried.
 		if event.Timestamp < eval.Timestamp {
 			subscriberHandledCounter.WithLabelValues(w.subscriberType, codeGoalEventIssuedBeforeEvaluation).Inc()
-			w.logger.Warn("Goal event is older than the user's latest evaluation, discarding it",
+			w.logger.Debug("Goal event is older than the user's latest evaluation, discarding it",
 				zap.String("environmentId", environmentID),
 				zap.Any("goalEvent", event),
 				zap.Any("evaluation", eval),

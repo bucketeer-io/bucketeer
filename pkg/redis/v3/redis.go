@@ -82,6 +82,7 @@ const (
 
 var (
 	ErrNil         = goredis.Nil
+	ErrClosed      = goredis.ErrClosed
 	ErrInvalidType = errors.New("redis: invalid type")
 	ErrInvalidDB   = errors.New("redis: db index must not be negative")
 )

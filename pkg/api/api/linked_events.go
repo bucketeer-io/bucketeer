@@ -183,11 +183,14 @@ func (p *LinkedEventPublisher) Publish(
 		}
 		t, err := p.getTargets(ctx, environmentID, r.kind)
 		if err != nil {
-			p.logger.Error("Failed to load linked targets",
-				zap.Error(err),
-				zap.String("environmentId", environmentID),
-				zap.String("kind", r.kind),
-			)
+			// The caller gave up on the request, so nobody waits for the result
+			if ctx.Err() == nil {
+				p.logger.Error("Failed to load linked targets",
+					zap.Error(err),
+					zap.String("environmentId", environmentID),
+					zap.String("kind", r.kind),
+				)
+			}
 			if needEvaluations {
 				evaluations = failLoad(evaluations, errs)
 			}

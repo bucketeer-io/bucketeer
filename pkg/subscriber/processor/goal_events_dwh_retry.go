@@ -26,6 +26,8 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
 
+	ecdwh "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
+	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 )
@@ -77,7 +79,8 @@ func (w *goalEvtWriter) scanAndProcess(ctx context.Context) {
 		}
 		return nil
 	})
-	if err != nil {
+	// The client is closed on shutdown
+	if err != nil && ctx.Err() == nil && !errors.Is(err, redisv3.ErrClosed) {
 		w.logger.Error("Scan failed", zap.Error(err))
 	}
 }
@@ -204,10 +207,13 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 			// The goal event was created before the user was evaluated
 			// (the client SDK sets the timestamps), so retrying can never
 			// link it. Discard the retry message.
-			lg.Warn("Goal event is older than the user's latest evaluation, deleting retry message")
+			lg.Debug("Goal event is older than the user's latest evaluation, deleting retry message")
 			w.deleteKey(ctx, key)
 		} else {
-			lg.Error("Linking failed", zap.Error(err))
+			// A missing evaluation is the normal reason to retry
+			if !ecdwh.IsNoResultsFound(err) {
+				lg.Error("Linking failed", zap.Error(err))
+			}
 			msg.RetryCount++
 			if err := w.storeRetryMessage(msg); err != nil {
 				subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToStoreRetryMessage).Inc()
