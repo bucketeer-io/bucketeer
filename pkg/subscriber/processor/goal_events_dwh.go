@@ -151,7 +151,8 @@ func (w *goalEvtWriter) Write(
 						// linked. Discard it by acking the message.
 						continue
 					}
-					if !retriable {
+					// A missing evaluation was already stored for retry
+					if !retriable && !ecdwh.IsNoResultsFound(err) {
 						w.logger.Error(
 							"Failed to convert to goal event",
 							zap.Error(err),
