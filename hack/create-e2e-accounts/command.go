@@ -86,6 +86,7 @@ type command struct {
 	envReadEmail               *string
 	defaultOrganizationID      *string
 	e2eOrganizationID          *string
+	systemAdminOrganizationID  *string
 	e2eEnvironmentID           *string
 	oauthKeyPath               *string
 	issuer                     *string
@@ -113,7 +114,7 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		mysqlDBName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
 		sysAdminEmail: cmd.Flag(
 			"sys-admin-email",
-			"Email of the system admin account (OWNER of the e2e/system-admin organization; its token is a system admin).",
+			"Email of the system admin account (OWNER of the system admin and e2e organizations; its token is a system admin).",
 		).Required().String(),
 		orgOwnerEmail: cmd.Flag(
 			"org-owner-email",
@@ -135,6 +136,10 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 			"e2e-organization-id",
 			"ID of the e2e organization where the org owner account also gets OWNER role.",
 		).Required().String(),
+		systemAdminOrganizationID: cmd.Flag(
+			"system-admin-organization-id",
+			"ID of the seeded organization with system_admin set that the system admin account is OWNER of.",
+		).Default("system-admin").String(),
 		e2eEnvironmentID: cmd.Flag(
 			"e2e-environment-id",
 			"ID of the e2e environment used for the editor/viewer environment roles.",
@@ -200,15 +205,18 @@ func (c *command) Run(ctx context.Context, _ metrics.Metrics, logger *zap.Logger
 		return err
 	}
 
-	// System admin: OWNER of the e2e (system-admin) organization. Its token is
-	// minted with is_system_admin=true, so it can call system-admin-only APIs
-	// (e.g. creating organizations/environments) and read across organizations.
-	if err := c.upsertAccount(
-		ctx, client, logger,
-		*c.sysAdminEmail, *c.e2eOrganizationID,
-		roleOrganizationOWNER, emptyEnvironmentRolesJSON, now,
-	); err != nil {
-		return err
+	// System admin: OWNER of the system admin organization, which makes the
+	// account a system admin, and OWNER of the e2e organization so it can write
+	// there. Its token is minted with is_system_admin=true until the claim is
+	// dropped (RFC 0050).
+	for _, orgID := range []string{*c.systemAdminOrganizationID, *c.e2eOrganizationID} {
+		if err := c.upsertAccount(
+			ctx, client, logger,
+			*c.sysAdminEmail, orgID,
+			roleOrganizationOWNER, emptyEnvironmentRolesJSON, now,
+		); err != nil {
+			return err
+		}
 	}
 
 	// Org owner: OWNER of the default org (which owns the e2e environment) and
@@ -247,10 +255,9 @@ func (c *command) Run(ctx context.Context, _ metrics.Metrics, logger *zap.Logger
 		return err
 	}
 
-	// Mint an access token per account. The system admin token is scoped to the
-	// e2e (system-admin) org and carries is_system_admin=true. The other three
-	// are scoped to the default org and are NOT system admins — the org owner
-	// relies on its org OWNER role and the editor/viewer rely on their
+	// Mint an access token per account. The system admin token carries
+	// is_system_admin=true. The other three are NOT system admins — the org
+	// owner relies on its org OWNER role and the editor/viewer rely on their
 	// environment roles, exercising the real RBAC path.
 	signer, err := token.NewSigner(*c.oauthKeyPath)
 	if err != nil {
@@ -281,6 +288,7 @@ func (c *command) Run(ctx context.Context, _ metrics.Metrics, logger *zap.Logger
 		zap.String("envReadEmail", *c.envReadEmail),
 		zap.String("defaultOrganizationId", *c.defaultOrganizationID),
 		zap.String("e2eOrganizationId", *c.e2eOrganizationID),
+		zap.String("systemAdminOrganizationId", *c.systemAdminOrganizationID),
 		zap.String("e2eEnvironmentId", *c.e2eEnvironmentID),
 	)
 	return nil

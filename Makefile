@@ -52,6 +52,8 @@ E2E_TIMEOUT ?= 30m
 # environment where re-running the bootstrap every hour is inconvenient.
 E2E_TOKEN_TTL ?= 1h
 SYS_ADMIN_EMAIL ?= sysadmin@bucketeer.io
+# Organization with system_admin set that makes the system admin account a system admin.
+SYSTEM_ADMIN_ORGANIZATION_ID ?= system-admin
 ORG_OWNER_EMAIL ?= orgowner@bucketeer.io
 ENV_WRITE_EMAIL ?= envwrite@bucketeer.io
 ENV_READ_EMAIL ?= envread@bucketeer.io
@@ -307,6 +309,7 @@ endif
 		--env-read-email=${ENV_READ_EMAIL} \
 		--default-organization-id=${DEFAULT_ORGANIZATION_ID} \
 		--e2e-organization-id=${E2E_ORGANIZATION_ID} \
+		--system-admin-organization-id=${SYSTEM_ADMIN_ORGANIZATION_ID} \
 		--e2e-environment-id=${E2E_ENVIRONMENT_ID} \
 		--oauth-key=${OAUTH_KEY_PATH} \
 		--issuer=${ISSUER} \

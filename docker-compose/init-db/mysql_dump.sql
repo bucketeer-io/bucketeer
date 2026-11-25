@@ -35,6 +35,7 @@ CREATE TABLE `organization` (
 LOCK TABLES `organization` WRITE;
 INSERT INTO `organization` VALUES ('default', 'Default organization', 'default', 'This organization is for local development', 0, 0, 0, 0, 1706092038, 1706092038);
 INSERT INTO `organization` VALUES ('e2e', 'E2E organization', 'e2e', 'This organization is for organization e2e tests', 0, 0, 0, 0, 1706092038, 1706092038);
+INSERT INTO `organization` VALUES ('system-admin', 'System admin organization', 'system-admin', 'This organization makes the e2e system admin account a system admin', 0, 0, 0, 1, 1706092038, 1706092038);
 UNLOCK TABLES;
 
 --
