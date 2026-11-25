@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -140,11 +141,29 @@ func TestLoadLiveHoldoutGroup(t *testing.T) {
 		redis := cachev3mock.NewMockHoldoutGroupCache(controller)
 		memory.EXPECT().Get("env-down").Return(nil, cache.ErrNotFound)
 		redis.EXPECT().Get("env-down").Return(nil, cache.ErrNotFound)
+		logger, logs := newObservedLogger()
 		fallback := func(context.Context, uint64) (*featureproto.HoldoutGroup, error) { return nil, errors.New("grpc") }
 		assert.Equal(t,
 			evaluation.UnavailableHoldoutSnapshot(),
-			loadLiveHoldoutGroup(context.Background(), memory, redis, "env-down", fallback, zap.NewNop()),
+			loadLiveHoldoutGroup(context.Background(), memory, redis, "env-down", fallback, logger),
 		)
+		require.Len(t, logs.All(), 1)
+		assert.Equal(t, "Failed to read the holdout snapshot from the feature service", logs.All()[0].Message)
+	})
+	t.Run("a caller cancellation is unavailable and is not logged", func(t *testing.T) {
+		memory := cachev3mock.NewMockHoldoutGroupCache(controller)
+		redis := cachev3mock.NewMockHoldoutGroupCache(controller)
+		memory.EXPECT().Get("env-cancel").Return(nil, cache.ErrNotFound)
+		redis.EXPECT().Get("env-cancel").Return(nil, cache.ErrNotFound)
+		logger, logs := newObservedLogger()
+		fallback := func(context.Context, uint64) (*featureproto.HoldoutGroup, error) {
+			return nil, fmt.Errorf("%w: %w", errCallerCanceled, context.Canceled)
+		}
+		assert.Equal(t,
+			evaluation.UnavailableHoldoutSnapshot(),
+			loadLiveHoldoutGroup(context.Background(), memory, redis, "env-cancel", fallback, logger),
+		)
+		assert.Empty(t, logs.All())
 	})
 }
 
