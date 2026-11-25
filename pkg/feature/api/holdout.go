@@ -806,8 +806,8 @@ func (s *FeatureService) snapshotSegmentUsersForActivation(
 }
 
 // ensureSegmentWithinLimit rejects a segment that includes more users than
-// the segment of a SEGMENT group may have. The count stops one user over the
-// limit.
+// the segment of a SEGMENT group may have. The count stops when it has
+// counted one user over the limit.
 func (s *FeatureService) ensureSegmentWithinLimit(ctx context.Context, segmentID, environmentID string) error {
 	count, err := s.holdoutStorage.CountSegmentUsers(
 		ctx, segmentID, environmentID, holdoutdomain.MaxSegmentUsers+1,
