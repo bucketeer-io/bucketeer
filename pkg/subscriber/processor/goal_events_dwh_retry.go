@@ -211,7 +211,8 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 			w.deleteKey(ctx, key)
 		} else {
 			// A missing evaluation is the normal reason to retry
-			if !ecdwh.IsNoResultsFound(err) {
+			if !ecdwh.IsNoResultsFound(err) &&
+				!errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
 				lg.Error("Linking failed", zap.Error(err))
 			}
 			msg.RetryCount++
