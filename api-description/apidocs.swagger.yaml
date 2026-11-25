@@ -8408,6 +8408,13 @@ definitions:
         $ref: '#/definitions/clientSourceId'
       sdkVersion:
         type: string
+      featureVersion:
+        type: integer
+        format: int32
+        description: |-
+          Evaluates the saved flag version using the supplied user attributes and
+          current prerequisite flags, segments, and holdout groups. Omit to use the
+          current flag version. Returns NotFound if the requested version is missing.
   gatewayGetEvaluationResponse:
     type: object
     properties:
