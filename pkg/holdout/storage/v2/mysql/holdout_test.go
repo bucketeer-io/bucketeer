@@ -363,6 +363,39 @@ func TestCreateSegmentUserSnapshot(t *testing.T) {
 	})
 }
 
+func TestCountSegmentUsers(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+
+	t.Run("counts the included users up to the limit", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		row := mock.NewMockRow(controller)
+		row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(dest ...any) error {
+			*(dest[0].(*int64)) = 3
+			return nil
+		})
+		storage.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+			gomock.Any(),
+			countSegmentUsersSQL,
+			"seg", "env", int32(proto.SegmentUser_INCLUDED), int64(101),
+		).Return(row)
+		count, err := storage.CountSegmentUsers(context.Background(), "seg", "env", 101)
+		require.NoError(t, err)
+		assert.Equal(t, int64(3), count)
+	})
+	t.Run("statement error", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		row := mock.NewMockRow(controller)
+		row.EXPECT().Scan(gomock.Any()).Return(errors.New("db"))
+		storage.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).Return(row)
+		count, err := storage.CountSegmentUsers(context.Background(), "seg", "env", 101)
+		assert.EqualError(t, err, "db")
+		assert.Zero(t, count)
+	})
+}
+
 func TestListActiveGroupsAndTargets(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)

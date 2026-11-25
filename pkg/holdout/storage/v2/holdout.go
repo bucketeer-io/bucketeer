@@ -87,6 +87,10 @@ type HoldoutStorage interface {
 	// in the database, and returns how many users it copied. The users are
 	// not loaded into the service.
 	CreateSegmentUserSnapshot(ctx context.Context, groupID, segmentID, environmentID string) (int64, error)
+	// CountSegmentUsers counts the users CreateSegmentUserSnapshot would copy
+	// for the segment. It stops at limit, so its cost does not grow with the
+	// segment beyond that: a result equal to limit means limit or more.
+	CountSegmentUsers(ctx context.Context, segmentID, environmentID string, limit int64) (int64, error)
 	// ListLiveFeatureTargets returns current target rows of WAITING, RUNNING, or ANALYSIS groups.
 	ListLiveFeatureTargets(ctx context.Context, environmentID, featureID string) ([]domain.FeatureTarget, error)
 }

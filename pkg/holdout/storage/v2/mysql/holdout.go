@@ -57,6 +57,8 @@ var (
 	selectLiveFeatureTargetsSQL string
 	//go:embed sql/holdout/insert_holdout_group_segment_users.sql
 	insertHoldoutGroupSegmentUsersSQL string
+	//go:embed sql/holdout/count_segment_users.sql
+	countSegmentUsersSQL string
 )
 
 type holdoutStorage struct {
@@ -340,6 +342,26 @@ func (s *holdoutStorage) CreateSegmentUserSnapshot(
 		return 0, err
 	}
 	return result.RowsAffected()
+}
+
+func (s *holdoutStorage) CountSegmentUsers(
+	ctx context.Context,
+	segmentID, environmentID string,
+	limit int64,
+) (int64, error) {
+	var count int64
+	err := s.qe.QueryRowContext(
+		ctx,
+		countSegmentUsersSQL,
+		segmentID,
+		environmentID,
+		int32(proto.SegmentUser_INCLUDED),
+		limit,
+	).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (s *holdoutStorage) ListActiveGroups(

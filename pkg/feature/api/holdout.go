@@ -84,6 +84,11 @@ func (s *FeatureService) CreateHoldoutGroup(
 			if serving, ok := holdoutdomain.ServingGroupForSegment(segmentID, active); ok {
 				return holdoutdomain.NewSegmentLockedError(segmentID, serving)
 			}
+			// The segment can still grow while the group is WAITING, so the
+			// start checks the limit again.
+			if err := s.ensureSegmentWithinLimit(txCtx, segmentID, req.EnvironmentId); err != nil {
+				return err
+			}
 		}
 		var seed string
 		if req.AssignmentType == featureproto.HoldoutGroup_HASH {
@@ -776,7 +781,8 @@ func activatesSegmentGroup(previous, group *holdoutdomain.HoldoutGroup) bool {
 // commit on, the segment is locked by the serving group, so the copy is the
 // membership of the whole serving period. A group with or without goals gets
 // one. The database copies the rows in one statement; the cost grows with the
-// number of users and is paid inside the transaction.
+// number of users and is paid inside the transaction, so a segment over
+// MaxSegmentUsers is rejected before the copy.
 func (s *FeatureService) snapshotSegmentUsersForActivation(
 	ctx context.Context,
 	previous, group *holdoutdomain.HoldoutGroup,
@@ -784,8 +790,35 @@ func (s *FeatureService) snapshotSegmentUsersForActivation(
 	if !activatesSegmentGroup(previous, group) {
 		return nil
 	}
-	_, err := s.holdoutStorage.CreateSegmentUserSnapshot(ctx, group.Id, group.SegmentId, group.EnvironmentId)
-	return err
+	if err := s.ensureSegmentWithinLimit(ctx, group.SegmentId, group.EnvironmentId); err != nil {
+		return err
+	}
+	copied, err := s.holdoutStorage.CreateSegmentUserSnapshot(ctx, group.Id, group.SegmentId, group.EnvironmentId)
+	if err != nil {
+		return err
+	}
+	// The count and the copy are two statements and can read different rows,
+	// so the number of copied rows decides. The error undoes the copy.
+	if copied > holdoutdomain.MaxSegmentUsers {
+		return holdoutdomain.NewSegmentTooLargeError(group.SegmentId)
+	}
+	return nil
+}
+
+// ensureSegmentWithinLimit rejects a segment that includes more users than
+// the segment of a SEGMENT group may have. The count stops one user over the
+// limit.
+func (s *FeatureService) ensureSegmentWithinLimit(ctx context.Context, segmentID, environmentID string) error {
+	count, err := s.holdoutStorage.CountSegmentUsers(
+		ctx, segmentID, environmentID, holdoutdomain.MaxSegmentUsers+1,
+	)
+	if err != nil {
+		return err
+	}
+	if count > holdoutdomain.MaxSegmentUsers {
+		return holdoutdomain.NewSegmentTooLargeError(segmentID)
+	}
+	return nil
 }
 
 // syncHoldoutExperiments keeps the internal experiments of the group in step

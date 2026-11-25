@@ -42,6 +42,21 @@ func (m *MockHoldoutStorage) EXPECT() *MockHoldoutStorageMockRecorder {
 	return m.recorder
 }
 
+// CountSegmentUsers mocks base method.
+func (m *MockHoldoutStorage) CountSegmentUsers(ctx context.Context, segmentID, environmentID string, limit int64) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountSegmentUsers", ctx, segmentID, environmentID, limit)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountSegmentUsers indicates an expected call of CountSegmentUsers.
+func (mr *MockHoldoutStorageMockRecorder) CountSegmentUsers(ctx, segmentID, environmentID, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountSegmentUsers", reflect.TypeOf((*MockHoldoutStorage)(nil).CountSegmentUsers), ctx, segmentID, environmentID, limit)
+}
+
 // CreateHoldoutGroup mocks base method.
 func (m *MockHoldoutStorage) CreateHoldoutGroup(ctx context.Context, group *domain.HoldoutGroup) error {
 	m.ctrl.T.Helper()

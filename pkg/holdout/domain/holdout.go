@@ -458,6 +458,22 @@ func NewFeatureTargetedError(featureID string, target FeatureTarget) error {
 	).WithMessageKey("HoldoutFeatureTargeted")
 }
 
+// MaxSegmentUsers is the largest number of included users the segment of a
+// SEGMENT group may have. The users are copied when the group starts, so the
+// time and the locks of the start grow with the segment.
+const MaxSegmentUsers = 100_000
+
+func NewSegmentTooLargeError(segmentID string) error {
+	return pkgErr.NewErrorFailedPrecondition(
+		pkgErr.HoldoutPackageName,
+		fmt.Sprintf(
+			"segment %s includes more than %d users, the limit for a holdout group; "+
+				"use the HASH assignment type for a larger population",
+			segmentID, MaxSegmentUsers,
+		),
+	).WithMessageKey("HoldoutSegmentTooLarge")
+}
+
 func NewSegmentLockedError(segmentID string, group GroupSnapshot) error {
 	return pkgErr.NewErrorFailedPrecondition(
 		pkgErr.HoldoutPackageName,

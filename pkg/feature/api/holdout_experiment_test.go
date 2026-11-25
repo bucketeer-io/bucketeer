@@ -750,8 +750,11 @@ func TestStartHoldoutGroupSnapshotsSegmentUsers(t *testing.T) {
 		t.Parallel()
 		h := newMeasuredHoldoutTest(t, segmentGroup([]string{}), eventproto.Event_HOLDOUT_GROUP_STARTED, true)
 		locked := expectSegment(h)
+		counted := h.storage.EXPECT().
+			CountSegmentUsers(inHoldoutTx(), "seg", "ns0", int64(holdoutdomain.MaxSegmentUsers+1)).
+			Return(int64(holdoutdomain.MaxSegmentUsers), nil).After(locked)
 		h.storage.EXPECT().CreateSegmentUserSnapshot(inHoldoutTx(), "hg", "seg", "ns0").
-			Return(int64(3), nil).After(locked)
+			Return(int64(holdoutdomain.MaxSegmentUsers), nil).After(counted)
 		resp, err := h.service.StartHoldoutGroup(
 			createContextWithTokenRoleUnassigned(),
 			&featureproto.StartHoldoutGroupRequest{Id: "hg", EnvironmentId: "ns0"},
@@ -764,8 +767,11 @@ func TestStartHoldoutGroupSnapshotsSegmentUsers(t *testing.T) {
 		t.Parallel()
 		h := newMeasuredHoldoutTest(t, segmentGroup([]string{"goal-1"}), eventproto.Event_HOLDOUT_GROUP_STARTED, true)
 		locked := expectSegment(h)
+		counted := h.storage.EXPECT().
+			CountSegmentUsers(inHoldoutTx(), "seg", "ns0", int64(holdoutdomain.MaxSegmentUsers+1)).
+			Return(int64(holdoutdomain.MaxSegmentUsers), nil).After(locked)
 		h.storage.EXPECT().CreateSegmentUserSnapshot(inHoldoutTx(), "hg", "seg", "ns0").
-			Return(int64(3), nil).After(locked)
+			Return(int64(holdoutdomain.MaxSegmentUsers), nil).After(counted)
 		created := h.expectCreate()
 		resp, err := h.service.StartHoldoutGroup(
 			createContextWithTokenRoleUnassigned(),
@@ -789,9 +795,88 @@ func TestStartHoldoutGroupSnapshotsSegmentUsers(t *testing.T) {
 		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
 			gomock.Any(), "seg", "ns0",
 		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg"}}, nil, nil)
+		storage.EXPECT().CountSegmentUsers(gomock.Any(), "seg", "ns0", int64(holdoutdomain.MaxSegmentUsers+1)).
+			Return(int64(3), nil)
 		storage.EXPECT().CreateSegmentUserSnapshot(gomock.Any(), "hg", "seg", "ns0").
 			Return(int64(0), errors.New("db"))
 		// No experiment write, no UpdateHoldoutGroup and no published event are expected.
+		_, err := service.StartHoldoutGroup(
+			createContextWithTokenRoleUnassigned(),
+			&featureproto.StartHoldoutGroupRequest{Id: "hg", EnvironmentId: "ns0"},
+		)
+		assert.Equal(t, codes.Unknown, status.Code(err))
+	})
+
+	t.Run("a segment over the user limit fails the start before the copy", func(t *testing.T) {
+		t.Parallel()
+		for _, mode := range []featureproto.StartHoldoutGroupRequest_Mode{
+			featureproto.StartHoldoutGroupRequest_MANUAL,
+			featureproto.StartHoldoutGroupRequest_SCHEDULED,
+		} {
+			controller := gomock.NewController(t)
+			service, storage := newHoldoutService(t, controller)
+			group := segmentGroup([]string{"goal-1"})
+			if mode == featureproto.StartHoldoutGroupRequest_SCHEDULED {
+				group.StartAt = now - 10
+			}
+			expectTx(service)
+			storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+			storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(group, nil)
+			storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
+			service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
+				gomock.Any(), "seg", "ns0",
+			).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg"}}, nil, nil)
+			storage.EXPECT().CountSegmentUsers(gomock.Any(), "seg", "ns0", int64(holdoutdomain.MaxSegmentUsers+1)).
+				Return(int64(holdoutdomain.MaxSegmentUsers+1), nil)
+			// No snapshot, no experiment write, no UpdateHoldoutGroup and no published event are expected.
+			_, err := service.StartHoldoutGroup(
+				createContextWithTokenRoleUnassigned(),
+				&featureproto.StartHoldoutGroupRequest{Id: "hg", EnvironmentId: "ns0", Mode: mode},
+			)
+			assert.Equal(t, codes.FailedPrecondition, status.Code(err), mode.String())
+			assert.Contains(t, status.Convert(err).Message(), "100000", mode.String())
+		}
+	})
+
+	t.Run("a copy of more users than the limit fails the start", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, storage := newHoldoutService(t, controller)
+		expectTx(service)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").
+			Return(segmentGroup([]string{"goal-1"}), nil)
+		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
+		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
+			gomock.Any(), "seg", "ns0",
+		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg"}}, nil, nil)
+		storage.EXPECT().CountSegmentUsers(gomock.Any(), "seg", "ns0", int64(holdoutdomain.MaxSegmentUsers+1)).
+			Return(int64(holdoutdomain.MaxSegmentUsers), nil)
+		storage.EXPECT().CreateSegmentUserSnapshot(gomock.Any(), "hg", "seg", "ns0").
+			Return(int64(holdoutdomain.MaxSegmentUsers+1), nil)
+		// No experiment write, no UpdateHoldoutGroup and no published event are expected.
+		_, err := service.StartHoldoutGroup(
+			createContextWithTokenRoleUnassigned(),
+			&featureproto.StartHoldoutGroupRequest{Id: "hg", EnvironmentId: "ns0"},
+		)
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+		assert.Contains(t, status.Convert(err).Message(), "100000")
+	})
+
+	t.Run("a failed count fails the start before the copy", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, storage := newHoldoutService(t, controller)
+		expectTx(service)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").
+			Return(segmentGroup([]string{}), nil)
+		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
+		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
+			gomock.Any(), "seg", "ns0",
+		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg"}}, nil, nil)
+		storage.EXPECT().CountSegmentUsers(gomock.Any(), "seg", "ns0", gomock.Any()).
+			Return(int64(0), errors.New("db"))
 		_, err := service.StartHoldoutGroup(
 			createContextWithTokenRoleUnassigned(),
 			&featureproto.StartHoldoutGroupRequest{Id: "hg", EnvironmentId: "ns0"},
