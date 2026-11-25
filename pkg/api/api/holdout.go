@@ -140,7 +140,10 @@ func loadLiveHoldoutGroup(
 			}
 			group, err = fallback(ctx, epoch)
 			if err != nil {
-				if logger != nil {
+				// Client disconnects are identified by isCallerContextErr, the
+				// same check the rest of the gateway uses before it writes an
+				// error log. The snapshot is still unavailable for this request.
+				if logger != nil && !isCallerContextErr(err) {
 					logger.Error("Failed to read the holdout snapshot from the feature service",
 						zap.Error(err),
 						zap.String("environmentId", environmentID),
