@@ -23,13 +23,13 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
 	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
@@ -195,7 +195,7 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(t, ctx, true)
+			ctx = createContextWithEditor(t, ctx, newEditor(nil, nil, nil))
 			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -365,7 +365,7 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(t, ctx, true)
+			ctx = createContextWithEditor(t, ctx, newEditor(nil, nil, nil))
 			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -427,7 +427,7 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(t, ctx, true)
+			ctx = createContextWithEditor(t, ctx, newEditor(nil, nil, nil))
 			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -449,33 +449,18 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 	})
 
 	patterns := []struct {
-		desc          string
-		orgRole       *accountproto.AccountV2_Role_Organization
-		envRole       *accountproto.AccountV2_Role_Environment
-		isSystemAdmin bool
-		setup         func(*SubscriptionService)
-		input         *proto.GetSubscriptionRequest
-		expectedErr   error
+		desc        string
+		setup       func(*SubscriptionService)
+		input       *proto.GetSubscriptionRequest
+		expectedErr error
 	}{
 		{
-			desc:          "err: ErrIDRequired",
-			isSystemAdmin: true,
-			input:         &proto.GetSubscriptionRequest{},
-			expectedErr:   statusIDRequired.Err(),
+			desc:        "err: ErrIDRequired",
+			input:       &proto.GetSubscriptionRequest{},
+			expectedErr: statusIDRequired.Err(),
 		},
 		{
-			desc:          "err: ErrPermissionDenied",
-			isSystemAdmin: false,
-			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole:       toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input:         &proto.GetSubscriptionRequest{},
-			expectedErr:   statusPermissionDenied.Err(),
-		},
-		{
-			desc:          "success",
-			isSystemAdmin: false,
-			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success",
 			setup: func(s *SubscriptionService) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -491,11 +476,11 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := newSubscriptionService(mockController, nil, p.orgRole, p.envRole)
+			service := newSubscriptionService(mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
-			ctx = setToken(t, ctx, p.isSystemAdmin)
+			ctx = createContextWithEditor(t, ctx, newEditor(nil, nil, nil))
 			actual, err := service.GetSubscription(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			if err == nil {
@@ -518,55 +503,30 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 	})
 
 	patterns := []struct {
-		desc          string
-		orgRole       *accountproto.AccountV2_Role_Organization
-		envRole       *accountproto.AccountV2_Role_Environment
-		isSystemAdmin bool
-		setup         func(*SubscriptionService)
-		input         *proto.ListSubscriptionsRequest
-		expected      *proto.ListSubscriptionsResponse
-		expectedErr   error
+		desc        string
+		editor      *eventproto.Editor
+		setup       func(*SubscriptionService)
+		input       *proto.ListSubscriptionsRequest
+		expected    *proto.ListSubscriptionsResponse
+		expectedErr error
 	}{
 		{
-			desc:          "err: ErrPermissionDenied",
-			isSystemAdmin: false,
-			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole:       toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input: &proto.ListSubscriptionsRequest{
-				PageSize: 2,
-				Cursor:   "",
-				SourceTypes: []proto.Subscription_SourceType{
-					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
-					proto.Subscription_DOMAIN_EVENT_SUBSCRIPTION,
-				},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:          "success: filter by environmentIDs",
-			isSystemAdmin: false,
-			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
-			setup: func(s *SubscriptionService) {
-				s.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(),
-				).Return(&accountproto.GetAccountV2Response{
-					Account: &accountproto.AccountV2{
-						Email:            "email",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-							{
-								EnvironmentId: "ns0",
-								Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-							},
-							{
-								EnvironmentId: "ns1",
-								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-							},
-						},
+			desc: "success: filter by environmentIDs",
+			editor: &eventproto.Editor{
+				Email:            "email",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						EnvironmentId: "ns0",
+						Role:          accountproto.AccountV2_Role_Environment_EDITOR,
 					},
-				}, nil)
+					{
+						EnvironmentId: "ns1",
+						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+					},
+				},
+			},
+			setup: func(s *SubscriptionService) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().ListSubscriptions(
 					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Subscription{
@@ -607,10 +567,12 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:          "success",
-			isSystemAdmin: false,
-			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success",
+			editor: newEditor(
+				nil,
+				toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+				toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			),
 			setup: func(s *SubscriptionService) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().ListSubscriptions(
 					gomock.Any(), gomock.Any(),
@@ -631,11 +593,11 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newSubscriptionService(mockController, nil, p.orgRole, p.envRole)
+			s := newSubscriptionService(mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
-			ctx = setToken(t, ctx, p.isSystemAdmin)
+			ctx = createContextWithEditor(t, ctx, p.editor)
 			actual, err := s.ListSubscriptions(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
@@ -656,36 +618,14 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 	})
 
 	patterns := []struct {
-		desc          string
-		orgRole       *accountproto.AccountV2_Role_Organization
-		envRole       *accountproto.AccountV2_Role_Environment
-		isSystemAdmin bool
-		setup         func(*SubscriptionService)
-		input         *proto.ListEnabledSubscriptionsRequest
-		expected      *proto.ListEnabledSubscriptionsResponse
-		expectedErr   error
+		desc        string
+		setup       func(*SubscriptionService)
+		input       *proto.ListEnabledSubscriptionsRequest
+		expected    *proto.ListEnabledSubscriptionsResponse
+		expectedErr error
 	}{
 		{
-			desc:          "err: ErrPermissionDenied",
-			isSystemAdmin: false,
-			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole:       toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input: &proto.ListEnabledSubscriptionsRequest{
-				PageSize: 2,
-				Cursor:   "1",
-				SourceTypes: []proto.Subscription_SourceType{
-					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
-					proto.Subscription_DOMAIN_EVENT_SUBSCRIPTION,
-				},
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:          "success",
-			isSystemAdmin: false,
-			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success",
 			setup: func(s *SubscriptionService) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().ListSubscriptions(
 					gomock.Any(), gomock.Any(),
@@ -706,11 +646,11 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newSubscriptionService(mockController, nil, p.orgRole, p.envRole)
+			s := newSubscriptionService(mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
-			ctx = setToken(t, ctx, p.isSystemAdmin)
+			ctx = createContextWithEditor(t, ctx, newEditor(nil, nil, nil))
 			actual, err := s.ListEnabledSubscriptions(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)

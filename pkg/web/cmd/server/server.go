@@ -1211,7 +1211,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		dbClient,
 		adminSubscriptionStorage,
 		subscriptionStorage,
-		accountClient,
 		domainTopicPublisher,
 		subscriptionapi.WithLogger(logger),
 	)

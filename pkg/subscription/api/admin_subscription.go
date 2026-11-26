@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/command"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
@@ -36,10 +37,7 @@ func (s *SubscriptionService) CreateAdminSubscription(
 	ctx context.Context,
 	req *subscriptionproto.CreateAdminSubscriptionRequest,
 ) (*subscriptionproto.CreateAdminSubscriptionResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateCreateAdminSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
@@ -115,10 +113,7 @@ func (s *SubscriptionService) UpdateAdminSubscription(
 	ctx context.Context,
 	req *subscriptionproto.UpdateAdminSubscriptionRequest,
 ) (*subscriptionproto.UpdateAdminSubscriptionResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateUpdateAdminSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
@@ -171,10 +166,7 @@ func (s *SubscriptionService) EnableAdminSubscription(
 	ctx context.Context,
 	req *subscriptionproto.EnableAdminSubscriptionRequest,
 ) (*subscriptionproto.EnableAdminSubscriptionResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateEnableAdminSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
@@ -208,10 +200,7 @@ func (s *SubscriptionService) DisableAdminSubscription(
 	ctx context.Context,
 	req *subscriptionproto.DisableAdminSubscriptionRequest,
 ) (*subscriptionproto.DisableAdminSubscriptionResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateDisableAdminSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
@@ -297,15 +286,12 @@ func (s *SubscriptionService) DeleteAdminSubscription(
 	ctx context.Context,
 	req *subscriptionproto.DeleteAdminSubscriptionRequest,
 ) (*subscriptionproto.DeleteAdminSubscriptionResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := validateDeleteAdminSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
 	var handler = command.NewEmptyAdminSubscriptionCommandHandler()
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		subscription, err := s.adminSubscriptionStorage.GetAdminSubscription(contextWithTx, req.Id)
 		if err != nil {
 			return err
@@ -380,10 +366,6 @@ func (s *SubscriptionService) GetAdminSubscription(
 	ctx context.Context,
 	req *subscriptionproto.GetAdminSubscriptionRequest,
 ) (*subscriptionproto.GetAdminSubscriptionResponse, error) {
-	_, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateGetAdminSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
@@ -417,10 +399,6 @@ func (s *SubscriptionService) ListAdminSubscriptions(
 	ctx context.Context,
 	req *subscriptionproto.ListAdminSubscriptionsRequest,
 ) (*subscriptionproto.ListAdminSubscriptionsResponse, error) {
-	_, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}
@@ -456,10 +434,6 @@ func (s *SubscriptionService) ListEnabledAdminSubscriptions(
 	ctx context.Context,
 	req *subscriptionproto.ListEnabledAdminSubscriptionsRequest,
 ) (*subscriptionproto.ListEnabledAdminSubscriptionsResponse, error) {
-	_, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}

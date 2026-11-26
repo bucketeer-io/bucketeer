@@ -234,7 +234,7 @@ func TestUpdateAdminSubscription(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = subscriptionClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
+	_, err = subscriptionClient.GetAdminSubscription(ctx, &proto.GetAdminSubscriptionRequest{
 		Id: id,
 	})
 	if err != nil {

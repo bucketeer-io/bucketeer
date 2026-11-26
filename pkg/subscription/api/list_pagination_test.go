@@ -96,10 +96,10 @@ func assertListPaginationResult(
 	assert.Equal(t, tc.cursor, listedCursor)
 }
 
-func listPaginationContext(t *testing.T, isSystemAdmin bool) context.Context {
+func listPaginationContext(t *testing.T) context.Context {
 	t.Helper()
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.MD{"accept-language": []string{"ja"}})
-	return setToken(t, ctx, isSystemAdmin)
+	return createContextWithEditor(t, ctx, newEditor(nil, nil, nil))
 }
 
 func expectListSubscriptions(service *SubscriptionService, listed **v2ss.ListSubscriptionsParams) {
@@ -129,13 +129,13 @@ func TestListSubscriptionsPaginationValidation(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			service := newSubscriptionService(mockController, nil, nil, nil)
+			service := newSubscriptionService(mockController)
 			var listed *v2ss.ListSubscriptionsParams
 			if tc.wantErr == nil {
 				expectListSubscriptions(service, &listed)
 			}
 
-			resp, err := service.ListSubscriptions(listPaginationContext(t, false), &proto.ListSubscriptionsRequest{
+			resp, err := service.ListSubscriptions(listPaginationContext(t), &proto.ListSubscriptionsRequest{
 				EnvironmentId: "ns0",
 				PageSize:      tc.pageSize,
 				Cursor:        tc.cursor,
@@ -160,13 +160,13 @@ func TestListEnabledSubscriptionsPaginationValidation(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			service := newSubscriptionService(mockController, nil, nil, nil)
+			service := newSubscriptionService(mockController)
 			var listed *v2ss.ListSubscriptionsParams
 			if tc.wantErr == nil {
 				expectListSubscriptions(service, &listed)
 			}
 
-			resp, err := service.ListEnabledSubscriptions(listPaginationContext(t, false), &proto.ListEnabledSubscriptionsRequest{
+			resp, err := service.ListEnabledSubscriptions(listPaginationContext(t), &proto.ListEnabledSubscriptionsRequest{
 				EnvironmentId: "ns0",
 				PageSize:      tc.pageSize,
 				Cursor:        tc.cursor,
@@ -191,13 +191,13 @@ func TestListAdminSubscriptionsPaginationValidation(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			service := newSubscriptionService(mockController, nil, nil, nil)
+			service := newSubscriptionService(mockController)
 			var listed *v2ss.ListAdminSubscriptionsParams
 			if tc.wantErr == nil {
 				expectListAdminSubscriptions(service, &listed)
 			}
 
-			resp, err := service.ListAdminSubscriptions(listPaginationContext(t, true), &proto.ListAdminSubscriptionsRequest{
+			resp, err := service.ListAdminSubscriptions(listPaginationContext(t), &proto.ListAdminSubscriptionsRequest{
 				PageSize: tc.pageSize,
 				Cursor:   tc.cursor,
 			})
@@ -221,14 +221,14 @@ func TestListEnabledAdminSubscriptionsPaginationValidation(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			service := newSubscriptionService(mockController, nil, nil, nil)
+			service := newSubscriptionService(mockController)
 			var listed *v2ss.ListAdminSubscriptionsParams
 			if tc.wantErr == nil {
 				expectListAdminSubscriptions(service, &listed)
 			}
 
 			resp, err := service.ListEnabledAdminSubscriptions(
-				listPaginationContext(t, true),
+				listPaginationContext(t),
 				&proto.ListEnabledAdminSubscriptionsRequest{
 					PageSize: tc.pageSize,
 					Cursor:   tc.cursor,

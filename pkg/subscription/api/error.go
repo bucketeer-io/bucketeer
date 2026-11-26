@@ -77,10 +77,4 @@ var (
 	statusAlreadyExists = api.NewGRPCStatus(
 		err.NewErrorAlreadyExists(err.SubscriptionPackageName, "already exists"),
 	)
-	statusUnauthenticated = api.NewGRPCStatus(
-		err.NewErrorUnauthenticated(err.SubscriptionPackageName, "unauthenticated"),
-	)
-	statusPermissionDenied = api.NewGRPCStatus(
-		err.NewErrorPermissionDenied(err.SubscriptionPackageName, "permission denied"),
-	)
 )
