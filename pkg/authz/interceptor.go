@@ -80,7 +80,7 @@ func CallerFromContext(ctx context.Context) (Caller, bool) {
 		return Caller{}, false
 	}
 	caller := Caller{Email: t.Email}
-	if t.IsServiceToken {
+	if t.IsServiceToken && t.IsSystemAdmin {
 		// Service tokens carry no name yet (RFC 0050 step 2).
 		caller.Service = LegacyService
 	}

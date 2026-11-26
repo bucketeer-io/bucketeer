@@ -311,6 +311,15 @@ func TestCallerFromContext(t *testing.T) {
 		{desc: "no token", ctx: context.Background()},
 		{desc: "user", ctx: userCtx("viewer@example.com"), expected: user("viewer@example.com"), expectedOK: true},
 		{desc: "service", ctx: serviceCtx(""), expected: Caller{Email: "service@example.com", Service: LegacyService}, expectedOK: true},
+		{
+			desc: "service token without system admin is a user",
+			ctx: context.WithValue(context.Background(), rpc.AccessTokenKey, &token.AccessToken{
+				Email:          "service@example.com",
+				IsServiceToken: true,
+			}),
+			expected:   user("service@example.com"),
+			expectedOK: true,
+		},
 		{desc: "relayed", ctx: serviceCtx("viewer@example.com"), expected: relayed("viewer@example.com"), expectedOK: true},
 	}
 	for _, p := range patterns {
