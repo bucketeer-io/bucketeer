@@ -20,10 +20,6 @@ import (
 )
 
 var (
-	statusUnauthenticated = api.NewGRPCStatus(
-		bkterr.NewErrorUnauthenticated(bkterr.NotificationPackageName, "unauthenticated"))
-	statusPermissionDenied = api.NewGRPCStatus(
-		bkterr.NewErrorPermissionDenied(bkterr.NotificationPackageName, "permission denied"))
 	statusLocalizationRequired = api.NewGRPCStatus(
 		bkterr.NewErrorInvalidArgEmpty(
 			bkterr.NotificationPackageName,

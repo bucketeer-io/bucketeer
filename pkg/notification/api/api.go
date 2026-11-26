@@ -23,18 +23,13 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
-	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
@@ -89,56 +84,11 @@ func (s *NotificationService) Register(server *grpc.Server) {
 	proto.RegisterNotificationServiceServer(server, s)
 }
 
-func (s *NotificationService) checkSystemAdminRole(
-	ctx context.Context,
-) (*eventproto.Editor, error) {
-	editor, err := role.CheckSystemAdminRole(ctx)
-	if err != nil {
-		switch gstatus.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Error(
-				"Unauthenticated",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, statusUnauthenticated.Err()
-		case codes.PermissionDenied:
-			s.logger.Error(
-				"Permission denied",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, statusPermissionDenied.Err()
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-	}
-	return editor, nil
-}
-
-// checkAuthenticated allows any authenticated console user (viewer APIs).
-func (s *NotificationService) checkAuthenticated(ctx context.Context) (*token.AccessToken, error) {
-	t, ok := rpc.GetAccessToken(ctx)
-	if !ok {
-		s.logger.Error(
-			"Unauthenticated",
-			log.FieldsFromIncomingContext(ctx)...,
-		)
-		return nil, statusUnauthenticated.Err()
-	}
-	return t, nil
-}
-
 func (s *NotificationService) ListNotifications(
 	ctx context.Context,
 	req *proto.ListNotificationsRequest,
 ) (*proto.ListNotificationsResponse, error) {
-	t, err := s.checkAuthenticated(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	limit := int(req.PageSize)
 	if limit <= 0 || limit > maxNotificationPageSize {
 		limit = maxNotificationPageSize
@@ -148,7 +98,7 @@ func (s *NotificationService) ListNotifications(
 		language = defaultNotificationLanguage
 	}
 	params := storage.ListNotificationsParams{
-		Email:           t.Email,
+		Email:           editor.Email,
 		Language:        language,
 		SearchKeyword:   req.SearchKeyword,
 		ReadStatus:      req.ReadStatus,
@@ -184,10 +134,7 @@ func (s *NotificationService) GetNotification(
 	ctx context.Context,
 	req *proto.GetNotificationRequest,
 ) (*proto.GetNotificationResponse, error) {
-	t, err := s.checkAuthenticated(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	id := strings.TrimSpace(req.Id)
 	if len(id) == 0 {
 		return nil, statusNotificationIDRequired.Err()
@@ -212,10 +159,10 @@ func (s *NotificationService) GetNotification(
 	}
 	// Drafts are visible to system admins only; hide their existence from
 	// other users.
-	if notification.Status != proto.Notification_PUBLISHED && !t.IsSystemAdmin {
+	if notification.Status != proto.Notification_PUBLISHED && !editor.IsAdmin {
 		return nil, statusNotificationNotFound.Err()
 	}
-	read, err := s.notificationStorage.IsNotificationRead(ctx, id, t.Email)
+	read, err := s.notificationStorage.IsNotificationRead(ctx, id, editor.Email)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get notification read state",
@@ -229,7 +176,7 @@ func (s *NotificationService) GetNotification(
 	notification.Read = read
 	notification.Localization = domain.ResolveLocalization(notification.Localizations, language)
 	// All localizations are the editor view; viewers get the resolved one.
-	if !t.IsSystemAdmin {
+	if !editor.IsAdmin {
 		notification.Localizations = nil
 	}
 	return &proto.GetNotificationResponse{
@@ -241,11 +188,8 @@ func (s *NotificationService) GetNotificationUnreadCount(
 	ctx context.Context,
 	req *proto.GetNotificationUnreadCountRequest,
 ) (*proto.GetNotificationUnreadCountResponse, error) {
-	t, err := s.checkAuthenticated(ctx)
-	if err != nil {
-		return nil, err
-	}
-	count, err := s.notificationStorage.GetNotificationUnreadCount(ctx, t.Email)
+	editor := authz.EditorFrom(ctx)
+	count, err := s.notificationStorage.GetNotificationUnreadCount(ctx, editor.Email)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get notification unread count",
@@ -262,10 +206,7 @@ func (s *NotificationService) MarkNotificationsAsRead(
 	ctx context.Context,
 	req *proto.MarkNotificationsAsReadRequest,
 ) (*proto.MarkNotificationsAsReadResponse, error) {
-	t, err := s.checkAuthenticated(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	ids := make([]string, 0, len(req.Ids))
 	seen := make(map[string]struct{}, len(req.Ids))
 	for _, id := range req.Ids {
@@ -285,8 +226,8 @@ func (s *NotificationService) MarkNotificationsAsRead(
 	if len(ids) > maxNotificationPageSize {
 		return nil, statusTooManyNotificationIDs.Err()
 	}
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
-		return s.notificationStorage.MarkNotificationsAsRead(ctxWithTx, ids, t.Email, time.Now().Unix())
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		return s.notificationStorage.MarkNotificationsAsRead(ctxWithTx, ids, editor.Email, time.Now().Unix())
 	})
 	if err != nil {
 		s.logger.Error(
@@ -302,12 +243,9 @@ func (s *NotificationService) MarkAllNotificationsAsRead(
 	ctx context.Context,
 	req *proto.MarkAllNotificationsAsReadRequest,
 ) (*proto.MarkAllNotificationsAsReadResponse, error) {
-	t, err := s.checkAuthenticated(ctx)
-	if err != nil {
-		return nil, err
-	}
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
-		return s.notificationStorage.MarkAllNotificationsAsRead(ctxWithTx, t.Email, time.Now().Unix())
+	editor := authz.EditorFrom(ctx)
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+		return s.notificationStorage.MarkAllNotificationsAsRead(ctxWithTx, editor.Email, time.Now().Unix())
 	})
 	if err != nil {
 		s.logger.Error(
@@ -323,10 +261,6 @@ func (s *NotificationService) ListDraftAdminNotifications(
 	ctx context.Context,
 	req *proto.ListDraftAdminNotificationsRequest,
 ) (*proto.ListDraftAdminNotificationsResponse, error) {
-	_, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
 	limit := int(req.PageSize)
 	if limit <= 0 || limit > maxNotificationPageSize {
 		limit = maxNotificationPageSize
@@ -363,10 +297,7 @@ func (s *NotificationService) CreateAdminNotification(
 	ctx context.Context,
 	req *proto.CreateAdminNotificationRequest,
 ) (*proto.CreateAdminNotificationResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := validateCreateAdminNotificationRequest(req); err != nil {
 		s.logger.Error(
 			"Failed to validate create notification request",
@@ -436,10 +367,7 @@ func (s *NotificationService) UpdateAdminNotification(
 	ctx context.Context,
 	req *proto.UpdateAdminNotificationRequest,
 ) (*proto.UpdateAdminNotificationResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := validateUpdateAdminNotificationRequest(req); err != nil {
 		s.logger.Error(
 			"Failed to validate update notification request",
@@ -448,7 +376,7 @@ func (s *NotificationService) UpdateAdminNotification(
 		return nil, err
 	}
 	var notification *domain.Notification
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		var err error
 		notification, err = s.notificationStorage.GetAdminNotification(ctxWithTx, req.Id)
 		if err != nil {
@@ -492,15 +420,12 @@ func (s *NotificationService) PublishAdminNotification(
 	ctx context.Context,
 	req *proto.PublishAdminNotificationRequest,
 ) (*proto.PublishAdminNotificationResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if len(strings.TrimSpace(req.Id)) == 0 {
 		return nil, statusNotificationIDRequired.Err()
 	}
 	var notification *domain.Notification
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		var err error
 		notification, err = s.notificationStorage.GetAdminNotification(ctxWithTx, req.Id)
 		if err != nil {
@@ -544,14 +469,11 @@ func (s *NotificationService) DeleteAdminNotification(
 	ctx context.Context,
 	req *proto.DeleteAdminNotificationRequest,
 ) (*proto.DeleteAdminNotificationResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if len(strings.TrimSpace(req.Id)) == 0 {
 		return nil, statusNotificationIDRequired.Err()
 	}
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		return s.notificationStorage.DeleteAdminNotification(ctxWithTx, req.Id, editor.Email, time.Now().Unix())
 	})
 	if err != nil {
