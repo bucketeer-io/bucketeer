@@ -150,6 +150,8 @@ Two consequences are accepted, not designed away:
 
 In SEGMENT mode the evaluator additionally needs the group's segment users, which today's plumbing does not fetch — segment IDs are collected per flag. The live group's `segment_id` is added to that set on the server-evaluated `GetEvaluations` path and on `GetSegmentUsers`, so local-evaluation SDKs receive it too. In HASH mode nothing is fetched and the path is unchanged.
 
+The users of that segment reach the gateway through the segment users cache, like the users of a segment that a flag rule references. The `SegmentUserCacher` batch job writes that cache every minute for the segments in use, and a segment is in use when a flag rule references it or when a SEGMENT group that is `WAITING`, `RUNNING` or `ANALYSIS` references it. `WAITING` is included so that the users are cached before the group starts. The cache refresher also writes the entry on a segment event, but it reads the users through `ListSegmentUsers` in one gRPC response of at most 4 MiB, which is about 41,000 users with 6-character IDs and about 25,700 with UUIDs. For a larger segment that read fails and the batch job is the only writer of the entry.
+
 #### 4.3.2 Delivery and SDK compatibility
 
 Two delivery paths already exist, and they have very different exposure:

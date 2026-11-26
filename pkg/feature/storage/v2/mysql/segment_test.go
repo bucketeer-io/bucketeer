@@ -356,3 +356,79 @@ func TestDeleteSegment(t *testing.T) {
 		})
 	}
 }
+
+func TestListAllInUseSegments(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	errInternal := errors.New("test error")
+	// A segment is in use by a holdout group that is waiting or serving.
+	inUseHoldoutGroupStatuses := []any{
+		int32(proto.HoldoutGroup_WAITING),
+		int32(proto.HoldoutGroup_RUNNING),
+		int32(proto.HoldoutGroup_ANALYSIS),
+	}
+	tests := []struct {
+		desc        string
+		setup       func(*mock.MockQueryExecer)
+		expected    []*v2fs.InUseSegment
+		expectedErr error
+	}{
+		{
+			desc: "err: query error",
+			setup: func(mockQueryExecer *mock.MockQueryExecer) {
+				mockQueryExecer.EXPECT().QueryContext(
+					gomock.Any(), selectAllInUseSegmentsSQLQuery, inUseHoldoutGroupStatuses...,
+				).Return(nil, errInternal)
+			},
+			expectedErr: errInternal,
+		},
+		{
+			desc: "err: scan error",
+			setup: func(mockQueryExecer *mock.MockQueryExecer) {
+				rows := mock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(true)
+				rows.EXPECT().Scan(gomock.Any()).Return(errInternal)
+				mockQueryExecer.EXPECT().QueryContext(
+					gomock.Any(), selectAllInUseSegmentsSQLQuery, inUseHoldoutGroupStatuses...,
+				).Return(rows, nil)
+			},
+			expectedErr: errInternal,
+		},
+		{
+			desc: "success",
+			setup: func(mockQueryExecer *mock.MockQueryExecer) {
+				rows := mock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				gomock.InOrder(
+					rows.EXPECT().Next().Return(true),
+					rows.EXPECT().Next().Return(false),
+				)
+				rows.EXPECT().Scan(gomock.Any()).DoAndReturn(func(dest ...any) error {
+					*(dest[0].(*string)) = "segment"
+					*(dest[1].(*string)) = "env"
+					*(dest[2].(*int64)) = 10
+					return nil
+				})
+				rows.EXPECT().Err().Return(nil)
+				mockQueryExecer.EXPECT().QueryContext(
+					gomock.Any(), selectAllInUseSegmentsSQLQuery, inUseHoldoutGroupStatuses...,
+				).Return(rows, nil)
+			},
+			expected: []*v2fs.InUseSegment{{SegmentID: "segment", EnvironmentID: "env", UpdatedAt: 10}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			mockQueryExecer := mock.NewMockQueryExecer(mockController)
+			tt.setup(mockQueryExecer)
+			storage := NewSegmentStorage(mockQueryExecer)
+			segments, err := storage.ListAllInUseSegments(context.Background())
+			assert.Equal(t, tt.expected, segments)
+			assert.Equal(t, tt.expectedErr, err)
+		})
+	}
+}
