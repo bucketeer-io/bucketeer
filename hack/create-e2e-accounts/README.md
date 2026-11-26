@@ -6,7 +6,7 @@ an access token for each of them. It upserts rows directly into the
 
 | Account | Organization (role) | Environment role | Access token |
 |---------|---------------------|------------------|--------------|
-| `--sys-admin-email` | e2e org (`OWNER`) | — | `--sys-admin-token-output` (system admin) |
+| `--sys-admin-email` | system admin org (`OWNER`) + e2e org (`OWNER`) | — | `--sys-admin-token-output` (system admin) |
 | `--org-owner-email` | default org (`OWNER`) + e2e org (`OWNER`) | — (org `OWNER` implies access to every environment in the org) | `--org-owner-default-token-output` + `--org-owner-e2e-token-output` (identical: the token no longer names an organization) |
 | `--env-write-email` | default org (`MEMBER`) | `EDITOR` on the e2e environment (`--e2e-environment-id`) | `--env-write-token-output` |
 | `--env-read-email` | default org (`MEMBER`) | `VIEWER` on the e2e environment (`--e2e-environment-id`) | `--env-read-token-output` |
@@ -43,6 +43,7 @@ go run ./hack/create-e2e-accounts create \
   --env-read-email=<ENV_READ_EMAIL> \
   --default-organization-id=<DEFAULT_ORGANIZATION_ID> \
   --e2e-organization-id=<E2E_ORGANIZATION_ID> \
+  --system-admin-organization-id=<SYSTEM_ADMIN_ORGANIZATION_ID> \
   --e2e-environment-id=<E2E_ENVIRONMENT_ID> \
   --oauth-key=<OAUTH_PRIVATE_KEY_PATH> \
   --issuer=<ISSUER> \
@@ -65,12 +66,13 @@ go run ./hack/create-e2e-accounts create \
 | `--mysql-host` | MySQL host. |
 | `--mysql-port` | MySQL port. |
 | `--mysql-db-name` | MySQL database name. |
-| `--sys-admin-email` | Email of the system admin account (`OWNER` of the e2e org; its token is a system admin). |
+| `--sys-admin-email` | Email of the system admin account (`OWNER` of the system admin and e2e orgs; its token is a system admin). |
 | `--org-owner-email` | Email of the organization owner account (`OWNER` in the default and e2e orgs). |
 | `--env-write-email` | Email of the environment editor account (`MEMBER` of default org, `EDITOR` on the e2e environment). |
 | `--env-read-email` | Email of the environment viewer account (`MEMBER` of default org, `VIEWER` on the e2e environment). |
 | `--default-organization-id` | ID of the default organization that owns the e2e environment. |
 | `--e2e-organization-id` | ID of the e2e organization where the org owner account also gets `OWNER`. |
+| `--system-admin-organization-id` | ID of the seeded organization with `system_admin` set that the system admin account is `OWNER` of (default `system-admin`). |
 | `--e2e-environment-id` | ID of the e2e environment used for the editor/viewer environment roles. |
 | `--oauth-key` | Path to the OAuth RSA private key used to sign the access tokens. |
 | `--issuer` | Issuer URL set in the generated access tokens (must match the gateway config). |

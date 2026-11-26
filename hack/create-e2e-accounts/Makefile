@@ -1,4 +1,4 @@
-TAG=v0.0.3
+TAG=v0.0.4
 IMAGE=ghcr.io/bucketeer-io/bucketeer-create-e2e-accounts
 
 .PHONY: deps

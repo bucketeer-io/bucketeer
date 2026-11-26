@@ -544,7 +544,8 @@ CREATE TABLE IF NOT EXISTS atlas_schema_revisions (
 INSERT INTO organization (id, name, url_code, description, disabled, archived, trial, system_admin, owner_email, created_at, updated_at)
 VALUES
     ('default', 'Default organization', 'default', 'This organization is for local development', false, false, false, false, 'localenv@bucketeer.io', 1706092038, 1706092038),
-    ('e2e', 'E2E organization', 'e2e', 'This organization is for organization e2e tests', false, false, false, false, 'localenv@bucketeer.io', 1706092038, 1706092038);
+    ('e2e', 'E2E organization', 'e2e', 'This organization is for organization e2e tests', false, false, false, false, 'localenv@bucketeer.io', 1706092038, 1706092038),
+    ('system-admin', 'System admin organization', 'system-admin', 'This organization makes the e2e system admin account a system admin', false, false, false, true, 'localenv@bucketeer.io', 1706092038, 1706092038);
 
 INSERT INTO project (id, name, url_code, description, disabled, trial, creator_email, organization_id, created_at, updated_at)
 VALUES ('default', 'Default project', 'default', 'This project is for local development', false, false, 'localenv@bucketeer.io', 'default', 1706092038, 1706092038);
