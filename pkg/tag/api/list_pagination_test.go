@@ -24,6 +24,7 @@ import (
 
 	tagstorage "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage"
 	tagstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mock"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 )
 
@@ -90,7 +91,7 @@ func TestListTagsPaginationValidation(t *testing.T) {
 					})
 			}
 
-			resp, err := service.ListTags(createContextWithTokenRoleOwner(t), &proto.ListTagsRequest{
+			resp, err := service.ListTags(createContextWithEditor(t, &eventproto.Editor{Email: "email", IsAdmin: true}), &proto.ListTagsRequest{
 				EnvironmentId: "ns0",
 				PageSize:      tc.pageSize,
 				Cursor:        tc.cursor,

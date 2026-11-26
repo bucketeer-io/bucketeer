@@ -25,8 +25,8 @@ import (
 	"google.golang.org/grpc"
 	pb "google.golang.org/protobuf/proto"
 
-	accclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
@@ -57,7 +57,6 @@ type TagService struct {
 	dbClient       database.Client
 	tagStorage     tagstorage.TagStorage
 	featureStorage ftstorage.FeatureStorage
-	accountClient  accclient.Client
 	publisher      publisher.Publisher
 	opts           *options
 	logger         *zap.Logger
@@ -67,7 +66,6 @@ func NewTagService(
 	dbClient database.Client,
 	tagStorage tagstorage.TagStorage,
 	featureStorage ftstorage.FeatureStorage,
-	accountClient accclient.Client,
 	publisher publisher.Publisher,
 	opts ...Option,
 ) *TagService {
@@ -81,7 +79,6 @@ func NewTagService(
 		dbClient:       dbClient,
 		tagStorage:     tagStorage,
 		featureStorage: featureStorage,
-		accountClient:  accountClient,
 		publisher:      publisher,
 		opts:           dopts,
 		logger:         dopts.logger.Named("api"),
@@ -96,12 +93,7 @@ func (s *TagService) CreateTag(
 	ctx context.Context,
 	req *proto.CreateTagRequest,
 ) (*proto.CreateTagResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateCreateTagRquest(req); err != nil {
 		s.logger.Error(
 			"Failed to create a tag",
@@ -253,12 +245,7 @@ func (s *TagService) ListTags(
 	}
 	if req.OrganizationId != "" {
 		// New console
-		editor, err := s.checkOrganizationRole(
-			ctx, accproto.AccountV2_Role_Organization_MEMBER,
-			req.OrganizationId)
-		if err != nil {
-			return nil, err
-		}
+		editor := authz.EditorFrom(ctx)
 		p.OrganizationID = req.OrganizationId
 		var hasAllowedEnvironment bool
 		p.EnvironmentIDs, hasAllowedEnvironment = s.getAllowedEnvironments([]string{req.EnvironmentId}, editor)
@@ -275,12 +262,6 @@ func (s *TagService) ListTags(
 		}
 	} else {
 		// Current console
-		_, err := s.checkEnvironmentRole(
-			ctx, accproto.AccountV2_Role_Environment_VIEWER,
-			req.EnvironmentId)
-		if err != nil {
-			return nil, err
-		}
 		p.EnvironmentID = req.EnvironmentId
 	}
 	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(ctx, p)
@@ -308,12 +289,7 @@ func (s *TagService) DeleteTag(
 	ctx context.Context,
 	req *proto.DeleteTagRequest,
 ) (*proto.DeleteTagResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateDeleteTagRequest(req); err != nil {
 		s.logger.Error(
 			"Failed to delete a tag",
@@ -326,7 +302,7 @@ func (s *TagService) DeleteTag(
 		return nil, err
 	}
 	var tag *domain.Tag
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		tagDB, err := s.tagStorage.GetTag(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
@@ -429,58 +405,6 @@ func (s *TagService) validateDeleteTagRequest(req *proto.DeleteTagRequest) error
 		return statusNameRequired.Err()
 	}
 	return nil
-}
-
-func (s *TagService) checkEnvironmentRole(
-	ctx context.Context,
-	requiredRole accproto.AccountV2_Role_Environment,
-	environmentId string,
-) (*eventproto.Editor, error) {
-	return role.CheckEnvironmentRoleWithLog(
-		ctx,
-		requiredRole,
-		environmentId,
-		func(email string) (*accproto.AccountV2, error) {
-			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accproto.GetAccountV2ByEnvironmentIDRequest{
-				Email:         email,
-				EnvironmentId: environmentId,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return resp.Account, nil
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
-}
-
-func (s *TagService) checkOrganizationRole(
-	ctx context.Context,
-	requiredRole accproto.AccountV2_Role_Organization,
-	organizationID string,
-) (*eventproto.Editor, error) {
-	return role.CheckOrganizationRoleWithLog(
-		ctx,
-		requiredRole,
-		organizationID,
-		func(email string) (*accproto.GetAccountV2Response, error) {
-			resp, err := s.accountClient.GetAccountV2(ctx, &accproto.GetAccountV2Request{
-				Email:          email,
-				OrganizationId: organizationID,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return resp, nil
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
 }
 
 // getAllowedEnvironments returns the environment IDs a list request is scoped

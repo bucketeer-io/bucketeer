@@ -17,7 +17,6 @@ package api
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,17 +24,15 @@ import (
 	"go.uber.org/zap"
 	gstatus "google.golang.org/grpc/status"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	err "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	featurestoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/tag/domain"
 	tagstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 )
@@ -46,7 +43,6 @@ func TestNewTagService(t *testing.T) {
 	defer mockController.Finish()
 	dbClientMock := databasemock.NewMockClient(mockController)
 	tagStorageMock := tagstoragemock.NewMockTagStorage(mockController)
-	accountClientMock := accountclientmock.NewMockClient(mockController)
 	p := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
 	featureStorageMock := featurestoragemock.NewMockFeatureStorage(mockController)
@@ -54,7 +50,6 @@ func TestNewTagService(t *testing.T) {
 		dbClientMock,
 		tagStorageMock,
 		featureStorageMock,
-		accountClientMock,
 		p,
 		WithLogger(logger),
 	)
@@ -66,7 +61,7 @@ func TestCreateTagMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleOwner(t)
+	ctx := createContextWithEditor(t, &eventproto.Editor{Email: "email"})
 
 	patterns := []struct {
 		desc        string
@@ -293,7 +288,7 @@ func TestListTagsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleUnassigned(t)
+	ctx := createContextWithEditor(t, &eventproto.Editor{Email: "email"})
 
 	patterns := []struct {
 		desc        string
@@ -303,14 +298,6 @@ func TestListTagsMySQL(t *testing.T) {
 		expectedErr error
 		expected    *proto.ListTagsResponse
 	}{
-		{
-			desc:        "errPermissionDenied",
-			service:     createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			setup:       func(s *TagService) {},
-			req:         &proto.ListTagsRequest{EnvironmentId: "ns0", PageSize: 10, Cursor: "0"},
-			expectedErr: statusPermissionDenied.Err(),
-			expected:    nil,
-		},
 		{
 			desc:    "success",
 			service: createTagService(mockController),
@@ -372,7 +359,7 @@ func TestDeleteTagMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleOwner(t)
+	ctx := createContextWithEditor(t, &eventproto.Editor{Email: "email"})
 
 	patterns := []struct {
 		desc        string
@@ -495,31 +482,12 @@ func TestDeleteTagMySQL(t *testing.T) {
 
 func createTagService(c *gomock.Controller) *TagService {
 	dbClientMock := databasemock.NewMockClient(c)
-	accountClientMock := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: "ns0",
-					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-				},
-				{
-					EnvironmentId: "",
-					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-				},
-			},
-		},
-	}
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	p := publishermock.NewMockPublisher(c)
 	logger := zap.NewNop()
 	return &TagService{
 		dbClient:       dbClientMock,
 		tagStorage:     tagstoragemock.NewMockTagStorage(c),
 		featureStorage: featurestoragemock.NewMockFeatureStorage(c),
-		accountClient:  accountClientMock,
 		publisher:      p,
 		opts: &options{
 			logger: zap.NewNop(),
@@ -528,59 +496,8 @@ func createTagService(c *gomock.Controller) *TagService {
 	}
 }
 
-func createServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, ro accountproto.AccountV2_Role_Organization, re accountproto.AccountV2_Role_Environment) *TagService {
-	dbClientMock := databasemock.NewMockClient(c)
-	accountClientMock := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: ro,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: "ns0",
-					Role:          re,
-				},
-			},
-		},
-	}
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
-	p := publishermock.NewMockPublisher(c)
-	logger := zap.NewNop()
-	return &TagService{
-		dbClient:      dbClientMock,
-		tagStorage:    tagstoragemock.NewMockTagStorage(c),
-		accountClient: accountClientMock,
-		publisher:     p,
-		opts: &options{
-			logger: zap.NewNop(),
-		},
-		logger: logger,
-	}
-}
-
-func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
+// createContextWithEditor is a context after the authz interceptor allowed the request.
+func createContextWithEditor(t *testing.T, editor *eventproto.Editor) context.Context {
 	t.Helper()
-	token := &token.AccessToken{
-		Issuer:   "issuer",
-		Audience: "audience",
-		Expiry:   time.Now().AddDate(100, 0, 0),
-		IssuedAt: time.Now(),
-		Email:    "email",
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
-}
-
-func createContextWithTokenRoleOwner(t *testing.T) context.Context {
-	t.Helper()
-	token := &token.AccessToken{
-		Issuer:        "issuer",
-		Audience:      "audience",
-		Expiry:        time.Now().AddDate(100, 0, 0),
-		IssuedAt:      time.Now(),
-		Email:         "email",
-		IsSystemAdmin: true,
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
+	return authz.WithEditor(context.TODO(), editor)
 }

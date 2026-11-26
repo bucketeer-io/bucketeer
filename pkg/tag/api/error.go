@@ -38,8 +38,4 @@ var (
 	statusInvalidOrderBy = api.NewGRPCStatus(
 		err.NewErrorInvalidArgNotMatchFormat(err.TagPackageName, "order_by is invalid", "OrderBy"),
 	)
-	statusUnauthenticated = api.NewGRPCStatus(
-		err.NewErrorUnauthenticated(err.TagPackageName, "unauthenticated"))
-	statusPermissionDenied = api.NewGRPCStatus(
-		err.NewErrorPermissionDenied(err.TagPackageName, "permission denied"))
 )
