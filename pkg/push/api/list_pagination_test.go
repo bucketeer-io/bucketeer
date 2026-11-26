@@ -76,7 +76,7 @@ func TestListPushesPaginationValidation(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			service := newPushService(mockController, nil, nil, nil)
+			service := newPushService(mockController)
 			var listed *v2ps.ListPushesParams
 			if tc.wantErr == nil {
 				service.pushStorage.(*storagemock.MockPushStorage).EXPECT().
@@ -87,7 +87,7 @@ func TestListPushesPaginationValidation(t *testing.T) {
 					})
 			}
 
-			resp, err := service.ListPushes(createContextWithToken(t, false), &pushproto.ListPushesRequest{
+			resp, err := service.ListPushes(createContextWithEditor(t, newEditor(nil, nil, nil)), &pushproto.ListPushesRequest{
 				EnvironmentId: "ns0",
 				PageSize:      tc.pageSize,
 				Cursor:        tc.cursor,

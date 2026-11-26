@@ -28,8 +28,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
@@ -63,7 +63,6 @@ type PushService struct {
 	pushStorage      v2ps.PushStorage
 	featureClient    featureclient.Client
 	experimentClient experimentclient.Client
-	accountClient    accountclient.Client
 	publisher        publisher.Publisher
 	opts             *options
 	logger           *zap.Logger
@@ -74,7 +73,6 @@ func NewPushService(
 	pushStorage v2ps.PushStorage,
 	featureClient featureclient.Client,
 	experimentClient experimentclient.Client,
-	accountClient accountclient.Client,
 	publisher publisher.Publisher,
 	opts ...Option,
 ) *PushService {
@@ -89,7 +87,6 @@ func NewPushService(
 		pushStorage:      pushStorage,
 		featureClient:    featureClient,
 		experimentClient: experimentClient,
-		accountClient:    accountClient,
 		publisher:        publisher,
 		opts:             dopts,
 		logger:           dopts.logger.Named("api"),
@@ -104,12 +101,7 @@ func (s *PushService) CreatePush(
 	ctx context.Context,
 	req *pushproto.CreatePushRequest,
 ) (*pushproto.CreatePushResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateCreatePushRequest(req); err != nil {
 		return nil, err
 	}
@@ -216,19 +208,14 @@ func (s *PushService) UpdatePush(
 	ctx context.Context,
 	req *pushproto.UpdatePushRequest,
 ) (*pushproto.UpdatePushResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	if err := s.validateUpdatePushRequest(req); err != nil {
 		return nil, err
 	}
 	var updatedPushPb *pushproto.Push
 	var updatePushEvent *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		push, err := s.pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -309,18 +296,13 @@ func (s *PushService) DeletePush(
 	ctx context.Context,
 	req *pushproto.DeletePushRequest,
 ) (*pushproto.DeletePushResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := validateDeletePushRequest(req); err != nil {
 		return nil, err
 	}
 
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		push, err := s.pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -394,12 +376,6 @@ func (s *PushService) GetPush(
 	ctx context.Context,
 	req *pushproto.GetPushRequest,
 ) (*pushproto.GetPushResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := s.validateGetPushRequest(req); err != nil {
 		return nil, err
 	}
@@ -568,22 +544,10 @@ func (s *PushService) ListPushes(
 	hasAllowedEnvironment := true
 	if req.OrganizationId != "" {
 		// console v3
-		editor, err := s.checkOrganizationRole(
-			ctx, accountproto.AccountV2_Role_Organization_MEMBER,
-			req.OrganizationId,
-		)
-		if err != nil {
-			return nil, err
-		}
+		editor := authz.EditorFrom(ctx)
 		filterEnvironmentIDs, hasAllowedEnvironment = s.getAllowedEnvironments(req.EnvironmentIds, editor)
 	} else {
 		// console v2
-		_, err := s.checkEnvironmentRole(
-			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-			req.EnvironmentId)
-		if err != nil {
-			return nil, err
-		}
 		filterEnvironmentIDs = append(filterEnvironmentIDs, req.EnvironmentId)
 	}
 
@@ -723,56 +687,4 @@ func (s *PushService) listPushes(
 		return nil, "", 0, statusInternal.Err()
 	}
 	return pushes, strconv.Itoa(nextCursor), totalCount, nil
-}
-
-func (s *PushService) checkEnvironmentRole(
-	ctx context.Context,
-	requiredRole accountproto.AccountV2_Role_Environment,
-	environmentId string,
-) (*eventproto.Editor, error) {
-	return role.CheckEnvironmentRoleWithLog(
-		ctx,
-		requiredRole,
-		environmentId,
-		func(email string) (*accountproto.AccountV2, error) {
-			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
-				Email:         email,
-				EnvironmentId: environmentId,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return resp.Account, nil
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
-}
-
-func (s *PushService) checkOrganizationRole(
-	ctx context.Context,
-	requiredRole accountproto.AccountV2_Role_Organization,
-	organizationID string,
-) (*eventproto.Editor, error) {
-	return role.CheckOrganizationRoleWithLog(
-		ctx,
-		requiredRole,
-		organizationID,
-		func(email string) (*accountproto.GetAccountV2Response, error) {
-			resp, err := s.accountClient.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-				Email:          email,
-				OrganizationId: organizationID,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return resp, nil
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
 }
