@@ -59,7 +59,9 @@ func newIncomingContext(t *testing.T) context.Context {
 	})
 }
 
-func setServiceToken(t *testing.T, ctx context.Context) context.Context {
+// setSystemAdminToken is the access token of a system admin, signed in as a
+// user or with a service token.
+func setSystemAdminToken(t *testing.T, ctx context.Context, isServiceToken bool) context.Context {
 	t.Helper()
 	return context.WithValue(ctx, rpc.AccessTokenKey, &token.AccessToken{
 		Issuer:         "issuer",
@@ -68,7 +70,7 @@ func setServiceToken(t *testing.T, ctx context.Context) context.Context {
 		IssuedAt:       time.Now(),
 		Email:          "service@bucketeer.io",
 		IsSystemAdmin:  true,
-		IsServiceToken: true,
+		IsServiceToken: isServiceToken,
 	})
 }
 
@@ -85,17 +87,20 @@ func TestGetSubscriptionMasksWebhookURL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	service := newSubscriptionService(
-		mockController,
-		nil,
-		toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-		toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
-	)
+	service := newSubscriptionService(mockController)
 	service.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 		gomock.Any(), "sub-0", "ns0",
 	).Return(storedSubscription(), nil)
 
-	ctx := setToken(t, newIncomingContext(t), false)
+	ctx := createContextWithEditor(
+		t,
+		newIncomingContext(t),
+		newEditor(
+			nil,
+			toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+		),
+	)
 	actual, err := service.GetSubscription(ctx, &proto.GetSubscriptionRequest{Id: "sub-0", EnvironmentId: "ns0"})
 	require.NoError(t, err)
 	assert.Equal(t, maskedSlackWebhookURL, actual.Subscription.Recipient.SlackChannelRecipient.WebhookUrl)
@@ -108,12 +113,7 @@ func TestListSubscriptionsMasksWebhookURL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	service := newSubscriptionService(
-		mockController,
-		nil,
-		toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-		toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
-	)
+	service := newSubscriptionService(mockController)
 	service.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().ListSubscriptions(
 		gomock.Any(), gomock.Any(),
 	).Return([]*proto.Subscription{
@@ -121,7 +121,15 @@ func TestListSubscriptionsMasksWebhookURL(t *testing.T) {
 		{Id: "sub-1", Name: "without recipient"},
 	}, 0, int64(2), nil)
 
-	ctx := setToken(t, newIncomingContext(t), false)
+	ctx := createContextWithEditor(
+		t,
+		newIncomingContext(t),
+		newEditor(
+			nil,
+			toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+		),
+	)
 	actual, err := service.ListSubscriptions(ctx, &proto.ListSubscriptionsRequest{EnvironmentId: "ns0", PageSize: 10})
 	require.NoError(t, err)
 	require.Len(t, actual.Subscriptions, 2)
@@ -135,26 +143,32 @@ func TestListEnabledSubscriptionsWebhookURL(t *testing.T) {
 
 	patterns := []struct {
 		desc     string
-		setToken func(*testing.T, context.Context) context.Context
+		caller   func(*testing.T, context.Context) context.Context
 		expected string
 	}{
 		{
 			desc: "environment viewer: masked",
-			setToken: func(t *testing.T, ctx context.Context) context.Context {
-				return setToken(t, ctx, false)
+			caller: func(t *testing.T, ctx context.Context) context.Context {
+				return createContextWithEditor(t, ctx, newEditor(
+					nil,
+					toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+					toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+				))
 			},
 			expected: maskedSlackWebhookURL,
 		},
 		{
 			desc: "system admin: masked",
-			setToken: func(t *testing.T, ctx context.Context) context.Context {
-				return setToken(t, ctx, true)
+			caller: func(t *testing.T, ctx context.Context) context.Context {
+				return setSystemAdminToken(t, ctx, false)
 			},
 			expected: maskedSlackWebhookURL,
 		},
 		{
-			desc:     "service token used by the notification sender: original URL",
-			setToken: setServiceToken,
+			desc: "service token used by the notification sender: original URL",
+			caller: func(t *testing.T, ctx context.Context) context.Context {
+				return setSystemAdminToken(t, ctx, true)
+			},
 			expected: slackWebhookURL,
 		},
 	}
@@ -164,17 +178,12 @@ func TestListEnabledSubscriptionsWebhookURL(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			service := newSubscriptionService(
-				mockController,
-				nil,
-				toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-				toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
-			)
+			service := newSubscriptionService(mockController)
 			service.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().ListSubscriptions(
 				gomock.Any(), gomock.Any(),
 			).Return([]*proto.Subscription{storedSubscription().Subscription}, 0, int64(1), nil)
 
-			ctx := p.setToken(t, newIncomingContext(t))
+			ctx := p.caller(t, newIncomingContext(t))
 			actual, err := service.ListEnabledSubscriptions(ctx, &proto.ListEnabledSubscriptionsRequest{
 				EnvironmentId: "ns0",
 				PageSize:      10,
@@ -208,7 +217,7 @@ func TestCreateSubscriptionStoresWebhookURLButMasksEventAndResponse(t *testing.T
 		return nil
 	})
 
-	ctx := setToken(t, newIncomingContext(t), true)
+	ctx := createContextWithEditor(t, newIncomingContext(t), newEditor(nil, nil, nil))
 	actual, err := service.CreateSubscription(ctx, &proto.CreateSubscriptionRequest{
 		EnvironmentId: "ns0",
 		Name:          "sname",
@@ -262,7 +271,7 @@ func TestUpdateSubscriptionKeepsStoredWebhookURLAndMasksEventAndResponse(t *test
 		return nil
 	})
 
-	ctx := setToken(t, newIncomingContext(t), true)
+	ctx := createContextWithEditor(t, newIncomingContext(t), newEditor(nil, nil, nil))
 	actual, err := service.UpdateSubscription(ctx, &proto.UpdateSubscriptionRequest{
 		Id:            "sub-0",
 		EnvironmentId: "ns0",
@@ -306,7 +315,7 @@ func TestDeleteSubscriptionMasksWebhookURLInEvent(t *testing.T) {
 		return nil
 	})
 
-	ctx := setToken(t, newIncomingContext(t), true)
+	ctx := createContextWithEditor(t, newIncomingContext(t), newEditor(nil, nil, nil))
 	_, err := service.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{Id: "sub-0", EnvironmentId: "ns0"})
 	require.NoError(t, err)
 

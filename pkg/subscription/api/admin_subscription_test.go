@@ -17,19 +17,16 @@ package api
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
 	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2"
 	staragemock "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
@@ -45,33 +42,21 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 	})
 
 	patterns := []struct {
-		desc          string
-		setup         func(*SubscriptionService)
-		isSystemAdmin bool
-		input         *proto.CreateAdminSubscriptionRequest
-		expectedErr   error
+		desc        string
+		setup       func(*SubscriptionService)
+		input       *proto.CreateAdminSubscriptionRequest
+		expectedErr error
 	}{
 		{
-			desc:          "err: ErrPermissionDenied",
-			setup:         nil,
-			isSystemAdmin: false,
-			input: &proto.CreateAdminSubscriptionRequest{
-				Command: nil,
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:          "err: ErrNoCommand",
-			setup:         nil,
-			isSystemAdmin: true,
+			desc:  "err: ErrNoCommand",
+			setup: nil,
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: nil,
 			},
 			expectedErr: statusNoCommand.Err(),
 		},
 		{
-			desc:          "err: ErrSourceTypesRequired",
-			isSystemAdmin: true,
+			desc: "err: ErrSourceTypesRequired",
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
 					Name: "sname",
@@ -84,8 +69,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: statusSourceTypesRequired.Err(),
 		},
 		{
-			desc:          "err: ErrRecipientRequired",
-			isSystemAdmin: true,
+			desc: "err: ErrRecipientRequired",
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
 					Name: "sname",
@@ -98,8 +82,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: statusRecipientRequired.Err(),
 		},
 		{
-			desc:          "err: ErrSlackRecipientRequired",
-			isSystemAdmin: true,
+			desc: "err: ErrSlackRecipientRequired",
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
 					Name: "sname",
@@ -115,8 +98,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: statusSlackRecipientRequired.Err(),
 		},
 		{
-			desc:          "err: ErrSlackRecipientWebhookURLRequired",
-			isSystemAdmin: true,
+			desc: "err: ErrSlackRecipientWebhookURLRequired",
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
 					Name: "sname",
@@ -133,8 +115,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: statusSlackRecipientWebhookURLRequired.Err(),
 		},
 		{
-			desc:          "err: ErrSlackRecipientWebhookURLInvalid: not a Slack incoming webhook",
-			isSystemAdmin: true,
+			desc: "err: ErrSlackRecipientWebhookURLInvalid: not a Slack incoming webhook",
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
 					Name: "sname",
@@ -153,8 +134,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: statusSlackRecipientWebhookURLInvalid.Err(),
 		},
 		{
-			desc:          "err: ErrNameRequired",
-			isSystemAdmin: true,
+			desc: "err: ErrNameRequired",
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
 					SourceTypes: []proto.Subscription_SourceType{
@@ -184,7 +164,6 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			isSystemAdmin: true,
 			input: &proto.CreateAdminSubscriptionRequest{
 				Command: &proto.CreateAdminSubscriptionCommand{
 					Name: "sname",
@@ -203,7 +182,7 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(t, ctx, p.isSystemAdmin)
+			ctx = createContextWithEditor(t, ctx, newEditor(nil, nil, nil))
 			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -226,35 +205,25 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 	})
 
 	patterns := []struct {
-		desc          string
-		setup         func(*SubscriptionService)
-		isSystemAdmin bool
-		input         *proto.UpdateAdminSubscriptionRequest
-		expectedErr   error
+		desc        string
+		setup       func(*SubscriptionService)
+		input       *proto.UpdateAdminSubscriptionRequest
+		expectedErr error
 	}{
 		{
-			desc:          "err: ErrPermissionDenied",
-			isSystemAdmin: false,
-			input:         &proto.UpdateAdminSubscriptionRequest{},
-			expectedErr:   statusPermissionDenied.Err(),
+			desc:        "err: ErrIDRequired",
+			input:       &proto.UpdateAdminSubscriptionRequest{},
+			expectedErr: statusIDRequired.Err(),
 		},
 		{
-			desc:          "err: ErrIDRequired",
-			isSystemAdmin: true,
-			input:         &proto.UpdateAdminSubscriptionRequest{},
-			expectedErr:   statusIDRequired.Err(),
-		},
-		{
-			desc:          "err: ErrNoCommand",
-			isSystemAdmin: true,
+			desc: "err: ErrNoCommand",
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id: "key-0",
 			},
 			expectedErr: statusNoCommand.Err(),
 		},
 		{
-			desc:          "err: add notification types: ErrSourceTypesRequired",
-			isSystemAdmin: true,
+			desc: "err: add notification types: ErrSourceTypesRequired",
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id:                    "key-0",
 				AddSourceTypesCommand: &proto.AddAdminSubscriptionSourceTypesCommand{},
@@ -262,8 +231,7 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 			expectedErr: statusSourceTypesRequired.Err(),
 		},
 		{
-			desc:          "err: delete notification types: ErrSourceTypesRequired",
-			isSystemAdmin: true,
+			desc: "err: delete notification types: ErrSourceTypesRequired",
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id:                       "key-0",
 				DeleteSourceTypesCommand: &proto.DeleteAdminSubscriptionSourceTypesCommand{},
@@ -282,7 +250,6 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 					_ = fn(ctx)
 				}).Return(v2ss.ErrAdminSubscriptionNotFound)
 			},
-			isSystemAdmin: true,
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id: "key-1",
 				AddSourceTypesCommand: &proto.AddAdminSubscriptionSourceTypesCommand{
@@ -316,7 +283,6 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			isSystemAdmin: true,
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id: "key-0",
 				AddSourceTypesCommand: &proto.AddAdminSubscriptionSourceTypesCommand{
@@ -353,7 +319,6 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			isSystemAdmin: true,
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id: "key-0",
 				DeleteSourceTypesCommand: &proto.DeleteAdminSubscriptionSourceTypesCommand{
@@ -390,7 +355,6 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			isSystemAdmin: true,
 			input: &proto.UpdateAdminSubscriptionRequest{
 				Id: "key-0",
 				AddSourceTypesCommand: &proto.AddAdminSubscriptionSourceTypesCommand{
@@ -412,7 +376,7 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(t, ctx, p.isSystemAdmin)
+			ctx = createContextWithEditor(t, ctx, newEditor(nil, nil, nil))
 			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -434,27 +398,18 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 	})
 
 	patterns := []struct {
-		desc          string
-		setup         func(*SubscriptionService)
-		isSystemAdmin bool
-		input         *proto.EnableAdminSubscriptionRequest
-		expectedErr   error
+		desc        string
+		setup       func(*SubscriptionService)
+		input       *proto.EnableAdminSubscriptionRequest
+		expectedErr error
 	}{
 		{
-			desc:          "err: ErrPermissionDenied",
-			isSystemAdmin: false,
-			input:         &proto.EnableAdminSubscriptionRequest{},
-			expectedErr:   statusPermissionDenied.Err(),
+			desc:        "err: ErrIDRequired",
+			input:       &proto.EnableAdminSubscriptionRequest{},
+			expectedErr: statusIDRequired.Err(),
 		},
 		{
-			desc:          "err: ErrIDRequired",
-			isSystemAdmin: true,
-			input:         &proto.EnableAdminSubscriptionRequest{},
-			expectedErr:   statusIDRequired.Err(),
-		},
-		{
-			desc:          "err: ErrNoCommand",
-			isSystemAdmin: true,
+			desc: "err: ErrNoCommand",
 			input: &proto.EnableAdminSubscriptionRequest{
 				Id: "key-0",
 			},
@@ -483,7 +438,6 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			isSystemAdmin: true,
 			input: &proto.EnableAdminSubscriptionRequest{
 				Id:      "key-0",
 				Command: &proto.EnableAdminSubscriptionCommand{},
@@ -493,7 +447,7 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(t, ctx, p.isSystemAdmin)
+			ctx = createContextWithEditor(t, ctx, newEditor(nil, nil, nil))
 			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -516,21 +470,18 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 	})
 
 	patterns := []struct {
-		desc          string
-		setup         func(*SubscriptionService)
-		isSystemAdmin bool
-		input         *proto.DisableAdminSubscriptionRequest
-		expectedErr   error
+		desc        string
+		setup       func(*SubscriptionService)
+		input       *proto.DisableAdminSubscriptionRequest
+		expectedErr error
 	}{
 		{
-			desc:          "err: ErrIDRequired",
-			isSystemAdmin: true,
-			input:         &proto.DisableAdminSubscriptionRequest{},
-			expectedErr:   statusIDRequired.Err(),
+			desc:        "err: ErrIDRequired",
+			input:       &proto.DisableAdminSubscriptionRequest{},
+			expectedErr: statusIDRequired.Err(),
 		},
 		{
-			desc:          "err: ErrNoCommand",
-			isSystemAdmin: true,
+			desc: "err: ErrNoCommand",
 			input: &proto.DisableAdminSubscriptionRequest{
 				Id: "key-0",
 			},
@@ -559,7 +510,6 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			isSystemAdmin: true,
 			input: &proto.DisableAdminSubscriptionRequest{
 				Id:      "key-0",
 				Command: &proto.DisableAdminSubscriptionCommand{},
@@ -569,7 +519,7 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(t, ctx, p.isSystemAdmin)
+			ctx = createContextWithEditor(t, ctx, newEditor(nil, nil, nil))
 			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -591,21 +541,18 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 	})
 
 	patterns := []struct {
-		desc          string
-		setup         func(*SubscriptionService)
-		isSystemAdmin bool
-		input         *proto.DeleteAdminSubscriptionRequest
-		expectedErr   error
+		desc        string
+		setup       func(*SubscriptionService)
+		input       *proto.DeleteAdminSubscriptionRequest
+		expectedErr error
 	}{
 		{
-			desc:          "err: ErrIDRequired",
-			isSystemAdmin: true,
-			input:         &proto.DeleteAdminSubscriptionRequest{},
-			expectedErr:   statusIDRequired.Err(),
+			desc:        "err: ErrIDRequired",
+			input:       &proto.DeleteAdminSubscriptionRequest{},
+			expectedErr: statusIDRequired.Err(),
 		},
 		{
-			desc:          "err: ErrNoCommand",
-			isSystemAdmin: true,
+			desc: "err: ErrNoCommand",
 			input: &proto.DeleteAdminSubscriptionRequest{
 				Id: "key-0",
 			},
@@ -633,7 +580,6 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			isSystemAdmin: true,
 			input: &proto.DeleteAdminSubscriptionRequest{
 				Id:      "key-0",
 				Command: &proto.DeleteAdminSubscriptionCommand{},
@@ -643,7 +589,7 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx = setToken(t, ctx, p.isSystemAdmin)
+			ctx = createContextWithEditor(t, ctx, newEditor(nil, nil, nil))
 			service := newSubscriptionServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
@@ -665,23 +611,15 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 	})
 
 	patterns := []struct {
-		desc          string
-		setup         func(*SubscriptionService)
-		isSystemAdmin bool
-		input         *proto.GetAdminSubscriptionRequest
-		expectedErr   error
+		desc        string
+		setup       func(*SubscriptionService)
+		input       *proto.GetAdminSubscriptionRequest
+		expectedErr error
 	}{
 		{
-			desc:          "err: ErrPermissionDenied",
-			isSystemAdmin: false,
-			input:         &proto.GetAdminSubscriptionRequest{},
-			expectedErr:   statusPermissionDenied.Err(),
-		},
-		{
-			desc:          "err: ErrIDRequired",
-			isSystemAdmin: true,
-			input:         &proto.GetAdminSubscriptionRequest{},
-			expectedErr:   statusIDRequired.Err(),
+			desc:        "err: ErrIDRequired",
+			input:       &proto.GetAdminSubscriptionRequest{},
+			expectedErr: statusIDRequired.Err(),
 		},
 		{
 			desc: "success",
@@ -694,9 +632,8 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			isSystemAdmin: true,
-			input:         &proto.GetAdminSubscriptionRequest{Id: "key-0"},
-			expectedErr:   nil,
+			input:       &proto.GetAdminSubscriptionRequest{Id: "key-0"},
+			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
@@ -705,7 +642,7 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			ctx = setToken(t, ctx, p.isSystemAdmin)
+			ctx = createContextWithEditor(t, ctx, newEditor(nil, nil, nil))
 			actual, err := service.GetAdminSubscription(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			if err == nil {
@@ -726,21 +663,12 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 	})
 
 	patterns := []struct {
-		desc          string
-		setup         func(*SubscriptionService)
-		isSystemAdmin bool
-		input         *proto.ListAdminSubscriptionsRequest
-		expected      *proto.ListAdminSubscriptionsResponse
-		expectedErr   error
+		desc        string
+		setup       func(*SubscriptionService)
+		input       *proto.ListAdminSubscriptionsRequest
+		expected    *proto.ListAdminSubscriptionsResponse
+		expectedErr error
 	}{
-		{
-			desc:          "err: ErrPermissionDenied",
-			setup:         nil,
-			isSystemAdmin: false,
-			input:         &proto.ListAdminSubscriptionsRequest{PageSize: 2, Cursor: ""},
-			expected:      nil,
-			expectedErr:   statusPermissionDenied.Err(),
-		},
 		{
 			desc: "success",
 			setup: func(s *SubscriptionService) {
@@ -749,7 +677,6 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 				).Return([]*proto.Subscription{}, 0, int64(0), nil)
 
 			},
-			isSystemAdmin: true,
 			input: &proto.ListAdminSubscriptionsRequest{
 				PageSize: 2,
 				Cursor:   "",
@@ -768,7 +695,7 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			ctx = setToken(t, ctx, p.isSystemAdmin)
+			ctx = createContextWithEditor(t, ctx, newEditor(nil, nil, nil))
 			actual, err := s.ListAdminSubscriptions(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
@@ -787,21 +714,12 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 	})
 
 	patterns := []struct {
-		desc          string
-		setup         func(*SubscriptionService)
-		isSystemAdmin bool
-		input         *proto.ListEnabledAdminSubscriptionsRequest
-		expected      *proto.ListEnabledAdminSubscriptionsResponse
-		expectedErr   error
+		desc        string
+		setup       func(*SubscriptionService)
+		input       *proto.ListEnabledAdminSubscriptionsRequest
+		expected    *proto.ListEnabledAdminSubscriptionsResponse
+		expectedErr error
 	}{
-		{
-			desc:          "err: ErrPermissionDenied",
-			setup:         nil,
-			isSystemAdmin: false,
-			input:         &proto.ListEnabledAdminSubscriptionsRequest{PageSize: 2, Cursor: ""},
-			expected:      nil,
-			expectedErr:   statusPermissionDenied.Err(),
-		},
 		{
 			desc: "success",
 			setup: func(s *SubscriptionService) {
@@ -809,7 +727,6 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Subscription{}, 1, int64(1), nil)
 			},
-			isSystemAdmin: true,
 			input: &proto.ListEnabledAdminSubscriptionsRequest{
 				PageSize: 2,
 				Cursor:   "1",
@@ -828,23 +745,10 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(s)
 			}
-			ctx = setToken(t, ctx, p.isSystemAdmin)
+			ctx = createContextWithEditor(t, ctx, newEditor(nil, nil, nil))
 			actual, err := s.ListEnabledAdminSubscriptions(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
 		})
 	}
-}
-
-func setToken(t *testing.T, ctx context.Context, isSystemAdmin bool) context.Context {
-	t.Helper()
-	tokenID := &token.AccessToken{
-		Issuer:        "issuer",
-		Audience:      "audience",
-		Expiry:        time.Now().AddDate(100, 0, 0),
-		IssuedAt:      time.Now(),
-		Email:         "email",
-		IsSystemAdmin: isSystemAdmin,
-	}
-	return context.WithValue(ctx, rpc.AccessTokenKey, tokenID)
 }

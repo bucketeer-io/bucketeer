@@ -22,17 +22,17 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	v2ss "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
-// listScopeAccount returns the account of the caller for the environment
-// scoping tests: a member of the organization with roles in env0 and env1 only.
-func listScopeAccount(orgRole accountproto.AccountV2_Role_Organization) *accountproto.AccountV2 {
-	return &accountproto.AccountV2{
+// listScopeEditor returns the caller for the environment scoping tests:
+// a member of the organization with roles in env0 and env1 only.
+func listScopeEditor(orgRole accountproto.AccountV2_Role_Organization) *eventproto.Editor {
+	return &eventproto.Editor{
 		Email:            "email",
 		OrganizationRole: orgRole,
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
@@ -47,7 +47,7 @@ func TestListSubscriptionsMemberEnvironmentScope(t *testing.T) {
 
 	cases := []struct {
 		name            string
-		account         *accountproto.AccountV2
+		editor          *eventproto.Editor
 		req             *proto.ListSubscriptionsRequest
 		wantEnvFilter   []string
 		wantStorageCall bool
@@ -56,7 +56,7 @@ func TestListSubscriptionsMemberEnvironmentScope(t *testing.T) {
 		{
 			// An UNASSIGNED entry grants no access to its environment.
 			name: "member's unassigned environment entry is not an accessible environment",
-			account: &accountproto.AccountV2{
+			editor: &eventproto.Editor{
 				Email:            "email",
 				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
@@ -71,8 +71,8 @@ func TestListSubscriptionsMemberEnvironmentScope(t *testing.T) {
 			},
 		},
 		{
-			name:    "member requesting only environments outside their roles gets an empty page",
-			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
+			name:   "member requesting only environments outside their roles gets an empty page",
+			editor: listScopeEditor(accountproto.AccountV2_Role_Organization_MEMBER),
 			req: &proto.ListSubscriptionsRequest{
 				OrganizationId: "org0",
 				EnvironmentIds: []string{"env2", "env3"},
@@ -82,15 +82,15 @@ func TestListSubscriptionsMemberEnvironmentScope(t *testing.T) {
 		},
 		{
 			name: "member without any environment role gets an empty page",
-			account: &accountproto.AccountV2{
+			editor: &eventproto.Editor{
 				Email:            "email",
 				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			},
 			req: &proto.ListSubscriptionsRequest{OrganizationId: "org0", PageSize: 10},
 		},
 		{
-			name:    "member with no accessible environment still gets an invalid cursor rejected",
-			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
+			name:   "member with no accessible environment still gets an invalid cursor rejected",
+			editor: listScopeEditor(accountproto.AccountV2_Role_Organization_MEMBER),
 			req: &proto.ListSubscriptionsRequest{
 				OrganizationId: "org0",
 				EnvironmentIds: []string{"env2"},
@@ -99,8 +99,8 @@ func TestListSubscriptionsMemberEnvironmentScope(t *testing.T) {
 			wantErr: statusInvalidCursor.Err(),
 		},
 		{
-			name:    "member with no accessible environment still gets an invalid order rejected",
-			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
+			name:   "member with no accessible environment still gets an invalid order rejected",
+			editor: listScopeEditor(accountproto.AccountV2_Role_Organization_MEMBER),
 			req: &proto.ListSubscriptionsRequest{
 				OrganizationId: "org0",
 				EnvironmentIds: []string{"env2"},
@@ -109,8 +109,8 @@ func TestListSubscriptionsMemberEnvironmentScope(t *testing.T) {
 			wantErr: statusInvalidOrderBy.Err(),
 		},
 		{
-			name:    "member requesting a mix keeps only the environments they have a role in",
-			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
+			name:   "member requesting a mix keeps only the environments they have a role in",
+			editor: listScopeEditor(accountproto.AccountV2_Role_Organization_MEMBER),
 			req: &proto.ListSubscriptionsRequest{
 				OrganizationId: "org0",
 				EnvironmentIds: []string{"env2", "env1"},
@@ -121,14 +121,14 @@ func TestListSubscriptionsMemberEnvironmentScope(t *testing.T) {
 		},
 		{
 			name:            "member without an environment filter lists all of their environments",
-			account:         listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
+			editor:          listScopeEditor(accountproto.AccountV2_Role_Organization_MEMBER),
 			req:             &proto.ListSubscriptionsRequest{OrganizationId: "org0", PageSize: 10},
 			wantEnvFilter:   []string{"env0", "env1"},
 			wantStorageCall: true,
 		},
 		{
 			name:            "admin without an environment filter is not restricted",
-			account:         listScopeAccount(accountproto.AccountV2_Role_Organization_ADMIN),
+			editor:          listScopeEditor(accountproto.AccountV2_Role_Organization_ADMIN),
 			req:             &proto.ListSubscriptionsRequest{OrganizationId: "org0", PageSize: 10},
 			wantEnvFilter:   []string{},
 			wantStorageCall: true,
@@ -142,10 +142,7 @@ func TestListSubscriptionsMemberEnvironmentScope(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			service := newSubscriptionService(mockController, nil, nil, nil)
-			service.accountClient.(*accountclientmock.MockClient).EXPECT().
-				GetAccountV2(gomock.Any(), gomock.Any()).
-				Return(&accountproto.GetAccountV2Response{Account: tc.account}, nil).AnyTimes()
+			service := newSubscriptionService(mockController)
 
 			var listed *v2ss.ListSubscriptionsParams
 			if tc.wantStorageCall {
@@ -157,7 +154,7 @@ func TestListSubscriptionsMemberEnvironmentScope(t *testing.T) {
 					})
 			}
 
-			ctx := setToken(t, newIncomingContext(t), false)
+			ctx := createContextWithEditor(t, newIncomingContext(t), tc.editor)
 			resp, err := service.ListSubscriptions(ctx, tc.req)
 			if tc.wantErr != nil {
 				require.Error(t, err)

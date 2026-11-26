@@ -19,17 +19,10 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
-	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	subscriptionproto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
@@ -50,7 +43,6 @@ type SubscriptionService struct {
 	dbClient                 database.Client
 	adminSubscriptionStorage v2.AdminSubscriptionStorage
 	subscriptionStorage      v2.SubscriptionStorage
-	accountClient            accountclient.Client
 	domainEventPublisher     publisher.Publisher
 	opts                     *options
 	logger                   *zap.Logger
@@ -60,7 +52,6 @@ func NewSubscriptionService(
 	dbClient database.Client,
 	adminSubscriptionStorage v2.AdminSubscriptionStorage,
 	subscriptionStorage v2.SubscriptionStorage,
-	accountClient accountclient.Client,
 	domainEventPublisher publisher.Publisher,
 	opts ...Option,
 ) *SubscriptionService {
@@ -74,7 +65,6 @@ func NewSubscriptionService(
 		dbClient:                 dbClient,
 		adminSubscriptionStorage: adminSubscriptionStorage,
 		subscriptionStorage:      subscriptionStorage,
-		accountClient:            accountClient,
 		domainEventPublisher:     domainEventPublisher,
 		opts:                     dopts,
 		logger:                   dopts.logger.Named("api"),
@@ -83,87 +73,6 @@ func NewSubscriptionService(
 
 func (s *SubscriptionService) Register(server *grpc.Server) {
 	subscriptionproto.RegisterSubscriptionServiceServer(server, s)
-}
-
-func (s *SubscriptionService) checkSystemAdminRole(
-	ctx context.Context,
-) (*eventproto.Editor, error) {
-	editor, err := role.CheckSystemAdminRole(ctx)
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Error(
-				"Unauthenticated",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, statusUnauthenticated.Err()
-		case codes.PermissionDenied:
-			s.logger.Error(
-				"Permission denied",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, statusPermissionDenied.Err()
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-	}
-	return editor, nil
-}
-
-func (s *SubscriptionService) checkEnvironmentRole(
-	ctx context.Context,
-	requiredRole accountproto.AccountV2_Role_Environment,
-	environmentId string,
-) (*eventproto.Editor, error) {
-	return role.CheckEnvironmentRoleWithLog(
-		ctx,
-		requiredRole,
-		environmentId,
-		func(email string) (*accountproto.AccountV2, error) {
-			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
-				Email:         email,
-				EnvironmentId: environmentId,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return resp.Account, nil
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
-}
-
-func (s *SubscriptionService) checkOrganizationRole(
-	ctx context.Context,
-	requiredRole accountproto.AccountV2_Role_Organization,
-	organizationID string,
-) (*eventproto.Editor, error) {
-	return role.CheckOrganizationRoleWithLog(
-		ctx,
-		requiredRole,
-		organizationID,
-		func(email string) (*accountproto.GetAccountV2Response, error) {
-			resp, err := s.accountClient.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-				Email:          email,
-				OrganizationId: organizationID,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return resp, nil
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
 }
 
 func (s *SubscriptionService) publishDomainEvents(ctx context.Context, events []*eventproto.Event) map[string]error {

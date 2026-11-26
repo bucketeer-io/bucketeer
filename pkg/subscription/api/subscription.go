@@ -23,6 +23,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
@@ -38,12 +39,7 @@ func (s *SubscriptionService) CreateSubscription(
 	ctx context.Context,
 	req *subscriptionproto.CreateSubscriptionRequest,
 ) (*subscriptionproto.CreateSubscriptionResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	if err := s.validateCreateSubscriptionRequest(req); err != nil {
 		return nil, err
@@ -132,12 +128,7 @@ func (s *SubscriptionService) UpdateSubscription(
 	ctx context.Context,
 	req *subscriptionproto.UpdateSubscriptionRequest,
 ) (*subscriptionproto.UpdateSubscriptionResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateUpdateSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
@@ -239,18 +230,14 @@ func (s *SubscriptionService) DeleteSubscription(
 	ctx context.Context,
 	req *subscriptionproto.DeleteSubscriptionRequest,
 ) (*subscriptionproto.DeleteSubscriptionResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := validateDeleteSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
 
 	var subscription *domain.Subscription
 	var event *eventproto.Event
+	var err error
 	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		subscription, err = s.subscriptionStorage.GetSubscription(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -304,12 +291,6 @@ func (s *SubscriptionService) GetSubscription(
 	ctx context.Context,
 	req *subscriptionproto.GetSubscriptionRequest,
 ) (*subscriptionproto.GetSubscriptionResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateGetSubscriptionRequest(req); err != nil {
 		return nil, err
 	}
@@ -339,21 +320,10 @@ func (s *SubscriptionService) ListSubscriptions(
 	hasAllowedEnvironment := true
 	if req.OrganizationId != "" {
 		// console v3
-		editor, err := s.checkOrganizationRole(
-			ctx, accountproto.AccountV2_Role_Organization_MEMBER,
-			req.OrganizationId)
-		if err != nil {
-			return nil, err
-		}
+		editor := authz.EditorFrom(ctx)
 		filterEnvironmentIDs, hasAllowedEnvironment = s.getAllowedEnvironments(req.EnvironmentIds, editor)
 	} else {
 		// console v2
-		_, err := s.checkEnvironmentRole(
-			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-			req.EnvironmentId)
-		if err != nil {
-			return nil, err
-		}
 		filterEnvironmentIDs = append(filterEnvironmentIDs, req.EnvironmentId)
 	}
 	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
@@ -456,12 +426,6 @@ func (s *SubscriptionService) ListEnabledSubscriptions(
 	ctx context.Context,
 	req *subscriptionproto.ListEnabledSubscriptionsRequest,
 ) (*subscriptionproto.ListEnabledSubscriptionsResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}

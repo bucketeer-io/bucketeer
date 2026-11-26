@@ -18,24 +18,21 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
-
-	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/subscription/domain"
 	v2mock "github.com/bucketeer-io/bucketeer/v2/pkg/subscription/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/subscription"
 )
 
@@ -50,14 +47,12 @@ func TestNewSubscriptionService(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	dbClient := dbmock.NewMockClient(mockController)
-	accountClientMock := accountclientmock.NewMockClient(mockController)
 	pm := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
 	s := NewSubscriptionService(
 		dbClient,
 		v2mock.NewMockAdminSubscriptionStorage(mockController),
 		v2mock.NewMockSubscriptionStorage(mockController),
-		accountClientMock,
 		pm,
 		WithLogger(logger),
 	)
@@ -69,101 +64,55 @@ func newSubscriptionServiceWithMock(
 	c *gomock.Controller,
 ) *SubscriptionService {
 	t.Helper()
-	accountClientMock := accountclientmock.NewMockClient(c)
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(
-		&accountproto.GetAccountV2ByEnvironmentIDResponse{
-			Account: &accountproto.AccountV2{
-				Email:            "email",
-				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-					{EnvironmentId: "", Role: accountproto.AccountV2_Role_Environment_EDITOR},
-				},
-			},
-		}, nil,
-	).AnyTimes()
 	return &SubscriptionService{
 		dbClient:                 dbmock.NewMockClient(c),
 		adminSubscriptionStorage: v2mock.NewMockAdminSubscriptionStorage(c),
 		subscriptionStorage:      v2mock.NewMockSubscriptionStorage(c),
-		accountClient:            accountClientMock,
 		domainEventPublisher:     publishermock.NewMockPublisher(c),
 		logger:                   zap.NewNop(),
 	}
 }
 
-func newSubscriptionService(c *gomock.Controller, specifiedEnvironmentId *string, specifiedOrgRole *accountproto.AccountV2_Role_Organization, specifiedEnvRole *accountproto.AccountV2_Role_Environment) *SubscriptionService {
-	var or accountproto.AccountV2_Role_Organization
-	var er accountproto.AccountV2_Role_Environment
-	var envId string
+func newSubscriptionService(c *gomock.Controller) *SubscriptionService {
+	return &SubscriptionService{
+		dbClient:                 dbmock.NewMockClient(c),
+		adminSubscriptionStorage: v2mock.NewMockAdminSubscriptionStorage(c),
+		subscriptionStorage:      v2mock.NewMockSubscriptionStorage(c),
+		domainEventPublisher:     publishermock.NewMockPublisher(c),
+		logger:                   zap.NewNop(),
+	}
+}
+
+func newEditor(
+	specifiedEnvironmentId *string,
+	specifiedOrgRole *accountproto.AccountV2_Role_Organization,
+	specifiedEnvRole *accountproto.AccountV2_Role_Environment,
+) *eventproto.Editor {
+	or := accountproto.AccountV2_Role_Organization_ADMIN
+	er := accountproto.AccountV2_Role_Environment_EDITOR
+	envId := "ns0"
 	if specifiedOrgRole != nil {
 		or = *specifiedOrgRole
-	} else {
-		or = accountproto.AccountV2_Role_Organization_ADMIN
 	}
 	if specifiedEnvRole != nil {
 		er = *specifiedEnvRole
-	} else {
-		er = accountproto.AccountV2_Role_Environment_EDITOR
 	}
 	if specifiedEnvironmentId != nil {
 		envId = *specifiedEnvironmentId
-	} else {
-		envId = "ns0"
 	}
-
-	accountClientMock := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: or,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: envId,
-					Role:          er,
-				},
-			},
+	return &eventproto.Editor{
+		Email:            "email",
+		OrganizationRole: or,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{EnvironmentId: envId, Role: er},
 		},
 	}
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
-	dbClient := dbmock.NewMockClient(c)
-	p := publishermock.NewMockPublisher(c)
-	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	return &SubscriptionService{
-		dbClient:                 dbClient,
-		adminSubscriptionStorage: v2mock.NewMockAdminSubscriptionStorage(c),
-		subscriptionStorage:      v2mock.NewMockSubscriptionStorage(c),
-		accountClient:            accountClientMock,
-		domainEventPublisher:     publishermock.NewMockPublisher(c),
-		logger:                   zap.NewNop(),
-	}
 }
 
-func createContextWithToken(t *testing.T, token *token.AccessToken) context.Context {
+// createContextWithEditor is a context after the authz interceptor allowed the request.
+func createContextWithEditor(t *testing.T, ctx context.Context, editor *eventproto.Editor) context.Context {
 	t.Helper()
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
-}
-
-func createAdminToken(t *testing.T) *token.AccessToken {
-	t.Helper()
-	return &token.AccessToken{
-		Issuer:   "issuer",
-		Audience: "audience",
-		Expiry:   time.Now().AddDate(100, 0, 0),
-		IssuedAt: time.Now(),
-		Email:    "email",
-	}
-}
-
-func createOwnerToken(t *testing.T) *token.AccessToken {
-	t.Helper()
-	return &token.AccessToken{
-		Issuer:   "issuer",
-		Audience: "audience",
-		Expiry:   time.Now().AddDate(100, 0, 0),
-		IssuedAt: time.Now(),
-		Email:    "email",
-	}
+	return authz.WithEditor(ctx, editor)
 }
 
 type msgLengthMatcher struct{ length int }
