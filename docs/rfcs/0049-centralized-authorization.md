@@ -115,7 +115,10 @@ target pair is checked at different permissions (`CloneFeature`:
 ### Interceptor
 
 Lives in `pkg/authz` and is added to the `pkg/rpc` server chain after token
-verification, with a stream variant for `AIChatService.Chat`. Handlers outside gRPC (the AI chat
+verification, with a stream variant for `AIChatService.Chat`. The stream chain
+verifies no token today, so token verification is added to it together with
+the stream interceptor; until then a streaming caller is anonymous and passes
+public RPCs only. Handlers outside gRPC (the AI chat
 SSE endpoint and the gateway's native SDK routes) call the same authorizer
 explicitly. The special cases move as they are: service tokens have full
 access, requests relayed by the public API gateway are judged as the API key's
