@@ -171,3 +171,126 @@ func TestSignDemoCreationToken(t *testing.T) {
 		})
 	}
 }
+
+func TestSignServiceToken(t *testing.T) {
+	t.Parallel()
+	issuer := "test_issuer"
+	audience := "test_client_id"
+	privateKeyPath, publicKeyPath := tokentesting.WriteKeyPair(t)
+	signer, err := NewSigner(privateKeyPath)
+	require.NoError(t, err)
+	verifier, err := NewVerifier(publicKeyPath, issuer, audience)
+	require.NoError(t, err)
+	now := time.Now()
+	testcases := []struct {
+		desc        string
+		token       *ServiceToken
+		expectedErr string
+	}{
+		{
+			desc: "success: valid service token",
+			token: &ServiceToken{
+				Issuer:   issuer,
+				Subject:  "batch",
+				Audience: audience,
+				Expiry:   now.Add(time.Hour),
+				IssuedAt: now,
+				Email:    "service@example.com",
+				ID:       "token-1",
+				// A caller-supplied token_use must not survive signing.
+				TokenUse: TokenUseAccess,
+			},
+		},
+		{
+			desc: "success: without an email",
+			token: &ServiceToken{
+				Issuer:   issuer,
+				Subject:  "batch",
+				Audience: audience,
+				Expiry:   now.Add(time.Hour),
+				IssuedAt: now,
+				ID:       "token-1",
+			},
+		},
+		{
+			desc: "error: missing sub",
+			token: &ServiceToken{
+				Issuer:   issuer,
+				Audience: audience,
+				Expiry:   now.Add(time.Hour),
+				IssuedAt: now,
+				ID:       "token-1",
+			},
+			expectedErr: "sub must be not empty",
+		},
+		{
+			desc: "error: missing jti",
+			token: &ServiceToken{
+				Issuer:   issuer,
+				Subject:  "batch",
+				Audience: audience,
+				Expiry:   now.Add(time.Hour),
+				IssuedAt: now,
+			},
+			expectedErr: "jti must be not empty",
+		},
+		{
+			desc: "error: wrong issuer",
+			token: &ServiceToken{
+				Issuer:   "other",
+				Subject:  "batch",
+				Audience: audience,
+				Expiry:   now.Add(time.Hour),
+				IssuedAt: now,
+				ID:       "token-1",
+			},
+			expectedErr: "different provider",
+		},
+		{
+			desc: "error: wrong audience",
+			token: &ServiceToken{
+				Issuer:   issuer,
+				Subject:  "batch",
+				Audience: "other",
+				Expiry:   now.Add(time.Hour),
+				IssuedAt: now,
+				ID:       "token-1",
+			},
+			expectedErr: "audience",
+		},
+		{
+			desc: "error: expired token",
+			token: &ServiceToken{
+				Issuer:   issuer,
+				Subject:  "batch",
+				Audience: audience,
+				Expiry:   now.Add(-time.Hour),
+				IssuedAt: now.Add(-2 * time.Hour),
+				ID:       "token-1",
+			},
+			expectedErr: "expired",
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+			signedToken, err := signer.SignServiceToken(tc.token)
+			require.NoError(t, err)
+			parsedToken, err := verifier.VerifyServiceToken(signedToken)
+			if tc.expectedErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.expectedErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.token.Issuer, parsedToken.Issuer)
+			assert.Equal(t, tc.token.Subject, parsedToken.Subject)
+			assert.Equal(t, tc.token.Audience, parsedToken.Audience)
+			assert.True(t, tc.token.Expiry.Equal(parsedToken.Expiry))
+			assert.True(t, tc.token.IssuedAt.Equal(parsedToken.IssuedAt))
+			assert.Equal(t, tc.token.Email, parsedToken.Email)
+			assert.Equal(t, tc.token.ID, parsedToken.ID)
+			assert.Equal(t, TokenUseService, parsedToken.TokenUse)
+		})
+	}
+}

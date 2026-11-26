@@ -57,10 +57,38 @@ var specificAuthMethods = map[string]methodAuth{
 }
 
 var defaultAuth = methodAuth{
-	authFunc: func(v token.Verifier, token string) (interface{}, error) {
-		return v.VerifyAccessToken(token)
+	authFunc: func(v token.Verifier, raw string) (interface{}, error) {
+		return VerifyCallerToken(v, raw)
 	},
 	key: AccessTokenKey,
+}
+
+// VerifyCallerToken accepts an access token or a service token. A service
+// token is presented in the form pkg/role reads, until the authorizer builds
+// the caller from the token.
+func VerifyCallerToken(v token.Verifier, raw string) (*token.AccessToken, error) {
+	accessToken, err := v.VerifyAccessToken(raw)
+	if err == nil {
+		return accessToken, nil
+	}
+	serviceToken, serviceErr := v.VerifyServiceToken(raw)
+	if serviceErr != nil {
+		return nil, err
+	}
+	email := serviceToken.Email
+	if email == "" {
+		email = serviceToken.Subject
+	}
+	return &token.AccessToken{
+		Issuer:         serviceToken.Issuer,
+		Audience:       serviceToken.Audience,
+		Expiry:         serviceToken.Expiry,
+		IssuedAt:       serviceToken.IssuedAt,
+		Email:          email,
+		IsSystemAdmin:  true,
+		IsServiceToken: true,
+		TokenUse:       serviceToken.TokenUse,
+	}, nil
 }
 
 var (

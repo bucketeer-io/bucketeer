@@ -237,6 +237,7 @@ func (s *EnvironmentService) generateDemoToken(
 	accessTokenTTL := timeNow.Add(5 * time.Minute)
 	accessToken := &token.DemoCreationToken{
 		Issuer:   s.issuer,
+		Subject:  userEmail,
 		Audience: s.audience,
 		Expiry:   accessTokenTTL,
 		IssuedAt: timeNow,

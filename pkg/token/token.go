@@ -19,8 +19,8 @@ import (
 )
 
 // Token use values are stamped by the signer and checked by the matching
-// verifier. Access, refresh, and demo-creation tokens share one signing key,
-// so a token of one kind must not verify as another.
+// verifier. Access, refresh, service, and demo-creation tokens share one
+// signing key, so a token of one kind must not verify as another.
 // Access and refresh tokens that omit the claim still verify as themselves,
 // so a deployment can roll forward or back without replacing those tokens.
 // A demo-creation token must carry the claim: an access token has the same
@@ -29,7 +29,20 @@ const (
 	TokenUseAccess  = "access"
 	TokenUseRefresh = "refresh"
 	TokenUseDemo    = "demo"
+	TokenUseService = "service"
 )
+
+// Claims is shared by the service and demo-creation tokens; each kind is a named type over it.
+type Claims struct {
+	Issuer   string    `json:"iss"`
+	Subject  string    `json:"sub,omitempty"`
+	Audience string    `json:"aud"`
+	Expiry   time.Time `json:"exp"`
+	IssuedAt time.Time `json:"iat"`
+	Email    string    `json:"email,omitempty"`
+	ID       string    `json:"jti,omitempty"`
+	TokenUse string    `json:"token_use"`
+}
 
 type AccessToken struct {
 	Issuer        string    `json:"iss"`
@@ -57,11 +70,7 @@ type RefreshToken struct {
 	TokenUse string    `json:"token_use"`
 }
 
-type DemoCreationToken struct {
-	Issuer   string    `json:"iss"`
-	Audience string    `json:"aud"`
-	Expiry   time.Time `json:"exp"`
-	IssuedAt time.Time `json:"iat"`
-	Email    string    `json:"email"`
-	TokenUse string    `json:"token_use"`
-}
+// ServiceToken names in Subject the service it was issued to.
+type ServiceToken Claims
+
+type DemoCreationToken Claims

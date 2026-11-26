@@ -29,6 +29,7 @@ import (
 type Verifier interface {
 	VerifyAccessToken(string) (*AccessToken, error)
 	VerifyRefreshToken(string) (*RefreshToken, error)
+	VerifyServiceToken(string) (*ServiceToken, error)
 	VerifyDemoCreationToken(string) (*DemoCreationToken, error)
 }
 
@@ -129,8 +130,33 @@ func (v *verifier) VerifyRefreshToken(rawRefreshToken string) (*RefreshToken, er
 	return t, nil
 }
 
+func (v *verifier) VerifyServiceToken(rawServiceToken string) (*ServiceToken, error) {
+	t, err := v.verifyClaims(rawServiceToken, TokenUseService)
+	if err != nil {
+		return nil, err
+	}
+	if t.Subject == "" {
+		return nil, fmt.Errorf("sub must be not empty")
+	}
+	if t.ID == "" {
+		return nil, fmt.Errorf("jti must be not empty")
+	}
+	return (*ServiceToken)(t), nil
+}
+
 func (v *verifier) VerifyDemoCreationToken(rawDemoToken string) (*DemoCreationToken, error) {
-	jws, err := jose.ParseSigned(rawDemoToken, []jose.SignatureAlgorithm{v.algorithm})
+	t, err := v.verifyClaims(rawDemoToken, TokenUseDemo)
+	if err != nil {
+		return nil, err
+	}
+	if t.Email == "" {
+		return nil, fmt.Errorf("email must be not empty")
+	}
+	return (*DemoCreationToken)(t), nil
+}
+
+func (v *verifier) verifyClaims(raw, tokenUse string) (*Claims, error) {
+	jws, err := jose.ParseSigned(raw, []jose.SignatureAlgorithm{v.algorithm})
 	if err != nil {
 		return nil, fmt.Errorf("malformed jwt: %w", err)
 	}
@@ -138,24 +164,21 @@ func (v *verifier) VerifyDemoCreationToken(rawDemoToken string) (*DemoCreationTo
 	if err != nil {
 		return nil, fmt.Errorf("invalid jwt: %w", err)
 	}
-	t := &DemoCreationToken{}
+	t := &Claims{}
 	if err := json.Unmarshal(payload, t); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal claims: %w", err)
 	}
-	if err := checkTokenUse(t.TokenUse, TokenUseDemo); err != nil {
+	if err := checkTokenUse(t.TokenUse, tokenUse); err != nil {
 		return nil, err
 	}
 	if t.Issuer != v.issuer {
-		return nil, fmt.Errorf("demo token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)
+		return nil, fmt.Errorf("%s token issued by a different provider, expected %q got %q", tokenUse, v.issuer, t.Issuer)
 	}
 	if t.Audience != v.audience {
 		return nil, fmt.Errorf("expected audience %q got %q", v.audience, t.Audience)
 	}
 	if t.Expiry.Before(time.Now()) {
 		return nil, fmt.Errorf("token is expired (Token Expiry: %v)", t.Expiry)
-	}
-	if t.Email == "" {
-		return nil, fmt.Errorf("email must be not empty")
 	}
 	return t, nil
 }

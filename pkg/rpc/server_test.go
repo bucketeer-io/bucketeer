@@ -100,6 +100,12 @@ func (v *dummyVerifier) VerifyRefreshToken(rawRefreshToken string) (*token.Refre
 	}, nil
 }
 
+func (v *dummyVerifier) VerifyServiceToken(rawServiceToken string) (*token.ServiceToken, error) {
+	return &token.ServiceToken{
+		Subject: "test",
+	}, nil
+}
+
 func (v *dummyVerifier) VerifyDemoCreationToken(rawDemoToken string) (*token.DemoCreationToken, error) {
 	return &token.DemoCreationToken{
 		Email: "test@email",

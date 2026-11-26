@@ -170,7 +170,7 @@ func (h *chatHTTPService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := h.verifier.VerifyAccessToken(parts[1])
+	accessToken, err := rpc.VerifyCallerToken(h.verifier, parts[1])
 	if err != nil {
 		h.logger.Warn("authentication failed", zap.Error(err))
 		writeJSONError(w, "Unauthorized", http.StatusUnauthorized)
