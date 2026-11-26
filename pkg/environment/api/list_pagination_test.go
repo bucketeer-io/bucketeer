@@ -98,7 +98,7 @@ func assertListPaginationResult(
 
 func systemAdminContext(t *testing.T) context.Context {
 	t.Helper()
-	return metadata.NewIncomingContext(createContextWithToken(t), metadata.MD{"accept-language": []string{"ja"}})
+	return metadata.NewIncomingContext(createContextWithEditor(t, true), metadata.MD{"accept-language": []string{"ja"}})
 }
 
 func TestListProjectsPaginationValidation(t *testing.T) {

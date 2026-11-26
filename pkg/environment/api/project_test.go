@@ -25,7 +25,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	acmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
@@ -34,28 +33,16 @@ import (
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	pubmock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
-
-func mockAdminOrgAuth(s *EnvironmentService) {
-	s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
-		gomock.Any(), gomock.Any(),
-	).Return(&accountproto.GetAccountV2Response{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
-		},
-	}, nil)
-}
 
 func TestGetProjectMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -125,7 +112,7 @@ func TestListProjectsMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -184,7 +171,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -208,37 +195,8 @@ func TestCreateProjectMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			ctx: metadata.NewIncomingContext(context.TODO(), metadata.MD{
-				"accept-language": []string{"ja"},
-			}),
-			desc:        "err: unauthenticated",
-			setup:       nil,
-			req:         &proto.CreateProjectRequest{},
-			expectedErr: statusUnauthenticated.Err(),
-		},
-		{
-			ctx: metadata.NewIncomingContext(createContextWithTokenRoleUnassigned(t), metadata.MD{
-				"accept-language": []string{"ja"},
-			}),
-			desc: "err: permission denied",
-			setup: func(s *EnvironmentService) {
-				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(),
-				).Return(&accountproto.GetAccountV2Response{
-					Account: &accountproto.AccountV2{
-						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-					},
-				}, nil)
-			},
-			req:         &proto.CreateProjectRequest{},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
 			ctx:  ctx,
 			desc: "err: empty name",
-			setup: func(s *EnvironmentService) {
-				mockAdminOrgAuth(s)
-			},
 			req: &proto.CreateProjectRequest{
 				Name: "",
 			},
@@ -247,9 +205,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 		{
 			ctx:  ctx,
 			desc: "err: only space",
-			setup: func(s *EnvironmentService) {
-				mockAdminOrgAuth(s)
-			},
 			req: &proto.CreateProjectRequest{
 				Name: "    ",
 			},
@@ -258,9 +213,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 		{
 			ctx:  ctx,
 			desc: "err: max name length exceeded",
-			setup: func(s *EnvironmentService) {
-				mockAdminOrgAuth(s)
-			},
 			req: &proto.CreateProjectRequest{
 				Name: strings.Repeat("a", 51),
 			},
@@ -269,9 +221,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 		{
 			ctx:  ctx,
 			desc: "err: empty url code",
-			setup: func(s *EnvironmentService) {
-				mockAdminOrgAuth(s)
-			},
 			req: &proto.CreateProjectRequest{
 				Name:    "name",
 				UrlCode: "",
@@ -281,9 +230,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 		{
 			ctx:  ctx,
 			desc: "err: url code can't use uppercase",
-			setup: func(s *EnvironmentService) {
-				mockAdminOrgAuth(s)
-			},
 			req: &proto.CreateProjectRequest{
 				Name:    "name",
 				UrlCode: "URLCODE",
@@ -293,9 +239,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 		{
 			ctx:  ctx,
 			desc: "err: url code can't use space",
-			setup: func(s *EnvironmentService) {
-				mockAdminOrgAuth(s)
-			},
 			req: &proto.CreateProjectRequest{
 				Name:    "name",
 				UrlCode: "url code",
@@ -305,9 +248,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 		{
 			ctx:  ctx,
 			desc: "err: max url code length exceeded",
-			setup: func(s *EnvironmentService) {
-				mockAdminOrgAuth(s)
-			},
 			req: &proto.CreateProjectRequest{
 				Name:    "name",
 				UrlCode: strings.Repeat("a", 51),
@@ -317,9 +257,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 		{
 			ctx:  ctx,
 			desc: "err: organization ID required",
-			setup: func(s *EnvironmentService) {
-				mockAdminOrgAuth(s)
-			},
 			req: &proto.CreateProjectRequest{
 				Name:           "name",
 				UrlCode:        "url-code",
@@ -331,7 +268,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 			ctx:  ctx,
 			desc: "err: project already exists",
 			setup: func(s *EnvironmentService) {
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentAlreadyExists)
@@ -348,7 +284,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 			ctx:  ctx,
 			desc: "err: internal error",
 			setup: func(s *EnvironmentService) {
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal error"))
@@ -365,7 +300,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 			ctx:  ctx,
 			desc: "err: publish domain event failed",
 			setup: func(s *EnvironmentService) {
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -386,7 +320,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 			ctx:  ctx,
 			desc: "success",
 			setup: func(s *EnvironmentService) {
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -431,7 +364,7 @@ func TestUpdateProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -491,7 +424,6 @@ func TestUpdateProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
@@ -510,7 +442,6 @@ func TestUpdateProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1", Description: "old desc"},
 				}, nil)
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -542,7 +473,7 @@ func TestEnableProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -581,7 +512,6 @@ func TestEnableProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
@@ -599,7 +529,6 @@ func TestEnableProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -628,7 +557,7 @@ func TestDisableProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -667,7 +596,6 @@ func TestDisableProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
@@ -685,7 +613,6 @@ func TestDisableProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -714,7 +641,7 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -753,7 +680,6 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))
@@ -771,7 +697,6 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-1", OrganizationId: "org-1"},
 				}, nil)
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -795,158 +720,12 @@ func TestConvertTrialProjectMySQL(t *testing.T) {
 	}
 }
 
-func TestProjectPermissionDeniedMySQL(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	ctx := createContextWithTokenRoleUnassigned(t)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	patterns := []struct {
-		desc     string
-		setup    func(*EnvironmentService)
-		action   func(context.Context, *EnvironmentService) error
-		expected error
-	}{
-		{
-			desc: "EnableProject",
-			setup: func(s *EnvironmentService) {
-				// Mock project fetch to succeed so we can reach the permission check
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
-					gomock.Any(), "project-id",
-				).Return(&domain.Project{
-					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
-				}, nil)
-				// Mock account client call to return permission denied
-				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
-					gomock.Any(), &accountproto.GetAccountV2Request{
-						Email:          "email",
-						OrganizationId: "org-1",
-					},
-				).Return(&accountproto.GetAccountV2Response{
-					Account: &accountproto.AccountV2{
-						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
-					},
-				}, nil)
-			},
-			action: func(ctx context.Context, es *EnvironmentService) error {
-				_, err := es.EnableProject(ctx, &proto.EnableProjectRequest{
-					Id: "project-id",
-				})
-				return err
-			},
-			expected: statusPermissionDenied.Err(),
-		},
-		{
-			desc: "DisableProject",
-			setup: func(s *EnvironmentService) {
-				// Mock project fetch to succeed so we can reach the permission check
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
-					gomock.Any(), "project-id",
-				).Return(&domain.Project{
-					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
-				}, nil)
-				// Mock account client call to return permission denied
-				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
-					gomock.Any(), &accountproto.GetAccountV2Request{
-						Email:          "email",
-						OrganizationId: "org-1",
-					},
-				).Return(&accountproto.GetAccountV2Response{
-					Account: &accountproto.AccountV2{
-						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
-					},
-				}, nil)
-			},
-			action: func(ctx context.Context, es *EnvironmentService) error {
-				_, err := es.DisableProject(ctx, &proto.DisableProjectRequest{
-					Id: "project-id",
-				})
-				return err
-			},
-			expected: statusPermissionDenied.Err(),
-		},
-		{
-			desc: "UpdateProject",
-			setup: func(s *EnvironmentService) {
-				// Mock project fetch to succeed so we can reach the permission check
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
-					gomock.Any(), "project-id",
-				).Return(&domain.Project{
-					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
-				}, nil)
-				// Mock account client call to return permission denied
-				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
-					gomock.Any(), &accountproto.GetAccountV2Request{
-						Email:          "email",
-						OrganizationId: "org-1",
-					},
-				).Return(&accountproto.GetAccountV2Response{
-					Account: &accountproto.AccountV2{
-						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
-					},
-				}, nil)
-			},
-			action: func(ctx context.Context, es *EnvironmentService) error {
-				_, err := es.UpdateProject(ctx, &proto.UpdateProjectRequest{
-					Id:   "project-id",
-					Name: &wrapperspb.StringValue{Value: "New Name"},
-				})
-				return err
-			},
-			expected: statusPermissionDenied.Err(),
-		},
-		{
-			desc: "ConvertTrialProject",
-			setup: func(s *EnvironmentService) {
-				// Mock project fetch to succeed so we can reach the permission check
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
-					gomock.Any(), "project-id",
-				).Return(&domain.Project{
-					Project: &proto.Project{Id: "project-id", OrganizationId: "org-1"},
-				}, nil)
-				// Mock account client call to return permission denied
-				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
-					gomock.Any(), &accountproto.GetAccountV2Request{
-						Email:          "email",
-						OrganizationId: "org-1",
-					},
-				).Return(&accountproto.GetAccountV2Response{
-					Account: &accountproto.AccountV2{
-						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
-					},
-				}, nil)
-			},
-			action: func(ctx context.Context, es *EnvironmentService) error {
-				_, err := es.ConvertTrialProject(ctx, &proto.ConvertTrialProjectRequest{
-					Id: "project-id",
-				})
-				return err
-			},
-			expected: statusPermissionDenied.Err(),
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			t.Parallel()
-			service := newEnvironmentService(t, mockController, nil)
-			if p.setup != nil {
-				p.setup(service)
-			}
-			actual := p.action(ctx, service)
-			assert.Equal(t, p.expected, actual)
-		})
-	}
-}
-
 func TestListProjectsV2(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleUnassigned(t)
+	ctx := createContextWithEditor(t, false)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -961,13 +740,6 @@ func TestListProjectsV2(t *testing.T) {
 		{
 			desc: "success: list projects",
 			setup: func(s *EnvironmentService) {
-				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(),
-				).Return(&accountproto.GetAccountV2Response{
-					Account: &accountproto.AccountV2{
-						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-					},
-				}, nil)
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any(),
 				).Return([]*environmentproto.Project{{}}, 1, int64(1), nil)
@@ -985,38 +757,7 @@ func TestListProjectsV2(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "failure: permission denied",
-			setup: func(s *EnvironmentService) {
-				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
-					gomock.Any(), &accountproto.GetAccountV2Request{
-						Email:          "email",
-						OrganizationId: "org-1",
-					},
-				).Return(&accountproto.GetAccountV2Response{
-					Account: &accountproto.AccountV2{
-						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
-					},
-				}, nil)
-			},
-			input: &environmentproto.ListProjectsV2Request{
-				PageSize:       10,
-				Cursor:         "",
-				OrganizationId: "org-1",
-			},
-			expected:    nil,
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
 			desc: "failure: invalid cursor",
-			setup: func(s *EnvironmentService) {
-				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(),
-				).Return(&accountproto.GetAccountV2Response{
-					Account: &accountproto.AccountV2{
-						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-					},
-				}, nil)
-			},
 			input: &environmentproto.ListProjectsV2Request{
 				PageSize:       10,
 				Cursor:         "invalid",
@@ -1028,13 +769,6 @@ func TestListProjectsV2(t *testing.T) {
 		{
 			desc: "failure: internal error",
 			setup: func(s *EnvironmentService) {
-				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(),
-				).Return(&accountproto.GetAccountV2Response{
-					Account: &accountproto.AccountV2{
-						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-					},
-				}, nil)
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().ListProjects(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "internal"))

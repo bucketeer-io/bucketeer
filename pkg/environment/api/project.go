@@ -25,11 +25,11 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
@@ -50,14 +50,6 @@ func (s *EnvironmentService) GetProject(
 		return nil, err
 	}
 	project, err := s.getProject(ctx, req.Id)
-	if err != nil {
-		return nil, err
-	}
-	_, err = s.checkOrganizationRole(
-		ctx,
-		project.OrganizationId,
-		accountproto.AccountV2_Role_Organization_MEMBER,
-	)
 	if err != nil {
 		return nil, err
 	}
@@ -91,10 +83,6 @@ func (s *EnvironmentService) ListProjects(
 	ctx context.Context,
 	req *environmentproto.ListProjectsRequest,
 ) (*environmentproto.ListProjectsResponse, error) {
-	_, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}
@@ -142,14 +130,7 @@ func (s *EnvironmentService) CreateProject(
 	ctx context.Context,
 	req *environmentproto.CreateProjectRequest,
 ) (*environmentproto.CreateProjectResponse, error) {
-	editor, err := s.checkOrganizationRole(
-		ctx,
-		req.OrganizationId,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-	)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := validateCreateProjectRequest(req); err != nil {
 		return nil, err
 	}
@@ -260,14 +241,7 @@ func (s *EnvironmentService) UpdateProject(
 	if err != nil {
 		return nil, err
 	}
-	editor, err := s.checkOrganizationRole(
-		ctx,
-		project.OrganizationId,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-	)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	var domainEvent *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		updated, err := project.Update(
@@ -372,14 +346,7 @@ func (s *EnvironmentService) EnableProject(
 	if err != nil {
 		return nil, err
 	}
-	editor, err := s.checkOrganizationRole(
-		ctx,
-		project.OrganizationId,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-	)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
@@ -446,14 +413,7 @@ func (s *EnvironmentService) DisableProject(
 	if err != nil {
 		return nil, err
 	}
-	editor, err := s.checkOrganizationRole(
-		ctx,
-		project.OrganizationId,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-	)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
@@ -520,14 +480,7 @@ func (s *EnvironmentService) ConvertTrialProject(
 	if err != nil {
 		return nil, err
 	}
-	editor, err := s.checkOrganizationRole(
-		ctx,
-		project.OrganizationId,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-	)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	var event *eventproto.Event
 	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
@@ -590,21 +543,6 @@ func (s *EnvironmentService) ListProjectsV2(
 	req *environmentproto.ListProjectsV2Request,
 ) (*environmentproto.ListProjectsV2Response, error) {
 	// Check if the user has at least Member role in the requested organization
-	_, err := s.checkOrganizationRole(
-		ctx,
-		req.OrganizationId,
-		accountproto.AccountV2_Role_Organization_MEMBER,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to check organization role",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("organizationID", req.OrganizationId),
-			)...,
-		)
-		return nil, err
-	}
 	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}

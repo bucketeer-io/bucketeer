@@ -25,9 +25,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	acmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
-	accdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
-	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
@@ -35,20 +32,8 @@ import (
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 )
-
-func mockAdminEnvAuth(s *EnvironmentService) {
-	s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
-		gomock.Any(), gomock.Any(), gomock.Any(),
-	).Return(&accdomain.AccountV2{
-		AccountV2: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
-		},
-	}, nil)
-}
 
 // errPublish is returned by the publisher mock to simulate a publish failure
 // after the transaction has committed.
@@ -66,7 +51,7 @@ func TestGetEnvironmentV2(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -130,7 +115,7 @@ func TestListEnvironmentsV2(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -189,7 +174,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -316,7 +301,6 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentAlreadyExists)
@@ -350,7 +334,6 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
@@ -375,7 +358,6 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
@@ -403,7 +385,6 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
@@ -429,7 +410,6 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
@@ -457,7 +437,6 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
 				}, nil)
-				mockAdminOrgAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context) error) {
@@ -507,7 +486,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -520,9 +499,6 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 	}{
 		{
 			desc: "err: ErrInvalidEnvironmentName: only space",
-			setup: func(s *EnvironmentService) {
-				mockAdminEnvAuth(s)
-			},
 			req: &proto.UpdateEnvironmentV2Request{
 				Id:          "id01",
 				Name:        wrapperspb.String("  "),
@@ -532,9 +508,6 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		},
 		{
 			desc: "err: ErrInvalidEnvironmentName: max name length exceeded",
-			setup: func(s *EnvironmentService) {
-				mockAdminEnvAuth(s)
-			},
 			req: &proto.UpdateEnvironmentV2Request{
 				Id:          "id01",
 				Name:        wrapperspb.String(strings.Repeat("a", 51)),
@@ -545,7 +518,6 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
-				mockAdminEnvAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentNotFound)
@@ -559,7 +531,6 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
-				mockAdminEnvAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
@@ -573,7 +544,6 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: storage write fails, event is not published",
 			setup: func(s *EnvironmentService) {
-				mockAdminEnvAuth(s)
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.EnvironmentV2{
@@ -598,7 +568,6 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: commit fails, event is not published",
 			setup: func(s *EnvironmentService) {
-				mockAdminEnvAuth(s)
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.EnvironmentV2{
@@ -626,7 +595,6 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: publish fails after commit",
 			setup: func(s *EnvironmentService) {
-				mockAdminEnvAuth(s)
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.EnvironmentV2{
@@ -652,7 +620,6 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
-				mockAdminEnvAuth(s)
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.EnvironmentV2{
@@ -695,7 +662,7 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -709,7 +676,6 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
-				mockAdminEnvAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentNotFound)
@@ -720,7 +686,6 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
-				mockAdminEnvAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
@@ -731,7 +696,6 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
-				mockAdminEnvAuth(s)
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.EnvironmentV2{
@@ -769,7 +733,7 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -783,7 +747,6 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
-				mockAdminEnvAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentNotFound)
@@ -794,7 +757,6 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
-				mockAdminEnvAuth(s)
 				s.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(pkgErr.NewErrorInternal(pkgErr.EnvironmentPackageName, "error"))
@@ -805,7 +767,6 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
-				mockAdminEnvAuth(s)
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
 					gomock.Any(), gomock.Any(),
 				).Return(&domain.EnvironmentV2{
@@ -834,218 +795,6 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 			}
 			_, err := service.UnarchiveEnvironmentV2(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-
-func TestEnvironmentV2APIs_Unauthenticated(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	unauthCtx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	expectedErr := statusUnauthenticated.Err()
-
-	patterns := []struct {
-		desc      string
-		setupFunc func(*EnvironmentService)
-		testFunc  func(*EnvironmentService) error
-	}{
-		{
-			desc: "CreateEnvironmentV2 - unauthenticated",
-			setupFunc: func(s *EnvironmentService) {
-				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
-					gomock.Any(), gomock.Any(),
-				).Return(&domain.Project{
-					Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
-				}, nil)
-			},
-			testFunc: func(s *EnvironmentService) error {
-				_, err := s.CreateEnvironmentV2(unauthCtx, &proto.CreateEnvironmentV2Request{
-					Name:      "name",
-					UrlCode:   "url-code",
-					ProjectId: "project-id",
-				})
-				return err
-			},
-		},
-		{
-			desc: "UpdateEnvironmentV2 - unauthenticated",
-			setupFunc: func(s *EnvironmentService) {
-				// For unauthenticated users, the error should occur before any storage calls
-			},
-			testFunc: func(s *EnvironmentService) error {
-				_, err := s.UpdateEnvironmentV2(unauthCtx, &proto.UpdateEnvironmentV2Request{
-					Id:   "env-id",
-					Name: wrapperspb.String("new-name"),
-				})
-				return err
-			},
-		},
-		{
-			desc: "ArchiveEnvironmentV2 - unauthenticated",
-			setupFunc: func(s *EnvironmentService) {
-				// For unauthenticated users, the error should occur before any storage calls
-			},
-			testFunc: func(s *EnvironmentService) error {
-				_, err := s.ArchiveEnvironmentV2(unauthCtx, &proto.ArchiveEnvironmentV2Request{
-					Id: "env-id",
-				})
-				return err
-			},
-		},
-		{
-			desc: "UnarchiveEnvironmentV2 - unauthenticated",
-			setupFunc: func(s *EnvironmentService) {
-				// For unauthenticated users, the error should occur before any storage calls
-			},
-			testFunc: func(s *EnvironmentService) error {
-				_, err := s.UnarchiveEnvironmentV2(unauthCtx, &proto.UnarchiveEnvironmentV2Request{
-					Id: "env-id",
-				})
-				return err
-			},
-		},
-	}
-
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			t.Parallel()
-			service := newEnvironmentService(t, mockController, nil)
-			if p.setupFunc != nil {
-				p.setupFunc(service)
-			}
-			err := p.testFunc(service)
-			assert.Equal(t, expectedErr, err)
-		})
-	}
-}
-
-func TestEnvironmentV2APIs_PermissionDenied(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	roleTestCtx := metadata.NewIncomingContext(createContextWithTokenRoleUnassigned(t), metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	expectedErr := statusPermissionDenied.Err()
-
-	rolePatterns := []struct {
-		role      string
-		roleValue accountproto.AccountV2_Role_Organization
-	}{
-		{"member", accountproto.AccountV2_Role_Organization_MEMBER},
-		{"unassigned", accountproto.AccountV2_Role_Organization_UNASSIGNED},
-	}
-
-	for _, rolePattern := range rolePatterns {
-		t.Run(rolePattern.role, func(t *testing.T) {
-			patterns := []struct {
-				desc      string
-				setupFunc func(*EnvironmentService)
-				testFunc  func(*EnvironmentService) error
-			}{
-				{
-					desc: "CreateEnvironmentV2 - permission denied",
-					setupFunc: func(s *EnvironmentService) {
-						s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
-							gomock.Any(), gomock.Any(),
-						).Return(&domain.Project{
-							Project: &proto.Project{Id: "project-id", OrganizationId: "organization-id01"},
-						}, nil)
-						s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
-							gomock.Any(), &accountproto.GetAccountV2Request{
-								Email:          "email",
-								OrganizationId: "organization-id01",
-							},
-						).Return(&accountproto.GetAccountV2Response{
-							Account: &accountproto.AccountV2{
-								OrganizationRole: rolePattern.roleValue,
-							},
-						}, nil)
-					},
-					testFunc: func(s *EnvironmentService) error {
-						_, err := s.CreateEnvironmentV2(roleTestCtx, &proto.CreateEnvironmentV2Request{
-							Name:      "name",
-							UrlCode:   "url-code",
-							ProjectId: "project-id",
-						})
-						return err
-					},
-				},
-				{
-					desc: "UpdateEnvironmentV2 - permission denied",
-					setupFunc: func(s *EnvironmentService) {
-						s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
-							gomock.Any(), gomock.Any(), gomock.Any(),
-						).Return(&accdomain.AccountV2{
-							AccountV2: &accountproto.AccountV2{
-								OrganizationRole: rolePattern.roleValue,
-							},
-						}, nil)
-					},
-					testFunc: func(s *EnvironmentService) error {
-						_, err := s.UpdateEnvironmentV2(roleTestCtx, &proto.UpdateEnvironmentV2Request{
-							Id:   "env-id",
-							Name: wrapperspb.String("new-name"),
-						})
-						return err
-					},
-				},
-				{
-					desc: "ArchiveEnvironmentV2 - permission denied",
-					setupFunc: func(s *EnvironmentService) {
-						s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
-							gomock.Any(), gomock.Any(), gomock.Any(),
-						).Return(&accdomain.AccountV2{
-							AccountV2: &accountproto.AccountV2{
-								OrganizationRole: rolePattern.roleValue,
-							},
-						}, nil)
-					},
-					testFunc: func(s *EnvironmentService) error {
-						_, err := s.ArchiveEnvironmentV2(roleTestCtx, &proto.ArchiveEnvironmentV2Request{
-							Id: "env-id",
-						})
-						return err
-					},
-				},
-				{
-					desc: "UnarchiveEnvironmentV2 - permission denied",
-					setupFunc: func(s *EnvironmentService) {
-						s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
-							gomock.Any(), gomock.Any(), gomock.Any(),
-						).Return(&accdomain.AccountV2{
-							AccountV2: &accountproto.AccountV2{
-								OrganizationRole: rolePattern.roleValue,
-							},
-						}, nil)
-					},
-					testFunc: func(s *EnvironmentService) error {
-						_, err := s.UnarchiveEnvironmentV2(roleTestCtx, &proto.UnarchiveEnvironmentV2Request{
-							Id: "env-id",
-						})
-						return err
-					},
-				},
-			}
-
-			for _, p := range patterns {
-				t.Run(p.desc, func(t *testing.T) {
-					t.Parallel()
-					service := newEnvironmentService(t, mockController, nil)
-					if p.setupFunc != nil {
-						p.setupFunc(service)
-					}
-					err := p.testFunc(service)
-					assert.Equal(t, expectedErr, err)
-				})
-			}
 		})
 	}
 }
