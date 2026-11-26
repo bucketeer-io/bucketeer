@@ -321,6 +321,12 @@ func TestListAllInUseSegments(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	// A segment is in use by a holdout group that is waiting or serving.
+	inUseHoldoutGroupStatuses := []any{
+		int32(proto.HoldoutGroup_WAITING),
+		int32(proto.HoldoutGroup_RUNNING),
+		int32(proto.HoldoutGroup_ANALYSIS),
+	}
 	patterns := []struct {
 		desc        string
 		setup       func(*segmentStorage)
@@ -331,7 +337,7 @@ func TestListAllInUseSegments(t *testing.T) {
 			desc: "Error: query fails",
 			setup: func(s *segmentStorage) {
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), selectAllInUseSegmentsSQLQuery, inUseHoldoutGroupStatuses...,
 				).Return(nil, errInternal)
 			},
 			expected:    nil,
@@ -345,7 +351,7 @@ func TestListAllInUseSegments(t *testing.T) {
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), selectAllInUseSegmentsSQLQuery, inUseHoldoutGroupStatuses...,
 				).Return(rows, nil)
 			},
 			expected:    []*v2fs.InUseSegment{},
@@ -359,7 +365,7 @@ func TestListAllInUseSegments(t *testing.T) {
 				rows.EXPECT().Next().Return(true)
 				rows.EXPECT().Scan(gomock.Any()).Return(errInternal)
 				s.qe.(*pgmock.MockQueryExecer).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), selectAllInUseSegmentsSQLQuery, inUseHoldoutGroupStatuses...,
 				).Return(rows, nil)
 			},
 			expected:    nil,

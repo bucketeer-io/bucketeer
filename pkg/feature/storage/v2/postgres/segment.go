@@ -348,7 +348,13 @@ func (s *segmentStorage) DeleteSegment(ctx context.Context, id, environmentId st
 func (s *segmentStorage) ListAllInUseSegments(
 	ctx context.Context,
 ) ([]*v2fs.InUseSegment, error) {
-	rows, err := s.qe.QueryContext(ctx, selectAllInUseSegmentsSQLQuery)
+	rows, err := s.qe.QueryContext(
+		ctx,
+		selectAllInUseSegmentsSQLQuery,
+		int32(proto.HoldoutGroup_WAITING),
+		int32(proto.HoldoutGroup_RUNNING),
+		int32(proto.HoldoutGroup_ANALYSIS),
+	)
 	if err != nil {
 		return nil, err
 	}
