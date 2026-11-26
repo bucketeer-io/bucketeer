@@ -1,4 +1,3 @@
--- Universal holdout groups (RFC 0048, phase 4).
 -- holdout_group_segment_user: the included users of the segment of a SEGMENT
 -- group, copied when the group starts. user_id is compared byte for byte, the
 -- way evaluation compares it: case and trailing spaces count. utf8mb4_bin and

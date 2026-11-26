@@ -1,4 +1,3 @@
--- Universal holdout groups (RFC 0048, phase 4).
 -- holdout_group_segment_user: the included users of the segment of a SEGMENT
 -- group, copied when the group starts.
 

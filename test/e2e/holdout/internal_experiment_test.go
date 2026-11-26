@@ -36,9 +36,9 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
-// RFC §4.8.1: a group with goals gets one internal experiment when it starts
-// and a second one when its analysis period starts. Both follow the group and
-// only the holdout service can write them.
+// A group with goals gets one internal experiment when it starts and a second
+// one when its analysis period starts. Both follow the group and only the
+// holdout service can write them.
 func TestInternalExperimentManual(t *testing.T) {
 	servingMu.Lock()
 	defer servingMu.Unlock()
@@ -154,9 +154,9 @@ func TestInternalExperimentManual(t *testing.T) {
 	assert.Equal(t, whole.StartAt, getExperiment(t, experimentClient, stopped.ExperimentId).StartAt)
 }
 
-// RFC §4.6, §4.8.1: the HoldoutGroupStatusUpdater creates and stops the
-// internal experiments as the manual operations do. A scheduled start does
-// not clamp start_at and a scheduled stop keeps stop_at.
+// The HoldoutGroupStatusUpdater creates and stops the internal experiments as
+// the manual operations do. A scheduled start does not clamp start_at and a
+// scheduled stop keeps stop_at.
 func TestInternalExperimentScheduled(t *testing.T) {
 	servingMu.Lock()
 	defer servingMu.Unlock()
@@ -207,9 +207,9 @@ func TestInternalExperimentScheduled(t *testing.T) {
 	}
 }
 
-// RFC §4.8.1: a group without goals has no internal experiment. When it gets
-// its first goals while serving, the experiment of the current period is
-// created and starts then, not at the start of the group.
+// A group without goals has no internal experiment. When it gets its first
+// goals while serving, the experiment of the current period is created and
+// starts then, not at the start of the group.
 func TestInternalExperimentGoalsAddedWhileServing(t *testing.T) {
 	servingMu.Lock()
 	defer servingMu.Unlock()
@@ -288,9 +288,9 @@ func TestInternalExperimentGoalsAddedWhileServing(t *testing.T) {
 	})
 }
 
-// RFC §4.2.2 (size limit): the segment of a SEGMENT group includes at most
-// MaxSegmentUsers users. The limit is checked when the group is created and
-// again when it starts, because the segment can grow in between.
+// The segment of a SEGMENT group includes at most MaxSegmentUsers users. The
+// limit is checked when the group is created and again when it starts,
+// because the segment can grow in between.
 func TestSegmentModeSizeLimit(t *testing.T) {
 	client := newFeatureClient(t)
 	segment := createSegment(t, client)
