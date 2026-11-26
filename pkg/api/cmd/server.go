@@ -77,6 +77,18 @@ const (
 	serverShutDownTimeout  = 30 * time.Second
 	grpcStopTimeout        = 5 * time.Second
 	featuresRefetchTimeout = 5 * time.Second
+
+	// getSegmentUsersMethod is the gRPC method behind /get_segment_users.
+	getSegmentUsersMethod = "/bucketeer.gateway.Gateway/GetSegmentUsers"
+	// maxGetSegmentUsersRESTResponseBytes is the size of the largest
+	// GetSegmentUsers response that /get_segment_users returns. The response
+	// holds the users of every segment the SDK needs. 32MiB is about 329,000
+	// users with 6-character IDs and about 115,000 with IDs of the maximum
+	// length of 100 characters. Encoding the response as JSON takes several
+	// times its size in memory for each request, so the limit is lower than
+	// the one for reading a segment from the feature service
+	// (featureclient.MaxSegmentUsersResponseBytes).
+	maxGetSegmentUsersRESTResponseBytes = 32 * 1024 * 1024
 )
 
 type server struct {
@@ -886,8 +898,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gateway.WithMetrics(registerer),
 		gateway.WithCertPath(*s.certPath),
 		gateway.WithKeyPath(*s.keyPath),
-		// GetSegmentUsers returns the users of every segment the SDK needs.
-		gateway.WithMaxResponseBytes(featureclient.MaxSegmentUsersResponseBytes),
+		gateway.WithMethodMaxResponseBytes(getSegmentUsersMethod, maxGetSegmentUsersRESTResponseBytes),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create API gateway: %w", err)

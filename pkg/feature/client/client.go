@@ -22,8 +22,8 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
-// MaxSegmentUsersResponseBytes is the size of the largest response with
-// segment users that a caller accepts. ListSegmentUsers returns all users of
+// MaxSegmentUsersResponseBytes is the size of the largest ListSegmentUsers
+// response that a caller accepts. ListSegmentUsers returns all users of
 // a segment in one response, and a gRPC client accepts 4MiB by default, which
 // is about 41,000 users with 6-character IDs and about 25,700 with UUIDs.
 // 64MiB holds more than 200,000 users with IDs of the maximum length of 100

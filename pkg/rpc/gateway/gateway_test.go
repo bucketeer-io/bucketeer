@@ -353,33 +353,53 @@ func TestGatewayResponseSizeLimit(t *testing.T) {
 		raisedBytes      = 8 * 1024 * 1024
 	)
 	backendAddr := startLargeResponseBackend(t)
+	raised := []Option{WithMethodMaxResponseBytes(largeResponseMethod, raisedBytes)}
 
 	patterns := []struct {
 		desc           string
 		opts           []Option
+		path           string
 		responseBytes  int
 		expectedStatus int
 	}{
 		{
-			desc:           "default limit: a response within it is returned",
+			desc:           "no limit set: a response within the default is returned",
+			path:           largeResponsePath,
 			responseBytes:  1024,
 			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:           "default limit: a response over it is rejected",
+			desc:           "no limit set: a response over the default is rejected",
+			path:           largeResponsePath,
 			responseBytes:  grpcDefaultBytes + 1,
 			expectedStatus: http.StatusTooManyRequests,
 		},
 		{
-			desc:           "raised limit: a response over the default is returned",
-			opts:           []Option{WithMaxResponseBytes(raisedBytes)},
+			desc:           "method with a limit: a response over the default is returned",
+			opts:           raised,
+			path:           largeResponsePath,
 			responseBytes:  grpcDefaultBytes + 1,
 			expectedStatus: http.StatusOK,
 		},
 		{
-			desc:           "raised limit: a response over it is rejected",
-			opts:           []Option{WithMaxResponseBytes(raisedBytes)},
+			desc:           "method with a limit: a response over the limit is rejected",
+			opts:           raised,
+			path:           largeResponsePath,
 			responseBytes:  raisedBytes + 1,
+			expectedStatus: http.StatusTooManyRequests,
+		},
+		{
+			desc:           "other method: a response within the default is returned",
+			opts:           raised,
+			path:           otherLargeResponsePath,
+			responseBytes:  1024,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:           "other method: a response over the default is rejected",
+			opts:           raised,
+			path:           otherLargeResponsePath,
+			responseBytes:  grpcDefaultBytes + 1,
 			expectedStatus: http.StatusTooManyRequests,
 		},
 	}
@@ -388,7 +408,7 @@ func TestGatewayResponseSizeLimit(t *testing.T) {
 			t.Parallel()
 			baseURL := startTestGatewayWithRegistrar(t, largeResponseRegistrar(t, backendAddr), p.opts...)
 
-			resp, err := http.Get(fmt.Sprintf("%s/v1/large/%d", baseURL, p.responseBytes))
+			resp, err := http.Get(fmt.Sprintf("%s%s/%d", baseURL, p.path, p.responseBytes))
 			require.NoError(t, err)
 			defer resp.Body.Close()
 			respBody, err := io.ReadAll(resp.Body)
@@ -404,45 +424,54 @@ func TestGatewayResponseSizeLimit(t *testing.T) {
 	}
 }
 
-// largeResponseMethod is the method of the service started by
-// startLargeResponseBackend. The request is the number of bytes to return.
-const largeResponseMethod = "/bucketeer.gateway.test.LargeResponse/Get"
+// The service started by startLargeResponseBackend has two methods that do
+// the same: the request is the number of bytes to return. largeResponseRegistrar
+// serves each of them under its own path.
+const (
+	largeResponseService     = "bucketeer.gateway.test.LargeResponse"
+	largeResponseMethod      = "/" + largeResponseService + "/Get"
+	otherLargeResponseMethod = "/" + largeResponseService + "/GetOther"
+	largeResponsePath        = "/v1/large"
+	otherLargeResponsePath   = "/v1/other"
+)
 
 // startLargeResponseBackend starts a gRPC server on a loopback port whose
-// only method returns a message with as many bytes as the request asks for.
+// methods return a message with as many bytes as the request asks for.
 // It returns the address of the server.
 func startLargeResponseBackend(t *testing.T) string {
 	t.Helper()
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
+	handler := func(
+		_ interface{},
+		_ context.Context,
+		decode func(interface{}) error,
+		_ grpc.UnaryServerInterceptor,
+	) (interface{}, error) {
+		size := &wrapperspb.Int32Value{}
+		if err := decode(size); err != nil {
+			return nil, err
+		}
+		return &wrapperspb.BytesValue{Value: make([]byte, size.Value)}, nil
+	}
 	server := grpc.NewServer()
 	server.RegisterService(&grpc.ServiceDesc{
-		ServiceName: "bucketeer.gateway.test.LargeResponse",
+		ServiceName: largeResponseService,
 		HandlerType: (*interface{})(nil),
-		Methods: []grpc.MethodDesc{{
-			MethodName: "Get",
-			Handler: func(
-				_ interface{},
-				_ context.Context,
-				decode func(interface{}) error,
-				_ grpc.UnaryServerInterceptor,
-			) (interface{}, error) {
-				size := &wrapperspb.Int32Value{}
-				if err := decode(size); err != nil {
-					return nil, err
-				}
-				return &wrapperspb.BytesValue{Value: make([]byte, size.Value)}, nil
-			},
-		}},
+		Methods: []grpc.MethodDesc{
+			{MethodName: "Get", Handler: handler},
+			{MethodName: "GetOther", Handler: handler},
+		},
 	}, struct{}{})
 	go func() { _ = server.Serve(ln) }()
 	t.Cleanup(server.Stop)
 	return ln.Addr().String()
 }
 
-// largeResponseRegistrar registers GET /v1/large/{bytes}. Like the generated
-// gRPC-Gateway handlers, it calls the backend over a connection opened with
-// the dial options of the gateway, and writes the size of the response.
+// largeResponseRegistrar registers GET /v1/large/{bytes} and
+// GET /v1/other/{bytes}. Like the generated gRPC-Gateway handlers, they call
+// the backend over a connection opened with the dial options of the gateway,
+// and write the size of the response.
 func largeResponseRegistrar(t *testing.T, backendAddr string) HandlerRegistrar {
 	t.Helper()
 	return func(_ context.Context, mux *runtime.ServeMux, dialOpts []grpc.DialOption) error {
@@ -451,8 +480,8 @@ func largeResponseRegistrar(t *testing.T, backendAddr string) HandlerRegistrar {
 			return err
 		}
 		t.Cleanup(func() { _ = conn.Close() })
-		return mux.HandlePath(http.MethodGet, "/v1/large/{bytes}",
-			func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		handle := func(method string) runtime.HandlerFunc {
+			return func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
 				_, outbound := runtime.MarshalerForRequest(mux, r)
 				size, err := strconv.ParseInt(pathParams["bytes"], 10, 32)
 				if err != nil {
@@ -460,12 +489,20 @@ func largeResponseRegistrar(t *testing.T, backendAddr string) HandlerRegistrar {
 					return
 				}
 				resp := &wrapperspb.BytesValue{}
-				if err := conn.Invoke(r.Context(), largeResponseMethod, wrapperspb.Int32(int32(size)), resp); err != nil {
+				if err := conn.Invoke(r.Context(), method, wrapperspb.Int32(int32(size)), resp); err != nil {
 					runtime.HTTPError(r.Context(), mux, outbound, w, r, err)
 					return
 				}
 				_, _ = w.Write([]byte(strconv.Itoa(len(resp.Value))))
-			},
+			}
+		}
+		if err := mux.HandlePath(
+			http.MethodGet, largeResponsePath+"/{bytes}", handle(largeResponseMethod),
+		); err != nil {
+			return err
+		}
+		return mux.HandlePath(
+			http.MethodGet, otherLargeResponsePath+"/{bytes}", handle(otherLargeResponseMethod),
 		)
 	}
 }

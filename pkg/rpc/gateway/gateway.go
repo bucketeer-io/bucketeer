@@ -295,6 +295,25 @@ func (g *Gateway) customRoutingErrorHandler(
 	runtime.DefaultRoutingErrorHandler(ctx, mux, marshaler, w, r, httpStatus)
 }
 
+// maxResponseBytesInterceptor makes a call to a method that has a response
+// size limit of its own accept a response of that size. The other calls keep
+// the limit of the connection.
+func (g *Gateway) maxResponseBytesInterceptor(
+	ctx context.Context,
+	method string,
+	req, reply interface{},
+	cc *grpc.ClientConn,
+	invoker grpc.UnaryInvoker,
+	opts ...grpc.CallOption,
+) error {
+	if maxBytes, ok := g.opts.methodMaxResponseBytes[method]; ok {
+		// The full slice expression keeps append from writing into the
+		// caller's slice.
+		opts = append(opts[:len(opts):len(opts)], grpc.MaxCallRecvMsgSize(maxBytes))
+	}
+	return invoker(ctx, method, req, reply, cc, opts...)
+}
+
 func (g *Gateway) Start(ctx context.Context,
 	registerFuncs ...HandlerRegistrar,
 ) error {
@@ -367,12 +386,8 @@ func (g *Gateway) Start(ctx context.Context,
 		grpc.WithInitialConnWindowSize(g.opts.initialConnWindowSize),
 	)
 
-	// The response of a service can be larger than the message a gRPC client
-	// accepts by default.
-	if g.opts.maxResponseBytes > 0 {
-		dialOpts = append(dialOpts, grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(g.opts.maxResponseBytes),
-		))
+	if len(g.opts.methodMaxResponseBytes) > 0 {
+		dialOpts = append(dialOpts, grpc.WithChainUnaryInterceptor(g.maxResponseBytesInterceptor))
 	}
 
 	// Register all the provided handler registrars
