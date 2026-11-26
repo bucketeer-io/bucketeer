@@ -1318,7 +1318,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		}
 	}
 	insightsService := insightsapi.NewInsightsService(
-		accountClient,
 		promClient,
 		monthlySummaryStorage,
 		insightsapi.WithLogger(logger),

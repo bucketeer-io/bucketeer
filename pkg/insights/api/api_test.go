@@ -26,15 +26,13 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	insightsstorage "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	prometheusmock "github.com/bucketeer-io/bucketeer/v2/pkg/prometheus/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	clientproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	insightsproto "github.com/bucketeer-io/bucketeer/v2/proto/insights"
 )
 
@@ -42,7 +40,7 @@ func TestNewInsightsService(t *testing.T) {
 	t.Parallel()
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
-	s := NewInsightsService(nil, nil, nil, WithLogger(logger))
+	s := NewInsightsService(nil, nil, WithLogger(logger))
 	assert.IsType(t, &insightsService{}, s)
 }
 
@@ -51,7 +49,7 @@ func TestGetInsightsMonthlySummary(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -60,8 +58,6 @@ func TestGetInsightsMonthlySummary(t *testing.T) {
 		desc        string
 		setup       func(*insightsService)
 		noProm      bool
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
 		input       *insightsproto.GetInsightsMonthlySummaryRequest
 		expected    *insightsproto.GetInsightsMonthlySummaryResponse
 		expectedErr error
@@ -72,19 +68,7 @@ func TestGetInsightsMonthlySummary(t *testing.T) {
 			expectedErr: statusEnvironmentIDRequired.Err(),
 		},
 		{
-			desc:    "error: ErrPermissionDenied",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input: &insightsproto.GetInsightsMonthlySummaryRequest{
-				EnvironmentIds: []string{"env1"},
-				SourceIds:      []clientproto.SourceId{clientproto.SourceId_ANDROID},
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "error: storage error",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "error: storage error",
 			setup: func(s *insightsService) {
 				s.monthlySummaryStorage.(*storagemock.MockMonthlySummaryStorage).EXPECT().
 					ListMonthlySummaries(gomock.Any(), []string{"env1"}, []string{"ANDROID"}).
@@ -97,9 +81,7 @@ func TestGetInsightsMonthlySummary(t *testing.T) {
 			expectedErr: statusInternal.Err(),
 		},
 		{
-			desc:    "success: empty result",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success: empty result",
 			setup: func(s *insightsService) {
 				s.monthlySummaryStorage.(*storagemock.MockMonthlySummaryStorage).EXPECT().
 					ListMonthlySummaries(gomock.Any(), []string{"env1"}, []string{"ANDROID"}).
@@ -115,9 +97,7 @@ func TestGetInsightsMonthlySummary(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:    "success: with data",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success: with data",
 			setup: func(s *insightsService) {
 				s.monthlySummaryStorage.(*storagemock.MockMonthlySummaryStorage).EXPECT().
 					ListMonthlySummaries(gomock.Any(), []string{"env1"}, []string{"ANDROID"}).
@@ -163,9 +143,7 @@ func TestGetInsightsMonthlySummary(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:    "success: without source filter returns all sources",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success: without source filter returns all sources",
 			setup: func(s *insightsService) {
 				s.monthlySummaryStorage.(*storagemock.MockMonthlySummaryStorage).EXPECT().
 					ListMonthlySummaries(gomock.Any(), []string{"env1"}, allSourceIDStrings()).
@@ -224,9 +202,9 @@ func TestGetInsightsMonthlySummary(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			var s *insightsService
 			if p.noProm {
-				s = newInsightsServiceWithoutProm(t, mockController, p.orgRole, p.envRole)
+				s = newInsightsServiceWithoutProm(t, mockController)
 			} else {
-				s = newInsightsServiceForTest(t, mockController, p.orgRole, p.envRole)
+				s = newInsightsServiceForTest(t, mockController)
 			}
 			if p.setup != nil {
 				p.setup(s)
@@ -245,7 +223,7 @@ func TestGetInsightsLatency(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -258,8 +236,6 @@ func TestGetInsightsLatency(t *testing.T) {
 		desc        string
 		setup       func(*insightsService)
 		noProm      bool
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
 		input       *insightsproto.GetInsightsTimeSeriesRequest
 		expected    *insightsproto.GetInsightsTimeSeriesResponse
 		expectedErr error
@@ -310,20 +286,7 @@ func TestGetInsightsLatency(t *testing.T) {
 			expectedErr: statusQueryRangeTooLarge.Err(),
 		},
 		{
-			desc:    "error: ErrPermissionDenied",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input: &insightsproto.GetInsightsTimeSeriesRequest{
-				EnvironmentIds: []string{"env1"},
-				StartAt:        startAt,
-				EndAt:          endAt,
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "error: prometheus error",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "error: prometheus error",
 			setup: func(s *insightsService) {
 				s.promClient.(*prometheusmock.MockClient).EXPECT().
 					QueryRange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -337,9 +300,7 @@ func TestGetInsightsLatency(t *testing.T) {
 			expectedErr: statusInternal.Err(),
 		},
 		{
-			desc:    "success",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success",
 			setup: func(s *insightsService) {
 				s.promClient.(*prometheusmock.MockClient).EXPECT().
 					QueryRange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -382,9 +343,9 @@ func TestGetInsightsLatency(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			var s *insightsService
 			if p.noProm {
-				s = newInsightsServiceWithoutProm(t, mockController, p.orgRole, p.envRole)
+				s = newInsightsServiceWithoutProm(t, mockController)
 			} else {
-				s = newInsightsServiceForTest(t, mockController, p.orgRole, p.envRole)
+				s = newInsightsServiceForTest(t, mockController)
 			}
 			if p.setup != nil {
 				p.setup(s)
@@ -407,31 +368,27 @@ func TestGetInsightsLatencyEnvironmentIDQuoting(t *testing.T) {
 
 	patterns := []struct {
 		desc          string
-		systemAdmin   bool
 		envIDs        []string
 		expectedQuery string
 	}{
 		{
-			desc:        "system admin: environment id containing a double quote and PromQL syntax stays inside the label matcher",
-			systemAdmin: true,
-			envIDs:      []string{`env1"} or up{job=~".+`},
+			desc:   "environment id containing a double quote and PromQL syntax stays inside the label matcher",
+			envIDs: []string{`env1"} or up{job=~".+`},
 			expectedQuery: recordingRuleLatencyAvg +
 				`{environment_id=~"^env1\"\\} or up\\{job=~\"\\.\\+$"}`,
 		},
 		{
-			desc:          "system admin: environment id containing a backslash is escaped",
-			systemAdmin:   true,
+			desc:          "environment id containing a backslash is escaped",
 			envIDs:        []string{`env\1`},
 			expectedQuery: recordingRuleLatencyAvg + `{environment_id=~"^env\\\\1$"}`,
 		},
 		{
-			desc:          "system admin: plain environment ids are passed through unchanged",
-			systemAdmin:   true,
+			desc:          "plain environment ids are passed through unchanged",
 			envIDs:        []string{"env1", "env2"},
 			expectedQuery: recordingRuleLatencyAvg + `{environment_id=~"^(env1|env2)$"}`,
 		},
 		{
-			desc:          "viewer: plain environment id is passed through unchanged",
+			desc:          "plain environment id is passed through unchanged",
 			envIDs:        []string{"env1"},
 			expectedQuery: recordingRuleLatencyAvg + `{environment_id=~"^env1$"}`,
 		},
@@ -443,20 +400,9 @@ func TestGetInsightsLatencyEnvironmentIDQuoting(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			var ctx context.Context
-			if p.systemAdmin {
-				ctx = createContextWithSystemAdminToken(t)
-			} else {
-				ctx = createContextWithToken(t)
-			}
-			ctx = metadata.NewIncomingContext(ctx, metadata.MD{})
+			ctx := metadata.NewIncomingContext(createContextWithEditor(t), metadata.MD{})
 
-			s := newInsightsServiceForTest(
-				t,
-				mockController,
-				toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-				toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
-			)
+			s := newInsightsServiceForTest(t, mockController)
 			s.promClient.(*prometheusmock.MockClient).EXPECT().
 				QueryRange(gomock.Any(), p.expectedQuery, gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(model.Matrix{}, nil)
@@ -477,7 +423,7 @@ func TestGetInsightsRequests(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -490,8 +436,6 @@ func TestGetInsightsRequests(t *testing.T) {
 		desc        string
 		setup       func(*insightsService)
 		noProm      bool
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
 		input       *insightsproto.GetInsightsTimeSeriesRequest
 		expected    *insightsproto.GetInsightsTimeSeriesResponse
 		expectedErr error
@@ -503,20 +447,7 @@ func TestGetInsightsRequests(t *testing.T) {
 			expectedErr: statusDataSourceNotConfigured.Err(),
 		},
 		{
-			desc:    "error: ErrPermissionDenied",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input: &insightsproto.GetInsightsTimeSeriesRequest{
-				EnvironmentIds: []string{"env1"},
-				StartAt:        startAt,
-				EndAt:          endAt,
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "success",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success",
 			setup: func(s *insightsService) {
 				s.promClient.(*prometheusmock.MockClient).EXPECT().
 					QueryRange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -559,9 +490,9 @@ func TestGetInsightsRequests(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			var s *insightsService
 			if p.noProm {
-				s = newInsightsServiceWithoutProm(t, mockController, p.orgRole, p.envRole)
+				s = newInsightsServiceWithoutProm(t, mockController)
 			} else {
-				s = newInsightsServiceForTest(t, mockController, p.orgRole, p.envRole)
+				s = newInsightsServiceForTest(t, mockController)
 			}
 			if p.setup != nil {
 				p.setup(s)
@@ -580,7 +511,7 @@ func TestGetInsightsEvaluations(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -593,8 +524,6 @@ func TestGetInsightsEvaluations(t *testing.T) {
 		desc        string
 		setup       func(*insightsService)
 		noProm      bool
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
 		input       *insightsproto.GetInsightsTimeSeriesRequest
 		expected    *insightsproto.GetInsightsTimeSeriesResponse
 		expectedErr error
@@ -606,9 +535,7 @@ func TestGetInsightsEvaluations(t *testing.T) {
 			expectedErr: statusDataSourceNotConfigured.Err(),
 		},
 		{
-			desc:    "success: with evaluation_type label",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success: with evaluation_type label",
 			setup: func(s *insightsService) {
 				s.promClient.(*prometheusmock.MockClient).EXPECT().
 					QueryRange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -649,9 +576,9 @@ func TestGetInsightsEvaluations(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			var s *insightsService
 			if p.noProm {
-				s = newInsightsServiceWithoutProm(t, mockController, p.orgRole, p.envRole)
+				s = newInsightsServiceWithoutProm(t, mockController)
 			} else {
-				s = newInsightsServiceForTest(t, mockController, p.orgRole, p.envRole)
+				s = newInsightsServiceForTest(t, mockController)
 			}
 			if p.setup != nil {
 				p.setup(s)
@@ -670,7 +597,7 @@ func TestGetInsightsErrorRates(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithEditor(t)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -682,8 +609,6 @@ func TestGetInsightsErrorRates(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*insightsService)
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
 		input       *insightsproto.GetInsightsTimeSeriesRequest
 		expected    *insightsproto.GetInsightsTimeSeriesResponse
 		expectedErr error
@@ -698,9 +623,7 @@ func TestGetInsightsErrorRates(t *testing.T) {
 			expectedErr: statusDataSourceNotConfigured.Err(),
 		},
 		{
-			desc:    "success",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success",
 			setup: func(s *insightsService) {
 				s.promClient.(*prometheusmock.MockClient).EXPECT().
 					QueryRange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -741,9 +664,9 @@ func TestGetInsightsErrorRates(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			var s *insightsService
 			if p.desc == "error: prometheus not configured" {
-				s = newInsightsServiceWithoutProm(t, mockController, p.orgRole, p.envRole)
+				s = newInsightsServiceWithoutProm(t, mockController)
 			} else {
-				s = newInsightsServiceForTest(t, mockController, p.orgRole, p.envRole)
+				s = newInsightsServiceForTest(t, mockController)
 			}
 			if p.setup != nil {
 				p.setup(s)
@@ -990,125 +913,39 @@ func TestConvertToMonthlySummarySeries(t *testing.T) {
 	}
 }
 
-func createContextWithToken(t *testing.T) context.Context {
+// createContextWithEditor is a context after the authz interceptor allowed the request.
+func createContextWithEditor(t *testing.T) context.Context {
 	t.Helper()
-	tk := &token.AccessToken{
-		Email:         "test@example.com",
-		IsSystemAdmin: false,
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, tk)
+	return authz.WithEditor(context.TODO(), &eventproto.Editor{Email: "test@example.com"})
 }
 
-func createContextWithSystemAdminToken(t *testing.T) context.Context {
+func newInsightsServiceForTest(t *testing.T, mockController *gomock.Controller) *insightsService {
 	t.Helper()
-	tk := &token.AccessToken{
-		Email:         "admin@example.com",
-		IsSystemAdmin: true,
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, tk)
-}
-
-func newInsightsServiceForTest(
-	t *testing.T,
-	mockController *gomock.Controller,
-	specifiedOrgRole *accountproto.AccountV2_Role_Organization,
-	specifiedEnvRole *accountproto.AccountV2_Role_Environment,
-) *insightsService {
-	t.Helper()
-
-	var or accountproto.AccountV2_Role_Organization
-	var er accountproto.AccountV2_Role_Environment
-	if specifiedOrgRole != nil {
-		or = *specifiedOrgRole
-	} else {
-		or = accountproto.AccountV2_Role_Organization_ADMIN
-	}
-	if specifiedEnvRole != nil {
-		er = *specifiedEnvRole
-	} else {
-		er = accountproto.AccountV2_Role_Environment_EDITOR
-	}
 
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
-
-	accountClientMock := accountclientmock.NewMockClient(mockController)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: or,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: "env1",
-					Role:          er,
-				},
-			},
-		},
-	}
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 
 	promClientMock := prometheusmock.NewMockClient(mockController)
 	storageMock := storagemock.NewMockMonthlySummaryStorage(mockController)
 
 	return &insightsService{
-		accountClient:         accountClientMock,
 		promClient:            promClientMock,
 		monthlySummaryStorage: storageMock,
 		logger:                logger,
 	}
 }
 
-func newInsightsServiceWithoutProm(
-	t *testing.T,
-	mockController *gomock.Controller,
-	specifiedOrgRole *accountproto.AccountV2_Role_Organization,
-	specifiedEnvRole *accountproto.AccountV2_Role_Environment,
-) *insightsService {
+func newInsightsServiceWithoutProm(t *testing.T, mockController *gomock.Controller) *insightsService {
 	t.Helper()
-
-	var or accountproto.AccountV2_Role_Organization
-	var er accountproto.AccountV2_Role_Environment
-	if specifiedOrgRole != nil {
-		or = *specifiedOrgRole
-	} else {
-		or = accountproto.AccountV2_Role_Organization_ADMIN
-	}
-	if specifiedEnvRole != nil {
-		er = *specifiedEnvRole
-	} else {
-		er = accountproto.AccountV2_Role_Environment_EDITOR
-	}
 
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
 
-	accountClientMock := accountclientmock.NewMockClient(mockController)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: or,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: "env1",
-					Role:          er,
-				},
-			},
-		},
-	}
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
-
 	storageMock := storagemock.NewMockMonthlySummaryStorage(mockController)
 
 	return &insightsService{
-		accountClient:         accountClientMock,
 		promClient:            nil, // prometheus not configured
 		monthlySummaryStorage: storageMock,
 		logger:                logger,
 	}
-}
-
-func toPtr[T any](value T) *T {
-	return &value
 }
