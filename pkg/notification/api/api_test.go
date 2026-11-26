@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -27,12 +26,12 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage"
 	notificationstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/notification/storage/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/notification"
 )
 
@@ -56,11 +55,7 @@ func TestNotificationService_CreateAdminNotification(t *testing.T) {
 	defer mockController.Finish()
 
 	adminCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, true),
-		metadata.MD{"accept-language": []string{"en"}},
-	)
-	memberCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, false),
+		createContextWithEditor(t, true),
 		metadata.MD{"accept-language": []string{"en"}},
 	)
 
@@ -85,22 +80,6 @@ func TestNotificationService_CreateAdminNotification(t *testing.T) {
 		req         *proto.CreateAdminNotificationRequest
 		expectedErr error
 	}{
-		{
-			desc: "err: unauthenticated",
-			ctx:  context.TODO(),
-			req: &proto.CreateAdminNotificationRequest{
-				Localizations: validLocalizations,
-			},
-			expectedErr: statusUnauthenticated.Err(),
-		},
-		{
-			desc: "err: permission denied",
-			ctx:  memberCtx,
-			req: &proto.CreateAdminNotificationRequest{
-				Localizations: validLocalizations,
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
 		{
 			desc:        "err: localization required",
 			ctx:         adminCtx,
@@ -229,17 +208,10 @@ func createNotificationService(c *gomock.Controller) *NotificationService {
 	}
 }
 
-func createContextWithToken(t *testing.T, isSystemAdmin bool) context.Context {
+// createContextWithEditor is a context after the authz interceptor allowed the request.
+func createContextWithEditor(t *testing.T, isSystemAdmin bool) context.Context {
 	t.Helper()
-	accessToken := &token.AccessToken{
-		Issuer:        "issuer",
-		Audience:      "audience",
-		Expiry:        time.Now().AddDate(100, 0, 0),
-		IssuedAt:      time.Now(),
-		Email:         "email",
-		IsSystemAdmin: isSystemAdmin,
-	}
-	return context.WithValue(context.TODO(), rpc.AccessTokenKey, accessToken)
+	return authz.WithEditor(context.TODO(), &eventproto.Editor{Email: "email", IsAdmin: isSystemAdmin})
 }
 
 func TestNotificationService_ListDraftAdminNotifications(t *testing.T) {
@@ -248,11 +220,7 @@ func TestNotificationService_ListDraftAdminNotifications(t *testing.T) {
 	defer mockController.Finish()
 
 	adminCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, true),
-		metadata.MD{"accept-language": []string{"en"}},
-	)
-	memberCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, false),
+		createContextWithEditor(t, true),
 		metadata.MD{"accept-language": []string{"en"}},
 	)
 
@@ -278,20 +246,6 @@ func TestNotificationService_ListDraftAdminNotifications(t *testing.T) {
 		expectedRes *proto.ListDraftAdminNotificationsResponse
 		expectedErr error
 	}{
-		{
-			desc:        "err: unauthenticated",
-			ctx:         context.TODO(),
-			req:         &proto.ListDraftAdminNotificationsRequest{},
-			expectedRes: nil,
-			expectedErr: statusUnauthenticated.Err(),
-		},
-		{
-			desc:        "err: permission denied",
-			ctx:         memberCtx,
-			req:         &proto.ListDraftAdminNotificationsRequest{},
-			expectedRes: nil,
-			expectedErr: statusPermissionDenied.Err(),
-		},
 		{
 			desc: "err: invalid cursor",
 			ctx:  adminCtx,
@@ -417,11 +371,7 @@ func TestNotificationService_UpdateAdminNotification(t *testing.T) {
 	defer mockController.Finish()
 
 	adminCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, true),
-		metadata.MD{"accept-language": []string{"en"}},
-	)
-	memberCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, false),
+		createContextWithEditor(t, true),
 		metadata.MD{"accept-language": []string{"en"}},
 	)
 
@@ -456,24 +406,6 @@ func TestNotificationService_UpdateAdminNotification(t *testing.T) {
 		req         *proto.UpdateAdminNotificationRequest
 		expectedErr error
 	}{
-		{
-			desc: "err: unauthenticated",
-			ctx:  context.TODO(),
-			req: &proto.UpdateAdminNotificationRequest{
-				Id:            "notification-id-0",
-				Localizations: validLocalizations,
-			},
-			expectedErr: statusUnauthenticated.Err(),
-		},
-		{
-			desc: "err: permission denied",
-			ctx:  memberCtx,
-			req: &proto.UpdateAdminNotificationRequest{
-				Id:            "notification-id-0",
-				Localizations: validLocalizations,
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
 		{
 			desc: "err: id required",
 			ctx:  adminCtx,
@@ -593,11 +525,7 @@ func TestNotificationService_DeleteAdminNotification(t *testing.T) {
 	defer mockController.Finish()
 
 	adminCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, true),
-		metadata.MD{"accept-language": []string{"en"}},
-	)
-	memberCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, false),
+		createContextWithEditor(t, true),
 		metadata.MD{"accept-language": []string{"en"}},
 	)
 
@@ -608,22 +536,6 @@ func TestNotificationService_DeleteAdminNotification(t *testing.T) {
 		req         *proto.DeleteAdminNotificationRequest
 		expectedErr error
 	}{
-		{
-			desc: "err: unauthenticated",
-			ctx:  context.TODO(),
-			req: &proto.DeleteAdminNotificationRequest{
-				Id: "notification-id-0",
-			},
-			expectedErr: statusUnauthenticated.Err(),
-		},
-		{
-			desc: "err: permission denied",
-			ctx:  memberCtx,
-			req: &proto.DeleteAdminNotificationRequest{
-				Id: "notification-id-0",
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
 		{
 			desc:        "err: id required",
 			ctx:         adminCtx,
@@ -701,11 +613,7 @@ func TestNotificationService_PublishAdminNotification(t *testing.T) {
 	defer mockController.Finish()
 
 	adminCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, true),
-		metadata.MD{"accept-language": []string{"en"}},
-	)
-	memberCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, false),
+		createContextWithEditor(t, true),
 		metadata.MD{"accept-language": []string{"en"}},
 	)
 
@@ -732,22 +640,6 @@ func TestNotificationService_PublishAdminNotification(t *testing.T) {
 		req         *proto.PublishAdminNotificationRequest
 		expectedErr error
 	}{
-		{
-			desc: "err: unauthenticated",
-			ctx:  context.TODO(),
-			req: &proto.PublishAdminNotificationRequest{
-				Id: "notification-id-0",
-			},
-			expectedErr: statusUnauthenticated.Err(),
-		},
-		{
-			desc: "err: permission denied",
-			ctx:  memberCtx,
-			req: &proto.PublishAdminNotificationRequest{
-				Id: "notification-id-0",
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
 		{
 			desc:        "err: id required",
 			ctx:         adminCtx,
@@ -894,7 +786,7 @@ func TestNotificationService_ListNotifications(t *testing.T) {
 	defer mockController.Finish()
 
 	viewerCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, false),
+		createContextWithEditor(t, false),
 		metadata.MD{"accept-language": []string{"en"}},
 	)
 
@@ -920,12 +812,6 @@ func TestNotificationService_ListNotifications(t *testing.T) {
 		req         *proto.ListNotificationsRequest
 		expectedErr error
 	}{
-		{
-			desc:        "err: unauthenticated",
-			ctx:         context.TODO(),
-			req:         &proto.ListNotificationsRequest{},
-			expectedErr: statusUnauthenticated.Err(),
-		},
 		{
 			desc: "err: invalid cursor",
 			ctx:  viewerCtx,
@@ -1006,11 +892,11 @@ func TestNotificationService_GetNotification(t *testing.T) {
 	defer mockController.Finish()
 
 	adminCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, true),
+		createContextWithEditor(t, true),
 		metadata.MD{"accept-language": []string{"en"}},
 	)
 	viewerCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, false),
+		createContextWithEditor(t, false),
 		metadata.MD{"accept-language": []string{"en"}},
 	)
 
@@ -1042,12 +928,6 @@ func TestNotificationService_GetNotification(t *testing.T) {
 		verify      func(*testing.T, *proto.GetNotificationResponse)
 		expectedErr error
 	}{
-		{
-			desc:        "err: unauthenticated",
-			ctx:         context.TODO(),
-			req:         &proto.GetNotificationRequest{Id: "notification-id-0"},
-			expectedErr: statusUnauthenticated.Err(),
-		},
 		{
 			desc:        "err: id required",
 			ctx:         viewerCtx,
@@ -1182,7 +1062,7 @@ func TestNotificationService_MarkNotificationsAsRead(t *testing.T) {
 	defer mockController.Finish()
 
 	viewerCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, false),
+		createContextWithEditor(t, false),
 		metadata.MD{"accept-language": []string{"en"}},
 	)
 
@@ -1198,12 +1078,6 @@ func TestNotificationService_MarkNotificationsAsRead(t *testing.T) {
 		req         *proto.MarkNotificationsAsReadRequest
 		expectedErr error
 	}{
-		{
-			desc:        "err: unauthenticated",
-			ctx:         context.TODO(),
-			req:         &proto.MarkNotificationsAsReadRequest{Ids: []string{"notification-id-0"}},
-			expectedErr: statusUnauthenticated.Err(),
-		},
 		{
 			desc:        "err: ids required",
 			ctx:         viewerCtx,
@@ -1276,7 +1150,7 @@ func TestNotificationService_GetNotificationUnreadCount(t *testing.T) {
 	defer mockController.Finish()
 
 	viewerCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, false),
+		createContextWithEditor(t, false),
 		metadata.MD{"accept-language": []string{"en"}},
 	)
 
@@ -1287,11 +1161,6 @@ func TestNotificationService_GetNotificationUnreadCount(t *testing.T) {
 		expected    int64
 		expectedErr error
 	}{
-		{
-			desc:        "err: unauthenticated",
-			ctx:         context.TODO(),
-			expectedErr: statusUnauthenticated.Err(),
-		},
 		{
 			desc: "err: internal",
 			ctx:  viewerCtx,
@@ -1336,7 +1205,7 @@ func TestNotificationService_MarkAllNotificationsAsRead(t *testing.T) {
 	defer mockController.Finish()
 
 	viewerCtx := metadata.NewIncomingContext(
-		createContextWithToken(t, false),
+		createContextWithEditor(t, false),
 		metadata.MD{"accept-language": []string{"en"}},
 	)
 
@@ -1346,11 +1215,6 @@ func TestNotificationService_MarkAllNotificationsAsRead(t *testing.T) {
 		setup       func(*NotificationService)
 		expectedErr error
 	}{
-		{
-			desc:        "err: unauthenticated",
-			ctx:         context.TODO(),
-			expectedErr: statusUnauthenticated.Err(),
-		},
 		{
 			desc: "err: internal",
 			ctx:  viewerCtx,
