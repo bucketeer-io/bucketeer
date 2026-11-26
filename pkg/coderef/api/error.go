@@ -58,10 +58,4 @@ var (
 	statusNotFound = api.NewGRPCStatus(
 		bkterr.NewErrorNotFound(bkterr.CoderefPackageName, "code reference not found", "CodeReference"),
 	)
-	statusUnauthenticated = api.NewGRPCStatus(
-		bkterr.NewErrorUnauthenticated(bkterr.CoderefPackageName, "unauthenticated"),
-	)
-	statusPermissionDenied = api.NewGRPCStatus(
-		bkterr.NewErrorPermissionDenied(bkterr.CoderefPackageName, "permission denied"),
-	)
 )

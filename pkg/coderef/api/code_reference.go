@@ -23,11 +23,11 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
@@ -88,14 +88,6 @@ func (s *CodeReferenceService) GetCodeReference(
 	ctx context.Context,
 	req *proto.GetCodeReferenceRequest,
 ) (*proto.GetCodeReferenceResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateGetCodeReferenceRequest(req); err != nil {
 		return nil, err
 	}
@@ -123,14 +115,6 @@ func (s *CodeReferenceService) ListCodeReferences(
 	ctx context.Context,
 	req *proto.ListCodeReferencesRequest,
 ) (*proto.ListCodeReferencesResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateListCodeReferencesRequest(req); err != nil {
 		return nil, err
 	}
@@ -183,14 +167,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 	ctx context.Context,
 	req *proto.CreateCodeReferenceRequest,
 ) (*proto.CreateCodeReferenceResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := validateCreateCodeReferenceRequest(req); err != nil {
 		return nil, err
 	}
@@ -279,20 +256,13 @@ func (s *CodeReferenceService) UpdateCodeReference(
 	ctx context.Context,
 	req *proto.UpdateCodeReferenceRequest,
 ) (*proto.UpdateCodeReferenceResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := validateUpdateCodeReferenceRequest(req); err != nil {
 		return nil, err
 	}
 	var codeRef *domain.CodeReference
 	var updatedCodeRef *domain.CodeReference
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		var err error
 		codeRef, err = s.codeRefStorage.GetCodeReference(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -390,14 +360,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 	ctx context.Context,
 	req *proto.DeleteCodeReferenceRequest,
 ) (*proto.DeleteCodeReferenceResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := validateDeleteCodeReferenceRequest(req); err != nil {
 		return nil, err
 	}

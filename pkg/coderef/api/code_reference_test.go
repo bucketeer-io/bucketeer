@@ -17,23 +17,20 @@ package api
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 const (
@@ -45,7 +42,6 @@ const (
 func createCodeReferenceService(t *testing.T, mockController *gomock.Controller) *CodeReferenceService {
 	t.Helper()
 	return &CodeReferenceService{
-		accountClient:  accountclientmock.NewMockClient(mockController),
 		dbClient:       dbmock.NewMockClient(mockController),
 		codeRefStorage: storagemock.NewMockCodeReferenceStorage(mockController),
 		publisher:      publishermock.NewMockPublisher(mockController),
@@ -53,33 +49,10 @@ func createCodeReferenceService(t *testing.T, mockController *gomock.Controller)
 	}
 }
 
-func createContextWithToken(t *testing.T, email string) context.Context {
+// createContextWithEditor is a context after the authz interceptor allowed the request.
+func createContextWithEditor(t *testing.T, email string) context.Context {
 	t.Helper()
-	tok := &token.AccessToken{
-		Issuer:   "issuer",
-		Audience: "audience",
-		Expiry:   time.Now().AddDate(100, 0, 0),
-		IssuedAt: time.Now(),
-		Email:    email,
-	}
-	return context.WithValue(context.TODO(), rpc.AccessTokenKey, tok)
-}
-
-// expectEditorInEnvironment makes the caller an environment EDITOR in the given
-// environment only (a plain organization MEMBER otherwise).
-func expectEditorInEnvironment(s *CodeReferenceService, email, environmentID string) {
-	s.accountClient.(*accountclientmock.MockClient).EXPECT().
-		GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).
-		Return(&accountproto.GetAccountV2ByEnvironmentIDResponse{
-			Account: &accountproto.AccountV2{
-				Email:            email,
-				OrganizationId:   "org0",
-				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-					{EnvironmentId: environmentID, Role: accountproto.AccountV2_Role_Environment_EDITOR},
-				},
-			},
-		}, nil)
+	return authz.WithEditor(context.TODO(), &eventproto.Editor{Email: email})
 }
 
 func codeReferenceInEnvironment(environmentID string) *domain.CodeReference {
@@ -137,11 +110,10 @@ func TestGetCodeReferenceScopedToEnvironment(t *testing.T) {
 			defer mockController.Finish()
 
 			service := createCodeReferenceService(t, mockController)
-			expectEditorInEnvironment(service, testEditorEmail, testEnvironmentID)
 			tc.setup(service)
 
 			resp, err := service.GetCodeReference(
-				createContextWithToken(t, testEditorEmail),
+				createContextWithEditor(t, testEditorEmail),
 				&proto.GetCodeReferenceRequest{
 					Id:            testCodeReferenceID,
 					EnvironmentId: testEnvironmentID,
@@ -205,7 +177,6 @@ func TestUpdateCodeReferenceScopedToEnvironment(t *testing.T) {
 			defer mockController.Finish()
 
 			service := createCodeReferenceService(t, mockController)
-			expectEditorInEnvironment(service, testEditorEmail, testEnvironmentID)
 			service.dbClient.(*dbmock.MockClient).EXPECT().
 				RunInTransactionV2(gomock.Any(), gomock.Any()).
 				DoAndReturn(func(ctx context.Context, fn func(context.Context) error) error {
@@ -215,7 +186,7 @@ func TestUpdateCodeReferenceScopedToEnvironment(t *testing.T) {
 			tc.setup(service, &persisted)
 
 			resp, err := service.UpdateCodeReference(
-				createContextWithToken(t, testEditorEmail),
+				createContextWithEditor(t, testEditorEmail),
 				&proto.UpdateCodeReferenceRequest{
 					Id:            testCodeReferenceID,
 					EnvironmentId: testEnvironmentID,
@@ -282,11 +253,10 @@ func TestDeleteCodeReferenceScopedToEnvironment(t *testing.T) {
 			defer mockController.Finish()
 
 			service := createCodeReferenceService(t, mockController)
-			expectEditorInEnvironment(service, testEditorEmail, testEnvironmentID)
 			tc.setup(service)
 
 			resp, err := service.DeleteCodeReference(
-				createContextWithToken(t, testEditorEmail),
+				createContextWithEditor(t, testEditorEmail),
 				&proto.DeleteCodeReferenceRequest{
 					Id:            testCodeReferenceID,
 					EnvironmentId: testEnvironmentID,

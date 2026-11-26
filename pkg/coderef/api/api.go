@@ -15,20 +15,13 @@
 package api
 
 import (
-	"context"
-
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/coderef/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/coderef"
-	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 type options struct {
@@ -44,7 +37,6 @@ func WithLogger(logger *zap.Logger) Option {
 }
 
 type CodeReferenceService struct {
-	accountClient  accountclient.Client
 	dbClient       database.Client
 	codeRefStorage storage.CodeReferenceStorage
 	publisher      publisher.Publisher
@@ -53,7 +45,6 @@ type CodeReferenceService struct {
 }
 
 func NewCodeReferenceService(
-	ac accountclient.Client,
 	dbClient database.Client,
 	codeRefStorage storage.CodeReferenceStorage,
 	p publisher.Publisher,
@@ -66,7 +57,6 @@ func NewCodeReferenceService(
 		opt(dopts)
 	}
 	return &CodeReferenceService{
-		accountClient:  ac,
 		dbClient:       dbClient,
 		codeRefStorage: codeRefStorage,
 		publisher:      p,
@@ -77,30 +67,4 @@ func NewCodeReferenceService(
 
 func (s *CodeReferenceService) Register(server *grpc.Server) {
 	proto.RegisterCodeReferenceServiceServer(server, s)
-}
-
-func (s *CodeReferenceService) checkEnvironmentRole(
-	ctx context.Context,
-	requiredRole accountproto.AccountV2_Role_Environment,
-	environmentID string,
-) (*eventproto.Editor, error) {
-	return role.CheckEnvironmentRoleWithLog(
-		ctx,
-		requiredRole,
-		environmentID,
-		func(email string) (*accountproto.AccountV2, error) {
-			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
-				Email:         email,
-				EnvironmentId: environmentID,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return resp.Account, nil
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
 }

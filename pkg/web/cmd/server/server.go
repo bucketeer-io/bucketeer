@@ -1269,7 +1269,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// codeReferenceService
 	codeReferenceService := coderefapi.NewCodeReferenceService(
-		accountClient,
 		dbClient,
 		codeRefStorage,
 		domainTopicPublisher,
