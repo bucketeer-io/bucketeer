@@ -27,11 +27,11 @@ import (
 
 	accclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/team/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/team/storage"
@@ -53,10 +53,6 @@ var (
 		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "page_size is invalid", "PageSize"))
 	statusInvalidOrderBy = api.NewGRPCStatus(
 		bkterr.NewErrorInvalidArgNotMatchFormat(bkterr.TeamPackageName, "order_by is invalid", "OrderBy"))
-	statusUnauthenticated = api.NewGRPCStatus(
-		bkterr.NewErrorUnauthenticated(bkterr.TeamPackageName, "unauthenticated"))
-	statusPermissionDenied = api.NewGRPCStatus(
-		bkterr.NewErrorPermissionDenied(bkterr.TeamPackageName, "permission denied"))
 	statusTeamNotFound = api.NewGRPCStatus(
 		bkterr.NewErrorNotFound(bkterr.TeamPackageName, "not found", "Team"))
 	statusTeamInUsed = api.NewGRPCStatus(
@@ -115,13 +111,8 @@ func (s *TeamService) CreateTeam(
 	ctx context.Context,
 	req *proto.CreateTeamRequest,
 ) (*proto.CreateTeamResponse, error) {
-	editor, err := s.checkOrganizationRole(
-		ctx, req.OrganizationId,
-		accountproto.AccountV2_Role_Organization_ADMIN)
-	if err != nil {
-		return nil, err
-	}
-	err = s.validateCreateTeamRequest(req)
+	editor := authz.EditorFrom(ctx)
+	err := s.validateCreateTeamRequest(req)
 	if err != nil {
 		s.logger.Error(
 			"Failed to validate create team request",
@@ -244,13 +235,8 @@ func (s *TeamService) DeleteTeam(
 	ctx context.Context,
 	req *proto.DeleteTeamRequest,
 ) (*proto.DeleteTeamResponse, error) {
-	editor, err := s.checkOrganizationRole(
-		ctx, req.OrganizationId,
-		accountproto.AccountV2_Role_Organization_ADMIN)
-	if err != nil {
-		return nil, err
-	}
-	err = s.validateDeleteTeamRequest(req)
+	editor := authz.EditorFrom(ctx)
+	err := s.validateDeleteTeamRequest(req)
 	if err != nil {
 		s.logger.Error(
 			"Failed to validate delete team request",
@@ -390,12 +376,6 @@ func (s *TeamService) ListTeams(
 	ctx context.Context,
 	req *proto.ListTeamsRequest,
 ) (*proto.ListTeamsResponse, error) {
-	_, err := s.checkOrganizationRole(
-		ctx, req.OrganizationId,
-		accountproto.AccountV2_Role_Organization_MEMBER)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}
@@ -430,28 +410,6 @@ func (s *TeamService) ListTeams(
 		TotalCount: totalCount,
 		NextCursor: strconv.Itoa(nextOffset),
 	}, nil
-}
-
-func (s *TeamService) checkOrganizationRole(
-	ctx context.Context,
-	organizationID string,
-	requiredRole accountproto.AccountV2_Role_Organization,
-) (*eventproto.Editor, error) {
-	return role.CheckOrganizationRoleWithLog(
-		ctx,
-		requiredRole,
-		organizationID,
-		func(email string) (*accountproto.GetAccountV2Response, error) {
-			return s.accountClient.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-				Email:          email,
-				OrganizationId: organizationID,
-			})
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
 }
 
 func (s *TeamService) reportInternalServerError(
