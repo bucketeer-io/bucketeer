@@ -129,11 +129,7 @@ func TestListAuditLogsRedactsSecretFields(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	s := newAuditLogServiceWithGetAccountByEnvironmentMock(
-		t, mockController,
-		accountproto.AccountV2_Role_Organization_MEMBER,
-		accountproto.AccountV2_Role_Environment_VIEWER,
-	)
+	s := newAuditLogService(t, mockController)
 	stored := storedAuditLogs(t)
 	s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 		gomock.Any(), gomock.Any(),
@@ -141,7 +137,7 @@ func TestListAuditLogsRedactsSecretFields(t *testing.T) {
 	s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAvatarAccountsV2(
 		gomock.Any(), gomock.Any(),
 	).Return([]*accountproto.AccountV2{}, nil)
-	ctx := metadata.NewIncomingContext(createContextWithToken(t, false), metadata.MD{
+	ctx := metadata.NewIncomingContext(createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}), metadata.MD{
 		"accept-language": []string{"ja"},
 	})
 
@@ -163,18 +159,14 @@ func TestGetAuditLogRedactsSecretFields(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			s := newAuditLogServiceWithGetAccountByEnvironmentMock(
-				t, mockController,
-				accountproto.AccountV2_Role_Organization_MEMBER,
-				accountproto.AccountV2_Role_Environment_VIEWER,
-			)
+			s := newAuditLogService(t, mockController)
 			s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
 				gomock.Any(), stored.Id, redactTestEnvironmentID, "",
 			).Return(stored, nil)
 			s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAvatarAccountsV2(
 				gomock.Any(), gomock.Any(),
 			).Return([]*accountproto.AccountV2{}, nil)
-			ctx := metadata.NewIncomingContext(createContextWithToken(t, false), metadata.MD{
+			ctx := metadata.NewIncomingContext(createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}), metadata.MD{
 				"accept-language": []string{"ja"},
 			})
 

@@ -24,14 +24,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
-	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	v2als "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -64,7 +62,6 @@ type AuditlogService interface {
 }
 
 type auditlogService struct {
-	accountClient   accountclient.Client
 	accountStorage  v2as.AccountStorage
 	auditLogStorage v2als.AuditLogStorage
 	opts            *options
@@ -72,7 +69,6 @@ type auditlogService struct {
 }
 
 func NewAuditLogService(
-	accountClient accountclient.Client,
 	accountStorage v2as.AccountStorage,
 	auditLogStorage v2als.AuditLogStorage,
 	opts ...Option,
@@ -84,7 +80,6 @@ func NewAuditLogService(
 		opt(dopts)
 	}
 	return &auditlogService{
-		accountClient:   accountClient,
 		accountStorage:  accountStorage,
 		auditLogStorage: auditLogStorage,
 		opts:            dopts,
@@ -101,8 +96,8 @@ func (s *auditlogService) GetAuditLog(
 	req *proto.GetAuditLogRequest,
 ) (*proto.GetAuditLogResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	if err := s.checkScopeRole(ctx, req.EnvironmentId, req.OrganizationId); err != nil {
-		return nil, err
+	if req.EnvironmentId == "" && req.OrganizationId == "" {
+		return nil, statusMissingEnvironmentOrOrganization.Err()
 	}
 	if req.Id == "" {
 		s.logger.Error("Missing audit log id",
@@ -176,8 +171,8 @@ func (s *auditlogService) ListAuditLogs(
 	localizer := locale.NewLocalizer(ctx)
 	// Combined with environment_id, organization_id lists that environment's
 	// logs plus the organization's organization-level logs in one timeline.
-	if err := s.checkScopeRole(ctx, req.EnvironmentId, req.OrganizationId); err != nil {
-		return nil, err
+	if req.EnvironmentId == "" && req.OrganizationId == "" {
+		return nil, statusMissingEnvironmentOrOrganization.Err()
 	}
 	params, err := listAuditLogsParams(req)
 	if err != nil {
@@ -291,13 +286,6 @@ func (s *auditlogService) ListFeatureHistory(
 	req *proto.ListFeatureHistoryRequest,
 ) (*proto.ListFeatureHistoryResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-
 	// Use maximum page size as default when not provided, is 0, or exceeds the maximum
 	limit := int(req.PageSize)
 	if limit <= 0 || limit > maxAuditLogPageSize {
@@ -384,89 +372,6 @@ func (s *auditlogService) getAccountMapByEmails(
 		accountMap[accounts[i].Email] = accounts[i]
 	}
 	return accountMap, nil
-}
-
-// checkScopeRole authorizes the audit log scope used by GetAuditLog and
-// ListAuditLogs. Every ID the storage is filtered by is checked on its own:
-// organization_id requires the organization admin role and environment_id
-// requires the environment viewer role. When both IDs are set, both checks must
-// pass, so the organization role alone never grants access to an environment
-// that belongs to a different organization.
-func (s *auditlogService) checkScopeRole(
-	ctx context.Context,
-	environmentID, organizationID string,
-) error {
-	if environmentID == "" && organizationID == "" {
-		return statusMissingEnvironmentOrOrganization.Err()
-	}
-	if organizationID != "" {
-		// System admins can read any organization's logs without being a member.
-		if _, err := role.CheckSystemAdminRole(ctx); err != nil {
-			_, err := s.checkOrganizationRole(
-				ctx, accountproto.AccountV2_Role_Organization_ADMIN,
-				organizationID)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	if environmentID != "" {
-		_, err := s.checkEnvironmentRole(
-			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-			environmentID)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (s *auditlogService) checkEnvironmentRole(
-	ctx context.Context,
-	requiredRole accountproto.AccountV2_Role_Environment,
-	environmentId string,
-) (*eventproto.Editor, error) {
-	return role.CheckEnvironmentRoleWithLog(
-		ctx,
-		requiredRole,
-		environmentId,
-		func(email string) (*accountproto.AccountV2, error) {
-			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
-				Email:         email,
-				EnvironmentId: environmentId,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return resp.Account, nil
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
-}
-
-func (s *auditlogService) checkOrganizationRole(
-	ctx context.Context,
-	requiredRole accountproto.AccountV2_Role_Organization,
-	organizationID string,
-) (*eventproto.Editor, error) {
-	return role.CheckOrganizationRoleWithLog(
-		ctx,
-		requiredRole,
-		organizationID,
-		func(email string) (*accountproto.GetAccountV2Response, error) {
-			return s.accountClient.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
-				Email:          email,
-				OrganizationId: organizationID,
-			})
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
 }
 
 func deDuplicateStrings(args []string) []string {
