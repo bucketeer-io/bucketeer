@@ -26,17 +26,15 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	v2asmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	v2als "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2"
 	v2alsmock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
 	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
@@ -46,12 +44,10 @@ func TestNewAuditLogService(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	accountClientMock := accountclientmock.NewMockClient(mockController)
 	accountStorageMock := v2asmock.NewMockAccountStorage(mockController)
 	auditLogStorageMock := v2alsmock.NewMockAuditLogStorage(mockController)
 	logger := zap.NewNop()
 	s := NewAuditLogService(
-		accountClientMock,
 		accountStorageMock,
 		auditLogStorageMock,
 		WithLogger(logger),
@@ -75,8 +71,8 @@ func TestGetAuditLog(t *testing.T) {
 	}{
 		{
 			desc:    "err: missing environment_id and organization_id",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context: createContextWithToken(t, true),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email", IsAdmin: true}),
 			setup:   nil,
 			input: &proto.GetAuditLogRequest{
 				Id: "id-1",
@@ -85,33 +81,9 @@ func TestGetAuditLog(t *testing.T) {
 			expectedErr: statusMissingEnvironmentOrOrganization.Err(),
 		},
 		{
-			desc:    "errPermissionDenied",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			context: createContextWithToken(t, false),
-			setup:   func(s *auditlogService) {},
-			input: &proto.GetAuditLogRequest{
-				Id:            "id-1",
-				EnvironmentId: "env-1",
-			},
-			expected:    nil,
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "errPermissionDenied: organization member",
-			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_MEMBER),
-			context: createContextWithToken(t, false),
-			setup:   func(s *auditlogService) {},
-			input: &proto.GetAuditLogRequest{
-				Id:             "id-1",
-				OrganizationId: "org-1",
-			},
-			expected:    nil,
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
 			desc:    "success: system admin without organization membership",
-			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED),
-			context: createContextWithToken(t, true),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email", IsAdmin: true}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
 					gomock.Any(), "id-1", "", "org-1",
@@ -139,8 +111,8 @@ func TestGetAuditLog(t *testing.T) {
 		},
 		{
 			desc:    "success: public api editor key obfuscated",
-			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED),
-			context: createContextWithToken(t, true),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email", IsAdmin: true}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
 					gomock.Any(), "id-1", "", "org-1",
@@ -178,19 +150,9 @@ func TestGetAuditLog(t *testing.T) {
 		},
 		{
 			desc:    "success: environment and organization scope combined",
-			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
-			context: createContextWithToken(t, false),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}),
 			setup: func(s *auditlogService) {
-				// The environment scope is authorized on its own, so the caller's
-				// account is also resolved for the requested environment.
-				s.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2ByEnvironmentID(
-					gomock.Any(), gomock.Any(),
-				).Return(&accountproto.GetAccountV2ByEnvironmentIDResponse{
-					Account: &accountproto.AccountV2{
-						Email:            "email",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-					},
-				}, nil)
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
 					gomock.Any(), "id-1", "env-1", "org-1",
 				).Return(&proto.AuditLog{
@@ -221,8 +183,8 @@ func TestGetAuditLog(t *testing.T) {
 		},
 		{
 			desc:    "success: organization audit log",
-			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
-			context: createContextWithToken(t, false),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
 					gomock.Any(), "id-1", "", "org-1",
@@ -250,8 +212,8 @@ func TestGetAuditLog(t *testing.T) {
 		},
 		{
 			desc:    "err: missing ID",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context: createContextWithToken(t, true),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email", IsAdmin: true}),
 			setup:   nil,
 			input: &proto.GetAuditLogRequest{
 				Id:            "",
@@ -262,8 +224,8 @@ func TestGetAuditLog(t *testing.T) {
 		},
 		{
 			desc:    "err: ErrInternal",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context: createContextWithToken(t, true),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email", IsAdmin: true}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -278,8 +240,8 @@ func TestGetAuditLog(t *testing.T) {
 		},
 		{
 			desc:    "success",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context: createContextWithToken(t, true),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email", IsAdmin: true}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -352,8 +314,8 @@ func TestListAuditLogs(t *testing.T) {
 	}{
 		{
 			desc:        "err: ErrInvalidCursor",
-			service:     newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context:     createContextWithToken(t, true),
+			service:     newAuditLogService(t, mockController),
+			context:     createContextWithEditor(t, &domaineventproto.Editor{Email: "email", IsAdmin: true}),
 			setup:       nil,
 			input:       &proto.ListAuditLogsRequest{Cursor: "XXX", EnvironmentId: "ns0"},
 			expected:    nil,
@@ -361,8 +323,8 @@ func TestListAuditLogs(t *testing.T) {
 		},
 		{
 			desc:    "err: ErrInternal",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context: createContextWithToken(t, true),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email", IsAdmin: true}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(),
@@ -373,18 +335,9 @@ func TestListAuditLogs(t *testing.T) {
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal")).Err(),
 		},
 		{
-			desc:        "errPermissionDenied",
-			service:     newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			context:     createContextWithToken(t, false),
-			setup:       func(s *auditlogService) {},
-			input:       &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
-			expected:    nil,
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
 			desc:    "success",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context: createContextWithToken(t, true),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email", IsAdmin: true}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(),
@@ -399,8 +352,8 @@ func TestListAuditLogs(t *testing.T) {
 		},
 		{
 			desc:    "success with default page size when page_size is 0",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context: createContextWithToken(t, true),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email", IsAdmin: true}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(),
@@ -422,8 +375,8 @@ func TestListAuditLogs(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer Account",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
-			context: createContextWithToken(t, false),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(),
@@ -438,8 +391,8 @@ func TestListAuditLogs(t *testing.T) {
 		},
 		{
 			desc:    "success: page size exceeds maximum",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context: createContextWithToken(t, true),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email", IsAdmin: true}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(),
@@ -470,26 +423,17 @@ func TestListAuditLogs(t *testing.T) {
 		},
 		{
 			desc:        "err: missing environment_id and organization_id",
-			service:     newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context:     createContextWithToken(t, true),
+			service:     newAuditLogService(t, mockController),
+			context:     createContextWithEditor(t, &domaineventproto.Editor{Email: "email", IsAdmin: true}),
 			setup:       nil,
 			input:       &proto.ListAuditLogsRequest{PageSize: 2},
 			expected:    nil,
 			expectedErr: statusMissingEnvironmentOrOrganization.Err(),
 		},
 		{
-			desc:        "errPermissionDenied: organization member",
-			service:     newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_MEMBER),
-			context:     createContextWithToken(t, false),
-			setup:       func(s *auditlogService) {},
-			input:       &proto.ListAuditLogsRequest{PageSize: 2, OrganizationId: "org-1"},
-			expected:    nil,
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
 			desc:    "success: system admin without organization membership",
-			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED),
-			context: createContextWithToken(t, true),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email", IsAdmin: true}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(),
@@ -516,8 +460,8 @@ func TestListAuditLogs(t *testing.T) {
 		},
 		{
 			desc:    "success: organization scope",
-			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
-			context: createContextWithToken(t, false),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}),
 			setup: func(s *auditlogService) {
 				entityType := int32(domaineventproto.Event_ORGANIZATION)
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
@@ -542,19 +486,9 @@ func TestListAuditLogs(t *testing.T) {
 		},
 		{
 			desc:    "success: environment and organization scope combined",
-			service: newAuditLogServiceWithGetAccountMock(t, mockController, accountproto.AccountV2_Role_Organization_ADMIN),
-			context: createContextWithToken(t, false),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}),
 			setup: func(s *auditlogService) {
-				// The environment scope is authorized on its own, so the caller's
-				// account is also resolved for the requested environment.
-				s.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2ByEnvironmentID(
-					gomock.Any(), gomock.Any(),
-				).Return(&accountproto.GetAccountV2ByEnvironmentIDResponse{
-					Account: &accountproto.AccountV2{
-						Email:            "email",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-					},
-				}, nil)
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(),
 					v2als.ListAuditLogsParams{
@@ -613,8 +547,8 @@ func TestListFeatureHistory(t *testing.T) {
 	}{
 		{
 			desc:        "err: ErrInvalidCursor",
-			service:     newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context:     createContextWithToken(t, false),
+			service:     newAuditLogService(t, mockController),
+			context:     createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}),
 			setup:       nil,
 			input:       &proto.ListFeatureHistoryRequest{Cursor: "XXX", EnvironmentId: "ns0"},
 			expected:    nil,
@@ -622,8 +556,8 @@ func TestListFeatureHistory(t *testing.T) {
 		},
 		{
 			desc:    "err: ErrInternal",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context: createContextWithToken(t, false),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(),
@@ -634,20 +568,9 @@ func TestListFeatureHistory(t *testing.T) {
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.AuditlogPackageName, "internal")).Err(),
 		},
 		{
-			desc:    "errPermissionDenied",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			context: createContextWithTokenRoleUnassigned(t),
-			setup:   func(s *auditlogService) {},
-			input: &proto.ListFeatureHistoryRequest{
-				FeatureId: "fid-1", PageSize: 2, Cursor: "", EnvironmentId: "ns0",
-			},
-			expected:    nil,
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
 			desc:    "success",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context: createContextWithToken(t, false),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(),
@@ -661,8 +584,8 @@ func TestListFeatureHistory(t *testing.T) {
 		},
 		{
 			desc:    "success with viewer account",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
-			context: createContextWithTokenRoleUnassigned(t),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(),
@@ -676,8 +599,8 @@ func TestListFeatureHistory(t *testing.T) {
 		},
 		{
 			desc:    "success with default page size when page_size is 0",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context: createContextWithToken(t, false),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}),
 			setup: func(s *auditlogService) {
 				entityType := int32(domaineventproto.Event_FEATURE)
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
@@ -701,8 +624,8 @@ func TestListFeatureHistory(t *testing.T) {
 		},
 		{
 			desc:    "success: public api editor key obfuscated",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context: createContextWithToken(t, false),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(),
@@ -714,8 +637,8 @@ func TestListFeatureHistory(t *testing.T) {
 		},
 		{
 			desc:    "success: page size exceeds maximum",
-			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
-			context: createContextWithToken(t, false),
+			service: newAuditLogService(t, mockController),
+			context: createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}),
 			setup: func(s *auditlogService) {
 				entityType := int32(domaineventproto.Event_FEATURE)
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
@@ -756,50 +679,11 @@ func TestListFeatureHistory(t *testing.T) {
 	}
 }
 
-func newAuditLogServiceWithGetAccountByEnvironmentMock(t *testing.T, mockController *gomock.Controller, ro accountproto.AccountV2_Role_Organization, re accountproto.AccountV2_Role_Environment) *auditlogService {
+func newAuditLogService(t *testing.T, mockController *gomock.Controller) *auditlogService {
 	t.Helper()
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
-	accountClientMock := accountclientmock.NewMockClient(mockController)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: ro,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: "ns0",
-					Role:          re,
-				},
-			},
-		},
-	}
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &auditlogService{
-		accountClient:   accountClientMock,
-		accountStorage:  v2asmock.NewMockAccountStorage(mockController),
-		auditLogStorage: v2alsmock.NewMockAuditLogStorage(mockController),
-		logger:          logger.Named("api"),
-	}
-}
-
-func newAuditLogServiceWithGetAccountMock(
-	t *testing.T,
-	mockController *gomock.Controller,
-	ro accountproto.AccountV2_Role_Organization,
-) *auditlogService {
-	t.Helper()
-	logger, err := log.NewLogger()
-	require.NoError(t, err)
-	accountClientMock := accountclientmock.NewMockClient(mockController)
-	ar := &accountproto.GetAccountV2Response{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: ro,
-		},
-	}
-	accountClientMock.EXPECT().GetAccountV2(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
-	return &auditlogService{
-		accountClient:   accountClientMock,
 		accountStorage:  v2asmock.NewMockAccountStorage(mockController),
 		auditLogStorage: v2alsmock.NewMockAuditLogStorage(mockController),
 		logger:          logger.Named("api"),
@@ -834,23 +718,10 @@ func createPublicAPIAuditLogs(t *testing.T, apiKey string) []*proto.AuditLog {
 	return auditlogs
 }
 
-func createContextWithToken(t *testing.T, isSystemAdmin bool) context.Context {
+// createContextWithEditor is a context after the authz interceptor allowed the request.
+func createContextWithEditor(t *testing.T, editor *domaineventproto.Editor) context.Context {
 	t.Helper()
-	token := &token.AccessToken{
-		Email:         "test@example.com",
-		IsSystemAdmin: isSystemAdmin,
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
-}
-
-func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
-	t.Helper()
-	token := &token.AccessToken{
-		Email: "test@example.com",
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
+	return authz.WithEditor(context.TODO(), editor)
 }
 
 func TestSanitizeEvents(t *testing.T) {

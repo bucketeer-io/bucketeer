@@ -20,10 +20,6 @@ import (
 )
 
 var (
-	statusUnauthenticated = api.NewGRPCStatus(
-		pkgErr.NewErrorUnauthenticated(pkgErr.AuditlogPackageName, "unauthenticated"))
-	statusPermissionDenied = api.NewGRPCStatus(
-		pkgErr.NewErrorPermissionDenied(pkgErr.AuditlogPackageName, "permission denied"))
 	statusMissingID = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuditlogPackageName, "missing ID", "ID"))
 	statusMissingEnvironmentOrOrganization = api.NewGRPCStatus(

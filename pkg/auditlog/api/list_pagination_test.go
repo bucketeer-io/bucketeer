@@ -27,6 +27,7 @@ import (
 	v2alsmock "github.com/bucketeer-io/bucketeer/v2/pkg/auditlog/storage/v2/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
+	domaineventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 // listCursorCase describes a cursor of a list request and what the handler is
@@ -74,11 +75,7 @@ func TestListAuditLogsCursorValidation(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			service := newAuditLogServiceWithGetAccountByEnvironmentMock(
-				t, mockController,
-				accountproto.AccountV2_Role_Organization_OWNER,
-				accountproto.AccountV2_Role_Environment_EDITOR,
-			)
+			service := newAuditLogService(t, mockController)
 			var listed *v2als.ListAuditLogsParams
 			if tc.wantErr == nil {
 				service.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().
@@ -92,7 +89,7 @@ func TestListAuditLogsCursorValidation(t *testing.T) {
 					Return([]*accountproto.AccountV2{}, nil).AnyTimes()
 			}
 
-			resp, err := service.ListAuditLogs(createContextWithToken(t, true), &proto.ListAuditLogsRequest{
+			resp, err := service.ListAuditLogs(createContextWithEditor(t, &domaineventproto.Editor{Email: "email", IsAdmin: true}), &proto.ListAuditLogsRequest{
 				EnvironmentId: "ns0",
 				PageSize:      10,
 				Cursor:        tc.cursor,
@@ -123,11 +120,7 @@ func TestListFeatureHistoryCursorValidation(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			service := newAuditLogServiceWithGetAccountByEnvironmentMock(
-				t, mockController,
-				accountproto.AccountV2_Role_Organization_OWNER,
-				accountproto.AccountV2_Role_Environment_EDITOR,
-			)
+			service := newAuditLogService(t, mockController)
 			var listed *v2als.ListAuditLogsParams
 			if tc.wantErr == nil {
 				service.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().
@@ -141,7 +134,7 @@ func TestListFeatureHistoryCursorValidation(t *testing.T) {
 					Return([]*accountproto.AccountV2{}, nil).AnyTimes()
 			}
 
-			resp, err := service.ListFeatureHistory(createContextWithToken(t, false), &proto.ListFeatureHistoryRequest{
+			resp, err := service.ListFeatureHistory(createContextWithEditor(t, &domaineventproto.Editor{Email: "email"}), &proto.ListFeatureHistoryRequest{
 				EnvironmentId: "ns0",
 				FeatureId:     "feature-id",
 				PageSize:      10,

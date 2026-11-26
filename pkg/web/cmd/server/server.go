@@ -1047,7 +1047,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	// auditLogService
 	auditLogService := auditlogapi.NewAuditLogService(
-		accountClient,
 		accountStorage,
 		auditLogStorage,
 		auditlogapi.WithLogger(logger),
