@@ -204,6 +204,58 @@ func TestUnaryInterceptor(t *testing.T) {
 	}
 }
 
+func TestShadowSampleRate(t *testing.T) {
+	t.Parallel()
+	req := &featureproto.GetFeatureRequest{EnvironmentId: "env-1"}
+	patterns := []struct {
+		desc            string
+		rate            float64
+		random          float64
+		enforced        []string
+		expectedChecked bool
+		expectedCode    codes.Code
+		expectedLogs    []loggedEntry
+	}{
+		{
+			desc: "rate 1 checks every request", rate: 1, random: 0.99,
+			expectedChecked: true, expectedLogs: []loggedEntry{{level: zapcore.WarnLevel, message: "Would deny"}},
+		},
+		{
+			desc: "rate above 1 is clamped", rate: 2, random: 0.99,
+			expectedChecked: true, expectedLogs: []loggedEntry{{level: zapcore.WarnLevel, message: "Would deny"}},
+		},
+		{
+			desc: "rate 0 skips the shadow check", rate: 0, random: 0,
+		},
+		{
+			desc: "sampled request is checked", rate: 0.5, random: 0.4,
+			expectedChecked: true, expectedLogs: []loggedEntry{{level: zapcore.WarnLevel, message: "Would deny"}},
+		},
+		{
+			desc: "request outside the sample is not checked", rate: 0.5, random: 0.6,
+		},
+		{
+			desc: "enforced service ignores the rate", rate: 0, random: 0, enforced: []string{FeatureService},
+			expectedChecked: true, expectedCode: codes.PermissionDenied,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			core, logs := observer.New(zapcore.DebugLevel)
+			accounts := &fakeAccounts{accounts: testAccounts()}
+			authorizer := New(testRules(guardFunc(func(context.Context, *Access) error { return nil })), accounts)
+			interceptor := NewInterceptor(authorizer, p.enforced, zap.New(core), WithShadowSampleRate(p.rate))
+			interceptor.random = func() float64 { return p.random }
+			handler := func(ctx context.Context, req interface{}) (interface{}, error) { return "response", nil }
+			ctx := userCtx("member@example.com")
+			_, err := interceptor.Unary()(ctx, req, &grpc.UnaryServerInfo{FullMethod: getFeature}, handler)
+			assert.Equal(t, p.expectedCode, status.Code(err))
+			assert.Equal(t, p.expectedChecked, accounts.calls > 0)
+			assert.Equal(t, p.expectedLogs, entries(logs))
+		})
+	}
+}
+
 // fakeStream hands the handler the given messages and then io.EOF.
 type fakeStream struct {
 	grpc.ServerStream

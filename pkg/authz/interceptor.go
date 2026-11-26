@@ -17,6 +17,7 @@ package authz
 import (
 	"context"
 	"errors"
+	"math/rand"
 	"strings"
 
 	"go.uber.org/zap"
@@ -44,19 +45,47 @@ const (
 type Interceptor struct {
 	authorizer *Authorizer
 	enforced   map[string]bool
+	sampleRate float64
+	random     func() float64
 	logger     *zap.Logger
 }
 
-func NewInterceptor(authorizer *Authorizer, enforced []string, logger *zap.Logger) *Interceptor {
+type InterceptorOption func(*Interceptor)
+
+// WithShadowSampleRate checks this fraction of the shadowed requests, 0 to 1;
+// 0 turns the shadow check off. Enforced services are always checked.
+func WithShadowSampleRate(rate float64) InterceptorOption {
+	return func(i *Interceptor) {
+		i.sampleRate = min(max(rate, 0), 1)
+	}
+}
+
+func NewInterceptor(
+	authorizer *Authorizer,
+	enforced []string,
+	logger *zap.Logger,
+	opts ...InterceptorOption,
+) *Interceptor {
 	set := make(map[string]bool, len(enforced))
 	for _, service := range enforced {
 		set[service] = true
 	}
-	return &Interceptor{
+	i := &Interceptor{
 		authorizer: authorizer,
 		enforced:   set,
+		sampleRate: 1,
+		random:     rand.Float64,
 		logger:     logger.Named("authz"),
 	}
+	for _, opt := range opts {
+		opt(i)
+	}
+	return i
+}
+
+// sampled reports whether a shadowed request is checked.
+func (i *Interceptor) sampled() bool {
+	return i.sampleRate >= 1 || (i.sampleRate > 0 && i.random() < i.sampleRate)
 }
 
 // mode is Enforce for the methods of an enforced service.
@@ -98,9 +127,13 @@ func (i *Interceptor) Unary() grpc.UnaryServerInterceptor {
 		if skipped(info.FullMethod) {
 			return handler(ctx, req)
 		}
+		mode := i.mode(info.FullMethod)
+		if mode == Shadow && !i.sampled() {
+			return handler(ctx, req)
+		}
 		caller, _ := CallerFromContext(ctx)
 		editor, authzErr := i.authorize(ctx, caller, info.FullMethod, req)
-		if i.mode(info.FullMethod) == Enforce {
+		if mode == Enforce {
 			if authzErr != nil {
 				return nil, authzErr
 			}
@@ -123,12 +156,16 @@ func (i *Interceptor) Stream() grpc.StreamServerInterceptor {
 		if skipped(info.FullMethod) {
 			return handler(srv, ss)
 		}
+		mode := i.mode(info.FullMethod)
+		if mode == Shadow && !i.sampled() {
+			return handler(srv, ss)
+		}
 		stream := &authorizedStream{ServerStream: ss, interceptor: i, method: info.FullMethod}
 		err := handler(srv, stream)
 		if stream.denied != nil {
 			return stream.denied
 		}
-		if i.mode(info.FullMethod) == Shadow && stream.authorized {
+		if mode == Shadow && stream.authorized {
 			i.compare(stream.caller, info.FullMethod, stream.authzErr, err)
 		}
 		return err

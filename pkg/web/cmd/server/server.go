@@ -173,6 +173,7 @@ type server struct {
 	project                                 *string
 	isDemoSiteEnabled                       *bool
 	timezone                                *string
+	authzShadowSampleRate                   *float64
 	certPath                                *string
 	keyPath                                 *string
 	serviceTokenPath                        *string
@@ -555,7 +556,11 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"data-warehouse-config-path",
 			"Path to data warehouse configuration file.",
 		).String(),
-		timezone:         cmd.Flag("timezone", "Time zone").Required().String(),
+		timezone: cmd.Flag("timezone", "Time zone").Required().String(),
+		authzShadowSampleRate: cmd.Flag(
+			"authz-shadow-sample-rate",
+			"Fraction of the requests, 0 to 1, checked by the authz interceptor in shadow mode; 0 turns the check off.",
+		).Default("1").Float64(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
@@ -996,7 +1001,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// authz interceptor: enforced for the services whose handlers no longer check, shadow for the others.
 	authorizer := authz.New(authz.WebRules, authz.NewAccountLoader(accountClient),
 		authz.WithLookups(authz.NewLookups(environmentClient)))
-	authzInterceptor := authz.NewInterceptor(authorizer, authz.EnforcedWebServices, logger)
+	authzInterceptor := authz.NewInterceptor(authorizer, authz.EnforcedWebServices, logger,
+		authz.WithShadowSampleRate(*s.authzShadowSampleRate))
 	// authService
 	authService, err := s.createAuthService(
 		ctx,
