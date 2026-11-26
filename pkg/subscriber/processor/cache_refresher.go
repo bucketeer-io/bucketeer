@@ -464,10 +464,14 @@ func (c *cacheRefresher) refreshSegmentUsers(
 	}
 	fetchCtx, cancel := context.WithTimeout(ctx, cacheRefresherFetchTimeout)
 	defer cancel()
-	listResp, err := c.featureClient.ListSegmentUsers(fetchCtx, &featureproto.ListSegmentUsersRequest{
-		SegmentId:     event.EntityId,
-		EnvironmentId: event.EnvironmentId,
-	})
+	listResp, err := c.featureClient.ListSegmentUsers(
+		fetchCtx,
+		&featureproto.ListSegmentUsersRequest{
+			SegmentId:     event.EntityId,
+			EnvironmentId: event.EnvironmentId,
+		},
+		featureclient.WithMaxSegmentUsersResponse(),
+	)
 	if err != nil {
 		return err
 	}

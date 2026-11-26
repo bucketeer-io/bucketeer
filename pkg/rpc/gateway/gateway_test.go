@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestBooleanConversionMarshaler_PreprocessJSON(t *testing.T) {
@@ -344,18 +346,136 @@ func TestGatewayRequestBodySizeLimit(t *testing.T) {
 	}
 }
 
+func TestGatewayResponseSizeLimit(t *testing.T) {
+	t.Parallel()
+	const (
+		grpcDefaultBytes = 4 * 1024 * 1024
+		raisedBytes      = 8 * 1024 * 1024
+	)
+	backendAddr := startLargeResponseBackend(t)
+
+	patterns := []struct {
+		desc           string
+		opts           []Option
+		responseBytes  int
+		expectedStatus int
+	}{
+		{
+			desc:           "default limit: a response within it is returned",
+			responseBytes:  1024,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:           "default limit: a response over it is rejected",
+			responseBytes:  grpcDefaultBytes + 1,
+			expectedStatus: http.StatusTooManyRequests,
+		},
+		{
+			desc:           "raised limit: a response over the default is returned",
+			opts:           []Option{WithMaxResponseBytes(raisedBytes)},
+			responseBytes:  grpcDefaultBytes + 1,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			desc:           "raised limit: a response over it is rejected",
+			opts:           []Option{WithMaxResponseBytes(raisedBytes)},
+			responseBytes:  raisedBytes + 1,
+			expectedStatus: http.StatusTooManyRequests,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			baseURL := startTestGatewayWithRegistrar(t, largeResponseRegistrar(t, backendAddr), p.opts...)
+
+			resp, err := http.Get(fmt.Sprintf("%s/v1/large/%d", baseURL, p.responseBytes))
+			require.NoError(t, err)
+			defer resp.Body.Close()
+			respBody, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			require.Equal(t, p.expectedStatus, resp.StatusCode, string(respBody))
+			if p.expectedStatus == http.StatusOK {
+				assert.Equal(t, strconv.Itoa(p.responseBytes), string(respBody))
+				return
+			}
+			assert.Contains(t, string(respBody), "received message larger than max")
+		})
+	}
+}
+
+// largeResponseMethod is the method of the service started by
+// startLargeResponseBackend. The request is the number of bytes to return.
+const largeResponseMethod = "/bucketeer.gateway.test.LargeResponse/Get"
+
+// startLargeResponseBackend starts a gRPC server on a loopback port whose
+// only method returns a message with as many bytes as the request asks for.
+// It returns the address of the server.
+func startLargeResponseBackend(t *testing.T) string {
+	t.Helper()
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	server := grpc.NewServer()
+	server.RegisterService(&grpc.ServiceDesc{
+		ServiceName: "bucketeer.gateway.test.LargeResponse",
+		HandlerType: (*interface{})(nil),
+		Methods: []grpc.MethodDesc{{
+			MethodName: "Get",
+			Handler: func(
+				_ interface{},
+				_ context.Context,
+				decode func(interface{}) error,
+				_ grpc.UnaryServerInterceptor,
+			) (interface{}, error) {
+				size := &wrapperspb.Int32Value{}
+				if err := decode(size); err != nil {
+					return nil, err
+				}
+				return &wrapperspb.BytesValue{Value: make([]byte, size.Value)}, nil
+			},
+		}},
+	}, struct{}{})
+	go func() { _ = server.Serve(ln) }()
+	t.Cleanup(server.Stop)
+	return ln.Addr().String()
+}
+
+// largeResponseRegistrar registers GET /v1/large/{bytes}. Like the generated
+// gRPC-Gateway handlers, it calls the backend over a connection opened with
+// the dial options of the gateway, and writes the size of the response.
+func largeResponseRegistrar(t *testing.T, backendAddr string) HandlerRegistrar {
+	t.Helper()
+	return func(_ context.Context, mux *runtime.ServeMux, dialOpts []grpc.DialOption) error {
+		conn, err := grpc.NewClient(backendAddr, dialOpts...)
+		if err != nil {
+			return err
+		}
+		t.Cleanup(func() { _ = conn.Close() })
+		return mux.HandlePath(http.MethodGet, "/v1/large/{bytes}",
+			func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+				_, outbound := runtime.MarshalerForRequest(mux, r)
+				size, err := strconv.ParseInt(pathParams["bytes"], 10, 32)
+				if err != nil {
+					runtime.HTTPError(r.Context(), mux, outbound, w, r, status.Errorf(codes.InvalidArgument, "%v", err))
+					return
+				}
+				resp := &wrapperspb.BytesValue{}
+				if err := conn.Invoke(r.Context(), largeResponseMethod, wrapperspb.Int32(int32(size)), resp); err != nil {
+					runtime.HTTPError(r.Context(), mux, outbound, w, r, err)
+					return
+				}
+				_, _ = w.Write([]byte(strconv.Itoa(len(resp.Value))))
+			},
+		)
+	}
+}
+
 // startTestGateway starts a gateway on a loopback port with a POST /v1/echo
 // handler that decodes the request body the same way the generated
 // gRPC-Gateway handlers do and echoes the decoded message back.
 // It returns the base URL of the gateway.
 func startTestGateway(t *testing.T, opts ...Option) string {
 	t.Helper()
-	// Reserve a free loopback port for the gateway to listen on.
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	addr := ln.Addr().String()
-	require.NoError(t, ln.Close())
-
 	echo := func(_ context.Context, mux *runtime.ServeMux, _ []grpc.DialOption) error {
 		return mux.HandlePath(http.MethodPost, "/v1/echo",
 			func(w http.ResponseWriter, r *http.Request, _ map[string]string) {
@@ -375,11 +495,24 @@ func startTestGateway(t *testing.T, opts ...Option) string {
 		)
 	}
 
+	return startTestGatewayWithRegistrar(t, echo, opts...)
+}
+
+// startTestGatewayWithRegistrar starts a gateway on a loopback port with the
+// handlers of the registrar. It returns the base URL of the gateway.
+func startTestGatewayWithRegistrar(t *testing.T, registrar HandlerRegistrar, opts ...Option) string {
+	t.Helper()
+	// Reserve a free loopback port for the gateway to listen on.
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	addr := ln.Addr().String()
+	require.NoError(t, ln.Close())
+
 	g, err := NewGateway(addr, append([]Option{WithLogger(zap.NewNop())}, opts...)...)
 	require.NoError(t, err)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	require.NoError(t, g.Start(ctx, echo))
+	require.NoError(t, g.Start(ctx, registrar))
 	t.Cleanup(func() { g.Stop(time.Second) })
 
 	require.Eventually(t, func() bool {

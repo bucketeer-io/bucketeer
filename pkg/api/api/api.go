@@ -831,7 +831,7 @@ func (s *gatewayService) getSegmentUsers(
 		SegmentId:     segmentID,
 		EnvironmentId: environmentId,
 	}
-	res, err := s.featureClient.ListSegmentUsers(ctx, req)
+	res, err := s.featureClient.ListSegmentUsers(ctx, req, featureclient.WithMaxSegmentUsersResponse())
 	if err != nil {
 		s.logger.Error(
 			"Failed to retrieve segment users from storage",

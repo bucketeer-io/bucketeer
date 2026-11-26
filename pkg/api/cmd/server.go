@@ -886,6 +886,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gateway.WithMetrics(registerer),
 		gateway.WithCertPath(*s.certPath),
 		gateway.WithKeyPath(*s.keyPath),
+		// GetSegmentUsers returns the users of every segment the SDK needs.
+		gateway.WithMaxResponseBytes(featureclient.MaxSegmentUsersResponseBytes),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create API gateway: %w", err)

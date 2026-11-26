@@ -367,6 +367,14 @@ func (g *Gateway) Start(ctx context.Context,
 		grpc.WithInitialConnWindowSize(g.opts.initialConnWindowSize),
 	)
 
+	// The response of a service can be larger than the message a gRPC client
+	// accepts by default.
+	if g.opts.maxResponseBytes > 0 {
+		dialOpts = append(dialOpts, grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(g.opts.maxResponseBytes),
+		))
+	}
+
 	// Register all the provided handler registrars
 	// The context will be used to manage the lifecycle of gRPC client connections.
 	// When the context is cancelled (after all shutdown logic completes), the gRPC

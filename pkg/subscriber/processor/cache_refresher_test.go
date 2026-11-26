@@ -39,6 +39,7 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/holdout/domain"
 	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
@@ -308,7 +309,11 @@ func TestCacheRefresherHandleMessage(t *testing.T) {
 			},
 			setup: func(m *cacheRefresherMocks, event *domaineventproto.Event) {
 				m.featureClient.EXPECT().
-					ListSegmentUsers(gomock.Any(), gomock.Any()).
+					ListSegmentUsers(
+						gomock.Any(),
+						gomock.Any(),
+						gomock.Eq(grpc.MaxCallRecvMsgSize(featureclient.MaxSegmentUsersResponseBytes)),
+					).
 					Return(&featureproto.ListSegmentUsersResponse{
 						Users: []*featureproto.SegmentUser{
 							{Id: "user-1", SegmentId: "segment-id-1"},
