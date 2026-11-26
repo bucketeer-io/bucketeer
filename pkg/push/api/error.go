@@ -54,8 +54,4 @@ var (
 	statusTagAlreadyExists = api.NewGRPCStatus(
 		err.NewErrorAlreadyExists(err.PushPackageName, "tag already exists"),
 	)
-	statusUnauthenticated = api.NewGRPCStatus(
-		err.NewErrorUnauthenticated(err.PushPackageName, "unauthenticated"),
-	)
-	statusPermissionDenied = api.NewGRPCStatus(err.NewErrorPermissionDenied(err.PushPackageName, "permission denied"))
 )

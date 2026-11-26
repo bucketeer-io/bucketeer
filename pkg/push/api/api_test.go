@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -29,8 +28,8 @@ import (
 
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
@@ -39,9 +38,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/push/domain"
 	v2ps "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/push/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	pushproto "github.com/bucketeer-io/bucketeer/v2/proto/push"
 )
 
@@ -81,7 +79,6 @@ func TestNewPushService(t *testing.T) {
 	pushStorageMock := storagemock.NewMockPushStorage(mockController)
 	featureClientMock := featureclientmock.NewMockClient(mockController)
 	experimentClientMock := experimentclientmock.NewMockClient(mockController)
-	accountClientMock := accountclientmock.NewMockClient(mockController)
 	pm := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
 	s := NewPushService(
@@ -89,7 +86,6 @@ func TestNewPushService(t *testing.T) {
 		pushStorageMock,
 		featureClientMock,
 		experimentClientMock,
-		accountClientMock,
 		pm,
 		WithLogger(logger),
 	)
@@ -101,7 +97,7 @@ func TestCreatePushMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, true)
+	ctx := createContextWithEditor(t, newEditor(nil, nil, nil))
 
 	patterns := []struct {
 		desc        string
@@ -290,7 +286,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, true)
+	ctx := createContextWithEditor(t, newEditor(nil, nil, nil))
 
 	patterns := []struct {
 		desc        string
@@ -551,7 +547,7 @@ func TestCheckFCMServiceAccount(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, true)
+	ctx := createContextWithEditor(t, newEditor(nil, nil, nil))
 
 	patterns := []struct {
 		desc              string
@@ -605,7 +601,7 @@ func TestDeletePushMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, true)
+	ctx := createContextWithEditor(t, newEditor(nil, nil, nil))
 
 	patterns := []struct {
 		desc        string
@@ -792,8 +788,6 @@ func TestListPushesMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, false)
-
 	patterns := []struct {
 		desc        string
 		orgRole     *accountproto.AccountV2_Role_Organization
@@ -823,14 +817,6 @@ func TestListPushesMySQL(t *testing.T) {
 			expectedErr: statusInternal.Err(),
 		},
 		{
-			desc:        "err: ErrPermissionDenied",
-			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole:     toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input:       &pushproto.ListPushesRequest{EnvironmentId: "ns0"},
-			expected:    nil,
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
 			desc:    "success",
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
@@ -848,24 +834,6 @@ func TestListPushesMySQL(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_EDITOR),
 			setup: func(s *PushService) {
-				s.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(),
-				).Return(&accountproto.GetAccountV2Response{
-					Account: &accountproto.AccountV2{
-						Email:            "email",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-							{
-								EnvironmentId: "ns0",
-								Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-							},
-							{
-								EnvironmentId: "ns1",
-								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-							},
-						},
-					},
-				}, nil)
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
 					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Push{
@@ -891,7 +859,8 @@ func TestListPushesMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newPushService(mockController, nil, p.orgRole, p.envRole)
+			ctx := createContextWithEditor(t, newEditor(nil, p.orgRole, p.envRole))
+			s := newPushService(mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -928,15 +897,14 @@ func TestGetPushMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc          string
-		isSystemAdmin bool
-		envID         *string
-		orgRole       *accountproto.AccountV2_Role_Organization
-		envRole       *accountproto.AccountV2_Role_Environment
-		setup         func(*PushService)
-		req           *pushproto.GetPushRequest
-		expected      *pushproto.GetPushResponse
-		expectedErr   error
+		desc        string
+		envID       *string
+		orgRole     *accountproto.AccountV2_Role_Organization
+		envRole     *accountproto.AccountV2_Role_Environment
+		setup       func(*PushService)
+		req         *pushproto.GetPushRequest
+		expected    *pushproto.GetPushResponse
+		expectedErr error
 	}{
 		{
 			desc:        "err: ErrIDRequired",
@@ -944,29 +912,6 @@ func TestGetPushMySQL(t *testing.T) {
 			envRole:     toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			req:         &pushproto.GetPushRequest{EnvironmentId: "ns0"},
 			expectedErr: statusIDRequired.Err(),
-		},
-		{
-			// The storage must not be called when the caller has no role in the
-			// environment, which the mock enforces by having no expectation set.
-			desc:    "err: ErrPermissionDenied: no role in the environment",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			req: &pushproto.GetPushRequest{
-				EnvironmentId: "ns0",
-				Id:            "key-1",
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "err: ErrPermissionDenied: viewer of another environment",
-			envID:   toPtr("ns1"),
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
-			req: &pushproto.GetPushRequest{
-				EnvironmentId: "ns0",
-				Id:            "key-1",
-			},
-			expectedErr: statusPermissionDenied.Err(),
 		},
 		{
 			desc:    "err: ErrNotFound",
@@ -1029,10 +974,9 @@ func TestGetPushMySQL(t *testing.T) {
 			expected: &pushproto.GetPushResponse{Push: expectedPush},
 		},
 		{
-			desc:          "success: system admin without an environment role",
-			isSystemAdmin: true,
-			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole:       toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			desc:    "success: system admin without an environment role",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
 					gomock.Any(), "key-1", "ns0",
@@ -1047,8 +991,8 @@ func TestGetPushMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			ctx := createContextWithToken(t, p.isSystemAdmin)
-			service := newPushService(mockController, p.envID, p.orgRole, p.envRole)
+			ctx := createContextWithEditor(t, newEditor(p.envID, p.orgRole, p.envRole))
+			service := newPushService(mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -1061,63 +1005,17 @@ func TestGetPushMySQL(t *testing.T) {
 
 func newPushServiceWithMock(t *testing.T, c *gomock.Controller) *PushService {
 	t.Helper()
-	accountClientMock := accountclientmock.NewMockClient(c)
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(
-		&accountproto.GetAccountV2ByEnvironmentIDResponse{
-			Account: &accountproto.AccountV2{
-				Email:            "email",
-				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-					{EnvironmentId: "", Role: accountproto.AccountV2_Role_Environment_EDITOR},
-				},
-			},
-		}, nil,
-	).AnyTimes()
 	return &PushService{
 		dbClient:         databasemock.NewMockClient(c),
 		pushStorage:      storagemock.NewMockPushStorage(c),
 		featureClient:    featureclientmock.NewMockClient(c),
 		experimentClient: experimentclientmock.NewMockClient(c),
-		accountClient:    accountClientMock,
 		publisher:        publishermock.NewMockPublisher(c),
 		logger:           zap.NewNop(),
 	}
 }
 
-func newPushService(c *gomock.Controller, specifiedEnvironmentId *string, specifiedOrgRole *accountproto.AccountV2_Role_Organization, specifiedEnvRole *accountproto.AccountV2_Role_Environment) *PushService {
-	var or accountproto.AccountV2_Role_Organization
-	var er accountproto.AccountV2_Role_Environment
-	var envId string
-	if specifiedOrgRole != nil {
-		or = *specifiedOrgRole
-	} else {
-		or = accountproto.AccountV2_Role_Organization_ADMIN
-	}
-	if specifiedEnvRole != nil {
-		er = *specifiedEnvRole
-	} else {
-		er = accountproto.AccountV2_Role_Environment_EDITOR
-	}
-	if specifiedEnvironmentId != nil {
-		envId = *specifiedEnvironmentId
-	} else {
-		envId = "ns0"
-	}
-
-	accountClientMock := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: or,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: envId,
-					Role:          er,
-				},
-			},
-		},
-	}
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+func newPushService(c *gomock.Controller) *PushService {
 	p := publishermock.NewMockPublisher(c)
 	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	return &PushService{
@@ -1125,24 +1023,43 @@ func newPushService(c *gomock.Controller, specifiedEnvironmentId *string, specif
 		featureClient:    featureclientmock.NewMockClient(c),
 		pushStorage:      storagemock.NewMockPushStorage(c),
 		experimentClient: experimentclientmock.NewMockClient(c),
-		accountClient:    accountClientMock,
 		publisher:        publishermock.NewMockPublisher(c),
 		logger:           zap.NewNop(),
 	}
 }
 
-func createContextWithToken(t *testing.T, isSystemAdmin bool) context.Context {
-	t.Helper()
-	token := &token.AccessToken{
-		Issuer:        "issuer",
-		Audience:      "audience",
-		Expiry:        time.Now().AddDate(100, 0, 0),
-		IssuedAt:      time.Now(),
-		Email:         "email",
-		IsSystemAdmin: isSystemAdmin,
+// newEditor is the caller the authz interceptor would have set: an admin
+// editor of "ns0" unless the roles or the environment are specified.
+func newEditor(
+	specifiedEnvironmentId *string,
+	specifiedOrgRole *accountproto.AccountV2_Role_Organization,
+	specifiedEnvRole *accountproto.AccountV2_Role_Environment,
+) *eventproto.Editor {
+	or := accountproto.AccountV2_Role_Organization_ADMIN
+	er := accountproto.AccountV2_Role_Environment_EDITOR
+	envId := "ns0"
+	if specifiedOrgRole != nil {
+		or = *specifiedOrgRole
 	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
+	if specifiedEnvRole != nil {
+		er = *specifiedEnvRole
+	}
+	if specifiedEnvironmentId != nil {
+		envId = *specifiedEnvironmentId
+	}
+	return &eventproto.Editor{
+		Email:            "email",
+		OrganizationRole: or,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{EnvironmentId: envId, Role: er},
+		},
+	}
+}
+
+// createContextWithEditor is a context after the authz interceptor allowed the request.
+func createContextWithEditor(t *testing.T, editor *eventproto.Editor) context.Context {
+	t.Helper()
+	return authz.WithEditor(context.TODO(), editor)
 }
 
 // convert to pointer

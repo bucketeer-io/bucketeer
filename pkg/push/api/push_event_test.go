@@ -43,7 +43,7 @@ func TestPushEventsOmitFCMServiceAccount(t *testing.T) {
 		// Part of fcmServiceAccountDummy that must not appear in any event.
 		privateKeyMarker = "PRIVATE KEY"
 	)
-	ctx := createContextWithToken(t, true)
+	ctx := createContextWithEditor(t, newEditor(nil, nil, nil))
 
 	storedPush := func() *domain.Push {
 		return &domain.Push{Push: &pushproto.Push{
