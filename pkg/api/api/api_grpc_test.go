@@ -853,7 +853,7 @@ func TestGrpcGetSegmentUsersBySegmentID(t *testing.T) {
 					nil, cache.ErrNotFound)
 				gs.segmentUsersRedisCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, cache.ErrNotFound)
-				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 					nil, errors.New("test"))
 			},
 			segmentID:   "seg-0",
@@ -868,7 +868,7 @@ func TestGrpcGetSegmentUsersBySegmentID(t *testing.T) {
 					nil, cache.ErrNotFound)
 				gs.segmentUsersRedisCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, cache.ErrNotFound)
-				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 					&featureproto.ListSegmentUsersResponse{Users: []*featureproto.SegmentUser{{UserId: "user-0"}}}, nil)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("test"))
@@ -885,7 +885,7 @@ func TestGrpcGetSegmentUsersBySegmentID(t *testing.T) {
 					nil, cache.ErrNotFound)
 				gs.segmentUsersRedisCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, cache.ErrNotFound)
-				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 					&featureproto.ListSegmentUsersResponse{Users: []*featureproto.SegmentUser{{UserId: "user-0"}}}, nil)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
 					nil, status.Error(codes.NotFound, "segment not found"))
@@ -907,7 +907,7 @@ func TestGrpcGetSegmentUsersBySegmentID(t *testing.T) {
 					nil, cache.ErrNotFound)
 				gs.segmentUsersRedisCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, cache.ErrNotFound)
-				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 					&featureproto.ListSegmentUsersResponse{Users: []*featureproto.SegmentUser{{UserId: "user-0"}}}, nil)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
 					&featureproto.GetSegmentResponse{Segment: &featureproto.Segment{UpdatedAt: 12345}}, nil)
@@ -1322,7 +1322,7 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 					}, nil)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get("segment-id-2", envID).Return(
 					nil, errors.New("internal error"))
-				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 					nil, ErrInternal)
 			},
 			input: &gwproto.GetSegmentUsersRequest{
@@ -1352,7 +1352,7 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 					}, nil)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get("segment-id-2", envID).Return(
 					nil, errors.New("internal error"))
-				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 					&featureproto.ListSegmentUsersResponse{
 						Users: []*featureproto.SegmentUser{
 							{
@@ -3059,7 +3059,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 					}, nil)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
-				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 					nil, ErrInternal)
 			},
 			input:       &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "id-0"}},
@@ -3239,7 +3239,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
-				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 					&featureproto.ListSegmentUsersResponse{}, nil)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
 					&featureproto.GetSegmentResponse{Segment: &featureproto.Segment{}}, nil)
@@ -4111,7 +4111,7 @@ func TestGrpcGetEvaluation(t *testing.T) {
 					}, nil)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
-				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 					nil, ErrInternal)
 			},
 			input:       &gwproto.GetEvaluationRequest{Tag: "test", User: &userproto.User{Id: "id-0"}, FeatureId: "feature-id-2"},

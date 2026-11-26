@@ -234,7 +234,7 @@ func uploadSegmentUsersAndWait(t *testing.T, client featureclient.Client, segmen
 			SegmentId:     segmentID,
 			State:         wrapperspb.Int32(int32(featureproto.SegmentUser_INCLUDED)),
 			EnvironmentId: holdoutEnv.id,
-		})
+		}, featureclient.WithMaxSegmentUsersResponse())
 		return err == nil && len(res.Users) >= len(userIDs)
 	}, segmentUploadTimeout, 2*time.Second, "segment users not uploaded")
 	// The segment must leave UPLOADING before a SEGMENT group can start.

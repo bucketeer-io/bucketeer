@@ -50,6 +50,7 @@ type options struct {
 	httpWriteTimeout          time.Duration
 	httpIdleTimeout           time.Duration
 	maxRequestBodyBytes       int64
+	methodMaxResponseBytes    map[string]int
 	incomingHeaderMatcher     runtime.HeaderMatcherFunc
 }
 
@@ -181,6 +182,22 @@ func WithHTTPTimeouts(readTimeout, writeTimeout, idleTimeout time.Duration) Opti
 func WithMaxRequestBodyBytes(maxRequestBodyBytes int64) Option {
 	return func(o *options) {
 		o.maxRequestBodyBytes = maxRequestBodyBytes
+	}
+}
+
+// WithMethodMaxResponseBytes sets the size of the largest response the
+// gateway accepts from one gRPC method. fullMethod has the form
+// "/package.Service/Method". A larger response is answered with 429
+// (ResourceExhausted). A method without a limit of its own keeps the grpc-go
+// default of 4MiB.
+func WithMethodMaxResponseBytes(fullMethod string, maxResponseBytes int) Option {
+	return func(o *options) {
+		// The map is created here, so that it is not shared through
+		// defaultOptions.
+		if o.methodMaxResponseBytes == nil {
+			o.methodMaxResponseBytes = make(map[string]int)
+		}
+		o.methodMaxResponseBytes[fullMethod] = maxResponseBytes
 	}
 }
 

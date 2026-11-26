@@ -31,6 +31,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -41,6 +42,7 @@ import (
 	accountstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
+	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
@@ -51,6 +53,10 @@ import (
 )
 
 const dummyURL = "http://example.com"
+
+// maxSegmentUsersResponse matches the call option with which ListSegmentUsers
+// accepts a response over the default gRPC limit.
+var maxSegmentUsersResponse = gomock.Eq(grpc.MaxCallRecvMsgSize(featureclient.MaxSegmentUsersResponseBytes))
 
 func TestNewGatewayService(t *testing.T) {
 	t.Parallel()
@@ -1383,7 +1389,7 @@ func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 					}, nil)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
-				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 					nil, ErrInternal)
 			},
 			input: httptest.NewRequest(
@@ -1562,7 +1568,7 @@ func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Put(gomock.Any(), gomock.Any()).Return(nil)
-				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 					&featureproto.ListSegmentUsersResponse{}, nil)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
 					&featureproto.GetSegmentResponse{Segment: &featureproto.Segment{Id: "id-0"}}, nil)
@@ -1929,7 +1935,7 @@ func TestGetEvaluation(t *testing.T) {
 					}, nil)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
-				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 					nil, ErrInternal)
 			},
 			input: httptest.NewRequest(
@@ -2496,7 +2502,7 @@ func TestGetSegmentUsersSegmentNotFound(t *testing.T) {
 	gs := newGatewayServiceWithMock(t, mockController)
 	gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 		nil, cache.ErrNotFound)
-	gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+	gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 		&featureproto.ListSegmentUsersResponse{Users: []*featureproto.SegmentUser{{UserId: "user-0"}}}, nil)
 	// Stale reference: the segment was deleted while a flag still references
 	// it. Evaluation must continue with the user list only instead of failing.
@@ -2724,7 +2730,7 @@ func TestEvaluateFeaturesForStream(t *testing.T) {
 					}, nil)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("cache miss"))
-				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 					&featureproto.ListSegmentUsersResponse{}, nil)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
 					&featureproto.GetSegmentResponse{Segment: &featureproto.Segment{Id: "segment-id"}}, nil)
@@ -3116,7 +3122,7 @@ func TestEvaluateFeaturesForStream(t *testing.T) {
 					}, nil)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("cache error"))
-				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any(), maxSegmentUsersResponse).Return(
 					nil, errors.New("db error"))
 			},
 
