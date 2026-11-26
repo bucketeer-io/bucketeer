@@ -24,13 +24,10 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	insightsstorage "github.com/bucketeer-io/bucketeer/v2/pkg/insights/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/prometheus"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	clientproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
 	insightsproto "github.com/bucketeer-io/bucketeer/v2/proto/insights"
 )
@@ -53,14 +50,12 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type insightsService struct {
-	accountClient         accountclient.Client
 	promClient            prometheus.Client // nil when prometheus-url is not configured
 	monthlySummaryStorage insightsstorage.MonthlySummaryStorage
 	logger                *zap.Logger
 }
 
 func NewInsightsService(
-	accountClient accountclient.Client,
 	promClient prometheus.Client,
 	monthlySummaryStorage insightsstorage.MonthlySummaryStorage,
 	opts ...Option,
@@ -70,7 +65,6 @@ func NewInsightsService(
 		opt(dopts)
 	}
 	return &insightsService{
-		accountClient:         accountClient,
 		promClient:            promClient,
 		monthlySummaryStorage: monthlySummaryStorage,
 		logger:                dopts.logger.Named("insights-api"),
@@ -85,9 +79,6 @@ func (s *insightsService) GetInsightsMonthlySummary(
 	ctx context.Context,
 	req *insightsproto.GetInsightsMonthlySummaryRequest,
 ) (*insightsproto.GetInsightsMonthlySummaryResponse, error) {
-	if err := s.checkEnvironmentRoles(ctx, req.EnvironmentIds); err != nil {
-		return nil, err
-	}
 	if err := s.validateMonthlySummaryRequest(req); err != nil {
 		return nil, err
 	}
@@ -119,9 +110,6 @@ func (s *insightsService) GetInsightsLatency(
 	ctx context.Context,
 	req *insightsproto.GetInsightsTimeSeriesRequest,
 ) (*insightsproto.GetInsightsTimeSeriesResponse, error) {
-	if err := s.checkEnvironmentRoles(ctx, req.EnvironmentIds); err != nil {
-		return nil, err
-	}
 	query := latencyQuery(
 		req.EnvironmentIds,
 		sourceIDsToStrings(req.SourceIds),
@@ -134,9 +122,6 @@ func (s *insightsService) GetInsightsRequests(
 	ctx context.Context,
 	req *insightsproto.GetInsightsTimeSeriesRequest,
 ) (*insightsproto.GetInsightsTimeSeriesResponse, error) {
-	if err := s.checkEnvironmentRoles(ctx, req.EnvironmentIds); err != nil {
-		return nil, err
-	}
 	query := requestCountQuery(
 		req.EnvironmentIds,
 		sourceIDsToStrings(req.SourceIds),
@@ -149,9 +134,6 @@ func (s *insightsService) GetInsightsEvaluations(
 	ctx context.Context,
 	req *insightsproto.GetInsightsTimeSeriesRequest,
 ) (*insightsproto.GetInsightsTimeSeriesResponse, error) {
-	if err := s.checkEnvironmentRoles(ctx, req.EnvironmentIds); err != nil {
-		return nil, err
-	}
 	query := evaluationsQuery(
 		req.EnvironmentIds,
 		sourceIDsToStrings(req.SourceIds),
@@ -163,9 +145,6 @@ func (s *insightsService) GetInsightsErrorRates(
 	ctx context.Context,
 	req *insightsproto.GetInsightsTimeSeriesRequest,
 ) (*insightsproto.GetInsightsTimeSeriesResponse, error) {
-	if err := s.checkEnvironmentRoles(ctx, req.EnvironmentIds); err != nil {
-		return nil, err
-	}
 	query := errorRatesQuery(
 		req.EnvironmentIds,
 		sourceIDsToStrings(req.SourceIds),
@@ -304,37 +283,6 @@ func (s *insightsService) validateTimeSeriesRequest(
 	maxRange := int64(maxQueryRangeDays * 24 * 60 * 60)
 	if req.EndAt-req.StartAt > maxRange {
 		return statusQueryRangeTooLarge.Err()
-	}
-	return nil
-}
-
-func (s *insightsService) checkEnvironmentRoles(ctx context.Context, envIDs []string) error {
-	for _, envID := range envIDs {
-		_, err := role.CheckEnvironmentRoleWithLog(
-			ctx,
-			accountproto.AccountV2_Role_Environment_VIEWER,
-			envID,
-			func(email string) (*accountproto.AccountV2, error) {
-				resp, err := s.accountClient.GetAccountV2ByEnvironmentID(
-					ctx,
-					&accountproto.GetAccountV2ByEnvironmentIDRequest{
-						Email:         email,
-						EnvironmentId: envID,
-					},
-				)
-				if err != nil {
-					return nil, err
-				}
-				return resp.Account, nil
-			},
-			s.logger,
-			statusUnauthenticated.Err(),
-			statusPermissionDenied.Err(),
-			func(_ error) error { return statusInternal.Err() },
-		)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }

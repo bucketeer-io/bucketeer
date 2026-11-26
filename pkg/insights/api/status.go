@@ -24,10 +24,6 @@ const packageName = "insights"
 var (
 	statusInternal = api.NewGRPCStatus(
 		pkgErr.NewErrorInternal(packageName, "internal error"))
-	statusUnauthenticated = api.NewGRPCStatus(
-		pkgErr.NewErrorUnauthenticated(packageName, "unauthenticated"))
-	statusPermissionDenied = api.NewGRPCStatus(
-		pkgErr.NewErrorPermissionDenied(packageName, "permission denied"))
 	statusEnvironmentIDRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(packageName, "environment id is required", "EnvironmentId"))
 	statusStartAtRequired = api.NewGRPCStatus(
