@@ -23,12 +23,11 @@ import (
 
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	accdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	v2acc "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
@@ -48,10 +47,6 @@ func (s *EnvironmentService) GetOrganization(
 	ctx context.Context,
 	req *environmentproto.GetOrganizationRequest,
 ) (*environmentproto.GetOrganizationResponse, error) {
-	_, err := s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_MEMBER)
-	if err != nil {
-		return nil, err
-	}
 	if err := s.validateGetOrganizationRequest(req); err != nil {
 		return nil, err
 	}
@@ -96,10 +91,6 @@ func (s *EnvironmentService) ListOrganizations(
 	ctx context.Context,
 	req *environmentproto.ListOrganizationsRequest,
 ) (*environmentproto.ListOrganizationsResponse, error) {
-	_, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}
@@ -240,10 +231,7 @@ func (s *EnvironmentService) CreateOrganization(
 	ctx context.Context,
 	req *environmentproto.CreateOrganizationRequest,
 ) (*environmentproto.CreateOrganizationResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateCreateOrganizationRequest(req); err != nil {
 		return nil, err
 	}
@@ -530,10 +518,7 @@ func (s *EnvironmentService) UpdateOrganization(
 	ctx context.Context,
 	req *environmentproto.UpdateOrganizationRequest,
 ) (*environmentproto.UpdateOrganizationResponse, error) {
-	editor, err := s.checkOrganizationOwner(ctx, req.Id)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	// Additional security validations for ownership transfer
 	if req.OwnerEmail != nil {
 		if err := s.validateOwnershipTransfer(ctx, req, editor); err != nil {
@@ -546,7 +531,7 @@ func (s *EnvironmentService) UpdateOrganization(
 	var prevOwnerEmail string
 	var newOwnerEmail string
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		organization, err := s.orgStorage.GetOrganization(ctxWithTx, req.Id)
 		if err != nil {
 			return err
@@ -614,55 +599,6 @@ func (s *EnvironmentService) UpdateOrganization(
 	return &environmentproto.UpdateOrganizationResponse{}, nil
 }
 
-// checkOrganizationOwner authorizes the organization owner, which is the account
-// holding the OWNER role or the account referenced by the organization's owner
-// email. The owner email account may have been demoted below OWNER before its
-// role was protected, and since that role can no longer be changed through the
-// account update, it must still be able to update the organization and transfer
-// ownership.
-func (s *EnvironmentService) checkOrganizationOwner(
-	ctx context.Context,
-	organizationID string,
-) (*eventproto.Editor, error) {
-	editor, err := s.checkOrganizationRole(ctx, organizationID, accountproto.AccountV2_Role_Organization_OWNER)
-	if status.Code(err) != codes.PermissionDenied {
-		return editor, err
-	}
-	token, ok := rpc.GetAccessToken(ctx)
-	if !ok || token.IsServiceToken {
-		return nil, err
-	}
-	organization, orgErr := s.orgStorage.GetOrganization(ctx, organizationID)
-	if orgErr != nil {
-		if errors.Is(orgErr, v2es.ErrOrganizationNotFound) {
-			return nil, err
-		}
-		return nil, s.reportCheckOrganizationOwnerError(ctx, organizationID, orgErr)
-	}
-	caller, callerErr := s.getOrganizationOwnerAccount(ctx, organization, token.Email)
-	if callerErr != nil {
-		return nil, s.reportCheckOrganizationOwnerError(ctx, organizationID, callerErr)
-	}
-	if caller == nil || caller.Disabled {
-		return nil, err
-	}
-	s.logger.Warn(
-		"Authorized the organization owner email account without the OWNER role",
-		log.FieldsFromIncomingContext(ctx).AddFields(
-			zap.String("organizationId", organizationID),
-			zap.String("email", caller.Email),
-			zap.String("organizationRole", caller.OrganizationRole.String()),
-		)...,
-	)
-	return &eventproto.Editor{
-		Email:            token.Email,
-		Name:             caller.GetAccountFullName(),
-		IsAdmin:          token.IsSystemAdmin,
-		EnvironmentRoles: caller.EnvironmentRoles,
-		OrganizationRole: caller.OrganizationRole,
-	}, nil
-}
-
 // getOrganizationOwnerAccount returns the account of email when it is the account
 // referenced by the organization's owner email, or nil otherwise.
 // The owner email is stored as it was typed when ownership was set, and account
@@ -691,21 +627,6 @@ func (s *EnvironmentService) getOrganizationOwnerAccount(
 		return nil, nil
 	}
 	return account, nil
-}
-
-func (s *EnvironmentService) reportCheckOrganizationOwnerError(
-	ctx context.Context,
-	organizationID string,
-	err error,
-) error {
-	s.logger.Error(
-		"Failed to check the organization owner",
-		log.FieldsFromIncomingContext(ctx).AddFields(
-			zap.Error(err),
-			zap.String("organizationId", organizationID),
-		)...,
-	)
-	return api.NewGRPCStatus(err).Err()
 }
 
 func (s *EnvironmentService) reportUpdateOrganizationError(
@@ -832,16 +753,13 @@ func (s *EnvironmentService) EnableOrganization(
 	ctx context.Context,
 	req *environmentproto.EnableOrganizationRequest,
 ) (*environmentproto.EnableOrganizationResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateEnableOrganizationRequest(req); err != nil {
 		return nil, err
 	}
 
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		organization, err := s.orgStorage.GetOrganization(ctxWithTx, req.Id)
 		if err != nil {
 			return err
@@ -897,16 +815,13 @@ func (s *EnvironmentService) DisableOrganization(
 	ctx context.Context,
 	req *environmentproto.DisableOrganizationRequest,
 ) (*environmentproto.DisableOrganizationResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateDisableOrganizationRequest(req); err != nil {
 		return nil, err
 	}
 
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		organization, err := s.orgStorage.GetOrganization(ctxWithTx, req.Id)
 		if err != nil {
 			return err
@@ -964,16 +879,13 @@ func (s *EnvironmentService) ArchiveOrganization(
 	ctx context.Context,
 	req *environmentproto.ArchiveOrganizationRequest,
 ) (*environmentproto.ArchiveOrganizationResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateArchiveOrganizationRequest(req); err != nil {
 		return nil, err
 	}
 
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		organization, err := s.orgStorage.GetOrganization(ctxWithTx, req.Id)
 		if err != nil {
 			return err
@@ -1031,16 +943,13 @@ func (s *EnvironmentService) UnarchiveOrganization(
 	ctx context.Context,
 	req *environmentproto.UnarchiveOrganizationRequest,
 ) (*environmentproto.UnarchiveOrganizationResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateUnarchiveOrganizationRequest(req); err != nil {
 		return nil, err
 	}
 
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		organization, err := s.orgStorage.GetOrganization(ctxWithTx, req.Id)
 		if err != nil {
 			return err
@@ -1096,16 +1005,13 @@ func (s *EnvironmentService) ConvertTrialOrganization(
 	ctx context.Context,
 	req *environmentproto.ConvertTrialOrganizationRequest,
 ) (*environmentproto.ConvertTrialOrganizationResponse, error) {
-	editor, err := s.checkSystemAdminRole(ctx)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateConvertTrialOrganizationRequest(req); err != nil {
 		return nil, err
 	}
 
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		organization, err := s.orgStorage.GetOrganization(ctxWithTx, req.Id)
 		if err != nil {
 			return err

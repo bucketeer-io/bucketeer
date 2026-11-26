@@ -16,26 +16,20 @@ package api
 
 import (
 	"context"
-	"errors"
 	"regexp"
 	"strconv"
 	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
-	accdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	v2acc "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth/google"
 	v2 "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	accproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
@@ -316,102 +310,6 @@ func validateListPagination(pageSize int64, cursor string) error {
 		return statusInvalidCursor.Err()
 	}
 	return nil
-}
-
-func (s *EnvironmentService) checkSystemAdminRole(
-	ctx context.Context,
-) (*eventproto.Editor, error) {
-	editor, err := role.CheckSystemAdminRole(ctx)
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Error(
-				"Unauthenticated",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, statusUnauthenticated.Err()
-		case codes.PermissionDenied:
-			s.logger.Error(
-				"Permission denied",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, statusPermissionDenied.Err()
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromIncomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return nil, api.NewGRPCStatus(err).Err()
-		}
-	}
-	return editor, nil
-}
-
-func (s *EnvironmentService) checkOrganizationRole(
-	ctx context.Context,
-	organizationID string,
-	requiredRole accproto.AccountV2_Role_Organization,
-) (*eventproto.Editor, error) {
-	return role.CheckOrganizationRoleWithLog(
-		ctx,
-		requiredRole,
-		organizationID,
-		func(email string) (*accproto.GetAccountV2Response, error) {
-			return s.accountClient.GetAccountV2(ctx, &accproto.GetAccountV2Request{
-				Email:          email,
-				OrganizationId: organizationID,
-			})
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
-}
-
-func (s *EnvironmentService) checkOrganizationRoleByEnvironmentID(
-	ctx context.Context,
-	requiredRole accproto.AccountV2_Role_Organization,
-	environmentID string,
-) (*eventproto.Editor, error) {
-	return role.CheckOrganizationRoleByEnvironmentIDWithLog(
-		ctx,
-		requiredRole,
-		environmentID,
-		func(email string) (*accproto.GetAccountV2Response, error) {
-			account, err := s.getAccountV2ByEnvironmentID(ctx, email, environmentID)
-			if err != nil {
-				return nil, err
-			}
-			return &accproto.GetAccountV2Response{Account: account.AccountV2}, nil
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
-}
-
-func (s *EnvironmentService) getAccountV2ByEnvironmentID(
-	ctx context.Context,
-	email, environmentID string,
-) (*accdomain.AccountV2, error) {
-	account, err := s.accountStorage.GetAccountV2ByEnvironmentID(ctx, email, environmentID)
-	if err != nil {
-		if errors.Is(err, v2acc.ErrAccountNotFound) {
-			return nil, statusAccountNotFound.Err()
-		}
-		s.logger.Error(
-			"Failed to get account by environment id",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentID", environmentID),
-				zap.String("email", email),
-			)...,
-		)
-		return nil, api.NewGRPCStatus(err).Err()
-	}
-	return account, nil
 }
 
 // publishDomainEvent publishes a domain event after the transaction that

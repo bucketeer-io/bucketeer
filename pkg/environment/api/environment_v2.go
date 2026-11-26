@@ -26,12 +26,12 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
@@ -45,14 +45,6 @@ func (s *EnvironmentService) GetEnvironmentV2(
 	ctx context.Context,
 	req *environmentproto.GetEnvironmentV2Request,
 ) (*environmentproto.GetEnvironmentV2Response, error) {
-	_, err := s.checkOrganizationRoleByEnvironmentID(
-		ctx,
-		accountproto.AccountV2_Role_Organization_MEMBER,
-		req.Id,
-	)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateGetEnvironmentV2Request(req); err != nil {
 		return nil, err
 	}
@@ -79,14 +71,6 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 	ctx context.Context,
 	req *environmentproto.ListEnvironmentsV2Request,
 ) (*environmentproto.ListEnvironmentsV2Response, error) {
-	_, err := s.checkOrganizationRole(
-		ctx,
-		req.OrganizationId,
-		accountproto.AccountV2_Role_Organization_MEMBER,
-	)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}
@@ -146,14 +130,7 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 	}
 
 	// Check if the user has admin role for the validated organization
-	editor, err := s.checkOrganizationRole(
-		ctx,
-		orgID,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-	)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	name := strings.TrimSpace(req.Name)
 	newEnvironment, err := domain.NewEnvironmentV2(
@@ -253,21 +230,14 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 	ctx context.Context,
 	req *environmentproto.UpdateEnvironmentV2Request,
 ) (*environmentproto.UpdateEnvironmentV2Response, error) {
-	editor, err := s.checkOrganizationRoleByEnvironmentID(
-		ctx,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-		req.Id,
-	)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	localizer := locale.NewLocalizer(ctx)
 	if err := validateUpdateEnvironmentV2Request(ctx, req); err != nil {
 		return nil, err
 	}
 
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		environment, err := s.environmentStorage.GetEnvironmentV2(ctxWithTx, req.Id)
 		if err != nil {
 			return err
@@ -374,21 +344,10 @@ func (s *EnvironmentService) ArchiveEnvironmentV2(
 	ctx context.Context,
 	req *environmentproto.ArchiveEnvironmentV2Request,
 ) (*environmentproto.ArchiveEnvironmentV2Response, error) {
-	editor, err := s.checkOrganizationRoleByEnvironmentID(
-		ctx,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-		req.Id,
-	)
-	if err != nil {
-		s.logger.Error("Failed to check organization role",
-			zap.Error(err),
-			zap.String("id", req.Id),
-		)
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	event := &eventproto.Event{}
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		environment, err := s.environmentStorage.GetEnvironmentV2(contextWithTx, req.Id)
 		if err != nil {
 			return err
@@ -444,21 +403,10 @@ func (s *EnvironmentService) UnarchiveEnvironmentV2(
 	ctx context.Context,
 	req *environmentproto.UnarchiveEnvironmentV2Request,
 ) (*environmentproto.UnarchiveEnvironmentV2Response, error) {
-	editor, err := s.checkOrganizationRoleByEnvironmentID(
-		ctx,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-		req.Id,
-	)
-	if err != nil {
-		s.logger.Error("Failed to check organization role",
-			zap.Error(err),
-			zap.String("id", req.Id),
-		)
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	event := &eventproto.Event{}
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		environment, err := s.environmentStorage.GetEnvironmentV2(contextWithTx, req.Id)
 		if err != nil {
 			return err

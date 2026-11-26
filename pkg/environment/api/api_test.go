@@ -27,6 +27,7 @@ import (
 	acmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	accstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
@@ -34,6 +35,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 func TestNewEnvironmentService(t *testing.T) {
@@ -55,18 +57,10 @@ func TestNewEnvironmentService(t *testing.T) {
 	assert.IsType(t, &EnvironmentService{}, s)
 }
 
-func createContextWithToken(t *testing.T) context.Context {
+// createContextWithEditor is a context after the authz interceptor allowed the request.
+func createContextWithEditor(t *testing.T, isSystemAdmin bool) context.Context {
 	t.Helper()
-	token := &token.AccessToken{
-		Issuer:        "issuer",
-		Audience:      "audience",
-		Expiry:        time.Now().AddDate(100, 0, 0),
-		IssuedAt:      time.Now(),
-		Email:         "email",
-		IsSystemAdmin: true,
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
+	return authz.WithEditor(context.TODO(), &eventproto.Editor{Email: "email", IsAdmin: isSystemAdmin})
 }
 
 func createDemoContextWithToken(t *testing.T) context.Context {
@@ -82,18 +76,6 @@ func createDemoContextWithToken(t *testing.T) context.Context {
 	return context.WithValue(ctx, rpc.DemoCreationTokenKey, token)
 }
 
-func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
-	t.Helper()
-	token := &token.AccessToken{
-		Issuer:   "issuer",
-		Audience: "audience",
-		Expiry:   time.Now().AddDate(100, 0, 0),
-		IssuedAt: time.Now(),
-		Email:    "email",
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
-}
 func newEnvironmentService(t *testing.T, mockController *gomock.Controller, s storage.Client) *EnvironmentService {
 	t.Helper()
 	logger, err := log.NewLogger()

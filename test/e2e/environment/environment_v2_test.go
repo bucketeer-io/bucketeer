@@ -79,7 +79,10 @@ func TestListEnvironmentsV2ByProject(t *testing.T) {
 	defer cancel()
 	c := newEnvironmentClient(t, *sysAdminAccessTokenPath)
 	defer c.Close()
-	resp, err := c.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{ProjectId: defaultProjectID})
+	resp, err := c.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{
+		OrganizationId: *organizationID,
+		ProjectId:      defaultProjectID,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,7 +102,10 @@ func TestListEnvironmentsV2(t *testing.T) {
 	c := newEnvironmentClient(t, *sysAdminAccessTokenPath)
 	defer c.Close()
 	pageSize := int64(1)
-	resp, err := c.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{PageSize: pageSize})
+	resp, err := c.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{
+		OrganizationId: *organizationID,
+		PageSize:       pageSize,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
