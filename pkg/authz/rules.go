@@ -55,7 +55,9 @@ var WebServices = []string{
 
 // EnforcedWebServices are the services whose handlers no longer check roles,
 // so the interceptor denies for them (RFC 0049 step 3); the others stay in shadow mode.
-var EnforcedWebServices []string
+var EnforcedWebServices = []string{
+	TagService,
+}
 
 // WebRules is Table 2 for the web gateway: what each handler checks today, written as a requirement.
 var WebRules = merge(

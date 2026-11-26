@@ -22,17 +22,17 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	tagstorage "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage"
 	tagstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 )
 
-// listScopeAccount returns the account of the caller for the environment
+// listScopeEditor returns the editor of the caller for the environment
 // scoping tests: a member of the organization with roles in env0 and env1 only.
-func listScopeAccount(orgRole accountproto.AccountV2_Role_Organization) *accountproto.AccountV2 {
-	return &accountproto.AccountV2{
+func listScopeEditor(orgRole accountproto.AccountV2_Role_Organization) *eventproto.Editor {
+	return &eventproto.Editor{
 		Email:            "email",
 		OrganizationRole: orgRole,
 		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
@@ -51,7 +51,7 @@ func TestListTagsMemberEnvironmentScope(t *testing.T) {
 
 	cases := []struct {
 		name            string
-		account         *accountproto.AccountV2
+		editor          *eventproto.Editor
 		req             *proto.ListTagsRequest
 		wantEnvFilter   []string
 		wantStorageCall bool
@@ -60,7 +60,7 @@ func TestListTagsMemberEnvironmentScope(t *testing.T) {
 		{
 			// An UNASSIGNED entry grants no access to its environment.
 			name: "member's unassigned environment entry is not an accessible environment",
-			account: &accountproto.AccountV2{
+			editor: &eventproto.Editor{
 				Email:            "email",
 				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
@@ -75,8 +75,8 @@ func TestListTagsMemberEnvironmentScope(t *testing.T) {
 			},
 		},
 		{
-			name:    "member requesting an environment outside their roles gets an empty page",
-			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
+			name:   "member requesting an environment outside their roles gets an empty page",
+			editor: listScopeEditor(accountproto.AccountV2_Role_Organization_MEMBER),
 			req: &proto.ListTagsRequest{
 				OrganizationId: "org0",
 				EnvironmentId:  "env2",
@@ -86,15 +86,15 @@ func TestListTagsMemberEnvironmentScope(t *testing.T) {
 		},
 		{
 			name: "member without any environment role gets an empty page",
-			account: &accountproto.AccountV2{
+			editor: &eventproto.Editor{
 				Email:            "email",
 				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			},
 			req: &proto.ListTagsRequest{OrganizationId: "org0", EnvironmentId: "env0", PageSize: 10},
 		},
 		{
-			name:    "member with no accessible environment still gets an invalid cursor rejected",
-			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
+			name:   "member with no accessible environment still gets an invalid cursor rejected",
+			editor: listScopeEditor(accountproto.AccountV2_Role_Organization_MEMBER),
 			req: &proto.ListTagsRequest{
 				OrganizationId: "org0",
 				EnvironmentId:  "env2",
@@ -103,8 +103,8 @@ func TestListTagsMemberEnvironmentScope(t *testing.T) {
 			wantErr: statusInvalidCursor.Err(),
 		},
 		{
-			name:    "member with no accessible environment still gets an invalid order rejected",
-			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
+			name:   "member with no accessible environment still gets an invalid order rejected",
+			editor: listScopeEditor(accountproto.AccountV2_Role_Organization_MEMBER),
 			req: &proto.ListTagsRequest{
 				OrganizationId: "org0",
 				EnvironmentId:  "env2",
@@ -113,8 +113,8 @@ func TestListTagsMemberEnvironmentScope(t *testing.T) {
 			wantErr: statusInvalidOrderBy.Err(),
 		},
 		{
-			name:    "member requesting an environment they have a role in is scoped to it",
-			account: listScopeAccount(accountproto.AccountV2_Role_Organization_MEMBER),
+			name:   "member requesting an environment they have a role in is scoped to it",
+			editor: listScopeEditor(accountproto.AccountV2_Role_Organization_MEMBER),
 			req: &proto.ListTagsRequest{
 				OrganizationId: "org0",
 				EnvironmentId:  "env1",
@@ -124,8 +124,8 @@ func TestListTagsMemberEnvironmentScope(t *testing.T) {
 			wantStorageCall: true,
 		},
 		{
-			name:    "admin requesting an environment outside their roles is not restricted",
-			account: listScopeAccount(accountproto.AccountV2_Role_Organization_ADMIN),
+			name:   "admin requesting an environment outside their roles is not restricted",
+			editor: listScopeEditor(accountproto.AccountV2_Role_Organization_ADMIN),
 			req: &proto.ListTagsRequest{
 				OrganizationId: "org0",
 				EnvironmentId:  "env2",
@@ -144,9 +144,6 @@ func TestListTagsMemberEnvironmentScope(t *testing.T) {
 			defer mockController.Finish()
 
 			service := createTagService(mockController)
-			service.accountClient.(*accountclientmock.MockClient).EXPECT().
-				GetAccountV2(gomock.Any(), gomock.Any()).
-				Return(&accountproto.GetAccountV2Response{Account: tc.account}, nil).AnyTimes()
 
 			var listed *tagstorage.ListTagsParams
 			if tc.wantStorageCall {
@@ -158,7 +155,7 @@ func TestListTagsMemberEnvironmentScope(t *testing.T) {
 					})
 			}
 
-			resp, err := service.ListTags(createContextWithTokenRoleUnassigned(t), tc.req)
+			resp, err := service.ListTags(createContextWithEditor(t, tc.editor), tc.req)
 			if tc.wantErr != nil {
 				require.Error(t, err)
 				assert.Equal(t, tc.wantErr.Error(), err.Error())
