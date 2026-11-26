@@ -159,7 +159,7 @@ func TestUpdateStatus(t *testing.T) {
 			if p.setup != nil {
 				p.setup(t, updater)
 			}
-			err := updater.updateStatus(context.Background(), "env", p.input)
+			err := updater.updateStatus(context.Background(), "env", p.input, time.Now())
 			assert.Equal(t, p.expected, err)
 		})
 	}
@@ -279,6 +279,171 @@ func TestRun(t *testing.T) {
 		gomock.InOrder(stopPredecessor, stopMissed, startSuccessor)
 		assert.NoError(t, updater.Run(context.Background()))
 	})
+
+	t.Run("starts a SEGMENT group after the transitions of every environment", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		updater := newStatusUpdater(t, controller)
+		updater.environmentClient.(*envmock.MockClient).EXPECT().ListEnvironmentsV2(
+			gomock.Any(), gomock.Any(),
+		).Return(&environmentproto.ListEnvironmentsV2Response{
+			Environments: []*environmentproto.EnvironmentV2{{Id: "env-segment"}, {Id: "env-stop"}, {Id: "env-hash"}},
+		}, nil)
+		groups := map[string][]*featureproto.HoldoutGroup{
+			"env-segment": {
+				{
+					Id: "segment", Status: featureproto.HoldoutGroup_WAITING, StartAt: past, StopAt: future,
+					AssignmentType: featureproto.HoldoutGroup_SEGMENT,
+				},
+				{
+					Id: "analysis", Status: featureproto.HoldoutGroup_RUNNING, StartAt: past - 100,
+					StartAnalysisAt: past, StopAt: future,
+				},
+			},
+			"env-stop": {
+				{
+					Id: "expired", Status: featureproto.HoldoutGroup_RUNNING, StartAt: past - 100, StopAt: past,
+					AssignmentType: featureproto.HoldoutGroup_SEGMENT,
+				},
+			},
+			"env-hash": {
+				{Id: "hash", Status: featureproto.HoldoutGroup_WAITING, StartAt: past, StopAt: future},
+			},
+		}
+		client := updater.featureClient.(*fcmock.MockClient)
+		client.EXPECT().ListHoldoutGroups(gomock.Any(), gomock.Any()).DoAndReturn(
+			func(
+				_ context.Context, req *featureproto.ListHoldoutGroupsRequest, _ ...grpc.CallOption,
+			) (*featureproto.ListHoldoutGroupsResponse, error) {
+				return &featureproto.ListHoldoutGroupsResponse{HoldoutGroups: groups[req.EnvironmentId]}, nil
+			}).Times(3)
+		startAnalysis := client.EXPECT().StartHoldoutGroupAnalysis(
+			gomock.Any(), &featureproto.StartHoldoutGroupAnalysisRequest{
+				Id: "analysis", EnvironmentId: "env-segment",
+				Mode: featureproto.StartHoldoutGroupAnalysisRequest_SCHEDULED,
+			},
+		).Return(&featureproto.StartHoldoutGroupAnalysisResponse{}, nil)
+		stopExpired := client.EXPECT().StopHoldoutGroup(
+			gomock.Any(), &featureproto.StopHoldoutGroupRequest{
+				Id: "expired", EnvironmentId: "env-stop", Mode: featureproto.StopHoldoutGroupRequest_SCHEDULED,
+			},
+		).Return(&featureproto.StopHoldoutGroupResponse{}, nil)
+		startHash := client.EXPECT().StartHoldoutGroup(
+			gomock.Any(), &featureproto.StartHoldoutGroupRequest{
+				Id: "hash", EnvironmentId: "env-hash", Mode: featureproto.StartHoldoutGroupRequest_SCHEDULED,
+			},
+		).Return(&featureproto.StartHoldoutGroupResponse{}, nil)
+		startSegment := client.EXPECT().StartHoldoutGroup(
+			gomock.Any(), &featureproto.StartHoldoutGroupRequest{
+				Id: "segment", EnvironmentId: "env-segment", Mode: featureproto.StartHoldoutGroupRequest_SCHEDULED,
+			},
+		).Return(&featureproto.StartHoldoutGroupResponse{}, nil)
+		gomock.InOrder(startAnalysis, stopExpired, startHash, startSegment)
+		assert.NoError(t, updater.Run(context.Background()))
+	})
+
+	t.Run("a group that becomes due during an earlier transition waits for the next run", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		updater := newStatusUpdater(t, controller)
+		listed := time.Date(2030, 1, 1, 0, 0, 0, 0, time.UTC)
+		current := listed
+		updater.now = func() time.Time { return current }
+		updater.environmentClient.(*envmock.MockClient).EXPECT().ListEnvironmentsV2(
+			gomock.Any(), gomock.Any(),
+		).Return(&environmentproto.ListEnvironmentsV2Response{
+			Environments: []*environmentproto.EnvironmentV2{{Id: "env"}},
+		}, nil)
+		client := updater.featureClient.(*fcmock.MockClient)
+		client.EXPECT().ListHoldoutGroups(gomock.Any(), gomock.Any()).Return(&featureproto.ListHoldoutGroupsResponse{
+			HoldoutGroups: []*featureproto.HoldoutGroup{
+				{
+					Id: "segment", Status: featureproto.HoldoutGroup_WAITING,
+					StartAt: listed.Unix() + 10, StopAt: listed.Unix() + 1000,
+					AssignmentType: featureproto.HoldoutGroup_SEGMENT,
+				},
+				{
+					Id: "hash", Status: featureproto.HoldoutGroup_WAITING,
+					StartAt: listed.Unix() + 10, StopAt: listed.Unix() + 1000,
+				},
+				{
+					Id: "expired", Status: featureproto.HoldoutGroup_RUNNING,
+					StartAt: listed.Unix() - 100, StopAt: listed.Unix() - 10,
+				},
+			},
+		}, nil)
+		// The stop takes long enough for the start_at of the waiting groups
+		// to pass. Neither was due when the run read the clock for the
+		// environment, so neither is started: a SEGMENT start decided after
+		// that would not have been set aside, and would run with the whole
+		// time of the run. StartHoldoutGroup has no expectation.
+		client.EXPECT().StopHoldoutGroup(
+			gomock.Any(), &featureproto.StopHoldoutGroupRequest{
+				Id: "expired", EnvironmentId: "env", Mode: featureproto.StopHoldoutGroupRequest_SCHEDULED,
+			},
+		).DoAndReturn(func(
+			context.Context, *featureproto.StopHoldoutGroupRequest, ...grpc.CallOption,
+		) (*featureproto.StopHoldoutGroupResponse, error) {
+			current = listed.Add(20 * time.Second)
+			return &featureproto.StopHoldoutGroupResponse{}, nil
+		})
+		assert.NoError(t, updater.Run(context.Background()))
+	})
+
+	t.Run("a SEGMENT start that uses up its share leaves the others their time", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		updater := newStatusUpdater(t, controller)
+		timeout := time.Second
+		updater.opts = &jobs.Options{Timeout: timeout}
+		updater.environmentClient.(*envmock.MockClient).EXPECT().ListEnvironmentsV2(
+			gomock.Any(), gomock.Any(),
+		).Return(&environmentproto.ListEnvironmentsV2Response{
+			Environments: []*environmentproto.EnvironmentV2{{Id: "env-slow"}, {Id: "env-other"}},
+		}, nil)
+		client := updater.featureClient.(*fcmock.MockClient)
+		client.EXPECT().ListHoldoutGroups(gomock.Any(), gomock.Any()).DoAndReturn(
+			func(
+				_ context.Context, req *featureproto.ListHoldoutGroupsRequest, _ ...grpc.CallOption,
+			) (*featureproto.ListHoldoutGroupsResponse, error) {
+				return &featureproto.ListHoldoutGroupsResponse{HoldoutGroups: []*featureproto.HoldoutGroup{{
+					Id: "group-" + req.EnvironmentId, Status: featureproto.HoldoutGroup_WAITING,
+					StartAt: past, StopAt: future, AssignmentType: featureproto.HoldoutGroup_SEGMENT,
+				}}}, nil
+			}).Times(2)
+		begin := time.Now()
+		// The first start never answers, like a copy of a segment that is too
+		// large: it must be cut off after half of the run, not at its end.
+		slow := client.EXPECT().StartHoldoutGroup(
+			gomock.Any(), &featureproto.StartHoldoutGroupRequest{
+				Id: "group-env-slow", EnvironmentId: "env-slow", Mode: featureproto.StartHoldoutGroupRequest_SCHEDULED,
+			},
+		).DoAndReturn(func(
+			ctx context.Context, _ *featureproto.StartHoldoutGroupRequest, _ ...grpc.CallOption,
+		) (*featureproto.StartHoldoutGroupResponse, error) {
+			deadline, ok := ctx.Deadline()
+			require.True(t, ok)
+			assert.LessOrEqual(t, deadline.Sub(begin), timeout/2+50*time.Millisecond)
+			<-ctx.Done()
+			return nil, ctx.Err()
+		})
+		other := client.EXPECT().StartHoldoutGroup(
+			gomock.Any(), &featureproto.StartHoldoutGroupRequest{
+				Id: "group-env-other", EnvironmentId: "env-other", Mode: featureproto.StartHoldoutGroupRequest_SCHEDULED,
+			},
+		).DoAndReturn(func(
+			ctx context.Context, _ *featureproto.StartHoldoutGroupRequest, _ ...grpc.CallOption,
+		) (*featureproto.StartHoldoutGroupResponse, error) {
+			// The last start has all the time that is left.
+			assert.NoError(t, ctx.Err())
+			deadline, ok := ctx.Deadline()
+			require.True(t, ok)
+			assert.Greater(t, time.Until(deadline), timeout/4)
+			return &featureproto.StartHoldoutGroupResponse{}, nil
+		})
+		gomock.InOrder(slow, other)
+		assert.ErrorIs(t, updater.Run(context.Background()), context.DeadlineExceeded)
+	})
 }
 
 func TestListPagination(t *testing.T) {
@@ -326,6 +491,7 @@ func newStatusUpdater(t *testing.T, controller *gomock.Controller) *statusUpdate
 		featureClient:     fcmock.NewMockClient(controller),
 		opts:              &jobs.Options{Timeout: 5 * time.Second},
 		logger:            zap.NewNop(),
+		now:               time.Now,
 	}
 }
 
@@ -337,5 +503,6 @@ func newMockStatusUpdater(t *testing.T, c *gomock.Controller) *statusUpdater {
 			Timeout: 5 * time.Second,
 		},
 		logger: zap.NewNop(),
+		now:    time.Now,
 	}
 }

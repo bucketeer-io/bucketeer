@@ -16,6 +16,8 @@ package mysql
 
 import (
 	"context"
+	"errors"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -333,6 +335,67 @@ func TestEnvironmentLockAndSeed(t *testing.T) {
 	})
 }
 
+func TestCreateSegmentUserSnapshot(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+
+	t.Run("copies the included users in one statement and returns the count", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		result := mock.NewMockResult(controller)
+		result.EXPECT().RowsAffected().Return(int64(3), nil)
+		storage.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+			gomock.Any(),
+			insertHoldoutGroupSegmentUsersSQL,
+			"hg", "seg", "env", int32(proto.SegmentUser_INCLUDED),
+		).Return(result, nil)
+		count, err := storage.CreateSegmentUserSnapshot(context.Background(), "hg", "seg", "env")
+		require.NoError(t, err)
+		assert.Equal(t, int64(3), count)
+	})
+	t.Run("statement error", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		storage.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).Return(nil, errors.New("db"))
+		count, err := storage.CreateSegmentUserSnapshot(context.Background(), "hg", "seg", "env")
+		assert.EqualError(t, err, "db")
+		assert.Zero(t, count)
+	})
+}
+
+func TestCountSegmentUsers(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+
+	t.Run("counts the included users up to the limit", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		row := mock.NewMockRow(controller)
+		row.EXPECT().Scan(gomock.Any()).DoAndReturn(func(dest ...any) error {
+			*(dest[0].(*int64)) = 3
+			return nil
+		})
+		storage.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+			gomock.Any(),
+			countSegmentUsersSQL,
+			"seg", "env", int32(proto.SegmentUser_INCLUDED), int64(101),
+		).Return(row)
+		count, err := storage.CountSegmentUsers(context.Background(), "seg", "env", 101)
+		require.NoError(t, err)
+		assert.Equal(t, int64(3), count)
+	})
+	t.Run("statement error", func(t *testing.T) {
+		storage := newHoldoutStorageWithMock(t, controller)
+		row := mock.NewMockRow(controller)
+		row.EXPECT().Scan(gomock.Any()).Return(errors.New("db"))
+		storage.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).Return(row)
+		count, err := storage.CountSegmentUsers(context.Background(), "seg", "env", 101)
+		assert.EqualError(t, err, "db")
+		assert.Zero(t, count)
+	})
+}
+
 func TestListActiveGroupsAndTargets(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
@@ -486,4 +549,22 @@ func TestGetClearedHoldoutUpdatedAt(t *testing.T) {
 func newHoldoutStorageWithMock(t *testing.T, controller *gomock.Controller) *holdoutStorage {
 	t.Helper()
 	return &holdoutStorage{qe: mock.NewMockQueryExecer(controller)}
+}
+
+// The snapshot is looked up by user ID the way evaluation compares user IDs:
+// byte for byte, so case and trailing spaces count. No test here runs against
+// a database, so this pins the column definition that gives that comparison
+// on MySQL. utf8mb4_bin pads trailing spaces: a lookup of "alice " would find
+// "alice", and a segment holding both could not be copied.
+func TestSegmentUserSnapshotComparesUserIDsExactly(t *testing.T) {
+	t.Parallel()
+	migration, err := os.ReadFile(
+		"../../../../../migration/mysql/20261125000000_create_holdout_group_segment_user_table.sql",
+	)
+	require.NoError(t, err)
+	assert.Contains(
+		t,
+		string(migration),
+		"user_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_bin NOT NULL",
+	)
 }

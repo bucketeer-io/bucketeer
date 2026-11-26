@@ -29,6 +29,7 @@ import (
 
 	envclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/environment/client/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
+	experimentstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/mock"
 	featuredomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	featurestoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
@@ -107,6 +108,8 @@ func TestCreateHoldoutGroup(t *testing.T) {
 		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegment(
 			gomock.Any(), "seg", "ns0",
 		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg"}}, nil, nil)
+		storage.EXPECT().CountSegmentUsers(gomock.Any(), "seg", "ns0", int64(holdoutdomain.MaxSegmentUsers+1)).
+			Return(int64(3), nil)
 		storage.EXPECT().CreateHoldoutGroup(gomock.Any(), gomock.Any()).Return(nil)
 
 		resp, err := service.CreateHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.CreateHoldoutGroupRequest{
@@ -133,6 +136,8 @@ func TestCreateHoldoutGroup(t *testing.T) {
 		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegment(
 			gomock.Any(), "SEG", "ns0",
 		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg"}}, nil, nil)
+		storage.EXPECT().CountSegmentUsers(gomock.Any(), "seg", "ns0", int64(holdoutdomain.MaxSegmentUsers+1)).
+			Return(int64(3), nil)
 		storage.EXPECT().CreateHoldoutGroup(gomock.Any(), gomock.Any()).Return(nil)
 
 		resp, err := service.CreateHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.CreateHoldoutGroupRequest{
@@ -145,6 +150,58 @@ func TestCreateHoldoutGroup(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.Equal(t, "seg", resp.HoldoutGroup.SegmentId)
+	})
+
+	t.Run("segment group accepts a segment at the user limit", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, storage := newHoldoutService(t, controller)
+		expectTx(service)
+		expectHoldoutEvents(t, service, controller, 1, eventproto.Event_HOLDOUT_GROUP_CREATED)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
+		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegment(
+			gomock.Any(), "seg", "ns0",
+		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg"}}, nil, nil)
+		storage.EXPECT().CountSegmentUsers(gomock.Any(), "seg", "ns0", int64(holdoutdomain.MaxSegmentUsers+1)).
+			Return(int64(holdoutdomain.MaxSegmentUsers), nil)
+		storage.EXPECT().CreateHoldoutGroup(gomock.Any(), gomock.Any()).Return(nil)
+
+		_, err := service.CreateHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.CreateHoldoutGroupRequest{
+			EnvironmentId:  "ns0",
+			Name:           "segment holdout",
+			AssignmentType: featureproto.HoldoutGroup_SEGMENT,
+			SegmentId:      "seg",
+			StartAt:        now + 100,
+			StopAt:         now + 1_000,
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("segment group rejects a segment over the user limit", func(t *testing.T) {
+		t.Parallel()
+		controller := gomock.NewController(t)
+		service, storage := newHoldoutService(t, controller)
+		expectTx(service)
+		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
+		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
+		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegment(
+			gomock.Any(), "seg", "ns0",
+		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg"}}, nil, nil)
+		storage.EXPECT().CountSegmentUsers(gomock.Any(), "seg", "ns0", int64(holdoutdomain.MaxSegmentUsers+1)).
+			Return(int64(holdoutdomain.MaxSegmentUsers+1), nil)
+		// CreateHoldoutGroup and the event publisher have no expectation.
+
+		_, err := service.CreateHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.CreateHoldoutGroupRequest{
+			EnvironmentId:  "ns0",
+			Name:           "segment holdout",
+			AssignmentType: featureproto.HoldoutGroup_SEGMENT,
+			SegmentId:      "seg",
+			StartAt:        now + 100,
+			StopAt:         now + 1_000,
+		})
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+		assert.Contains(t, status.Convert(err).Message(), "100000")
 	})
 
 	t.Run("overlapping period is rejected", func(t *testing.T) {
@@ -902,6 +959,9 @@ func newHoldoutService(t *testing.T, controller *gomock.Controller) (*FeatureSer
 	service := createFeatureService(controller)
 	storage := holdoutmock.NewMockHoldoutStorage(controller)
 	service.holdoutStorage = storage
+	// No expectation is set here, so a test that sets none fails when the
+	// holdout service reads or writes an experiment.
+	service.experimentStorage = experimentstoragemock.NewMockExperimentStorage(controller)
 	return service, storage
 }
 

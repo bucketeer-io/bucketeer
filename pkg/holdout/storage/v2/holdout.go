@@ -82,6 +82,17 @@ type HoldoutStorage interface {
 	// stores it so a client whose evaluatedAt is still behind the stop gets a
 	// full re-evaluation. Returns 0 when the environment has never stopped a group.
 	GetClearedHoldoutUpdatedAt(ctx context.Context, environmentID string) (int64, error)
+	// CreateSegmentUserSnapshot copies the users the segment includes into
+	// holdout_group_segment_user under the group, in one statement that runs
+	// in the database, and returns how many users it copied. The users are
+	// not loaded into the service.
+	CreateSegmentUserSnapshot(ctx context.Context, groupID, segmentID, environmentID string) (int64, error)
+	// CountSegmentUsers counts the users CreateSegmentUserSnapshot would copy
+	// for the segment and stops when it has counted limit of them: a result
+	// equal to limit means limit or more. Rows of the segment that are not
+	// counted, excluded or deleted users, are still read on the way; no index
+	// covers state and deleted.
+	CountSegmentUsers(ctx context.Context, segmentID, environmentID string, limit int64) (int64, error)
 	// ListLiveFeatureTargets returns current target rows of WAITING, RUNNING, or ANALYSIS groups.
 	ListLiveFeatureTargets(ctx context.Context, environmentID, featureID string) ([]domain.FeatureTarget, error)
 }

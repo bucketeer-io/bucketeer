@@ -28,7 +28,9 @@ import (
 	ecdwh "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
 	ecdwhmock "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database/mock"
 	redismock "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3/mock"
+	dwhstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/subscriber/storage/dwhstorage/mock"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	epproto "github.com/bucketeer-io/bucketeer/v2/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
 
@@ -296,6 +298,188 @@ func TestHandleNewRetryRequeuesWhenEvaluationNotFound(t *testing.T) {
 		RetryAt:       now - 30,
 	}
 	w.handleNewRetry(context.Background(), msg, key, w.logger)
+}
+
+// newTestHoldoutExperiment is an internal experiment of a holdout group that
+// has the same goal as newTestExperiment. Its feature ID is the group ID.
+func newTestHoldoutExperiment(now int64) *exproto.Experiment {
+	return &exproto.Experiment{
+		Id:             "holdout-experiment-1",
+		Kind:           exproto.Experiment_HOLDOUT,
+		GoalIds:        []string{testGoalID},
+		FeatureId:      "holdout-group-1",
+		FeatureVersion: 1,
+		StartAt:        now - 3600,
+		StopAt:         now + 3600,
+		Status:         exproto.Experiment_RUNNING,
+	}
+}
+
+// An internal experiment of a holdout group is not linked. A flag experiment
+// that has the same goal is linked as if the internal experiment were absent:
+// the only evaluation that is looked up is the flag's. gomock fails the test
+// on a lookup with the group ID as the feature ID.
+func TestLinkGoalEventByExperimentSkipsHoldoutExperiment(t *testing.T) {
+	t.Parallel()
+	now := time.Now().Unix()
+	flagEvaluation := &ecdwh.UserEvaluation{
+		UserID:         testUserID,
+		FeatureID:      testFeatureID,
+		FeatureVersion: 1,
+		VariationID:    "variation-a",
+		Reason:         "TARGET",
+		Timestamp:      now - 60,
+	}
+	orders := map[string][]*exproto.Experiment{
+		"holdout experiment first": {newTestHoldoutExperiment(now), newTestExperiment(now)},
+		"flag experiment first":    {newTestExperiment(now), newTestHoldoutExperiment(now)},
+	}
+	for name, experiments := range orders {
+		t.Run("a flag experiment sharing the goal is linked: "+name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			eventStorage := ecdwhmock.NewMockEventStorage(ctrl)
+			redisClient := redismock.NewMockClient(ctrl)
+			w := newTestGoalEvtWriter(eventStorage, redisClient, nil)
+			eventStorage.EXPECT().QueryUserEvaluation(
+				gomock.Any(), testEnvironmentID, testUserID, testFeatureID, int32(1), gomock.Any(), gomock.Any(),
+			).Return(flagEvaluation, nil).Times(1)
+
+			evals, retriable, err := w.linkGoalEventByExperiment(
+				context.Background(), newTestGoalEvent(now), testEventID, testEnvironmentID, "tag", experiments, true,
+			)
+			assert.NoError(t, err)
+			assert.False(t, retriable)
+			assert.Len(t, evals, 1)
+			assert.Equal(t, testFeatureID, evals[0].FeatureID)
+			assert.Equal(t, "variation-a", evals[0].VariationID)
+		})
+	}
+
+	for _, storeRetryOnMiss := range []bool{true, false} {
+		name := "retry path"
+		if storeRetryOnMiss {
+			name = "fresh path"
+		}
+		t.Run("only a holdout experiment has the goal: "+name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			// No evaluation is looked up and no retry message is stored.
+			eventStorage := ecdwhmock.NewMockEventStorage(ctrl)
+			redisClient := redismock.NewMockClient(ctrl)
+			w := newTestGoalEvtWriter(eventStorage, redisClient, nil)
+
+			evals, retriable, err := w.linkGoalEventByExperiment(
+				context.Background(),
+				newTestGoalEvent(now),
+				testEventID,
+				testEnvironmentID,
+				"tag",
+				[]*exproto.Experiment{newTestHoldoutExperiment(now)},
+				storeRetryOnMiss,
+			)
+			assert.ErrorIs(t, err, ErrExperimentNotFound)
+			assert.False(t, retriable)
+			assert.Nil(t, evals)
+		})
+	}
+
+	t.Run("a missing flag evaluation stores one retry and looks up no holdout evaluation", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		eventStorage := ecdwhmock.NewMockEventStorage(ctrl)
+		redisClient := redismock.NewMockClient(ctrl)
+		w := newTestGoalEvtWriter(eventStorage, redisClient, nil)
+		eventStorage.EXPECT().QueryUserEvaluation(
+			gomock.Any(), testEnvironmentID, testUserID, testFeatureID, int32(1), gomock.Any(), gomock.Any(),
+		).Return(nil, ecdwh.ErrBQNoResultsFound).Times(1)
+		redisClient.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(1)
+
+		evals, _, err := w.linkGoalEventByExperiment(
+			context.Background(),
+			newTestGoalEvent(now),
+			testEventID,
+			testEnvironmentID,
+			"tag",
+			[]*exproto.Experiment{newTestHoldoutExperiment(now), newTestExperiment(now)},
+			true,
+		)
+		assert.True(t, ecdwh.IsNoResultsFound(err))
+		assert.Nil(t, evals)
+	})
+}
+
+// The retry processor reads the experiments from the cache, which holds the
+// internal experiments too, and links the retried goal event to the flag
+// experiment only.
+func TestHandleNewRetrySkipsHoldoutExperiment(t *testing.T) {
+	t.Parallel()
+	now := time.Now().Unix()
+	key := testEnvironmentID + ":" + retryGoalEventKeyKind + ":" + testEventID
+	newMessage := func() *retryMessage {
+		return &retryMessage{
+			GoalEvent:     newTestGoalEvent(now),
+			EnvironmentID: testEnvironmentID,
+			RetryCount:    1,
+			ID:            testEventID,
+			FirstRetryAt:  now - 60,
+			RetryAt:       now - 30,
+		}
+	}
+
+	t.Run("a flag experiment sharing the goal is linked and written", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		eventStorage := ecdwhmock.NewMockEventStorage(ctrl)
+		redisClient := redismock.NewMockClient(ctrl)
+		cache := cachemock.NewMockExperimentsCache(ctrl)
+		goalWriter := dwhstoragemock.NewMockGoalEventWriter(ctrl)
+		w := newTestGoalEvtWriter(eventStorage, redisClient, cache)
+		w.writer = goalWriter
+
+		cache.EXPECT().Get(testEnvironmentID).Return(&exproto.Experiments{
+			Experiments: []*exproto.Experiment{newTestHoldoutExperiment(now), newTestExperiment(now)},
+		}, nil)
+		eventStorage.EXPECT().QueryUserEvaluation(
+			gomock.Any(), testEnvironmentID, testUserID, testFeatureID, int32(1), gomock.Any(), gomock.Any(),
+		).Return(&ecdwh.UserEvaluation{
+			UserID:         testUserID,
+			FeatureID:      testFeatureID,
+			FeatureVersion: 1,
+			VariationID:    "variation-a",
+			Reason:         "TARGET",
+			Timestamp:      now - 60,
+		}, nil).Times(1)
+		goalWriter.EXPECT().AppendRows(gomock.Any(), gomock.Any()).DoAndReturn(
+			func(_ context.Context, events []*epproto.GoalEvent) (map[string]bool, error) {
+				if assert.Len(t, events, 1) {
+					assert.Equal(t, testFeatureID, events[0].FeatureId)
+					assert.Equal(t, "variation-a", events[0].VariationId)
+				}
+				return nil, nil
+			},
+		)
+		redisClient.EXPECT().Del(key).Return(nil).Times(1)
+
+		w.handleNewRetry(context.Background(), newMessage(), key, w.logger)
+	})
+
+	t.Run("only a holdout experiment has the goal: the retry message is deleted", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		// No evaluation is looked up and the message is not stored again.
+		eventStorage := ecdwhmock.NewMockEventStorage(ctrl)
+		redisClient := redismock.NewMockClient(ctrl)
+		cache := cachemock.NewMockExperimentsCache(ctrl)
+		w := newTestGoalEvtWriter(eventStorage, redisClient, cache)
+
+		cache.EXPECT().Get(testEnvironmentID).Return(&exproto.Experiments{
+			Experiments: []*exproto.Experiment{newTestHoldoutExperiment(now)},
+		}, nil)
+		redisClient.EXPECT().Del(key).Return(nil).Times(1)
+
+		w.handleNewRetry(context.Background(), newMessage(), key, w.logger)
+	})
 }
 
 func TestScanAndProcessVisitsKeysFromEveryScanPage(t *testing.T) {
