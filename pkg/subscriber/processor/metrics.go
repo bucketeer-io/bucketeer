@@ -72,6 +72,7 @@ const (
 	codeHoldoutExposureLinked              = "HoldoutExposureLinked"
 	codeFailedToListMeasuredHoldoutGroups  = "FailedToListMeasuredHoldoutGroups"
 	codeFailedToDeduplicateHoldoutExposure = "FailedToDeduplicateHoldoutExposure"
+	codeExperimentsOlderThanHoldoutGroup   = "ExperimentsOlderThanHoldoutGroup"
 )
 
 var (

@@ -18,6 +18,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
+	"slices"
 	"sort"
 	"sync"
 	"testing"
@@ -51,7 +53,6 @@ const (
 	exposureFlagID  = "flag-1"
 	// exposureDayStart is 00:00:00 UTC of a day.
 	exposureDayStart = int64(1_700_006_400)
-	exposureDay      = exposureDayStart / secondsPerDay
 	// The measured group started the day before and stops two days later.
 	// Its analysis period starts at noon of exposureDayStart's day.
 	exposureGroupStartAt    = exposureDayStart - secondsPerDay
@@ -70,21 +71,30 @@ type exposureUserIDs struct {
 
 func exposureHashGroup() *ftproto.HoldoutGroup {
 	return &ftproto.HoldoutGroup{
-		Id:                   exposureGroupID,
-		EnvironmentId:        exposureEnvID,
-		AssignmentType:       ftproto.HoldoutGroup_HASH,
-		SamplingSeed:         "seed",
-		BucketStart:          95,
-		Percentage:           10,
-		Status:               ftproto.HoldoutGroup_ANALYSIS,
-		ExperimentId:         "exp-measurement",
-		AnalysisExperimentId: "exp-analysis",
-		StartAt:              exposureGroupStartAt,
-		StopAt:               exposureGroupStopAt,
+		Id:             exposureGroupID,
+		EnvironmentId:  exposureEnvID,
+		AssignmentType: ftproto.HoldoutGroup_HASH,
+		SamplingSeed:   "seed",
+		BucketStart:    95,
+		Percentage:     10,
+		Status:         ftproto.HoldoutGroup_RUNNING,
+		ExperimentId:   "exp-measurement",
+		StartAt:        exposureGroupStartAt,
+		StopAt:         exposureGroupStopAt,
 		Features: []*ftproto.HoldoutGroupFeature{
 			{Id: "target-1", HoldoutGroupId: exposureGroupID, FeatureId: exposureFlagID, AddedAt: exposureGroupStartAt},
 		},
 	}
+}
+
+// exposureHashGroupInAnalysis is exposureHashGroup after its analysis period
+// started: it has the internal experiment of that period too.
+func exposureHashGroupInAnalysis() *ftproto.HoldoutGroup {
+	group := exposureHashGroup()
+	group.Status = ftproto.HoldoutGroup_ANALYSIS
+	group.AnalysisStartedAt = exposureAnalysisStartAt
+	group.AnalysisExperimentId = "exp-analysis"
+	return group
 }
 
 func exposureSegmentGroup() *ftproto.HoldoutGroup {
@@ -234,9 +244,21 @@ func (f *fakeExposureKeys) held() []string {
 	return keys
 }
 
-func exposureKey(periodStartAt, day int64, userID string) string {
-	return fmt.Sprintf("%s:holdout_exposure:%s:%d:%d:%s", exposureEnvID, exposureGroupID, periodStartAt, day, userID)
+// exposureKey is the key of a row. intervals is what
+// holdoutExposureIntervals names.
+func exposureKey(intervals, userID string) string {
+	return fmt.Sprintf("%s:holdout_exposure:%s:%s:%s", exposureEnvID, exposureGroupID, intervals, userID)
 }
+
+// The intervals of the events the tests use most. The first experiment
+// starts one day before exposureDayStart, so an event shortly after
+// exposureDayStart is in its interval 1. The experiment of the analysis
+// period starts at noon of that day.
+var (
+	exposureFirstDayIntervals  = fmt.Sprintf("%d.0", exposureGroupStartAt)
+	exposureSecondDayIntervals = fmt.Sprintf("%d.1", exposureGroupStartAt)
+	exposureAnalysisIntervals  = fmt.Sprintf("%d.1-%d.0", exposureGroupStartAt, exposureAnalysisStartAt)
+)
 
 type evalWriterHarness struct {
 	t                   *testing.T
@@ -503,7 +525,7 @@ func TestEvalEvtWriterHoldoutExposureVariations(t *testing.T) {
 				EnvironmentId:  exposureEnvID,
 				Timestamp:      time.Unix(timestamp, 0).UnixMicro(),
 			}, row)
-			key := exposureKey(exposureGroupStartAt, exposureDay, p.userID)
+			key := exposureKey(exposureSecondDayIntervals, p.userID)
 			assert.Equal(t, []string{key}, keys.held())
 			assert.Equal(t, 25*time.Hour, keys.ttls[key])
 		})
@@ -533,7 +555,7 @@ func TestEvalEvtWriterHoldoutExposureNeedsUserID(t *testing.T) {
 	require.Len(t, rows, 1)
 	require.Contains(t, rows, "from-user:"+exposureGroupID)
 	assert.Equal(t, users.outside, rows["from-user:"+exposureGroupID].UserId)
-	assert.Equal(t, []string{exposureKey(exposureGroupStartAt, exposureDay, users.outside)}, keys.held())
+	assert.Equal(t, []string{exposureKey(exposureSecondDayIntervals, users.outside)}, keys.held())
 }
 
 func TestEvalEvtWriterHoldoutExposureTargetsAndWindow(t *testing.T) {
@@ -759,66 +781,361 @@ func TestEvalEvtWriterHoldoutExposureStoppedGroupWithOlderExperiments(t *testing
 	})
 }
 
-func TestHoldoutMeasurementPeriod(t *testing.T) {
+func TestHoldoutExposureIntervals(t *testing.T) {
 	t.Parallel()
+	first, analysis := exposureGroupStartAt, exposureAnalysisStartAt
 	both := []*exproto.Experiment{exposureMeasurementExperiment(), exposureAnalysisExperiment()}
 	reversed := []*exproto.Experiment{exposureAnalysisExperiment(), exposureMeasurementExperiment()}
 	patterns := []struct {
 		desc        string
 		experiments []*exproto.Experiment
 		timestamp   int64
-		startAt     int64
+		expected    string
 		found       bool
 	}{
 		{desc: "no experiment", timestamp: exposureDayStart},
-		{desc: "before the first window", experiments: both, timestamp: exposureGroupStartAt - 1},
+		{desc: "before the first window", experiments: both, timestamp: first - 1},
 		{
-			desc:        "start is inclusive",
+			desc:        "the start is in interval 0",
 			experiments: both,
-			timestamp:   exposureGroupStartAt,
-			startAt:     exposureGroupStartAt,
+			timestamp:   first,
+			expected:    fmt.Sprintf("%d.0", first),
 			found:       true,
 		},
 		{
-			desc:        "before the analysis period only the first window contains it",
+			desc:        "the second after the start is in interval 0",
 			experiments: both,
-			timestamp:   exposureAnalysisStartAt - 1,
-			startAt:     exposureGroupStartAt,
+			timestamp:   first + 1,
+			expected:    fmt.Sprintf("%d.0", first),
 			found:       true,
 		},
 		{
-			desc:        "in both windows the newest start wins",
+			desc:        "the first cutoff is in interval 0",
 			experiments: both,
-			timestamp:   exposureAnalysisStartAt,
-			startAt:     exposureAnalysisStartAt,
+			timestamp:   first + secondsPerDay,
+			expected:    fmt.Sprintf("%d.0", first),
+			found:       true,
+		},
+		{
+			desc:        "the second after the first cutoff is in interval 1",
+			experiments: both,
+			timestamp:   first + secondsPerDay + 1,
+			expected:    fmt.Sprintf("%d.1", first),
+			found:       true,
+		},
+		{
+			desc:        "before the analysis period only the first experiment has an interval",
+			experiments: both,
+			timestamp:   analysis - 1,
+			expected:    fmt.Sprintf("%d.1", first),
+			found:       true,
+		},
+		{
+			desc:        "in both windows each experiment has an interval, the oldest first",
+			experiments: both,
+			timestamp:   analysis,
+			expected:    fmt.Sprintf("%d.1-%d.0", first, analysis),
 			found:       true,
 		},
 		{
 			desc:        "the order of the experiments does not matter",
 			experiments: reversed,
-			timestamp:   exposureAnalysisStartAt,
-			startAt:     exposureAnalysisStartAt,
+			timestamp:   analysis,
+			expected:    fmt.Sprintf("%d.1-%d.0", first, analysis),
 			found:       true,
+		},
+		{
+			// The cutoffs of the first experiment are at midnight and
+			// those of the second at noon.
+			desc:        "the intervals of the two experiments change at different times",
+			experiments: both,
+			timestamp:   first + 2*secondsPerDay + 1,
+			expected:    fmt.Sprintf("%d.2-%d.0", first, analysis),
+			found:       true,
+		},
+		{
+			desc:        "after the first cutoff of the second experiment",
+			experiments: both,
+			timestamp:   analysis + secondsPerDay + 1,
+			expected:    fmt.Sprintf("%d.2-%d.1", first, analysis),
+			found:       true,
+		},
+		{
+			desc: "two experiments with the same start give one interval",
+			experiments: []*exproto.Experiment{
+				exposureMeasurementExperiment(), exposureMeasurementExperiment(),
+			},
+			timestamp: first + 10,
+			expected:  fmt.Sprintf("%d.0", first),
+			found:     true,
 		},
 		{desc: "stop is exclusive", experiments: both, timestamp: exposureGroupStopAt},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			startAt, found := holdoutMeasurementPeriod(p.experiments, p.timestamp)
+			intervals, found := holdoutExposureIntervals(p.experiments, p.timestamp)
 			assert.Equal(t, p.found, found)
-			assert.Equal(t, p.startAt, startAt)
+			assert.Equal(t, p.expected, intervals)
 		})
 	}
 }
 
-func TestEvalEvtWriterHoldoutExposureOneRowPerUserPeriodAndDay(t *testing.T) {
+// The calculator counts the users of an experiment from its start up to each
+// cutoff, one day apart from the start, and to its end. Whatever the order
+// the events are processed in, the rows must give every cutoff the users
+// that have an event up to it.
+func TestEvalEvtWriterHoldoutExposureRowsGiveEveryCutoffItsUsers(t *testing.T) {
+	t.Parallel()
+	// The first experiment starts at 11:00, so its cutoffs are inside a day
+	// of the calendar. The second starts 30 hours later.
+	firstStartAt := exposureGroupStartAt + 11*60*60
+	analysisStartAt := firstStartAt + 30*60*60
+	stopAt := firstStartAt + 4*secondsPerDay + 5*60*60
+	first := exposureMeasurementExperiment()
+	first.StartAt, first.StopAt = firstStartAt, stopAt
+	analysis := exposureAnalysisExperiment()
+	analysis.StartAt, analysis.StopAt = analysisStartAt, stopAt
+	experiments := []*exproto.Experiment{first, analysis}
+	// A SEGMENT group counts every user served normally.
+	group := exposureSegmentGroup()
+	group.Status = ftproto.HoldoutGroup_ANALYSIS
+	group.AnalysisExperimentId = analysis.Id
+	group.StopAt = stopAt
+	group.Features[0].AddedAt = firstStartAt
+
+	cutoffs := func(e *exproto.Experiment) []int64 {
+		var list []int64
+		for ts := e.StartAt + secondsPerDay; ts < e.StopAt; ts += secondsPerDay {
+			list = append(list, ts)
+		}
+		return append(list, e.StopAt)
+	}
+	usersUpTo := func(timestamps map[string][]int64, e *exproto.Experiment, cutoff int64) []string {
+		var users []string
+		for userID, list := range timestamps {
+			if slices.ContainsFunc(list, func(ts int64) bool { return ts >= e.StartAt && ts <= cutoff }) {
+				users = append(users, userID)
+			}
+		}
+		sort.Strings(users)
+		return users
+	}
+
+	for seed := int64(1); seed <= 20; seed++ {
+		t.Run(fmt.Sprintf("seed %d", seed), func(t *testing.T) {
+			t.Parallel()
+			random := rand.New(rand.NewSource(seed)) // nolint:gosec
+			type event struct {
+				id string
+				*eventproto.EvaluationEvent
+			}
+			var events []event
+			eventTimestamps := make(map[string][]int64)
+			for u := 0; u < 30; u++ {
+				userID := fmt.Sprintf("user-%d", u)
+				for i := 0; i < 1+random.Intn(6); i++ {
+					var ts int64
+					switch random.Intn(5) {
+					case 0:
+						// On a cutoff of one of the experiments, or a second
+						// around it.
+						e := experiments[random.Intn(len(experiments))]
+						list := cutoffs(e)
+						ts = list[random.Intn(len(list)-1)] + int64(random.Intn(3)) - 1
+					case 1:
+						// Around the start of the analysis period.
+						ts = analysisStartAt + int64(random.Intn(3)) - 1
+					default:
+						ts = firstStartAt + random.Int63n(stopAt-firstStartAt)
+					}
+					events = append(events, event{
+						id:              fmt.Sprintf("evt-%d-%d", u, i),
+						EvaluationEvent: exposureEvent(userID, ts, servedNormallyReason()),
+					})
+					eventTimestamps[userID] = append(eventTimestamps[userID], ts)
+				}
+			}
+			random.Shuffle(len(events), func(i, j int) { events[i], events[j] = events[j], events[i] })
+
+			h := newEvalWriterHarness(t).
+				withExperiments(experiments...).
+				withCachedGroups(group).
+				withAppend(nil, nil)
+			h.withKeys()
+			for len(events) > 0 {
+				size := min(1+random.Intn(8), len(events))
+				batch := make(eventDWHMap, size)
+				for _, evt := range events[:size] {
+					batch[evt.id] = evt.EvaluationEvent
+				}
+				events = events[size:]
+				require.Empty(t, h.write(batch))
+			}
+
+			rowTimestamps := make(map[string][]int64)
+			var rows int
+			for _, appended := range h.appended {
+				for _, row := range appended {
+					rowTimestamps[row.UserId] = append(rowTimestamps[row.UserId], row.Timestamp/1_000_000)
+					rows++
+				}
+			}
+			for _, e := range experiments {
+				for _, cutoff := range cutoffs(e) {
+					assert.Equal(t,
+						usersUpTo(eventTimestamps, e, cutoff),
+						usersUpTo(rowTimestamps, e, cutoff),
+						"experiment %s, cutoff %d", e.Id, cutoff,
+					)
+				}
+			}
+			// One row per interval at most: a user has two rows within a
+			// day only where the intervals of the two experiments overlap.
+			var eventCount int
+			for _, list := range eventTimestamps {
+				eventCount += len(list)
+			}
+			assert.LessOrEqual(t, rows, eventCount)
+		})
+	}
+}
+
+// An experiment that starts at 11:00 has a cutoff at 11:00 of every day. A
+// user whose 12:00 event is processed before the 10:00 event of the same
+// calendar day must be counted at that cutoff.
+func TestEvalEvtWriterHoldoutExposureEarlierEventAcrossACutoff(t *testing.T) {
+	t.Parallel()
+	users := exposureUsers(t)
+	experiment := exposureMeasurementExperiment()
+	experiment.StartAt = exposureGroupStartAt + 11*60*60
+	group := exposureHashGroup()
+	group.Features[0].AddedAt = experiment.StartAt
+	h := newEvalWriterHarness(t).
+		withExperiments(experiment).
+		withCachedGroups(group).
+		withAppend(nil, nil)
+	h.withKeys()
+	cutoff := experiment.StartAt + secondsPerDay
+
+	fails := h.write(eventDWHMap{
+		"evt-12": exposureEvent(users.comparison, cutoff+60*60, servedNormallyReason()),
+	})
+	assert.Empty(t, fails)
+	require.Len(t, h.lastRows(), 1)
+
+	fails = h.write(eventDWHMap{
+		"evt-10": exposureEvent(users.comparison, cutoff-60*60, servedNormallyReason()),
+	})
+	assert.Empty(t, fails)
+	rows := h.lastRows()
+	require.Len(t, rows, 1)
+	row := rows[holdoutExposureRowID("evt-10", exposureGroupID)]
+	require.NotNil(t, row)
+	assert.LessOrEqual(t, row.Timestamp, time.Unix(cutoff, 0).UnixMicro())
+}
+
+// The experiments list and the measured groups are cached apart. A group
+// whose analysis period just started can be read together with a list that
+// does not have the experiment of that period yet.
+func TestEvalEvtWriterExperimentsOlderThanHoldoutGroup(t *testing.T) {
+	t.Parallel()
+	users := exposureUsers(t)
+	listRequest := func() gomock.Matcher {
+		return gomock.Cond(func(req *exproto.ListExperimentsRequest) bool {
+			return req.EnvironmentId == exposureEnvID && len(req.Kinds) == 0
+		})
+	}
+	newHarness := func(t *testing.T) *evalWriterHarness {
+		return newEvalWriterHarness(t).
+			withExperiments(exposureMeasurementExperiment()).
+			withCachedGroups(exposureHashGroupInAnalysis()).
+			withAppend(nil, nil)
+	}
+	afterStart := func() eventDWHMap {
+		return eventDWHMap{
+			"after": exposureEvent(users.comparison, exposureAnalysisStartAt+60, servedNormallyReason()),
+		}
+	}
+
+	t.Run("the experiments are read from the experiment service", func(t *testing.T) {
+		t.Parallel()
+		h := newHarness(t)
+		keys := h.withKeys()
+		// The row of the user from before the analysis period started.
+		keys.values[exposureKey(exposureSecondDayIntervals, users.comparison)] = "held"
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), listRequest()).Return(
+			&exproto.ListExperimentsResponse{Experiments: []*exproto.Experiment{
+				exposureMeasurementExperiment(), exposureAnalysisExperiment(),
+			}}, nil,
+		)
+		assert.Empty(t, h.write(afterStart()))
+		rows := h.lastRows()
+		require.Len(t, rows, 1, "the experiment of the analysis period needs a row of its own")
+		require.Contains(t, rows, holdoutExposureRowID("after", exposureGroupID))
+		assert.Contains(t, keys.held(), exposureKey(exposureAnalysisIntervals, users.comparison))
+	})
+
+	t.Run("the experiments read from the service are the ones of the batch", func(t *testing.T) {
+		t.Parallel()
+		h := newHarness(t)
+		h.withKeys()
+		// The flag has an experiment that the cached list does not have.
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), listRequest()).Return(
+			&exproto.ListExperimentsResponse{Experiments: []*exproto.Experiment{
+				exposureMeasurementExperiment(), exposureAnalysisExperiment(), exposureFlagExperiment(),
+			}}, nil,
+		)
+		assert.Empty(t, h.write(afterStart()))
+		rows := h.lastRows()
+		require.Len(t, rows, 2)
+		assert.Contains(t, rows, "after")
+		assert.Contains(t, rows, holdoutExposureRowID("after", exposureGroupID))
+	})
+
+	t.Run("a failed read retries the events of the environment", func(t *testing.T) {
+		t.Parallel()
+		h := newHarness(t)
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), listRequest()).
+			Return(nil, errors.New("unavailable"))
+		assert.Equal(t, map[string]bool{"after": true}, h.write(afterStart()))
+		assert.Empty(t, h.lastRows())
+	})
+
+	t.Run("a service that does not list the experiment either does not stop the batch", func(t *testing.T) {
+		t.Parallel()
+		h := newHarness(t)
+		keys := h.withKeys()
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), listRequest()).Return(
+			&exproto.ListExperimentsResponse{Experiments: []*exproto.Experiment{
+				exposureMeasurementExperiment(),
+			}}, nil,
+		)
+		assert.Empty(t, h.write(afterStart()))
+		assert.Len(t, h.lastRows(), 1)
+		assert.Equal(t, []string{exposureKey(exposureSecondDayIntervals, users.comparison)}, keys.held())
+	})
+
+	t.Run("a group that names only listed experiments does not read the service", func(t *testing.T) {
+		t.Parallel()
+		// No expectation on the experiment client.
+		h := newEvalWriterHarness(t).
+			withExperiments(exposureMeasurementExperiment(), exposureAnalysisExperiment()).
+			withCachedGroups(exposureHashGroupInAnalysis()).
+			withAppend(nil, nil)
+		h.withKeys()
+		assert.Empty(t, h.write(afterStart()))
+		assert.Len(t, h.lastRows(), 1)
+	})
+}
+
+func TestEvalEvtWriterHoldoutExposureOneRowPerUserAndInterval(t *testing.T) {
 	t.Parallel()
 	users := exposureUsers(t)
 	newHarness := func(t *testing.T) (*evalWriterHarness, *fakeExposureKeys) {
 		h := newEvalWriterHarness(t).
 			withExperiments(exposureMeasurementExperiment(), exposureAnalysisExperiment()).
-			withCachedGroups(exposureHashGroup()).
+			withCachedGroups(exposureHashGroupInAnalysis()).
 			withAppend(nil, nil)
 		return h, h.withKeys()
 	}
@@ -833,10 +1150,10 @@ func TestEvalEvtWriterHoldoutExposureOneRowPerUserPeriodAndDay(t *testing.T) {
 		})
 		assert.Empty(t, fails)
 		assert.Len(t, h.lastRows(), 1)
-		assert.Equal(t, []string{exposureKey(exposureGroupStartAt, exposureDay, users.comparison)}, keys.asked)
+		assert.Equal(t, []string{exposureKey(exposureSecondDayIntervals, users.comparison)}, keys.asked)
 	})
 
-	t.Run("a later batch of the same day writes no row and nacks nothing", func(t *testing.T) {
+	t.Run("a later batch of the same interval writes no row and nacks nothing", func(t *testing.T) {
 		t.Parallel()
 		h, _ := newHarness(t)
 		h.write(eventDWHMap{"evt-1": exposureEvent(users.comparison, exposureDayStart+10, servedNormallyReason())})
@@ -873,18 +1190,20 @@ func TestEvalEvtWriterHoldoutExposureOneRowPerUserPeriodAndDay(t *testing.T) {
 		assert.Equal(t, holdoutdomain.InHoldoutVariationID, rows["evt-2:"+exposureGroupID].VariationId)
 	})
 
-	t.Run("the next day writes a row", func(t *testing.T) {
+	// exposureDayStart is one day after the start of the experiment: a
+	// cutoff of the calculator, which counts an event at that second.
+	t.Run("the next interval writes a row", func(t *testing.T) {
 		t.Parallel()
 		h, keys := newHarness(t)
 		fails := h.write(eventDWHMap{
-			"evt-1": exposureEvent(users.comparison, exposureDayStart-1, servedNormallyReason()),
-			"evt-2": exposureEvent(users.comparison, exposureDayStart, servedNormallyReason()),
+			"evt-1": exposureEvent(users.comparison, exposureDayStart, servedNormallyReason()),
+			"evt-2": exposureEvent(users.comparison, exposureDayStart+1, servedNormallyReason()),
 		})
 		assert.Empty(t, fails)
 		assert.Len(t, h.lastRows(), 2)
 		assert.Equal(t, []string{
-			exposureKey(exposureGroupStartAt, exposureDay-1, users.comparison),
-			exposureKey(exposureGroupStartAt, exposureDay, users.comparison),
+			exposureKey(exposureFirstDayIntervals, users.comparison),
+			exposureKey(exposureSecondDayIntervals, users.comparison),
 		}, keys.held())
 	})
 
@@ -904,9 +1223,9 @@ func TestEvalEvtWriterHoldoutExposureOneRowPerUserPeriodAndDay(t *testing.T) {
 		rows := h.lastRows()
 		require.Len(t, rows, 2)
 		require.Contains(t, rows, "before:"+exposureGroupID)
-		assert.Equal(t, []string{
-			exposureKey(exposureGroupStartAt, exposureDay, users.comparison),
-			exposureKey(exposureAnalysisStartAt, exposureDay, users.comparison),
+		assert.ElementsMatch(t, []string{
+			exposureKey(exposureSecondDayIntervals, users.comparison),
+			exposureKey(exposureAnalysisIntervals, users.comparison),
 		}, keys.held())
 		var afterStart int
 		for _, row := range rows {
@@ -993,7 +1312,7 @@ func TestEvalEvtWriterHoldoutExposureWithFlagExperiment(t *testing.T) {
 func TestEvalEvtWriterHoldoutExposureFailures(t *testing.T) {
 	t.Parallel()
 	users := exposureUsers(t)
-	key := exposureKey(exposureGroupStartAt, exposureDay, users.comparison)
+	key := exposureKey(exposureSecondDayIntervals, users.comparison)
 	event := func() eventDWHMap {
 		return eventDWHMap{
 			"evt": exposureEvent(users.comparison, exposureDayStart+10, servedNormallyReason()),

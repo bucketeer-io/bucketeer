@@ -17,6 +17,8 @@ package processor
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -37,14 +39,15 @@ import (
 const (
 	holdoutExposureLockKind = "holdout_exposure"
 	// holdoutExposureLockTTL is how long the key of a written row lives. A
-	// key is per day of the event timestamp, so one day from the first row
-	// covers the rest of that day; the extra hour covers events of the last
-	// minutes of the day that are delivered after midnight. An event of that
-	// day arriving after the key expired writes one more row for the user.
-	// The calculator counts distinct users, so that changes the evaluation
-	// total of the variation and not its user count.
+	// key is per interval of one day (holdoutExposureIntervals), so one day
+	// from the first row covers the rest of the interval; the extra hour
+	// covers events of its last minutes that are delivered after it ended.
+	// An event of the interval arriving after the key expired writes one
+	// more row for the user. The calculator counts distinct users, so that
+	// changes the evaluation total of the variation and not its user count.
 	holdoutExposureLockTTL = 25 * time.Hour
-	secondsPerDay          = int64(24 * 60 * 60)
+	// secondsPerDay is the distance between two cutoffs of the calculator.
+	secondsPerDay = int64(24 * 60 * 60)
 )
 
 // holdoutExposure is a row derived from an evaluation event on a target flag
@@ -64,23 +67,21 @@ type holdoutExposure struct {
 type holdoutExposureMatch struct {
 	groupID     string
 	variationID string
-	// periodStartAt is the start_at of the newest internal experiment of the
-	// group whose window contains the event, and day is the day of the event
-	// timestamp since the Unix epoch, in UTC. With the group and the user
-	// they make the row unique.
-	periodStartAt int64
-	day           int64
-	userID        string
+	// intervals names the interval of one day the event is in, for every
+	// internal experiment of the group whose window contains the event
+	// (holdoutExposureIntervals). With the group and the user it makes the
+	// row unique.
+	intervals string
+	userID    string
 }
 
 func (m *holdoutExposureMatch) lockKey(environmentID string) string {
 	return fmt.Sprintf(
-		"%s:%s:%s:%d:%d:%s",
+		"%s:%s:%s:%s:%s",
 		environmentID,
 		holdoutExposureLockKind,
 		m.groupID,
-		m.periodStartAt,
-		m.day,
+		m.intervals,
 		m.userID,
 	)
 }
@@ -216,11 +217,11 @@ func (d *holdoutExposureDeriver) match(
 		// a group that has stopped can meet an internal experiment that
 		// still has its window before the stop. The row of an event after
 		// the stop would be outside the window the calculator reads and
-		// would take the key of the user's row of that day.
+		// would take the key of the user's row of that interval.
 		if evt.Timestamp >= holdoutdomain.InternalExperimentStopAt(m.group) {
 			continue
 		}
-		periodStartAt, ok := holdoutMeasurementPeriod(m.experiments, evt.Timestamp)
+		intervals, ok := holdoutExposureIntervals(m.experiments, evt.Timestamp)
 		if !ok || !isHoldoutTargetAt(m.group, evt.FeatureId, evt.Timestamp) {
 			continue
 		}
@@ -229,18 +230,17 @@ func (d *holdoutExposureDeriver) match(
 			continue
 		}
 		return &holdoutExposureMatch{
-			groupID:       m.group.Id,
-			variationID:   variationID,
-			periodStartAt: periodStartAt,
-			day:           evt.Timestamp / secondsPerDay,
-			userID:        userID,
+			groupID:     m.group.Id,
+			variationID: variationID,
+			intervals:   intervals,
+			userID:      userID,
 		}
 	}
 	return nil
 }
 
 // acquire returns the row to write for a match, or nil when the row of the
-// user, group, period and day is already written. base is the row of the
+// user, group and intervals is already written. base is the row of the
 // event as it is written for a flag experiment; the derived row copies the
 // user, the reason, the tag, the source and the timestamp from it.
 //
@@ -298,27 +298,67 @@ func (d *holdoutExposureDeriver) release(ctx context.Context, exposure *holdoutE
 	}
 }
 
-// holdoutMeasurementPeriod reports whether timestamp is inside the window
-// [start_at, stop_at) of an internal experiment of the group, and returns the
-// start_at of the newest such experiment. The row of a user is unique per
-// period: an event after the analysis-period experiment started gets its own
-// row on the day of the start, so that experiment counts a user whose first
-// event of that day was before it.
-func holdoutMeasurementPeriod(experiments []*exproto.Experiment, timestamp int64) (int64, bool) {
-	var (
-		periodStartAt int64
-		found         bool
-	)
+// holdoutExposureIntervals reports whether timestamp is inside the window
+// [start_at, stop_at) of an internal experiment of the group. For every such
+// experiment, oldest first, it names the interval of that experiment the
+// timestamp is in, as "<start_at>.<n>" joined by "-".
+//
+// The calculator counts the users of an experiment from its start_at up to
+// each cutoff of that experiment, ends included: start_at plus n days, for
+// n = 1, 2 and so on. Interval n is the time after start_at plus n days, up
+// to and including start_at plus n+1 days, and interval 0 has start_at too,
+// so the events of one interval are on the same side of every cutoff. One
+// row per interval is then enough: whichever event of the interval is
+// processed first, the calculator counts the user at the cutoffs it would
+// count the user at with a row per event.
+//
+// The intervals of the two experiments of a group line up only when the
+// analysis period starts a whole number of days after the first experiment,
+// so a user can get two rows within a day once the analysis period started.
+// The first event of a user after that start is in an interval of the
+// analysis-period experiment that no earlier event is in, so that experiment
+// counts a user whose earlier events of the day were before it.
+func holdoutExposureIntervals(experiments []*exproto.Experiment, timestamp int64) (string, bool) {
+	var startAts []int64
 	for _, e := range experiments {
 		if timestamp < e.StartAt || timestamp >= e.StopAt {
 			continue
 		}
-		if !found || e.StartAt > periodStartAt {
-			periodStartAt = e.StartAt
-			found = true
+		if !slices.Contains(startAts, e.StartAt) {
+			startAts = append(startAts, e.StartAt)
 		}
 	}
-	return periodStartAt, found
+	if len(startAts) == 0 {
+		return "", false
+	}
+	slices.Sort(startAts)
+	intervals := make([]string, 0, len(startAts))
+	for _, startAt := range startAts {
+		n := max(timestamp-startAt-1, 0) / secondsPerDay
+		intervals = append(intervals, fmt.Sprintf("%d.%d", startAt, n))
+	}
+	return strings.Join(intervals, "-"), true
+}
+
+// lacksInternalExperiment reports whether a measured group names an internal
+// experiment that is not among the experiments the group was matched with.
+// The holdout service writes a group and its internal experiments together,
+// so the experiments list is then older than the group.
+func lacksInternalExperiment(measured []*measuredHoldoutGroup) bool {
+	for _, m := range measured {
+		for _, id := range []string{m.group.ExperimentId, m.group.AnalysisExperimentId} {
+			if id == "" {
+				continue
+			}
+			listed := slices.ContainsFunc(m.experiments, func(e *exproto.Experiment) bool {
+				return e.Id == id
+			})
+			if !listed {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // isHoldoutTargetAt reports whether the flag was a target of the group at

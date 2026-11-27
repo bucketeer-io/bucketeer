@@ -103,13 +103,13 @@ func (w *evalEvtWriter) Write(
 		if len(experiments) == 0 {
 			continue
 		}
-		measuredGroups, err := w.holdoutExposures.measuredGroups(ctx, environmentId, experiments)
+		experiments, measuredGroups, failureCode, err := w.listMeasuredHoldoutGroups(ctx, environmentId, experiments)
 		if err != nil {
 			w.logger.Error("failed to list measured holdout groups",
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 			)
-			subscriberHandledCounter.WithLabelValues(w.subscriberType, codeFailedToListMeasuredHoldoutGroups).Inc()
+			subscriberHandledCounter.WithLabelValues(w.subscriberType, failureCode).Inc()
 			// Make sure to retry all the events in the next pulling
 			for id := range events {
 				fails[id] = true
@@ -214,6 +214,47 @@ func (w *evalEvtWriter) Write(
 		)
 	}
 	return fails
+}
+
+// listMeasuredHoldoutGroups returns the measured holdout groups of the
+// environment and the experiments list to use for the batch, which is
+// experiments unless it is older than the groups.
+//
+// The two lists are cached apart. When a group names an internal experiment
+// that experiments lacks, for example the experiment of an analysis period
+// that just started, an event would be given the intervals of the listed
+// experiments only, and could take the key of an earlier row of the user
+// where the missing experiment needs a row of its own. The experiments are
+// then read from the experiment service, which has what the group names. On
+// an error, the returned code is the one to count it under.
+func (w *evalEvtWriter) listMeasuredHoldoutGroups(
+	ctx context.Context,
+	environmentID string,
+	experiments []*exproto.Experiment,
+) ([]*exproto.Experiment, []*measuredHoldoutGroup, string, error) {
+	measured, err := w.holdoutExposures.measuredGroups(ctx, environmentID, experiments)
+	if err != nil {
+		return nil, nil, codeFailedToListMeasuredHoldoutGroups, err
+	}
+	if !lacksInternalExperiment(measured) {
+		return experiments, measured, "", nil
+	}
+	subscriberHandledCounter.WithLabelValues(w.subscriberType, codeExperimentsOlderThanHoldoutGroup).Inc()
+	experiments, err = w.fetchExperiments(ctx, environmentID)
+	if err != nil {
+		return nil, nil, codeFailedToListExperiments, err
+	}
+	measured, err = w.holdoutExposures.measuredGroups(ctx, environmentID, experiments)
+	if err != nil {
+		return nil, nil, codeFailedToListMeasuredHoldoutGroups, err
+	}
+	if lacksInternalExperiment(measured) {
+		// Nothing newer can be read. The batch goes on with what is listed.
+		w.logger.Warn("A measured holdout group names an internal experiment that is not listed",
+			zap.String("environmentId", environmentID),
+		)
+	}
+	return experiments, measured, "", nil
 }
 
 // failedEventID returns the ID of the evaluation event that a row that was
@@ -329,28 +370,52 @@ func (w *evalEvtWriter) listExperiments(
 			if err == nil {
 				return expList.Experiments, nil
 			}
-			// Get the experiments from the DB
-			resp, err := w.experimentClient.ListExperiments(ctx, &exproto.ListExperimentsRequest{
-				// Because the evaluation and goal events may be sent with a delay
-				// for many reasons from the client side, we still calculate
-				// the results for two days after it stopped.
-				StopAt:        time.Now().In(w.location).Add(-experimentdomain.StoppedExperimentEventWindow).Unix(),
-				PageSize:      0,
-				EnvironmentId: environmentId,
-				Statuses: []exproto.Experiment_Status{
-					exproto.Experiment_RUNNING,
-					exproto.Experiment_STOPPED,
-				},
-				Archived: wrapperspb.Bool(false),
-			})
-			if err != nil {
-				return nil, err
-			}
-			return resp.Experiments, nil
+			return w.listExperimentsFromService(ctx, environmentId)
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 	return experiments.([]*exproto.Experiment), nil
+}
+
+// fetchExperiments is listExperiments without the cache.
+func (w *evalEvtWriter) fetchExperiments(
+	ctx context.Context,
+	environmentId string,
+) ([]*exproto.Experiment, error) {
+	experiments, err, _ := w.flightgroup.Do(
+		fmt.Sprintf("%s:%s", environmentId, "fetchExperiments"),
+		func() (interface{}, error) {
+			return w.listExperimentsFromService(ctx, environmentId)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return experiments.([]*exproto.Experiment), nil
+}
+
+func (w *evalEvtWriter) listExperimentsFromService(
+	ctx context.Context,
+	environmentId string,
+) ([]*exproto.Experiment, error) {
+	// Get the experiments from the DB
+	resp, err := w.experimentClient.ListExperiments(ctx, &exproto.ListExperimentsRequest{
+		// Because the evaluation and goal events may be sent with a delay
+		// for many reasons from the client side, we still calculate
+		// the results for two days after it stopped.
+		StopAt:        time.Now().In(w.location).Add(-experimentdomain.StoppedExperimentEventWindow).Unix(),
+		PageSize:      0,
+		EnvironmentId: environmentId,
+		Statuses: []exproto.Experiment_Status{
+			exproto.Experiment_RUNNING,
+			exproto.Experiment_STOPPED,
+		},
+		Archived: wrapperspb.Bool(false),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Experiments, nil
 }
