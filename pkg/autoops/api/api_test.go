@@ -26,9 +26,9 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	authclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
 	v2ao "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
 	mockAutoOpsStorage "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2/mock"
@@ -39,11 +39,8 @@ import (
 	mockFeatureStorage "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	mockOpsCountStorage "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
@@ -68,7 +65,6 @@ func TestNewAutoOpsService(t *testing.T) {
 	dbClientMock := dbmock.NewMockClient(mockController)
 	featureClientMock := featureclientmock.NewMockClient(mockController)
 	experimentClientMock := experimentclientmock.NewMockClient(mockController)
-	accountClientMock := accountclientmock.NewMockClient(mockController)
 	authClientMock := authclientmock.NewMockClient(mockController)
 	p := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
@@ -84,7 +80,6 @@ func TestNewAutoOpsService(t *testing.T) {
 		featureStorageMock,
 		featureClientMock,
 		experimentClientMock,
-		accountClientMock,
 		authClientMock,
 		p,
 		WithLogger(logger),
@@ -97,7 +92,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleOwner(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -490,7 +485,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleOwner(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -917,7 +912,7 @@ func TestStopAutoOpsRuleMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleOwner(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1050,7 +1045,7 @@ func TestDeleteAutoOpsRuleMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleOwner(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1183,7 +1178,7 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleUnassigned(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1212,31 +1207,8 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: statusAutoOpsRuleNotFound.Err(),
 		},
 		{
-			desc:        "errPermissionDenied",
-			service:     createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			setup:       func(s *AutoOpsService) {},
-			req:         &autoopsproto.GetAutoOpsRuleRequest{Id: "aid1", EnvironmentId: "ns0"},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
 			desc:    "success",
 			service: createAutoOpsService(mockController),
-			setup: func(s *AutoOpsService) {
-				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AutoOpsRule{
-					AutoOpsRule: &autoopsproto.AutoOpsRule{
-						Id: "aid1", OpsType: autoopsproto.OpsType_SCHEDULE, AutoOpsStatus: autoopsproto.AutoOpsStatus_RUNNING, Deleted: false, Clauses: []*autoopsproto.Clause{
-							{Id: "cid", ActionType: autoopsproto.ActionType_ENABLE, Clause: &anypb.Any{}},
-						}},
-				}, nil)
-			},
-			req:         &autoopsproto.GetAutoOpsRuleRequest{Id: "aid1", EnvironmentId: "ns0"},
-			expectedErr: nil,
-		},
-		{
-			desc:    "success with view account",
-			service: createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *AutoOpsService) {
 				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -1268,7 +1240,7 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleUnassigned(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1291,13 +1263,6 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:        "errPermissionDenied",
-			service:     createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			setup:       func(s *AutoOpsService) {},
-			req:         &autoopsproto.ListAutoOpsRulesRequest{EnvironmentId: "ns0", Cursor: ""},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
 			desc:    "err: InvalidCursor",
 			service: createAutoOpsService(mockController),
 			setup: func(s *AutoOpsService) {
@@ -1307,17 +1272,6 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 			},
 			req:         &autoopsproto.ListAutoOpsRulesRequest{EnvironmentId: "ns0", Cursor: "invalid"},
 			expectedErr: statusInvalidCursor.Err(),
-		},
-		{
-			desc:    "success with viewer",
-			service: createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
-			setup: func(s *AutoOpsService) {
-				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().ListAutoOpsRules(
-					gomock.Any(), gomock.Any(),
-				).Return([]*autoopsproto.AutoOpsRule{}, 0, nil)
-			},
-			req:         &autoopsproto.ListAutoOpsRulesRequest{EnvironmentId: "ns0", Cursor: ""},
-			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
@@ -1336,7 +1290,7 @@ func TestListOpsCountsMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := createContextWithTokenRoleUnassigned(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1350,24 +1304,6 @@ func TestListOpsCountsMySQL(t *testing.T) {
 		{
 			desc:    "success",
 			service: createAutoOpsService(mockController),
-			setup: func(s *AutoOpsService) {
-				s.opsCountStorage.(*mockOpsCountStorage.MockOpsCountStorage).EXPECT().ListOpsCounts(
-					gomock.Any(), gomock.Any(),
-				).Return([]*autoopsproto.OpsCount{}, 0, nil)
-			},
-			req:         &autoopsproto.ListOpsCountsRequest{EnvironmentId: "ns0", Cursor: ""},
-			expectedErr: nil,
-		},
-		{
-			desc:        "errPermissionDenied",
-			service:     createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			setup:       func(s *AutoOpsService) {},
-			req:         &autoopsproto.ListOpsCountsRequest{EnvironmentId: "ns0", Cursor: ""},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "success with view ",
-			service: createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *AutoOpsService) {
 				s.opsCountStorage.(*mockOpsCountStorage.MockOpsCountStorage).EXPECT().ListOpsCounts(
 					gomock.Any(), gomock.Any(),
@@ -1394,7 +1330,7 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleOwner(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1739,24 +1675,6 @@ func TestExistGoal(t *testing.T) {
 
 func createAutoOpsService(c *gomock.Controller) *AutoOpsService {
 	featureClientMock := featureclientmock.NewMockClient(c)
-	accountClientMock := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: "ns0",
-					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-				},
-				{
-					EnvironmentId: "",
-					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-				},
-			},
-		},
-	}
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	experimentClientMock := experimentclientmock.NewMockClient(c)
 	authClientMock := authclientmock.NewMockClient(c)
 	p := publishermock.NewMockPublisher(c)
@@ -1769,7 +1687,6 @@ func createAutoOpsService(c *gomock.Controller) *AutoOpsService {
 		opsCountStorage:  mockOpsCountStorage.NewMockOpsCountStorage(c),
 		featureClient:    featureClientMock,
 		experimentClient: experimentClientMock,
-		accountClient:    accountClientMock,
 		authClient:       authClientMock,
 		publisher:        p,
 		opts: &options{
@@ -1845,68 +1762,9 @@ func (m eventTypeMatcher) String() string {
 	return "is a domain event of type " + m.eventType.String()
 }
 
-func createServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, ro accountproto.AccountV2_Role_Organization, re accountproto.AccountV2_Role_Environment) *AutoOpsService {
-	featureClientMock := featureclientmock.NewMockClient(c)
-	accountClientMock := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: ro,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: "ns0",
-					Role:          re,
-				},
-			},
-		},
-	}
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
-	experimentClientMock := experimentclientmock.NewMockClient(c)
-	authClientMock := authclientmock.NewMockClient(c)
-	p := publishermock.NewMockPublisher(c)
-	logger := zap.NewNop()
-	return &AutoOpsService{
-		dbClient:         dbmock.NewMockClient(c),
-		autoOpsStorage:   mockAutoOpsStorage.NewMockAutoOpsRuleStorage(c),
-		prStorage:        mockAutoOpsStorage.NewMockProgressiveRolloutStorage(c),
-		opsCountStorage:  mockOpsCountStorage.NewMockOpsCountStorage(c),
-		featureClient:    featureClientMock,
-		experimentClient: experimentClientMock,
-		accountClient:    accountClientMock,
-		authClient:       authClientMock,
-		publisher:        p,
-		opts: &options{
-			logger: zap.NewNop(),
-		},
-		logger: logger,
-	}
-}
-
-func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
-	t.Helper()
-	token := &token.AccessToken{
-		Issuer:   "issuer",
-		Audience: "audience",
-		Expiry:   time.Now().AddDate(100, 0, 0),
-		IssuedAt: time.Now(),
-		Email:    "email",
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
-}
-
-func createContextWithTokenRoleOwner(t *testing.T) context.Context {
-	t.Helper()
-	token := &token.AccessToken{
-		Issuer:        "issuer",
-		Audience:      "audience",
-		Expiry:        time.Now().AddDate(100, 0, 0),
-		IssuedAt:      time.Now(),
-		Email:         "email",
-		IsSystemAdmin: true,
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
+// createContextWithEditor is a context after the authz interceptor allowed the request.
+func createContextWithEditor() context.Context {
+	return authz.WithEditor(context.TODO(), &eventproto.Editor{Email: "email"})
 }
 
 func TestValidateDatetimeClause(t *testing.T) {
@@ -2432,7 +2290,7 @@ func TestUpdateAutoOpsRule_MixedScheduleTypes(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleOwner(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})

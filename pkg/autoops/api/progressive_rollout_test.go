@@ -46,7 +46,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleOwner(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -988,7 +988,7 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleUnassigned(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1041,7 +1041,7 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleOwner(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1133,7 +1133,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleOwner(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1209,7 +1209,7 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleUnassigned(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1307,7 +1307,7 @@ func TestExecuteAutoOpsLocksFeatureRow(t *testing.T) {
 			gomock.Any(), "fid", "ns0",
 		).Return(nil, v2fs.ErrFeatureNotFound),
 	)
-	_, err := service.ExecuteAutoOps(createContextWithTokenRoleOwner(t), &autoopsproto.ExecuteAutoOpsRequest{
+	_, err := service.ExecuteAutoOps(createContextWithEditor(), &autoopsproto.ExecuteAutoOpsRequest{
 		Id: "rule", ClauseId: "clause", EnvironmentId: "ns0",
 	})
 	assert.Error(t, err)
@@ -1333,7 +1333,7 @@ func TestExecuteProgressiveRolloutLocksFeatureRow(t *testing.T) {
 			gomock.Any(), "fid", "ns0",
 		).Return(nil, v2fs.ErrFeatureNotFound),
 	)
-	_, err := service.ExecuteProgressiveRollout(createContextWithTokenRoleOwner(t), &autoopsproto.ExecuteProgressiveRolloutRequest{
+	_, err := service.ExecuteProgressiveRollout(createContextWithEditor(), &autoopsproto.ExecuteProgressiveRolloutRequest{
 		Id: "aid", EnvironmentId: "ns0", ScheduleId: "sid",
 	})
 	assert.Error(t, err)
@@ -1344,7 +1344,7 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleOwner(t)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
