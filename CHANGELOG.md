@@ -1,5 +1,33 @@
 # Changelog
 
+## [2.5.0](https://github.com/bucketeer-io/bucketeer/compare/v2.4.0...v2.5.0) (2026-11-27)
+
+
+### Features
+
+* **auth:** bound a session by the time of the original sign-in ([#3036](https://github.com/bucketeer-io/bucketeer/issues/3036)) ([00a4665](https://github.com/bucketeer-io/bucketeer/commit/00a4665b7c1376ca72cefb7c901b64ada5a56dd0))
+* **authz:** add the authorization engine for RFC 0049 ([#3015](https://github.com/bucketeer-io/bucketeer/issues/3015)) ([be1053d](https://github.com/bucketeer-io/bucketeer/commit/be1053d1c822d969e7107c53161305dec3400408))
+* **experiment:** add experiment kind for holdout groups ([#3041](https://github.com/bucketeer-io/bucketeer/issues/3041)) ([b49f2eb](https://github.com/bucketeer-io/bucketeer/commit/b49f2ebfa7da46eeb068f4d8eaa6d6a80b90bc77))
+* **holdout:** create and mirror the internal experiments of a holdout group ([#3042](https://github.com/bucketeer-io/bucketeer/issues/3042)) ([68fc8df](https://github.com/bucketeer-io/bucketeer/commit/68fc8df40008014520d83c746bcd23a7661f4858))
+
+
+### Bug Fixes
+
+* **account:** ignore disabled accounts when deciding the system admin ([#3030](https://github.com/bucketeer-io/bucketeer/issues/3030)) ([d2354be](https://github.com/bucketeer-io/bucketeer/commit/d2354bee51965835e297f6bb12d18e873ef1dd0e))
+* **api:** do not log caller cancellation on holdout snapshot reads ([#3044](https://github.com/bucketeer-io/bucketeer/issues/3044)) ([3c715f6](https://github.com/bucketeer-io/bucketeer/commit/3c715f6683b29eaaeccc13c970ff1d7586d4aa3d))
+* **gateway:** accept segment user responses over the default gRPC message size ([#3049](https://github.com/bucketeer-io/bucketeer/issues/3049)) ([dae61b2](https://github.com/bucketeer-io/bucketeer/commit/dae61b2d42fbc6cdf292cdd39eeb12f1032e9f86))
+* **holdout:** cache the users of a segment that only a holdout group references ([#3048](https://github.com/bucketeer-io/bucketeer/issues/3048)) ([2e3e7de](https://github.com/bucketeer-io/bucketeer/commit/2e3e7de9d4897477be78bda3528c0e5952079b2b))
+
+
+### Miscellaneous
+
+* **evaluation:** update typescript evaluation version to 0.0.10 ([#3026](https://github.com/bucketeer-io/bucketeer/issues/3026)) ([16e3d1b](https://github.com/bucketeer-io/bucketeer/commit/16e3d1b61202ed19288c99b0ed11dd2a98d91483))
+
+
+### Build System
+
+* **deps:** bump js-yaml in /evaluation/typescript ([#3057](https://github.com/bucketeer-io/bucketeer/issues/3057)) ([30983a5](https://github.com/bucketeer-io/bucketeer/commit/30983a540732afcbc41c58cb1c204cb1b43c95c4))
+
 ## [2.4.0](https://github.com/bucketeer-io/bucketeer/compare/v2.3.0...v2.4.0) (2026-11-19)
 
 
