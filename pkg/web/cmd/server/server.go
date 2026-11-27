@@ -1159,7 +1159,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// experimentService
 	experimentService := experimentapi.NewExperimentService(
 		featureClient,
-		accountClient,
 		autoOpsClient,
 		dbClient,
 		experimentStorage,

@@ -29,40 +29,15 @@ import (
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/mock"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
-
-// holdoutExperimentRoles are the roles allowed to write an experiment.
-// A write to an experiment whose kind is HOLDOUT is rejected for each of them.
-var holdoutExperimentRoles = []struct {
-	desc    string
-	orgRole accountproto.AccountV2_Role_Organization
-	envRole accountproto.AccountV2_Role_Environment
-}{
-	{
-		desc:    "organization owner",
-		orgRole: accountproto.AccountV2_Role_Organization_OWNER,
-		envRole: accountproto.AccountV2_Role_Environment_UNASSIGNED,
-	},
-	{
-		desc:    "organization admin",
-		orgRole: accountproto.AccountV2_Role_Organization_ADMIN,
-		envRole: accountproto.AccountV2_Role_Environment_UNASSIGNED,
-	},
-	{
-		desc:    "environment editor",
-		orgRole: accountproto.AccountV2_Role_Organization_MEMBER,
-		envRole: accountproto.AccountV2_Role_Environment_EDITOR,
-	},
-}
 
 func TestGetExperimentReturnsHoldoutKind(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	service := createExperimentService(mockController, nil, nil, nil)
+	service := createExperimentService(mockController)
 	service.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(
 		gomock.Any(), "id-1", "ns0",
 	).Return(&domain.Experiment{
@@ -70,7 +45,7 @@ func TestGetExperimentReturnsHoldoutKind(t *testing.T) {
 	}, nil)
 
 	resp, err := service.GetExperiment(
-		createContextWithToken(),
+		createContextWithEditor(),
 		&experimentproto.GetExperimentRequest{Id: "id-1", EnvironmentId: "ns0"},
 	)
 	require.NoError(t, err)
@@ -101,7 +76,7 @@ func TestListExperimentsKinds(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := createExperimentService(mockController, nil, nil, nil)
+			service := createExperimentService(mockController)
 			// The list and the summary receive the same kinds.
 			service.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().ListExperiments(
 				gomock.Any(), gomock.Any(),
@@ -118,7 +93,7 @@ func TestListExperimentsKinds(t *testing.T) {
 			).Return(&v2es.ExperimentSummary{TotalRunningCount: 1}, nil)
 
 			resp, err := service.ListExperiments(
-				createContextWithToken(),
+				createContextWithEditor(),
 				&experimentproto.ListExperimentsRequest{EnvironmentId: "ns0", Kinds: p.kinds},
 			)
 			require.NoError(t, err)
@@ -164,44 +139,9 @@ func TestUpdateExperimentRejectsHoldoutKind(t *testing.T) {
 			},
 		},
 	}
-	for _, r := range holdoutExperimentRoles {
-		for _, p := range requests {
-			t.Run(r.desc+": "+p.desc, func(t *testing.T) {
-				service := createExperimentService(mockController, nil, toPtr(r.orgRole), toPtr(r.envRole))
-				service.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
-					return fn(ctx)
-				})
-				service.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(
-					gomock.Any(), "id-1", "ns0",
-				).Return(&domain.Experiment{
-					Experiment: &experimentproto.Experiment{
-						Id:     "id-1",
-						Kind:   experimentproto.Experiment_HOLDOUT,
-						Status: experimentproto.Experiment_WAITING,
-					},
-				}, nil)
-				// Neither the storage write nor the domain event is expected:
-				// the mocks fail the test if either is called.
-
-				resp, err := service.UpdateExperiment(createContextWithToken(), p.req)
-				assert.Nil(t, resp)
-				assert.Equal(t, statusExperimentOwnedByHoldoutGroup.Err(), err)
-				assert.Equal(t, codes.FailedPrecondition, status.Code(err))
-			})
-		}
-	}
-}
-
-func TestDeleteExperimentRejectsHoldoutKind(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	for _, r := range holdoutExperimentRoles {
-		t.Run(r.desc, func(t *testing.T) {
-			service := createExperimentService(mockController, nil, toPtr(r.orgRole), toPtr(r.envRole))
+	for _, p := range requests {
+		t.Run(p.desc, func(t *testing.T) {
+			service := createExperimentService(mockController)
 			service.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
 				gomock.Any(), gomock.Any(),
 			).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
@@ -211,20 +151,49 @@ func TestDeleteExperimentRejectsHoldoutKind(t *testing.T) {
 				gomock.Any(), "id-1", "ns0",
 			).Return(&domain.Experiment{
 				Experiment: &experimentproto.Experiment{
-					Id:   "id-1",
-					Kind: experimentproto.Experiment_HOLDOUT,
+					Id:     "id-1",
+					Kind:   experimentproto.Experiment_HOLDOUT,
+					Status: experimentproto.Experiment_WAITING,
 				},
 			}, nil)
 			// Neither the storage write nor the domain event is expected:
 			// the mocks fail the test if either is called.
 
-			resp, err := service.DeleteExperiment(
-				createContextWithToken(),
-				&experimentproto.DeleteExperimentRequest{Id: "id-1", EnvironmentId: "ns0"},
-			)
+			resp, err := service.UpdateExperiment(createContextWithEditor(), p.req)
 			assert.Nil(t, resp)
 			assert.Equal(t, statusExperimentOwnedByHoldoutGroup.Err(), err)
 			assert.Equal(t, codes.FailedPrecondition, status.Code(err))
 		})
 	}
+}
+
+func TestDeleteExperimentRejectsHoldoutKind(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	service := createExperimentService(mockController)
+	service.dbClient.(*dbmock.MockClient).EXPECT().RunInTransactionV2(
+		gomock.Any(), gomock.Any(),
+	).DoAndReturn(func(ctx context.Context, fn func(ctx context.Context) error) error {
+		return fn(ctx)
+	})
+	service.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(
+		gomock.Any(), "id-1", "ns0",
+	).Return(&domain.Experiment{
+		Experiment: &experimentproto.Experiment{
+			Id:   "id-1",
+			Kind: experimentproto.Experiment_HOLDOUT,
+		},
+	}, nil)
+	// Neither the storage write nor the domain event is expected:
+	// the mocks fail the test if either is called.
+
+	resp, err := service.DeleteExperiment(
+		createContextWithEditor(),
+		&experimentproto.DeleteExperimentRequest{Id: "id-1", EnvironmentId: "ns0"},
+	)
+	assert.Nil(t, resp)
+	assert.Equal(t, statusExperimentOwnedByHoldoutGroup.Err(), err)
+	assert.Equal(t, codes.FailedPrecondition, status.Code(err))
 }

@@ -30,7 +30,6 @@ import (
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
@@ -40,7 +39,7 @@ func TestGetGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleUnassigned()
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -48,8 +47,6 @@ func TestGetGoalMySQL(t *testing.T) {
 	patterns := []struct {
 		desc          string
 		setup         func(*experimentService)
-		orgRole       *accountproto.AccountV2_Role_Organization
-		envRole       *accountproto.AccountV2_Role_Environment
 		id            string
 		environmentId string
 		expectedErr   error
@@ -73,17 +70,7 @@ func TestGetGoalMySQL(t *testing.T) {
 			expectedErr:   statusGoalNotFound.Err(),
 		},
 		{
-			desc:          "error: ErrPermissionDenied",
-			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole:       toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			id:            "id-1",
-			environmentId: "ns0",
-			expectedErr:   statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "success",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success",
 			setup: func(s *experimentService) {
 				s.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ListAutoOpsRules(
 					gomock.Any(), gomock.Any(),
@@ -105,7 +92,7 @@ func TestGetGoalMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := createExperimentService(mockController, nil, p.orgRole, p.envRole)
+			service := createExperimentService(mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -121,30 +108,19 @@ func TestListGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenRoleUnassigned()
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
 
 	patterns := []struct {
 		desc        string
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
 		setup       func(*experimentService)
 		req         *experimentproto.ListGoalsRequest
 		expectedErr error
 	}{
 		{
-			desc:        "error: ErrPermissionDenied",
-			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole:     toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			req:         &experimentproto.ListGoalsRequest{EnvironmentId: "ns0"},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "success",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success",
 			setup: func(s *experimentService) {
 				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().ListGoals(
 					gomock.Any(), gomock.Any(),
@@ -161,7 +137,7 @@ func TestListGoalMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := createExperimentService(mockController, nil, p.orgRole, p.envRole)
+			service := createExperimentService(mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -176,7 +152,7 @@ func TestCreateGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenAndMetadata(metadata.MD{
+	ctx := createContextWithEditorAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
 
@@ -319,7 +295,7 @@ func TestCreateGoalMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		service := createExperimentService(mockController, nil, nil, nil)
+		service := createExperimentService(mockController)
 		if p.setup != nil {
 			p.setup(service)
 		}
@@ -333,7 +309,7 @@ func TestUpdateGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenAndMetadata(metadata.MD{
+	ctx := createContextWithEditorAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
 
@@ -525,7 +501,7 @@ func TestUpdateGoalMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		service := createExperimentService(mockController, nil, nil, nil)
+		service := createExperimentService(mockController)
 		if p.setup != nil {
 			p.setup(service)
 		}
@@ -539,7 +515,7 @@ func TestDeleteGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithTokenAndMetadata(metadata.MD{
+	ctx := createContextWithEditorAndMetadata(metadata.MD{
 		"accept-language": []string{"ja"},
 	})
 
@@ -683,62 +659,11 @@ func TestDeleteGoalMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		service := createExperimentService(mockController, nil, nil, nil)
+		service := createExperimentService(mockController)
 		if p.setup != nil {
 			p.setup(service)
 		}
 		_, err := service.DeleteGoal(ctx, p.req)
 		assert.Equal(t, p.expectedErr, err, p.desc)
-	}
-}
-
-func TestGoalPermissionDenied(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	ctx := createContextWithTokenRoleUnassigned()
-	// Use unassigned roles instead of default admin
-	service := createExperimentService(
-		mockController,
-		toPtr("ns0"),
-		toPtr(accountproto.AccountV2_Role_Organization_UNASSIGNED),
-		toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-	)
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	patterns := []struct {
-		desc     string
-		action   func(context.Context, *experimentService) error
-		expected error
-	}{
-		{
-			desc: "CreateGoal",
-			action: func(ctx context.Context, es *experimentService) error {
-				_, err := es.CreateGoal(ctx, &experimentproto.CreateGoalRequest{})
-				return err
-			},
-			expected: statusPermissionDenied.Err(),
-		},
-		{
-			desc: "UpdateGoal",
-			action: func(ctx context.Context, es *experimentService) error {
-				_, err := es.UpdateGoal(ctx, &experimentproto.UpdateGoalRequest{})
-				return err
-			},
-			expected: statusPermissionDenied.Err(),
-		},
-		{
-			desc: "DeleteGoal",
-			action: func(ctx context.Context, es *experimentService) error {
-				_, err := es.DeleteGoal(ctx, &experimentproto.DeleteGoalRequest{})
-				return err
-			},
-			expected: statusPermissionDenied.Err(),
-		},
-	}
-	for _, p := range patterns {
-		actual := p.action(ctx, service)
-		assert.Equal(t, p.expected, actual, "%s", p.desc)
 	}
 }
