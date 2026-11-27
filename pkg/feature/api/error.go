@@ -203,10 +203,6 @@ var (
 			"segment rule clause values must not be empty",
 			"SegmentRuleClauseValues",
 		))
-	statusUnauthenticated = api.NewGRPCStatus(
-		pkgErr.NewErrorUnauthenticated(pkgErr.FeaturePackageName, "unauthenticated"))
-	statusPermissionDenied = api.NewGRPCStatus(
-		pkgErr.NewErrorPermissionDenied(pkgErr.FeaturePackageName, "permission denied"))
 	statusWaitingOrRunningExperimentExists = api.NewGRPCStatus(
 		pkgErr.NewErrorFailedPrecondition(pkgErr.FeaturePackageName, "experiment in waiting or running status exists").
 			WithMessageKey("HasWaitingOrRunningExperiment"))

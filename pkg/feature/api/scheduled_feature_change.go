@@ -26,13 +26,13 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/scheduled"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -41,12 +41,7 @@ func (s *FeatureService) CreateScheduledFlagChange(
 	ctx context.Context,
 	req *ftproto.CreateScheduledFlagChangeRequest,
 ) (*ftproto.CreateScheduledFlagChangeResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	if err := s.validateCreateScheduledFlagChangeRequest(req); err != nil {
 		return nil, err
@@ -58,7 +53,7 @@ func (s *FeatureService) CreateScheduledFlagChange(
 
 	// Feature lookup, count check, and create must be atomic to prevent race conditions
 	// Without transaction, concurrent requests could exceed the max schedules limit
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		// Get the feature to validate it exists and get its version
 		feature, err := s.featureStorage.GetFeature(ctxWithTx, req.FeatureId, req.EnvironmentId)
 		if err != nil {
@@ -221,12 +216,6 @@ func (s *FeatureService) GetScheduledFlagChange(
 	ctx context.Context,
 	req *ftproto.GetScheduledFlagChangeRequest,
 ) (*ftproto.GetScheduledFlagChangeResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 
 	if req.Id == "" {
 		return nil, statusMissingScheduledFlagChangeID.Err()
@@ -274,12 +263,7 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 	ctx context.Context,
 	req *ftproto.UpdateScheduledFlagChangeRequest,
 ) (*ftproto.UpdateScheduledFlagChangeResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	if req.Id == "" {
 		return nil, statusMissingScheduledFlagChangeID.Err()
@@ -297,7 +281,7 @@ func (s *FeatureService) UpdateScheduledFlagChange(
 	var previousScheduledAt int64
 	var detectedConflicts []*ftproto.ScheduledChangeConflict
 
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		var err error
 		sfc, err = s.scheduledFlagChangeStorage.GetScheduledFlagChange(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -472,12 +456,7 @@ func (s *FeatureService) DeleteScheduledFlagChange(
 	ctx context.Context,
 	req *ftproto.DeleteScheduledFlagChangeRequest,
 ) (*ftproto.DeleteScheduledFlagChangeResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	if req.Id == "" {
 		return nil, statusMissingScheduledFlagChangeID.Err()
@@ -486,7 +465,7 @@ func (s *FeatureService) DeleteScheduledFlagChange(
 	var sfc *domain.ScheduledFlagChange
 	var featureName string
 
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		var err error
 		sfc, err = s.scheduledFlagChangeStorage.GetScheduledFlagChange(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -560,12 +539,6 @@ func (s *FeatureService) ListScheduledFlagChanges(
 	ctx context.Context,
 	req *ftproto.ListScheduledFlagChangesRequest,
 ) (*ftproto.ListScheduledFlagChangesResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 
 	// Pagination
 	limit := int(req.PageSize)
@@ -640,12 +613,7 @@ func (s *FeatureService) ExecuteScheduledFlagChange(
 	ctx context.Context,
 	req *ftproto.ExecuteScheduledFlagChangeRequest,
 ) (*ftproto.ExecuteScheduledFlagChangeResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	if req.Id == "" {
 		return nil, statusMissingScheduledFlagChangeID.Err()
@@ -906,12 +874,6 @@ func (s *FeatureService) GetScheduledFlagChangeSummary(
 	ctx context.Context,
 	req *ftproto.GetScheduledFlagChangeSummaryRequest,
 ) (*ftproto.GetScheduledFlagChangeSummaryResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 
 	if req.FeatureId == "" {
 		return nil, statusMissingFeatureID.Err()

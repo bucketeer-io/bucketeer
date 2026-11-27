@@ -30,7 +30,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -101,9 +100,9 @@ func TestCreateScheduledFlagChange_ValidationErrors(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := createFeatureServiceWithGetAccountByEnvironmentMock(gomock.NewController(t), accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_EDITOR)
+			service := createFeatureServiceWithSegmentUsersCache(gomock.NewController(t))
 			p.setup(service)
-			ctx := createContextWithToken()
+			ctx := createContextWithEditor()
 			_, err := service.CreateScheduledFlagChange(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
 		})
@@ -115,7 +114,7 @@ func TestCreateScheduledFlagChange_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	service := createFeatureServiceWithGetAccountByEnvironmentMock(ctrl, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_EDITOR)
+	service := createFeatureServiceWithSegmentUsersCache(ctrl)
 
 	dbClient := service.dbClient.(*databasemock.MockClient)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
@@ -149,7 +148,7 @@ func TestCreateScheduledFlagChange_Success(t *testing.T) {
 	// Mock domain event publishing
 	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	req := &featureproto.CreateScheduledFlagChangeRequest{
 		EnvironmentId: "ns0",
 		FeatureId:     "feature-id",
@@ -174,11 +173,7 @@ func TestCreateScheduledFlagChange_WithDetectedConflictsStoredAsConflict(t *test
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	service := createFeatureServiceWithGetAccountByEnvironmentMock(
-		ctrl,
-		accountproto.AccountV2_Role_Organization_MEMBER,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-	)
+	service := createFeatureServiceWithSegmentUsersCache(ctrl)
 
 	dbClient := service.dbClient.(*databasemock.MockClient)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
@@ -242,7 +237,7 @@ func TestCreateScheduledFlagChange_WithDetectedConflictsStoredAsConflict(t *test
 		})
 	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	req := &featureproto.CreateScheduledFlagChangeRequest{
 		EnvironmentId: "ns0",
 		FeatureId:     "feature-id",
@@ -278,7 +273,7 @@ func TestGetScheduledFlagChange_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	service := createFeatureServiceWithGetAccountByEnvironmentMock(ctrl, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER)
+	service := createFeatureServiceWithSegmentUsersCache(ctrl)
 
 	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
@@ -304,7 +299,7 @@ func TestGetScheduledFlagChange_Success(t *testing.T) {
 	scheduledStorage.EXPECT().GetScheduledFlagChange(gomock.Any(), "sfc-id", "ns0").Return(sfc, nil)
 	featureStorage.EXPECT().GetFeature(gomock.Any(), "feature-id", "ns0").Return(feature, nil)
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	req := &featureproto.GetScheduledFlagChangeRequest{
 		EnvironmentId: "ns0",
 		Id:            "sfc-id",
@@ -321,7 +316,7 @@ func TestListScheduledFlagChanges_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	service := createFeatureServiceWithGetAccountByEnvironmentMock(ctrl, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER)
+	service := createFeatureServiceWithSegmentUsersCache(ctrl)
 
 	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
@@ -355,7 +350,7 @@ func TestListScheduledFlagChanges_Success(t *testing.T) {
 	scheduledStorage.EXPECT().ListScheduledFlagChanges(gomock.Any(), gomock.Any()).Return(sfcs, 2, int64(2), nil)
 	featureStorage.EXPECT().GetFeature(gomock.Any(), "feature-id", "ns0").Return(feature, nil).Times(2)
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	req := &featureproto.ListScheduledFlagChangesRequest{
 		EnvironmentId: "ns0",
 		FeatureId:     "feature-id",
@@ -373,7 +368,7 @@ func TestDeleteScheduledFlagChange_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	service := createFeatureServiceWithGetAccountByEnvironmentMock(ctrl, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_EDITOR)
+	service := createFeatureServiceWithSegmentUsersCache(ctrl)
 
 	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
@@ -407,7 +402,7 @@ func TestDeleteScheduledFlagChange_Success(t *testing.T) {
 	// Mock domain event publishing
 	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	req := &featureproto.DeleteScheduledFlagChangeRequest{
 		EnvironmentId: "ns0",
 		Id:            "sfc-id",
@@ -423,11 +418,7 @@ func TestExecuteScheduledFlagChange_ValidationFailureMarksFailedOutsideTransacti
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	service := createFeatureServiceWithGetAccountByEnvironmentMock(
-		ctrl,
-		accountproto.AccountV2_Role_Organization_MEMBER,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-	)
+	service := createFeatureServiceWithSegmentUsersCache(ctrl)
 
 	dbClient := service.dbClient.(*databasemock.MockClient)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
@@ -502,7 +493,7 @@ func TestExecuteScheduledFlagChange_ValidationFailureMarksFailedOutsideTransacti
 			return nil
 		})
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	_, err := service.ExecuteScheduledFlagChange(ctx, &featureproto.ExecuteScheduledFlagChangeRequest{
 		EnvironmentId: "ns0",
 		Id:            "sfc-id",
@@ -515,11 +506,7 @@ func TestExecuteScheduledFlagChange_TransientErrorKeepsSchedulePending(t *testin
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	service := createFeatureServiceWithGetAccountByEnvironmentMock(
-		ctrl,
-		accountproto.AccountV2_Role_Organization_MEMBER,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-	)
+	service := createFeatureServiceWithSegmentUsersCache(ctrl)
 
 	dbClient := service.dbClient.(*databasemock.MockClient)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
@@ -577,7 +564,7 @@ func TestExecuteScheduledFlagChange_TransientErrorKeepsSchedulePending(t *testin
 	// No UpdateScheduledFlagChange expectation: a transient error must NOT
 	// mark the schedule FAILED, so it stays PENDING and is retried later.
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	_, err := service.ExecuteScheduledFlagChange(ctx, &featureproto.ExecuteScheduledFlagChangeRequest{
 		EnvironmentId: "ns0",
 		Id:            "sfc-id",
@@ -590,7 +577,7 @@ func TestGetScheduledFlagChangeSummary_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	service := createFeatureServiceWithGetAccountByEnvironmentMock(ctrl, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER)
+	service := createFeatureServiceWithSegmentUsersCache(ctrl)
 
 	scheduledStorage := service.scheduledFlagChangeStorage.(*mock.MockScheduledFlagChangeStorage)
 
@@ -616,7 +603,7 @@ func TestGetScheduledFlagChangeSummary_Success(t *testing.T) {
 
 	scheduledStorage.EXPECT().ListScheduledFlagChanges(gomock.Any(), gomock.Any()).Return(sfcs, 0, int64(2), nil)
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	req := &featureproto.GetScheduledFlagChangeSummaryRequest{
 		EnvironmentId: "ns0",
 		FeatureId:     "feature-id",
@@ -1021,11 +1008,7 @@ func TestCreateScheduledFlagChange_ScheduleGapTooClose(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	service := createFeatureServiceWithGetAccountByEnvironmentMock(
-		ctrl,
-		accountproto.AccountV2_Role_Organization_MEMBER,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-	)
+	service := createFeatureServiceWithSegmentUsersCache(ctrl)
 
 	dbClient := service.dbClient.(*databasemock.MockClient)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
@@ -1074,7 +1057,7 @@ func TestCreateScheduledFlagChange_ScheduleGapTooClose(t *testing.T) {
 		1, int64(1), nil,
 	)
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	req := &featureproto.CreateScheduledFlagChangeRequest{
 		EnvironmentId: "ns0",
 		FeatureId:     "feature-id",
@@ -1273,11 +1256,7 @@ func TestCreateScheduledFlagChange_CircularPrerequisite(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			service := createFeatureServiceWithGetAccountByEnvironmentMock(
-				ctrl,
-				accountproto.AccountV2_Role_Organization_MEMBER,
-				accountproto.AccountV2_Role_Environment_EDITOR,
-			)
+			service := createFeatureServiceWithSegmentUsersCache(ctrl)
 
 			dbClient := service.dbClient.(*databasemock.MockClient)
 			featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
@@ -1296,7 +1275,7 @@ func TestCreateScheduledFlagChange_CircularPrerequisite(t *testing.T) {
 			)
 			p.setupMocks(featureStorage, scheduledStorage, domainPublisher)
 
-			ctx := createContextWithToken()
+			ctx := createContextWithEditor()
 			req := &featureproto.CreateScheduledFlagChangeRequest{
 				EnvironmentId: "ns0",
 				FeatureId:     "flag-a",
@@ -1338,11 +1317,7 @@ func TestCreateScheduledFlagChange_PublishFailureReturnsError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	service := createFeatureServiceWithGetAccountByEnvironmentMock(
-		ctrl,
-		accountproto.AccountV2_Role_Organization_MEMBER,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-	)
+	service := createFeatureServiceWithSegmentUsersCache(ctrl)
 
 	dbClient := service.dbClient.(*databasemock.MockClient)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
@@ -1374,7 +1349,7 @@ func TestCreateScheduledFlagChange_PublishFailureReturnsError(t *testing.T) {
 	scheduledStorage.EXPECT().CreateScheduledFlagChange(gomock.Any(), gomock.Any()).Return(nil)
 	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(errors.New("publish failed"))
 
-	resp, err := service.CreateScheduledFlagChange(createContextWithToken(), &featureproto.CreateScheduledFlagChangeRequest{
+	resp, err := service.CreateScheduledFlagChange(createContextWithEditor(), &featureproto.CreateScheduledFlagChangeRequest{
 		EnvironmentId: "ns0",
 		FeatureId:     "feature-id",
 		ScheduledAt:   time.Now().Add(time.Hour).Unix(),
@@ -1391,11 +1366,7 @@ func TestUpdateScheduledFlagChange_PublishFailureReturnsError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	service := createFeatureServiceWithGetAccountByEnvironmentMock(
-		ctrl,
-		accountproto.AccountV2_Role_Organization_MEMBER,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-	)
+	service := createFeatureServiceWithSegmentUsersCache(ctrl)
 
 	dbClient := service.dbClient.(*databasemock.MockClient)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
@@ -1435,7 +1406,7 @@ func TestUpdateScheduledFlagChange_PublishFailureReturnsError(t *testing.T) {
 		Return([]*featureproto.ScheduledFlagChange{}, 0, int64(0), nil)
 	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(errors.New("publish failed"))
 
-	resp, err := service.UpdateScheduledFlagChange(createContextWithToken(), &featureproto.UpdateScheduledFlagChangeRequest{
+	resp, err := service.UpdateScheduledFlagChange(createContextWithEditor(), &featureproto.UpdateScheduledFlagChangeRequest{
 		EnvironmentId: "ns0",
 		Id:            "sfc-id",
 		Comment:       wrapperspb.String("updated comment"),
@@ -1449,11 +1420,7 @@ func TestDeleteScheduledFlagChange_PublishFailureReturnsError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	service := createFeatureServiceWithGetAccountByEnvironmentMock(
-		ctrl,
-		accountproto.AccountV2_Role_Organization_MEMBER,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-	)
+	service := createFeatureServiceWithSegmentUsersCache(ctrl)
 
 	dbClient := service.dbClient.(*databasemock.MockClient)
 	featureStorage := service.featureStorage.(*mock.MockFeatureStorage)
@@ -1494,7 +1461,7 @@ func TestDeleteScheduledFlagChange_PublishFailureReturnsError(t *testing.T) {
 		})
 	domainPublisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(errors.New("publish failed"))
 
-	resp, err := service.DeleteScheduledFlagChange(createContextWithToken(), &featureproto.DeleteScheduledFlagChangeRequest{
+	resp, err := service.DeleteScheduledFlagChange(createContextWithEditor(), &featureproto.DeleteScheduledFlagChangeRequest{
 		EnvironmentId: "ns0",
 		Id:            "sfc-id",
 	})
@@ -1575,7 +1542,7 @@ func TestExecuteScheduledFlagChange_PublishFailureReturnsError(t *testing.T) {
 		Return(map[string]error{"event-id": errors.New("publish failed")})
 
 	resp, err := service.ExecuteScheduledFlagChange(
-		createContextWithToken(),
+		createContextWithEditor(),
 		&featureproto.ExecuteScheduledFlagChangeRequest{Id: "sfc-id", EnvironmentId: "ns0"},
 	)
 	assert.Equal(t, statusInternal.Err(), err)

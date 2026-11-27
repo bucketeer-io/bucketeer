@@ -279,7 +279,7 @@ func TestExecuteScheduledFlagChangeAppliesUpdatePreconditions(t *testing.T) {
 			}
 
 			resp, err := service.ExecuteScheduledFlagChange(
-				createContextWithToken(),
+				createContextWithEditor(),
 				&featureproto.ExecuteScheduledFlagChangeRequest{Id: scheduleID, EnvironmentId: envID},
 			)
 			switch {

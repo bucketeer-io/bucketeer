@@ -27,11 +27,11 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -50,14 +50,7 @@ func (s *FeatureService) CreateFlagTrigger(
 	ctx context.Context,
 	request *featureproto.CreateFlagTriggerRequest,
 ) (*featureproto.CreateFlagTriggerResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-		request.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	if err := validateCreateFlagTriggerRequest(request); err != nil {
 		s.logger.Error(
@@ -147,17 +140,10 @@ func (s *FeatureService) UpdateFlagTrigger(
 	ctx context.Context,
 	request *featureproto.UpdateFlagTriggerRequest,
 ) (*featureproto.UpdateFlagTriggerResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-		request.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	var event *eventproto.Event
 	var resetURL string
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
 			contextWithTx,
 			request.Id,
@@ -231,16 +217,9 @@ func (s *FeatureService) DeleteFlagTrigger(
 	ctx context.Context,
 	request *featureproto.DeleteFlagTriggerRequest,
 ) (*featureproto.DeleteFlagTriggerResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_EDITOR,
-		request.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
 			contextWithTx,
 			request.Id,
@@ -304,12 +283,6 @@ func (s *FeatureService) GetFlagTrigger(
 	ctx context.Context,
 	request *featureproto.GetFlagTriggerRequest,
 ) (*featureproto.GetFlagTriggerResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		request.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateGetFlagTriggerRequest(request); err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -343,12 +316,6 @@ func (s *FeatureService) ListFlagTriggers(
 	ctx context.Context,
 	request *featureproto.ListFlagTriggersRequest,
 ) (*featureproto.ListFlagTriggersResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		request.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateListFlagTriggersRequest(request); err != nil {
 		s.logger.Error(
 			"Invalid argument",

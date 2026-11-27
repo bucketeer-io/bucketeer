@@ -33,7 +33,7 @@ func TestListTagsMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	service := createFeatureServiceNew(mockController)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
@@ -97,7 +97,7 @@ func TestUpsertTags(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	service := createFeatureServiceNew(mockController)
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	internalErr := errors.New("test")
 	patterns := []struct {
 		desc        string

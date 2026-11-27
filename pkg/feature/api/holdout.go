@@ -29,6 +29,7 @@ import (
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
@@ -37,7 +38,6 @@ import (
 	holdoutdomain "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/domain"
 	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -47,10 +47,7 @@ func (s *FeatureService) CreateHoldoutGroup(
 	ctx context.Context,
 	req *featureproto.CreateHoldoutGroupRequest,
 ) (*featureproto.CreateHoldoutGroupResponse, error) {
-	editor, err := s.checkHoldoutAdmin(ctx, req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := requireEnvironment(req.EnvironmentId); err != nil {
 		return nil, holdoutStatus(err)
 	}
@@ -63,7 +60,7 @@ func (s *FeatureService) CreateHoldoutGroup(
 	now := time.Now().Unix()
 	var group *holdoutdomain.HoldoutGroup
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(txCtx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(txCtx context.Context) error {
 		if err := s.holdoutStorage.LockEnvironment(txCtx, req.EnvironmentId); err != nil {
 			return err
 		}
@@ -147,11 +144,6 @@ func (s *FeatureService) GetHoldoutGroup(
 	ctx context.Context,
 	req *featureproto.GetHoldoutGroupRequest,
 ) (*featureproto.GetHoldoutGroupResponse, error) {
-	if _, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentId,
-	); err != nil {
-		return nil, err
-	}
 	if err := requireHoldoutID(req.Id, req.EnvironmentId); err != nil {
 		return nil, holdoutStatus(err)
 	}
@@ -166,11 +158,6 @@ func (s *FeatureService) ListHoldoutGroups(
 	ctx context.Context,
 	req *featureproto.ListHoldoutGroupsRequest,
 ) (*featureproto.ListHoldoutGroupsResponse, error) {
-	if _, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER, req.EnvironmentId,
-	); err != nil {
-		return nil, err
-	}
 	if err := requireEnvironment(req.EnvironmentId); err != nil {
 		return nil, holdoutStatus(err)
 	}
@@ -208,10 +195,7 @@ func (s *FeatureService) UpdateHoldoutGroup(
 	ctx context.Context,
 	req *featureproto.UpdateHoldoutGroupRequest,
 ) (*featureproto.UpdateHoldoutGroupResponse, error) {
-	editor, err := s.checkHoldoutAdmin(ctx, req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := requireHoldoutID(req.Id, req.EnvironmentId); err != nil {
 		return nil, holdoutStatus(err)
 	}
@@ -226,7 +210,7 @@ func (s *FeatureService) UpdateHoldoutGroup(
 	now := time.Now().Unix()
 	var updated *holdoutdomain.HoldoutGroup
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(txCtx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(txCtx context.Context) error {
 		if err := s.holdoutStorage.LockEnvironment(txCtx, req.EnvironmentId); err != nil {
 			return err
 		}
@@ -397,10 +381,7 @@ func (s *FeatureService) AddHoldoutGroupFeatures(
 	ctx context.Context,
 	req *featureproto.AddHoldoutGroupFeaturesRequest,
 ) (*featureproto.AddHoldoutGroupFeaturesResponse, error) {
-	editor, err := s.checkHoldoutAdmin(ctx, req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := requireHoldoutID(req.Id, req.EnvironmentId); err != nil {
 		return nil, holdoutStatus(err)
 	}
@@ -410,7 +391,7 @@ func (s *FeatureService) AddHoldoutGroupFeatures(
 	now := time.Now().Unix()
 	var updated *holdoutdomain.HoldoutGroup
 	var events []*eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(txCtx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(txCtx context.Context) error {
 		if err := s.holdoutStorage.LockEnvironment(txCtx, req.EnvironmentId); err != nil {
 			return err
 		}
@@ -488,10 +469,7 @@ func (s *FeatureService) RemoveHoldoutGroupFeatures(
 	ctx context.Context,
 	req *featureproto.RemoveHoldoutGroupFeaturesRequest,
 ) (*featureproto.RemoveHoldoutGroupFeaturesResponse, error) {
-	editor, err := s.checkHoldoutAdmin(ctx, req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := requireHoldoutID(req.Id, req.EnvironmentId); err != nil {
 		return nil, holdoutStatus(err)
 	}
@@ -501,7 +479,7 @@ func (s *FeatureService) RemoveHoldoutGroupFeatures(
 	now := time.Now().Unix()
 	var updated *holdoutdomain.HoldoutGroup
 	var events []*eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(txCtx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(txCtx context.Context) error {
 		if err := s.holdoutStorage.LockEnvironment(txCtx, req.EnvironmentId); err != nil {
 			return err
 		}
@@ -574,17 +552,14 @@ func (s *FeatureService) transitionHoldout(
 	eventType eventproto.Event_Type,
 	eventMessage func(*holdoutdomain.HoldoutGroup) proto.Message,
 ) (*featureproto.HoldoutGroup, error) {
-	editor, err := s.checkHoldoutAdmin(ctx, environmentID)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := requireHoldoutID(id, environmentID); err != nil {
 		return nil, holdoutStatus(err)
 	}
 	now := time.Now().Unix()
 	var updated *holdoutdomain.HoldoutGroup
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(txCtx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(txCtx context.Context) error {
 		if err := s.holdoutStorage.LockEnvironment(txCtx, environmentID); err != nil {
 			return err
 		}
@@ -804,17 +779,6 @@ func (s *FeatureService) validateGoalIDs(ctx context.Context, environmentID stri
 		}
 	}
 	return nil
-}
-
-func (s *FeatureService) checkHoldoutAdmin(
-	ctx context.Context,
-	environmentID string,
-) (*eventproto.Editor, error) {
-	return s.checkOrganizationRole(
-		ctx,
-		accountproto.AccountV2_Role_Organization_ADMIN,
-		environmentID,
-	)
 }
 
 func (s *FeatureService) publishHoldoutEvents(ctx context.Context, events []*eventproto.Event) error {

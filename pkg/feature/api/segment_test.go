@@ -26,8 +26,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
-
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
@@ -505,7 +503,7 @@ func TestGetSegmentMySQL(t *testing.T) {
 			desc:    "error: missing id",
 			service: createFeatureService(mockController),
 			context: metadata.NewIncomingContext(
-				createContextWithToken(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup:         nil,
@@ -519,7 +517,7 @@ func TestGetSegmentMySQL(t *testing.T) {
 			desc:    "error: segment not found",
 			service: createFeatureService(mockController),
 			context: metadata.NewIncomingContext(
-				createContextWithToken(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
@@ -537,7 +535,7 @@ func TestGetSegmentMySQL(t *testing.T) {
 			desc:    "success",
 			service: createFeatureService(mockController),
 			context: metadata.NewIncomingContext(
-				createContextWithToken(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
@@ -561,9 +559,9 @@ func TestGetSegmentMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer account",
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			service: createFeatureServiceWithSegmentUsersCache(mockController),
 			context: metadata.NewIncomingContext(
-				createContextWithTokenRoleUnassigned(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
@@ -583,20 +581,6 @@ func TestGetSegmentMySQL(t *testing.T) {
 			environmentId: "ns0",
 			getExpectedErr: func() error {
 				return nil
-			},
-		},
-		{
-			desc:    "errPermissionDenied",
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			context: metadata.NewIncomingContext(
-				createContextWithTokenRoleUnassigned(),
-				metadata.MD{"accept-language": []string{"ja"}},
-			),
-			setup:         func(s *FeatureService) {},
-			id:            "id",
-			environmentId: "ns0",
-			getExpectedErr: func() error {
-				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -633,7 +617,7 @@ func TestListSegmentsMySQL(t *testing.T) {
 			desc:    "error: exceeded max page size per request",
 			service: createFeatureService(mockController),
 			context: metadata.NewIncomingContext(
-				createContextWithTokenRoleUnassigned(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup:         nil,
@@ -647,7 +631,7 @@ func TestListSegmentsMySQL(t *testing.T) {
 			desc:    "success",
 			service: createFeatureService(mockController),
 			context: metadata.NewIncomingContext(
-				createContextWithTokenRoleUnassigned(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
@@ -676,9 +660,9 @@ func TestListSegmentsMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer account",
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			service: createFeatureServiceWithSegmentUsersCache(mockController),
 			context: metadata.NewIncomingContext(
-				createContextWithTokenRoleUnassigned(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
@@ -703,20 +687,6 @@ func TestListSegmentsMySQL(t *testing.T) {
 			environmentId: "ns0",
 			getExpectedErr: func() error {
 				return nil
-			},
-		},
-		{
-			desc:    "errPermissionDenied",
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			context: metadata.NewIncomingContext(
-				createContextWithTokenRoleUnassigned(),
-				metadata.MD{"accept-language": []string{"ja"}},
-			),
-			setup:         func(s *FeatureService) {},
-			pageSize:      int64(maxPageSizePerRequest),
-			environmentId: "ns0",
-			getExpectedErr: func() error {
-				return statusPermissionDenied.Err()
 			},
 		},
 	}

@@ -26,7 +26,6 @@ import (
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -45,21 +44,9 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		getExpectedErr func() error
 	}{
 		{
-			desc:    "error: permission denied",
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			context: createContextWithTokenRoleUnassigned(),
-			setup:   func(s *FeatureService) {},
-			input: &featureproto.GetUserAttributeKeysRequest{
-				EnvironmentId: "ns0",
-			},
-			getExpectedErr: func() error {
-				return statusPermissionDenied.Err()
-			},
-		},
-		{
 			desc:    "error: cache error",
 			service: createFeatureServiceNew(mockController),
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				s.userAttributesCache.(*cachev3mock.MockUserAttributesCache).EXPECT().
 					GetUserAttributeKeyAll("ns0").
@@ -75,7 +62,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		{
 			desc:    "success: empty user attribute keys",
 			service: createFeatureServiceNew(mockController),
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				s.userAttributesCache.(*cachev3mock.MockUserAttributesCache).EXPECT().
 					GetUserAttributeKeyAll("ns0").
@@ -100,7 +87,7 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		{
 			desc:    "success: with user attribute keys",
 			service: createFeatureServiceNew(mockController),
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				expectedKeys := []string{"app_version", "appVersion", "platform", "country", "deviceType"}
 				s.userAttributesCache.(*cachev3mock.MockUserAttributesCache).EXPECT().
@@ -119,8 +106,8 @@ func TestGetUserAttributeKeys(t *testing.T) {
 		},
 		{
 			desc:    "success: with Viewer Account",
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
-			context: createContextWithTokenRoleUnassigned(),
+			service: createFeatureServiceWithSegmentUsersCache(mockController),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				expectedKeys := []string{"appVersion", "platform"}
 				s.userAttributesCache.(*cachev3mock.MockUserAttributesCache).EXPECT().

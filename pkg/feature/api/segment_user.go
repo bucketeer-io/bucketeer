@@ -26,12 +26,12 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	serviceeventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/service"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -41,12 +41,6 @@ func (s *FeatureService) ListSegmentUsers(
 	ctx context.Context,
 	req *featureproto.ListSegmentUsersRequest,
 ) (*featureproto.ListSegmentUsersResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateListSegmentUsersRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -94,12 +88,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	ctx context.Context,
 	req *featureproto.BulkUploadSegmentUsersRequest,
 ) (*featureproto.BulkUploadSegmentUsersResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := validateBulkUploadSegmentUsersRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -111,7 +100,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 		return nil, err
 	}
 	var eventPb *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		// Lock the segment row before any other read, then check that no
 		// serving holdout group references it.
 		segment, _, err := s.segmentStorage.GetSegmentForUpdate(contextWithTx, req.SegmentId, req.EnvironmentId)
@@ -223,12 +212,6 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 	ctx context.Context,
 	req *featureproto.BulkDownloadSegmentUsersRequest,
 ) (*featureproto.BulkDownloadSegmentUsersResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateBulkDownloadSegmentUsersRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",

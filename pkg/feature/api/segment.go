@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
@@ -29,7 +30,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -43,12 +43,7 @@ func (s *FeatureService) CreateSegment(
 	ctx context.Context,
 	req *featureproto.CreateSegmentRequest,
 ) (*featureproto.CreateSegmentResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := generateSegmentRuleIDs(req.Rules); err != nil {
 		s.logger.Error(
 			"Failed to generate segment rule ids",
@@ -156,12 +151,7 @@ func (s *FeatureService) DeleteSegment(
 	ctx context.Context,
 	req *featureproto.DeleteSegmentRequest,
 ) (*featureproto.DeleteSegmentResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := validateDeleteSegmentRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -176,7 +166,7 @@ func (s *FeatureService) DeleteSegment(
 		return nil, err
 	}
 	var eventPb *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		// Lock the segment row before any other read, then check that no
 		// serving holdout group references it.
 		segment, _, err := s.segmentStorage.GetSegmentForUpdate(contextWithTx, req.Id, req.EnvironmentId)
@@ -292,19 +282,7 @@ func (s *FeatureService) UpdateSegment(
 	ctx context.Context,
 	req *featureproto.UpdateSegmentRequest,
 ) (*featureproto.UpdateSegmentResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		s.logger.Error(
-			"Permission denied",
-			log.FieldsFromIncomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if req.Rules != nil {
 		if err := generateSegmentRuleIDs(req.Rules.Values); err != nil {
 			s.logger.Error(
@@ -317,7 +295,7 @@ func (s *FeatureService) UpdateSegment(
 			return nil, api.NewGRPCStatus(err).Err()
 		}
 	}
-	err = validateUpdateSegmentRequest(req)
+	err := validateUpdateSegmentRequest(req)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -499,12 +477,6 @@ func (s *FeatureService) GetSegment(
 	ctx context.Context,
 	req *featureproto.GetSegmentRequest,
 ) (*featureproto.GetSegmentResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateGetSegmentRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -556,12 +528,6 @@ func (s *FeatureService) ListSegments(
 	ctx context.Context,
 	req *featureproto.ListSegmentsRequest,
 ) (*featureproto.ListSegmentsResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateListSegmentsRequest(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",

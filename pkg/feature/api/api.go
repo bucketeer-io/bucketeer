@@ -27,7 +27,6 @@ import (
 	v2ts "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 
-	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
@@ -35,10 +34,7 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
-	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 type options struct {
@@ -62,7 +58,6 @@ type FeatureService struct {
 	holdoutStorage             v2hs.HoldoutStorage
 	tagStorage                 v2ts.TagStorage
 	dbClient                   database.Client
-	accountClient              accountclient.Client
 	experimentClient           experimentclient.Client
 	featuresCache              cachev3.FeaturesCache
 	holdoutGroupCache          cachev3.HoldoutGroupCache
@@ -87,7 +82,6 @@ func NewFeatureService(
 	flagTriggerStorage v2fs.FlagTriggerStorage,
 	scheduledFlagChangeStorage v2fs.ScheduledFlagChangeStorage,
 	holdoutStorage v2hs.HoldoutStorage,
-	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	autoOpsClient autoopsclient.Client,
 	environmentClient envclient.Client,
@@ -113,7 +107,6 @@ func NewFeatureService(
 		holdoutStorage:             holdoutStorage,
 		tagStorage:                 tagStorage,
 		dbClient:                   dbClient,
-		accountClient:              accountClient,
 		experimentClient:           experimentClient,
 		autoOpsClient:              autoOpsClient,
 		environmentClient:          environmentClient,
@@ -131,58 +124,6 @@ func NewFeatureService(
 
 func (s *FeatureService) Register(server *grpc.Server) {
 	featureproto.RegisterFeatureServiceServer(server, s)
-}
-
-func (s *FeatureService) checkEnvironmentRole(
-	ctx context.Context,
-	requiredRole accountproto.AccountV2_Role_Environment,
-	environmentId string,
-) (*eventproto.Editor, error) {
-	return role.CheckEnvironmentRoleWithLog(
-		ctx,
-		requiredRole,
-		environmentId,
-		func(email string) (*accountproto.AccountV2, error) {
-			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
-				Email:         email,
-				EnvironmentId: environmentId,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return resp.Account, nil
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
-}
-
-func (s *FeatureService) checkOrganizationRole(
-	ctx context.Context,
-	requiredRole accountproto.AccountV2_Role_Organization,
-	environmentID string,
-) (*eventproto.Editor, error) {
-	return role.CheckOrganizationRoleByEnvironmentIDWithLog(
-		ctx,
-		requiredRole,
-		environmentID,
-		func(email string) (*accountproto.GetAccountV2Response, error) {
-			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
-				Email:         email,
-				EnvironmentId: environmentID,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return &accountproto.GetAccountV2Response{Account: resp.Account}, nil
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
 }
 
 func (s *FeatureService) reportInternalServerError(

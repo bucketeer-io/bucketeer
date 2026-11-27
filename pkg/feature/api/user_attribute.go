@@ -22,7 +22,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -30,14 +29,6 @@ func (s *FeatureService) GetUserAttributeKeys(
 	ctx context.Context,
 	req *featureproto.GetUserAttributeKeysRequest,
 ) (*featureproto.GetUserAttributeKeysResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		s.logger.Error("Failed to get user attribute keys", zap.Error(err))
-		return nil, err
-	}
-
 	userAttributeKeys, err := s.userAttributesCache.GetUserAttributeKeyAll(req.EnvironmentId)
 	sort.Strings(userAttributeKeys)
 	if err != nil {

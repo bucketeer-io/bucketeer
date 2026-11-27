@@ -47,7 +47,7 @@ func TestFlagTriggerEventsOmitToken(t *testing.T) {
 	)
 
 	ctx := metadata.NewIncomingContext(
-		createContextWithToken(),
+		createContextWithEditor(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
 
