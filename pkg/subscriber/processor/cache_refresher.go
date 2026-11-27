@@ -334,25 +334,18 @@ func (c *cacheRefresher) refreshHoldoutGroup(
 	defer cancel()
 	// Captured before the read so a minute-cacher snapshot cannot overwrite a newer stop.
 	generation := c.now().UnixNano()
-	snapshot, err := v2hs.ServingSnapshot(fetchCtx, c.holdoutStorage, event.EnvironmentId)
-	if err != nil {
+	snapshot, readErr := v2hs.ServingSnapshot(fetchCtx, c.holdoutStorage, event.EnvironmentId)
+	if readErr != nil {
 		// A failed read must not delete the generation marker. The unavailable
 		// snapshot written at this generation rejects the older in-flight read,
 		// and marks evaluation IDs so recovery forces a full evaluation.
-		barrier := evaluation.UnavailableHoldoutSnapshot()
-		if _, putErr := c.holdoutGroupCache.PutIfNewer(barrier, event.EnvironmentId, generation); putErr != nil {
-			return writeError(putErr)
-		}
-		if pubErr := c.publishCacheInvalidation(ctx, event); pubErr != nil {
-			return pubErr
-		}
-		return err
+		snapshot = evaluation.UnavailableHoldoutSnapshot()
 	}
 	accepted, err := c.holdoutGroupCache.PutIfNewer(snapshot, event.EnvironmentId, generation)
 	if err != nil {
 		return writeError(err)
 	}
-	if !accepted {
+	if readErr == nil && !accepted {
 		c.logger.Info("Skipped holdout redis cache write: a newer snapshot is already cached",
 			zap.String("environmentId", event.EnvironmentId),
 			zap.String("entityId", event.EntityId),
@@ -373,6 +366,10 @@ func (c *cacheRefresher) refreshHoldoutGroup(
 	// experiments cache finds its group too. A group without internal
 	// experiments is not a measured group and leaves that cache alone as
 	// well.
+	//
+	// Both are refreshed when the serving snapshot could not be read too:
+	// they are read apart from it, and their readers would otherwise keep
+	// the state from before the change.
 	var measurementErr error
 	if holdoutGroupHasExperiments(event) {
 		measurementErr = c.putHoldoutMeasuredGroups(ctx, event)
@@ -383,7 +380,21 @@ func (c *cacheRefresher) refreshHoldoutGroup(
 	if err := c.publishCacheInvalidation(ctx, event); err != nil {
 		return err
 	}
-	return measurementErr
+	return holdoutRefreshError(readErr, measurementErr)
+}
+
+// holdoutRefreshError returns the error of a holdout refresh whose serving
+// snapshot and measurement caches failed apart. It is the serving error,
+// unless that one is not repeatable and the measurement error is: the event
+// is then redelivered, which a redelivery can still fix.
+func holdoutRefreshError(servingErr, measurementErr error) error {
+	if servingErr == nil {
+		return measurementErr
+	}
+	if !isRepeatable(servingErr) && isRepeatable(measurementErr) {
+		return measurementErr
+	}
+	return servingErr
 }
 
 func (c *cacheRefresher) putHoldoutMeasuredGroups(

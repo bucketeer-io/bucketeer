@@ -1505,21 +1505,75 @@ func TestEvalEvtWriterMeasuredGroupsSource(t *testing.T) {
 		assert.Len(t, h.lastRows(), 1)
 	})
 
-	t.Run("a refused or failed cache write does not stop the rows", func(t *testing.T) {
+	t.Run("a failed cache write does not stop the rows", func(t *testing.T) {
 		t.Parallel()
-		for _, result := range []struct {
-			accepted bool
-			err      error
-		}{{false, nil}, {false, errors.New("redis")}} {
-			h := newHarness(t)
-			h.withKeys()
-			h.measuredGroupsCache.EXPECT().Get(exposureEnvID).Return(nil, errors.New("redis"))
-			h.holdoutStorage.EXPECT().ListMeasuredGroups(gomock.Any(), exposureEnvID, endedSince).
-				Return(stored(exposureHashGroup()), nil)
-			h.measuredGroupsCache.EXPECT().PutIfNewer(gomock.Any(), exposureEnvID, gomock.Any()).
-				Return(result.accepted, result.err)
-			assert.Empty(t, h.write(event()))
-			assert.Len(t, h.lastRows(), 1)
+		h := newHarness(t)
+		h.withKeys()
+		h.measuredGroupsCache.EXPECT().Get(exposureEnvID).Return(nil, errors.New("redis"))
+		h.holdoutStorage.EXPECT().ListMeasuredGroups(gomock.Any(), exposureEnvID, endedSince).
+			Return(stored(exposureHashGroup()), nil)
+		h.measuredGroupsCache.EXPECT().PutIfNewer(gomock.Any(), exposureEnvID, gomock.Any()).
+			Return(false, errors.New("redis"))
+		assert.Empty(t, h.write(event()))
+		assert.Len(t, h.lastRows(), 1)
+	})
+
+	// The cache refuses the write when a reader that started later has
+	// cached its list while this one was read from the storage.
+	refusedWrite := func(t *testing.T, read *ftproto.HoldoutGroup) *evalWriterHarness {
+		h := newHarness(t)
+		first := h.measuredGroupsCache.EXPECT().Get(exposureEnvID).Return(nil, cache.ErrNotFound)
+		h.holdoutStorage.EXPECT().ListMeasuredGroups(gomock.Any(), exposureEnvID, endedSince).
+			Return(stored(read), nil).After(first)
+		h.measuredGroupsCache.EXPECT().PutIfNewer(gomock.Any(), exposureEnvID, now.UnixNano()).
+			Return(false, nil)
+		return h
+	}
+
+	t.Run("a refused cache write uses the list cached in the meantime", func(t *testing.T) {
+		t.Parallel()
+		// The storage was read before the flag became a target, and the
+		// cached list was read after it.
+		before := exposureHashGroup()
+		before.Features = nil
+		h := refusedWrite(t, before)
+		h.withKeys()
+		h.measuredGroupsCache.EXPECT().Get(exposureEnvID).
+			Return(&ftproto.HoldoutGroups{HoldoutGroups: []*ftproto.HoldoutGroup{exposureHashGroup()}}, nil)
+		assert.Empty(t, h.write(event()))
+		assert.Len(t, h.lastRows(), 1)
+	})
+
+	t.Run("a group that stopped while the storage was read derives nothing after its stop", func(t *testing.T) {
+		t.Parallel()
+		// The storage was read while the group was running. The list cached
+		// in the meantime has it stopped before the event. No keys are
+		// attached: a Redis call fails the test.
+		stopped := exposureHashGroup()
+		stopped.Status = ftproto.HoldoutGroup_FORCE_STOPPED
+		stopped.StoppedAt = exposureDayStart + 5
+		h := refusedWrite(t, exposureHashGroup())
+		h.measuredGroupsCache.EXPECT().Get(exposureEnvID).
+			Return(&ftproto.HoldoutGroups{HoldoutGroups: []*ftproto.HoldoutGroup{stopped}}, nil)
+		assert.Empty(t, h.write(event()))
+		assert.Empty(t, h.lastRows())
+	})
+
+	t.Run("a refused cache write retries the events when the cached list cannot be used", func(t *testing.T) {
+		t.Parallel()
+		for _, cached := range []struct {
+			desc   string
+			groups *ftproto.HoldoutGroups
+			err    error
+		}{
+			{desc: "the cache cannot be read", err: errors.New("redis")},
+			// What the cache refresher writes when it cannot read the groups.
+			{desc: "the cached list is empty", groups: &ftproto.HoldoutGroups{}},
+		} {
+			h := refusedWrite(t, exposureHashGroup())
+			h.measuredGroupsCache.EXPECT().Get(exposureEnvID).Return(cached.groups, cached.err)
+			assert.Equal(t, map[string]bool{"evt": true}, h.write(event()), cached.desc)
+			assert.Empty(t, h.lastRows(), cached.desc)
 		}
 	})
 
@@ -1545,8 +1599,7 @@ func TestEvalEvtWriterMeasuredGroupsSource(t *testing.T) {
 		h := newHarness(t)
 		h.measuredGroupsCache.EXPECT().Get(exposureEnvID).Return(nil, cache.ErrNotFound)
 		h.holdoutStorage.EXPECT().ListMeasuredGroups(gomock.Any(), exposureEnvID, endedSince).Return(nil, nil)
-		// The empty list is cached, so the next batch does not read the
-		// storage for a list that has the same groups.
+		// The list is cached as it was read.
 		h.measuredGroupsCache.EXPECT().PutIfNewer(
 			gomock.Cond(func(groups *ftproto.HoldoutGroups) bool {
 				return groups != nil && len(groups.HoldoutGroups) == 0

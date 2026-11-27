@@ -161,25 +161,61 @@ func (d *holdoutExposureDeriver) listGroups(
 	if groups, err := d.cache.Get(environmentID); err == nil && hasEveryGroup(groups, internal) {
 		return groups, nil
 	}
-	groups, err, _ := d.flightgroup.Do(environmentID, func() (interface{}, error) {
-		// Captured before the read so this write cannot replace a newer list.
-		generation := d.now().UnixNano()
-		groups, err := v2hs.MeasuredGroups(ctx, d.storage, environmentID, d.now())
-		if err != nil {
-			return nil, err
-		}
-		if _, err := d.cache.PutIfNewer(groups, environmentID, generation); err != nil {
-			d.logger.Warn("Failed to cache the measured holdout groups",
-				zap.Error(err),
-				zap.String("environmentId", environmentID),
-			)
-		}
-		return groups, nil
+	result, err, _ := d.flightgroup.Do(environmentID, func() (interface{}, error) {
+		return d.readGroups(ctx, environmentID)
 	})
 	if err != nil {
 		return nil, err
 	}
-	return groups.(*ftproto.HoldoutGroups), nil
+	read := result.(*measuredGroupsRead)
+	// The list a later reader cached is only known to be newer. It can be
+	// the empty list the cache refresher writes when it cannot read the
+	// groups, which says nothing about them.
+	if read.replaced && !hasEveryGroup(read.groups, internal) {
+		return nil, errMeasuredHoldoutGroupsChanged
+	}
+	return read.groups, nil
+}
+
+// measuredGroupsRead is the result of readGroups. replaced tells that groups
+// is not the list read from the storage but the one cached by a later
+// reader.
+type measuredGroupsRead struct {
+	groups   *ftproto.HoldoutGroups
+	replaced bool
+}
+
+// readGroups reads the measured groups from the storage and writes them to
+// the cache. When the cache refuses the write, a reader that started later
+// has cached its list in the meantime, for example after the group stopped,
+// and the list read here may be from before that change. The cached list is
+// returned in its place.
+func (d *holdoutExposureDeriver) readGroups(
+	ctx context.Context,
+	environmentID string,
+) (*measuredGroupsRead, error) {
+	// Captured before the read so this write cannot replace a newer list.
+	generation := d.now().UnixNano()
+	groups, err := v2hs.MeasuredGroups(ctx, d.storage, environmentID, d.now())
+	if err != nil {
+		return nil, err
+	}
+	accepted, err := d.cache.PutIfNewer(groups, environmentID, generation)
+	if err != nil {
+		d.logger.Warn("Failed to cache the measured holdout groups",
+			zap.Error(err),
+			zap.String("environmentId", environmentID),
+		)
+		return &measuredGroupsRead{groups: groups}, nil
+	}
+	if accepted {
+		return &measuredGroupsRead{groups: groups}, nil
+	}
+	newer, err := d.cache.Get(environmentID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", errMeasuredHoldoutGroupsChanged, err)
+	}
+	return &measuredGroupsRead{groups: newer, replaced: true}, nil
 }
 
 func hasEveryGroup(groups *ftproto.HoldoutGroups, internal map[string][]*exproto.Experiment) bool {

@@ -1205,6 +1205,53 @@ func TestCacheRefresherHoldoutEventRefreshesExperiments(t *testing.T) {
 		assert.True(t, isRepeatable(err))
 	})
 
+	// The measured groups and the experiments are read apart from the
+	// serving snapshot, and their readers need the change too.
+	t.Run("a failed read of the serving snapshot still refreshes the measured groups and the experiments", func(t *testing.T) {
+		t.Parallel()
+		h := newHoldoutExperimentsRefresher(t)
+		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1", ExperimentId: "internal"}
+		h.storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").Return(nil, errors.New("db"))
+		barrierPut := h.holdoutCache.EXPECT().
+			PutIfNewer(evaluation.UnavailableHoldoutSnapshot(), "env-1", refresherFixedGeneration).
+			Return(true, nil)
+		measuredPut := h.expectMeasuredGroups(group).After(barrierPut)
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
+			Return(&experimentproto.ListExperimentsResponse{}, nil).After(measuredPut)
+		experimentsPut := h.experimentsCache.EXPECT().
+			PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).Return(true, nil)
+		h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).After(experimentsPut)
+		assert.EqualError(t, h.refresher.refresh(context.Background(), holdoutGroupEvent(t, group)), "db")
+	})
+
+	t.Run("a failed read of the serving snapshot and of the measured groups replaces both", func(t *testing.T) {
+		t.Parallel()
+		h := newHoldoutExperimentsRefresher(t)
+		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1", ExperimentId: "internal"}
+		h.storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").Return(nil, errors.New("db"))
+		h.holdoutCache.EXPECT().
+			PutIfNewer(evaluation.UnavailableHoldoutSnapshot(), "env-1", refresherFixedGeneration).
+			Return(true, nil)
+		h.storage.EXPECT().ListMeasuredGroups(gomock.Any(), "env-1", gomock.Any()).
+			Return(nil, context.DeadlineExceeded)
+		h.measuredGroupsCache.EXPECT().PutIfNewer(
+			gomock.Cond(func(groups *featureproto.HoldoutGroups) bool {
+				return groups != nil && len(groups.HoldoutGroups) == 0
+			}),
+			"env-1",
+			refresherFixedGeneration,
+		).Return(true, nil)
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
+			Return(&experimentproto.ListExperimentsResponse{}, nil)
+		h.experimentsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).Return(true, nil)
+		h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		err := h.refresher.refresh(context.Background(), holdoutGroupEvent(t, group))
+		// The serving error alone would drop the event. The measurement
+		// error can be retried, so the event is redelivered.
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+		assert.True(t, isRepeatable(err))
+	})
+
 	t.Run("a failed read of the measured groups still refreshes the experiments and publishes", func(t *testing.T) {
 		t.Parallel()
 		h := newHoldoutExperimentsRefresher(t)
@@ -1302,6 +1349,43 @@ func TestCacheRefresherHoldoutEventWithoutExperimentsLeavesExperimentsCache(t *t
 			event := holdoutGroupEvent(t, group)
 			event.Type = eventType
 			require.NoError(t, h.refresher.refresh(context.Background(), event))
+		})
+	}
+}
+
+func TestHoldoutRefreshError(t *testing.T) {
+	t.Parallel()
+	dropped := errors.New("db")
+	repeatable := context.DeadlineExceeded
+	otherRepeatable := writeError(errors.New("OOM"))
+	patterns := []struct {
+		desc        string
+		serving     error
+		measurement error
+		expected    error
+	}{
+		{desc: "no error"},
+		{desc: "only the serving error", serving: dropped, expected: dropped},
+		{desc: "only the measurement error", measurement: dropped, expected: dropped},
+		{desc: "the serving error comes first", serving: repeatable, measurement: otherRepeatable, expected: repeatable},
+		{
+			desc:        "a repeatable serving error is kept over a measurement error that is not",
+			serving:     repeatable,
+			measurement: dropped,
+			expected:    repeatable,
+		},
+		{
+			desc:        "a repeatable measurement error replaces a serving error that is not",
+			serving:     dropped,
+			measurement: repeatable,
+			expected:    repeatable,
+		},
+		{desc: "neither is repeatable", serving: dropped, measurement: errors.New("other"), expected: dropped},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, p.expected, holdoutRefreshError(p.serving, p.measurement))
 		})
 	}
 }
