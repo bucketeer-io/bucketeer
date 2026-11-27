@@ -23,10 +23,6 @@ import (
 )
 
 var (
-	statusUnauthenticated = api.NewGRPCStatus(
-		pkgErr.NewErrorUnauthenticated(pkgErr.AIChatPackageName, "unauthenticated"))
-	statusPermissionDenied = api.NewGRPCStatus(
-		pkgErr.NewErrorPermissionDenied(pkgErr.AIChatPackageName, "permission denied"))
 	statusMissingEnvironmentID = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AIChatPackageName, "missing environment id", "EnvironmentId"))
 	statusMissingMessages = api.NewGRPCStatus(

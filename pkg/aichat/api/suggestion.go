@@ -17,7 +17,6 @@ package api
 import (
 	"context"
 
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	aichatproto "github.com/bucketeer-io/bucketeer/v2/proto/aichat"
 )
 
@@ -26,19 +25,9 @@ func (s *AIChatService) GetSuggestions(
 	ctx context.Context,
 	req *aichatproto.GetSuggestionsRequest,
 ) (*aichatproto.GetSuggestionsResponse, error) {
-	// Input validation (before authorization to avoid unnecessary RPC)
+	// Input validation
 	if req.EnvironmentId == "" {
 		return nil, statusMissingEnvironmentID.Err()
-	}
-
-	// Authorization check (Viewer role minimum)
-	_, err := s.checkEnvironmentRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId,
-	)
-	if err != nil {
-		return nil, err
 	}
 
 	suggestions := getSuggestionsForPage(req.PageContext)

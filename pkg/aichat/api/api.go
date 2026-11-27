@@ -15,24 +15,14 @@
 package api
 
 import (
-	"context"
-
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
-	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/rag"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/ratelimit"
-	pkgapi "github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	aichatproto "github.com/bucketeer-io/bucketeer/v2/proto/aichat"
-	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 )
 
 type options struct {
@@ -55,7 +45,6 @@ type AIChatService struct {
 	llmClient     llm.Client
 	ragSearcher   rag.Searcher
 	chatConfig    ChatConfig
-	accountClient accountclient.Client
 	featureClient featureclient.Client
 	rateLimiter   *ratelimit.Limiter
 	logger        *zap.Logger
@@ -66,7 +55,6 @@ func NewAIChatService(
 	llmClient llm.Client,
 	ragSearcher rag.Searcher,
 	chatConfig ChatConfig,
-	accountClient accountclient.Client,
 	featureClient featureclient.Client,
 	logger *zap.Logger,
 	opts ...Option,
@@ -79,7 +67,6 @@ func NewAIChatService(
 		llmClient:     llmClient,
 		ragSearcher:   ragSearcher,
 		chatConfig:    defaultChatConfig(chatConfig),
-		accountClient: accountClient,
 		featureClient: featureClient,
 		rateLimiter:   dopts.rateLimiter,
 		logger:        logger.Named("api"),
@@ -89,61 +76,4 @@ func NewAIChatService(
 // Register registers the service with the gRPC server.
 func (s *AIChatService) Register(server *grpc.Server) {
 	aichatproto.RegisterAIChatServiceServer(server, s)
-}
-
-func (s *AIChatService) checkEnvironmentRole(
-	ctx context.Context,
-	requiredRole accountproto.AccountV2_Role_Environment,
-	environmentId string,
-) (*eventproto.Editor, error) {
-	editor, err := role.CheckEnvironmentRole(
-		ctx,
-		requiredRole,
-		environmentId,
-		func(email string) (*accountproto.AccountV2, error) {
-			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(
-				ctx,
-				&accountproto.GetAccountV2ByEnvironmentIDRequest{
-					Email:         email,
-					EnvironmentId: environmentId,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			return resp.Account, nil
-		},
-	)
-	if err != nil {
-		switch status.Code(err) {
-		case codes.Unauthenticated:
-			s.logger.Error(
-				"Unauthenticated",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
-			return nil, statusUnauthenticated.Err()
-		case codes.PermissionDenied:
-			s.logger.Error(
-				"Permission denied",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
-			return nil, statusPermissionDenied.Err()
-		default:
-			s.logger.Error(
-				"Failed to check role",
-				log.FieldsFromIncomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", environmentId),
-				)...,
-			)
-			return nil, pkgapi.NewGRPCStatus(err).Err()
-		}
-	}
-	return editor, nil
 }

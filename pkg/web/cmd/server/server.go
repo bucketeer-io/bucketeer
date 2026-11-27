@@ -1381,7 +1381,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			llmClient,
 			ragSearcher,
 			chatCfg,
-			accountClient,
 			featureClient,
 			logger,
 			aichatapi.WithGRPCRateLimiter(rateLimiter),
