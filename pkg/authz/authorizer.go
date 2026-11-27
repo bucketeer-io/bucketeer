@@ -116,34 +116,34 @@ func (a *Authorizer) Authorize(
 	if caller.PublicAPI != nil && rule.kind != requirePermission {
 		return nil, ErrPermissionDenied
 	}
-	fullAccess := caller.FullAccess()
+	hasFullAccess := caller.HasFullAccess()
 	access := &Access{
-		Method:      method,
-		Request:     req,
-		Caller:      caller,
-		SystemAdmin: fullAccess,
-		accounts:    &accountCache{loader: a.accounts},
+		Method:               method,
+		Request:              req,
+		Caller:               caller,
+		HasSystemAdminAccess: hasFullAccess,
+		accounts:             &accountCache{loader: a.accounts},
 	}
 	var admin *Account
-	if !fullAccess && caller.PublicAPI == nil {
+	if !hasFullAccess && caller.PublicAPI == nil {
 		var err error
 		if admin, err = access.accounts.systemAdmin(ctx, caller.Email); err != nil {
 			return nil, err
 		}
-		access.SystemAdmin = admin != nil
+		access.HasSystemAdminAccess = admin != nil
 	}
 	switch rule.kind {
 	case requireAuthenticated:
 		return editorOf(access, admin, nil), nil
 	case requireSystemAdmin:
-		if !access.SystemAdmin {
+		if !access.HasSystemAdminAccess {
 			return nil, ErrPermissionDenied
 		}
 		return editorOf(access, admin, nil), nil
 	}
 	// A service identity skips the permission checks, but not the guards:
 	// owner protection and the like apply whoever calls.
-	if fullAccess && len(rule.guards) == 0 {
+	if hasFullAccess && len(rule.guards) == 0 {
 		return editorOf(access, nil, nil), nil
 	}
 	// The editor carries the account of the last scope checked: the target
@@ -155,7 +155,7 @@ func (a *Authorizer) Authorize(
 			return nil, statusOf(err)
 		}
 		access.Scopes = append(access.Scopes, scopes...)
-		if fullAccess {
+		if hasFullAccess {
 			continue
 		}
 		for _, scope := range scopes {
@@ -184,13 +184,13 @@ func (a *Authorizer) Authorize(
 // system admin's is loaded only when the permission needs membership.
 func (a *Authorizer) check(ctx context.Context, access *Access, n need, scope ScopeID) (*Account, error) {
 	var account *Account
-	if !access.SystemAdmin {
+	if !access.HasSystemAdminAccess {
 		var err error
 		if account, err = access.Account(ctx, scope); err != nil {
 			return nil, err
 		}
 	}
-	if access.SystemAdmin && readableBySystemAdmin(n.permission) {
+	if access.HasSystemAdminAccess && readableBySystemAdmin(n.permission) {
 		return account, nil
 	}
 	for _, alternative := range n.alternatives {
@@ -238,7 +238,7 @@ func statusOf(err error) error {
 func editorOf(access *Access, admin, target *Account) *eventproto.Editor {
 	editor := &eventproto.Editor{
 		Email:           access.Caller.Email,
-		IsAdmin:         access.SystemAdmin,
+		IsAdmin:         access.HasSystemAdminAccess,
 		PublicApiEditor: access.Caller.PublicAPI,
 	}
 	named := target

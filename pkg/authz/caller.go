@@ -50,9 +50,9 @@ type Caller struct {
 	PublicAPI *eventproto.Editor_PublicAPIEditor
 }
 
-// FullAccess reports whether the caller skips the permission checks: a
+// HasFullAccess reports whether the caller skips the permission checks: a
 // service identity that is not relaying a public API request.
-func (c Caller) FullAccess() bool {
+func (c Caller) HasFullAccess() bool {
 	return c.Service != "" && c.PublicAPI == nil
 }
 

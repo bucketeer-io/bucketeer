@@ -758,11 +758,11 @@ func TestCallerRelayed(t *testing.T) {
 	}
 }
 
-func TestCallerFullAccess(t *testing.T) {
+func TestCallerHasFullAccess(t *testing.T) {
 	t.Parallel()
-	assert.True(t, service().FullAccess())
-	assert.False(t, relayed("editor@example.com").FullAccess())
-	assert.False(t, user("editor@example.com").FullAccess())
+	assert.True(t, service().HasFullAccess())
+	assert.False(t, relayed("editor@example.com").HasFullAccess())
+	assert.False(t, user("editor@example.com").HasFullAccess())
 }
 
 func TestAuthorizeWithLookups(t *testing.T) {
