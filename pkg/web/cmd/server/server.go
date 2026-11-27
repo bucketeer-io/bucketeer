@@ -1137,7 +1137,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentResultStorage,
 		experimentClient,
 		featureClient,
-		accountClient,
 		registerer,
 		persistentRedisV3Cache,
 		location,

@@ -26,7 +26,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
@@ -37,11 +36,8 @@ import (
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
-	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	ecproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -82,7 +78,6 @@ func WithLogger(l *zap.Logger) Option {
 type eventCounterService struct {
 	experimentClient        experimentclient.Client
 	featureClient           featureclient.Client
-	accountClient           accountclient.Client
 	eventStorage            dwhdatabase.EventStorage
 	experimentResultStorage operationaldatabase.ExperimentResultStorage
 	metrics                 metrics.Registerer
@@ -101,7 +96,6 @@ func NewEventCounterService(
 	experimentResultStorage operationaldatabase.ExperimentResultStorage,
 	e experimentclient.Client,
 	f featureclient.Client,
-	a accountclient.Client,
 	r metrics.Registerer,
 	redis cache.MultiGetDeleteCountCache,
 	loc *time.Location,
@@ -120,7 +114,6 @@ func NewEventCounterService(
 	return &eventCounterService{
 		experimentClient:        e,
 		featureClient:           f,
-		accountClient:           a,
 		eventStorage:            eventStorage,
 		experimentResultStorage: experimentResultStorage,
 		metrics:                 r,
@@ -139,13 +132,7 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 	ctx context.Context,
 	req *ecproto.GetExperimentEvaluationCountRequest,
 ) (*ecproto.GetExperimentEvaluationCountResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if err = validateGetExperimentEvaluationCountRequest(req); err != nil {
+	if err := validateGetExperimentEvaluationCountRequest(req); err != nil {
 		return nil, err
 	}
 	startAt := time.Unix(req.StartAt, 0)
@@ -228,12 +215,6 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	ctx context.Context,
 	req *ecproto.GetEvaluationTimeseriesCountRequest,
 ) (*ecproto.GetEvaluationTimeseriesCountResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := s.validateGetEvaluationTimeseriesCount(req); err != nil {
 		return nil, err
 	}
@@ -757,12 +738,6 @@ func (s *eventCounterService) GetExperimentResult(
 	ctx context.Context,
 	req *ecproto.GetExperimentResultRequest,
 ) (*ecproto.GetExperimentResultResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if req.ExperimentId == "" {
 		return nil, statusExperimentIDRequired.Err()
 	}
@@ -790,12 +765,6 @@ func (s *eventCounterService) ListExperimentResults(
 	ctx context.Context,
 	req *ecproto.ListExperimentResultsRequest,
 ) (*ecproto.ListExperimentResultsResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if req.FeatureId == "" {
 		return nil, statusFeatureIDRequired.Err()
 	}
@@ -884,13 +853,7 @@ func (s *eventCounterService) GetExperimentGoalCount(
 	ctx context.Context,
 	req *ecproto.GetExperimentGoalCountRequest,
 ) (*ecproto.GetExperimentGoalCountResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if err = validateGetExperimentGoalCountRequest(req); err != nil {
+	if err := validateGetExperimentGoalCountRequest(req); err != nil {
 		return nil, err
 	}
 	startAt := time.Unix(req.StartAt, 0)
@@ -1000,12 +963,6 @@ func (s *eventCounterService) GetOpsEvaluationUserCount(
 	ctx context.Context,
 	req *ecproto.GetOpsEvaluationUserCountRequest,
 ) (*ecproto.GetOpsEvaluationUserCountResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateGetOpsEvaluationUserCountRequest(req); err != nil {
 		return nil, err
 	}
@@ -1078,12 +1035,6 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 	ctx context.Context,
 	req *ecproto.GetOpsGoalUserCountRequest,
 ) (*ecproto.GetOpsGoalUserCountResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateGetOpsGoalUserCountRequest(req); err != nil {
 		return nil, err
 	}
@@ -1149,31 +1100,5 @@ func newOpsGoalUserCountKey(
 		kind,
 		fmt.Sprintf("%s:%d:%s:%s:%s", featureID, featureVersion, opsRuleID, clauseID, variationID),
 		environmentId,
-	)
-}
-
-func (s *eventCounterService) checkEnvironmentRole(
-	ctx context.Context,
-	requiredRole accountproto.AccountV2_Role_Environment,
-	environmentId string,
-) (*eventproto.Editor, error) {
-	return role.CheckEnvironmentRoleWithLog(
-		ctx,
-		requiredRole,
-		environmentId,
-		func(email string) (*accountproto.AccountV2, error) {
-			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
-				Email:         email,
-				EnvironmentId: environmentId,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return resp.Account, nil
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
 	)
 }
