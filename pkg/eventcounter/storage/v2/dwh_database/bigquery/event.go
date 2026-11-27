@@ -208,7 +208,7 @@ func (es *eventStorage) QueryUserEvaluation(
 	var row dwhdatabase.UserEvaluation
 	err = iter.Next(&row)
 	if err == iterator.Done {
-		es.logger.Error(
+		es.logger.Debug(
 			"User evaluation not found",
 			log.FieldsFromIncomingContext(ctx).AddFields(
 				zap.Error(err),
