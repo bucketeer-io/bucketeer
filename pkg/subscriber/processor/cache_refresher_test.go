@@ -1278,6 +1278,25 @@ func TestCacheRefresherHoldoutEventRefreshesExperiments(t *testing.T) {
 		assert.True(t, isRepeatable(err))
 	})
 
+	t.Run("a dropped measured groups error does not hide a repeatable experiments error", func(t *testing.T) {
+		t.Parallel()
+		h := newHoldoutExperimentsRefresher(t)
+		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1", ExperimentId: "internal"}
+		h.expectHoldoutSnapshot(group)
+		h.storage.EXPECT().ListMeasuredGroups(gomock.Any(), "env-1", gomock.Any()).
+			Return(nil, errors.New("db"))
+		h.measuredGroupsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+			Return(true, nil)
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
+			Return(nil, context.DeadlineExceeded)
+		h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		err := h.refresher.refresh(context.Background(), holdoutGroupEvent(t, group))
+		// The measured groups error alone would drop the event, and the
+		// experiments cache would keep the state from before the change.
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+		assert.True(t, isRepeatable(err))
+	})
+
 	t.Run("a failed read whose empty list cannot be written is repeatable and still publishes", func(t *testing.T) {
 		t.Parallel()
 		h := newHoldoutExperimentsRefresher(t)
@@ -1356,36 +1375,77 @@ func TestCacheRefresherHoldoutEventWithoutExperimentsLeavesExperimentsCache(t *t
 func TestHoldoutRefreshError(t *testing.T) {
 	t.Parallel()
 	dropped := errors.New("db")
+	otherDropped := errors.New("other")
 	repeatable := context.DeadlineExceeded
 	otherRepeatable := writeError(errors.New("OOM"))
 	patterns := []struct {
-		desc        string
-		serving     error
-		measurement error
-		expected    error
+		desc           string
+		serving        error
+		measuredGroups error
+		experiments    error
+		expected       error
 	}{
 		{desc: "no error"},
 		{desc: "only the serving error", serving: dropped, expected: dropped},
-		{desc: "only the measurement error", measurement: dropped, expected: dropped},
-		{desc: "the serving error comes first", serving: repeatable, measurement: otherRepeatable, expected: repeatable},
+		{desc: "only the measured groups error", measuredGroups: dropped, expected: dropped},
+		{desc: "only the experiments error", experiments: dropped, expected: dropped},
 		{
-			desc:        "a repeatable serving error is kept over a measurement error that is not",
-			serving:     repeatable,
-			measurement: dropped,
-			expected:    repeatable,
+			desc:           "the first repeatable error comes first",
+			serving:        repeatable,
+			measuredGroups: otherRepeatable,
+			experiments:    otherRepeatable,
+			expected:       repeatable,
 		},
 		{
-			desc:        "a repeatable measurement error replaces a serving error that is not",
+			desc:           "a repeatable serving error is kept over errors that are not",
+			serving:        repeatable,
+			measuredGroups: dropped,
+			experiments:    otherDropped,
+			expected:       repeatable,
+		},
+		{
+			desc:           "a repeatable measured groups error replaces a serving error that is not",
+			serving:        dropped,
+			measuredGroups: repeatable,
+			expected:       repeatable,
+		},
+		{
+			desc:        "a repeatable experiments error replaces a serving error that is not",
 			serving:     dropped,
-			measurement: repeatable,
+			experiments: repeatable,
 			expected:    repeatable,
 		},
-		{desc: "neither is repeatable", serving: dropped, measurement: errors.New("other"), expected: dropped},
+		{
+			desc:           "a repeatable experiments error replaces a measured groups error that is not",
+			measuredGroups: dropped,
+			experiments:    repeatable,
+			expected:       repeatable,
+		},
+		{
+			desc:           "a repeatable experiments error replaces two errors that are not",
+			serving:        dropped,
+			measuredGroups: otherDropped,
+			experiments:    repeatable,
+			expected:       repeatable,
+		},
+		{
+			desc:           "none is repeatable",
+			serving:        dropped,
+			measuredGroups: otherDropped,
+			experiments:    otherDropped,
+			expected:       dropped,
+		},
+		{
+			desc:           "none of the measurement errors is repeatable",
+			measuredGroups: otherDropped,
+			experiments:    dropped,
+			expected:       otherDropped,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, p.expected, holdoutRefreshError(p.serving, p.measurement))
+			assert.Equal(t, p.expected, holdoutRefreshError(p.serving, p.measuredGroups, p.experiments))
 		})
 	}
 }

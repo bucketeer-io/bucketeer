@@ -370,31 +370,36 @@ func (c *cacheRefresher) refreshHoldoutGroup(
 	// Both are refreshed when the serving snapshot could not be read too:
 	// they are read apart from it, and their readers would otherwise keep
 	// the state from before the change.
-	var measurementErr error
+	var measuredGroupsErr, experimentsErr error
 	if holdoutGroupHasExperiments(event) {
-		measurementErr = c.putHoldoutMeasuredGroups(ctx, event)
-		if _, err := c.putExperiments(ctx, event); err != nil && measurementErr == nil {
-			measurementErr = err
-		}
+		measuredGroupsErr = c.putHoldoutMeasuredGroups(ctx, event)
+		_, experimentsErr = c.putExperiments(ctx, event)
 	}
 	if err := c.publishCacheInvalidation(ctx, event); err != nil {
 		return err
 	}
-	return holdoutRefreshError(readErr, measurementErr)
+	return holdoutRefreshError(readErr, measuredGroupsErr, experimentsErr)
 }
 
-// holdoutRefreshError returns the error of a holdout refresh whose serving
-// snapshot and measurement caches failed apart. It is the serving error,
-// unless that one is not repeatable and the measurement error is: the event
-// is then redelivered, which a redelivery can still fix.
-func holdoutRefreshError(servingErr, measurementErr error) error {
-	if servingErr == nil {
-		return measurementErr
+// holdoutRefreshError returns the error of a holdout refresh whose caches
+// failed apart, from the errors in the order the caches are refreshed. It is
+// the first repeatable one, so the event is redelivered whenever a
+// redelivery can still fix one of the caches, and the first one when none is
+// repeatable.
+func holdoutRefreshError(errs ...error) error {
+	var first error
+	for _, err := range errs {
+		if err == nil {
+			continue
+		}
+		if isRepeatable(err) {
+			return err
+		}
+		if first == nil {
+			first = err
+		}
 	}
-	if !isRepeatable(servingErr) && isRepeatable(measurementErr) {
-		return measurementErr
-	}
-	return servingErr
+	return first
 }
 
 func (c *cacheRefresher) putHoldoutMeasuredGroups(
