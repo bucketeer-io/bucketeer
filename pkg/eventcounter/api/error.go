@@ -45,10 +45,6 @@ var (
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.EventCounterPackageName, "clause id is required", "ClauseId"))
 	statusExperimentResultNotFound = api.NewGRPCStatus(
 		pkgErr.NewErrorNotFound(pkgErr.EventCounterPackageName, "experiment result not found", "ExperimentResult"))
-	statusUnauthenticated = api.NewGRPCStatus(
-		pkgErr.NewErrorUnauthenticated(pkgErr.EventCounterPackageName, "unauthenticated"))
-	statusPermissionDenied = api.NewGRPCStatus(
-		pkgErr.NewErrorPermissionDenied(pkgErr.EventCounterPackageName, "permission denied"))
 	statusUnknownTimeRange = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgNotMatchFormat(pkgErr.EventCounterPackageName, "unknown time range", "TimeRange"))
 )

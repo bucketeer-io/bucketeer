@@ -29,8 +29,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/cache"
 	cachemock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/mock"
 	cachev3 "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3"
@@ -45,11 +45,9 @@ import (
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	ecproto "github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -67,7 +65,7 @@ func TestNewEventCounterService(t *testing.T) {
 	reg := metrics.DefaultRegisterer()
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
-	g := NewEventCounterService(nil, nil, nil, nil, nil, reg, nil, jpLocation, logger)
+	g := NewEventCounterService(nil, nil, nil, nil, reg, nil, jpLocation, logger)
 	assert.IsType(t, &eventCounterService{}, g)
 }
 
@@ -76,7 +74,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	now := time.Now()
-	ctx := createContextWithToken(t, false)
+	ctx := createContextWithEditor()
 	correctStartAtUnix := now.Add(-30 * 24 * time.Hour).Unix()
 	correctStartAt := time.Unix(correctStartAtUnix, 0)
 	correctEndAtUnix := now.Unix()
@@ -92,8 +90,6 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
 		input       *ecproto.GetExperimentEvaluationCountRequest
 		expected    *ecproto.GetExperimentEvaluationCountResponse
 		expectedErr error
@@ -136,24 +132,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 			expectedErr: statusFeatureIDRequired.Err(),
 		},
 		{
-			desc:    "error: ErrPermissionDenied",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input: &ecproto.GetExperimentEvaluationCountRequest{
-				EnvironmentId:  ns,
-				StartAt:        correctStartAtUnix,
-				EndAt:          correctEndAtUnix,
-				FeatureId:      fID,
-				FeatureVersion: fVersion,
-				VariationIds:   []string{vID1},
-			},
-			expected:    nil,
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "success: one variation",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success: one variation",
 			setup: func(s *eventCounterService) {
 				s.eventStorage.(*dwhmock.MockEventStorage).EXPECT().QueryEvaluationCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion).Return(
 					[]*dwhdatabase.EvaluationEventCount{
@@ -234,7 +213,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController, nil, p.orgRole, p.envRole)
+			gs := newEventCounterService(t, mockController)
 			if p.setup != nil {
 				p.setup(gs)
 			}
@@ -304,7 +283,7 @@ func TestListExperiments(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newEventCounterService(t, mockController, nil, nil, nil)
+			s := newEventCounterService(t, mockController)
 			p.setup(s)
 			actual, err := s.listExperiments(context.Background(), p.inputFeatureID, p.inputFeatureVersion, p.environmentId)
 			assert.Equal(t, p.expected, actual)
@@ -318,15 +297,13 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, false)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
 
 	patterns := []struct {
 		desc        string
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
 		setup       func(*eventCounterService)
 		input       *ecproto.GetExperimentResultRequest
 		expectedErr error
@@ -350,19 +327,7 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 			expectedErr: statusExperimentResultNotFound.Err(),
 		},
 		{
-			desc:    "error: ErrPermissionDenied",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input: &ecproto.GetExperimentResultRequest{
-				ExperimentId:  "eid",
-				EnvironmentId: "ns0",
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "success: get the result from storage",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success: get the result from storage",
 			setup: func(s *eventCounterService) {
 				s.experimentResultStorage.(*opmock.MockExperimentResultStorage).EXPECT().GetExperimentResult(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -377,7 +342,7 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController, nil, p.orgRole, p.envRole)
+			gs := newEventCounterService(t, mockController)
 			if p.setup != nil {
 				p.setup(gs)
 			}
@@ -395,15 +360,13 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t, false)
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
 
 	patterns := []struct {
 		desc        string
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
 		setup       func(*eventCounterService)
 		input       *ecproto.ListExperimentResultsRequest
 		expected    *ecproto.ListExperimentResultsResponse
@@ -458,21 +421,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			expectedErr: api.NewGRPCStatus(pkgErr.NewErrorInternal(pkgErr.EventCounterPackageName, "internal")).Err(),
 		},
 		{
-			desc:    "error: ErrPermissionDenied",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input: &ecproto.ListExperimentResultsRequest{
-				FeatureId:      "fid",
-				FeatureVersion: &wrapperspb.Int32Value{Value: int32(1)},
-				EnvironmentId:  "ns0",
-			},
-			expected:    nil,
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "success: no results",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success: no results",
 			setup: func(s *eventCounterService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(
 					gomock.Any(), gomock.Any(),
@@ -551,7 +500,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newEventCounterService(t, mockController, nil, p.orgRole, p.envRole)
+			s := newEventCounterService(t, mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -567,7 +516,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	now := time.Now()
-	ctx := createContextWithToken(t, false)
+	ctx := createContextWithEditor()
 	correctStartAtUnix := now.Add(-30 * 24 * time.Hour).Unix()
 	correctStartAt := time.Unix(correctStartAtUnix, 0)
 	correctEndAtUnix := now.Unix()
@@ -583,8 +532,6 @@ func TestGetExperimentGoalCount(t *testing.T) {
 	})
 	patterns := []struct {
 		desc        string
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
 		setup       func(*eventCounterService)
 		input       *ecproto.GetExperimentGoalCountRequest
 		expected    *ecproto.GetExperimentGoalCountResponse
@@ -642,21 +589,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 			expectedErr: statusGoalIDRequired.Err(),
 		},
 		{
-			desc:    "error: ErrPermissionDenied",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input: &ecproto.GetExperimentGoalCountRequest{
-				EnvironmentId: ns,
-				FeatureId:     fID,
-				StartAt:       correctStartAtUnix,
-				EndAt:         correctEndAtUnix,
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "success: one variation",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success: one variation",
 			setup: func(s *eventCounterService) {
 				s.eventStorage.(*dwhmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, gID, fID, fVersion).Return(
 					[]*dwhdatabase.GoalEventCount{
@@ -756,7 +689,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newEventCounterService(t, mockController, nil, p.orgRole, p.envRole)
+			s := newEventCounterService(t, mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -1024,7 +957,7 @@ func TestGetTotalEventCounts(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController, nil, nil, nil)
+			gs := newEventCounterService(t, mockController)
 			actual := gs.getTotalEventCounts(p.input)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -1090,7 +1023,7 @@ func TestGetTimestamps(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController, nil, nil, nil)
+			gs := newEventCounterService(t, mockController)
 			timestamps, timestampUnit, err := gs.getTimestamps(p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Len(t, timestamps, p.expectedLen)
@@ -1140,7 +1073,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := createContextWithToken(t, false)
+	ctx := createContextWithEditor()
 	environmentId := "ns0"
 	fID := "fid"
 	vID0 := "vid0"
@@ -1152,8 +1085,6 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
 		setup       func(context.Context, *eventCounterService)
 		input       *ecproto.GetEvaluationTimeseriesCountRequest
 		expected    *ecproto.GetEvaluationTimeseriesCountResponse
@@ -1282,21 +1213,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 			expectedErr: statusInternal.Err(),
 		},
 		{
-			desc:    "error: ErrPermissionDenied",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input: &ecproto.GetEvaluationTimeseriesCountRequest{
-				EnvironmentId: environmentId,
-				FeatureId:     fID,
-				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
-			},
-			expected:    nil,
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "success",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_EDITOR),
+			desc: "success",
 			setup: func(ctx context.Context, s *eventCounterService) {
 				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
 					EnvironmentId: environmentId,
@@ -1356,7 +1273,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newEventCounterService(t, mockController, nil, p.orgRole, p.envRole)
+			s := newEventCounterService(t, mockController)
 			if p.setup != nil {
 				p.setup(ctx, s)
 			}
@@ -1384,7 +1301,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := createContextWithToken(t, false)
+	ctx := createContextWithEditor()
 	environmentId := "ns0"
 	opsRuleID := "rule0"
 	clauseID := "clause0"
@@ -1399,9 +1316,6 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
-		envId       *string
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
 		input       *ecproto.GetOpsEvaluationUserCountRequest
 		expected    *ecproto.GetOpsEvaluationUserCountResponse
 		expectedErr error
@@ -1462,22 +1376,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 			expectedErr: statusVariationIDRequired.Err(),
 		},
 		{
-			desc:    "error: ErrPermissionDenied",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input: &ecproto.GetOpsEvaluationUserCountRequest{
-				EnvironmentId:  environmentId,
-				OpsRuleId:      opsRuleID,
-				ClauseId:       clauseID,
-				FeatureId:      fID,
-				FeatureVersion: int32(fVersion),
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "success",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success",
 			setup: func(s *eventCounterService) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
 					GetUserCount(cacheKey).Return(int64(1234), nil)
@@ -1498,8 +1397,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:  "success: without environment_id",
-			envId: toPtr(""),
+			desc: "success: without environment_id",
 			setup: func(s *eventCounterService) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
 					GetUserCount(cacheKeyWithoutNS).Return(int64(9876), nil)
@@ -1521,7 +1419,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController, p.envId, p.orgRole, p.envRole)
+			gs := newEventCounterService(t, mockController)
 			if p.setup != nil {
 				p.setup(gs)
 			}
@@ -1536,7 +1434,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := createContextWithToken(t, false)
+	ctx := createContextWithEditor()
 	environmentId := "ns0"
 	opsRuleID := "rule0"
 	clauseID := "clause0"
@@ -1551,9 +1449,6 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
-		envId       *string
-		orgRole     *accountproto.AccountV2_Role_Organization
-		envRole     *accountproto.AccountV2_Role_Environment
 		input       *ecproto.GetOpsGoalUserCountRequest
 		expected    *ecproto.GetOpsGoalUserCountResponse
 		expectedErr error
@@ -1614,22 +1509,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			expectedErr: statusVariationIDRequired.Err(),
 		},
 		{
-			desc:    "error: ErrPermissionDenied",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input: &ecproto.GetOpsGoalUserCountRequest{
-				EnvironmentId:  environmentId,
-				OpsRuleId:      opsRuleID,
-				ClauseId:       clauseID,
-				FeatureId:      fID,
-				FeatureVersion: int32(fVersion),
-			},
-			expectedErr: statusPermissionDenied.Err(),
-		},
-		{
-			desc:    "success",
-			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			desc: "success",
 			setup: func(s *eventCounterService) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
 					GetUserCount(cacheKey).Return(int64(1234), nil)
@@ -1650,8 +1530,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:  "success: without environment_id",
-			envId: toPtr(""),
+			desc: "success: without environment_id",
 			setup: func(s *eventCounterService) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
 					GetUserCount(cacheKeyWithoutNS).Return(int64(9876), nil)
@@ -1673,7 +1552,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController, p.envId, p.orgRole, p.envRole)
+			gs := newEventCounterService(t, mockController)
 			if p.setup != nil {
 				p.setup(gs)
 			}
@@ -1732,26 +1611,7 @@ func getDate(t time.Time) int64 {
 	return time.Date(u.Year(), u.Month(), u.Day(), 0, 0, 0, 0, time.UTC).Unix()
 }
 
-func newEventCounterService(t *testing.T, mockController *gomock.Controller, specifiedEnvironmentId *string, specifiedOrgRole *accountproto.AccountV2_Role_Organization, specifiedEnvRole *accountproto.AccountV2_Role_Environment) *eventCounterService {
-	var or accountproto.AccountV2_Role_Organization
-	var er accountproto.AccountV2_Role_Environment
-	var envId string
-	if specifiedOrgRole != nil {
-		or = *specifiedOrgRole
-	} else {
-		or = accountproto.AccountV2_Role_Organization_ADMIN
-	}
-	if specifiedEnvRole != nil {
-		er = *specifiedEnvRole
-	} else {
-		er = accountproto.AccountV2_Role_Environment_EDITOR
-	}
-	if specifiedEnvironmentId != nil {
-		envId = *specifiedEnvironmentId
-	} else {
-		envId = "ns0"
-	}
-
+func newEventCounterService(t *testing.T, mockController *gomock.Controller) *eventCounterService {
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
 	metrics := metrics.NewMetrics(
@@ -1759,20 +1619,6 @@ func newEventCounterService(t *testing.T, mockController *gomock.Controller, spe
 		"/metrics",
 	)
 	reg := metrics.DefaultRegisterer()
-	accountClientMock := accountclientmock.NewMockClient(mockController)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: or,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: envId,
-					Role:          er,
-				},
-			},
-		},
-	}
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	// The daily cutover marker is absent by default, so daily ranges fall
 	// back to hourly keys exactly like the pre-daily-tier read path.
 	counterCacheMock := cachemock.NewMockMultiGetDeleteCountCache(mockController)
@@ -1783,7 +1629,6 @@ func newEventCounterService(t *testing.T, mockController *gomock.Controller, spe
 	return &eventCounterService{
 		experimentClient:        experimentclientmock.NewMockClient(mockController),
 		featureClient:           featureclientmock.NewMockClient(mockController),
-		accountClient:           accountClientMock,
 		experimentResultStorage: opmock.NewMockExperimentResultStorage(mockController),
 		evaluationCountCacher:   eccachemock.NewMockEventCounterCache(mockController),
 		counterCache:            counterCacheMock,
@@ -1794,14 +1639,9 @@ func newEventCounterService(t *testing.T, mockController *gomock.Controller, spe
 	}
 }
 
-func createContextWithToken(t *testing.T, isSystemAdmin bool) context.Context {
-	t.Helper()
-	token := &token.AccessToken{
-		Email:         "test@example.com",
-		IsSystemAdmin: isSystemAdmin,
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
+// createContextWithEditor is a context after the authz interceptor allowed the request.
+func createContextWithEditor() context.Context {
+	return authz.WithEditor(context.TODO(), &eventproto.Editor{Email: "email"})
 }
 
 func newUUID(t *testing.T) string {
@@ -1873,7 +1713,7 @@ func TestGetUserCounts(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController, nil, nil, nil)
+			gs := newEventCounterService(t, mockController)
 			if p.setup != nil {
 				p.setup(gs)
 			}
@@ -1884,6 +1724,3 @@ func TestGetUserCounts(t *testing.T) {
 }
 
 // convert to pointer
-func toPtr[T any](value T) *T {
-	return &value
-}
