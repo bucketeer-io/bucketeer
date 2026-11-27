@@ -23,6 +23,7 @@ import (
 
 	"gonum.org/v1/gonum/stat/distuv"
 
+	holdoutdomain "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/domain"
 	"github.com/bucketeer-io/bucketeer/v2/proto/eventcounter"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -85,7 +86,10 @@ var (
 	errSRMInsufficientSamples = errors.New(
 		"total observed users below the minimum required for a reliable chi-square test")
 	errSRMTooFewExpectedCells = errors.New("fewer than 2 variations with positive expected user counts")
-	errSRMSmallExpectedCell   = errors.New(
+	errSRMHoldoutGroupMissing = errors.New("holdout group not available")
+	errSRMHoldoutNotHash      = errors.New(
+		"holdout group assigns users by segment (no expected split to test against)")
+	errSRMSmallExpectedCell = errors.New(
 		"smallest expected per-variation count below the chi-square reliability floor")
 )
 
@@ -143,15 +147,63 @@ func computeSRM(
 	feature *featureproto.Feature,
 	threshold float64,
 ) *eventcounter.SrmResult {
+	fractions, err := extractExpectedFractions(feature)
+	return computeSRMFromFractions(variationResults, fractions, err, threshold)
+}
+
+// computeHoldoutSRM is computeSRM for the internal experiment of a holdout
+// group. The variations and the expected split come from the group, not from
+// a flag: see holdoutExpectedFractions.
+func computeHoldoutSRM(
+	variationResults []*eventcounter.VariationResult,
+	group *featureproto.HoldoutGroup,
+	threshold float64,
+) *eventcounter.SrmResult {
+	fractions, err := holdoutExpectedFractions(group)
+	return computeSRMFromFractions(variationResults, fractions, err, threshold)
+}
+
+// holdoutExpectedFractions returns the expected fraction of the users of an
+// internal experiment in each of its two variations.
+//
+// A HASH group compares the held-out users with the users of the comparison
+// range, which has the size of the holdout range, so the expected split is
+// 50/50 whatever the percentage of the group.
+//
+// A SEGMENT group compares the users of its segment with every other user
+// evaluated on a target flag. The share of the segment among those users is
+// not a property of the group, so there is no expected split to test, and
+// the error is the skip reason.
+func holdoutExpectedFractions(group *featureproto.HoldoutGroup) (map[string]float64, error) {
+	if group == nil {
+		return nil, errSRMHoldoutGroupMissing
+	}
+	if group.AssignmentType != featureproto.HoldoutGroup_HASH {
+		return nil, errSRMHoldoutNotHash
+	}
+	return map[string]float64{
+		holdoutdomain.InHoldoutVariationID:    0.5,
+		holdoutdomain.NotInHoldoutVariationID: 0.5,
+	}, nil
+}
+
+// computeSRMFromFractions runs the checks described on computeSRM against
+// the expected fraction of each variation. fractionsErr is the reason the
+// fractions could not be determined; it becomes the skip reason.
+func computeSRMFromFractions(
+	variationResults []*eventcounter.VariationResult,
+	fractions map[string]float64,
+	fractionsErr error,
+	threshold float64,
+) *eventcounter.SrmResult {
 	if threshold <= 0 {
 		threshold = DefaultSRMThreshold
 	}
 	res := &eventcounter.SrmResult{Threshold: threshold}
 
-	fractions, err := extractExpectedFractions(feature)
-	if err != nil {
+	if fractionsErr != nil {
 		res.Status = eventcounter.SrmResult_SKIPPED
-		res.SkipReason = err.Error()
+		res.SkipReason = fractionsErr.Error()
 		return res
 	}
 

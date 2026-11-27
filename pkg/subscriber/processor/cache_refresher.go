@@ -108,6 +108,7 @@ type cacheRefresher struct {
 	autoOpsRulesCache          cachev3.AutoOpsRulesCache
 	holdoutStorage             v2hs.HoldoutStorage
 	holdoutGroupCache          cachev3.HoldoutGroupCache
+	holdoutMeasuredGroupsCache cachev3.HoldoutMeasuredGroupsCache
 	cacheInvalidationPublisher publisher.Publisher
 	logger                     *zap.Logger
 	// now supplies the features snapshot generation; overridable in tests.
@@ -131,6 +132,7 @@ func NewCacheRefresher(
 	autoOpsRulesCache cachev3.AutoOpsRulesCache,
 	holdoutStorage v2hs.HoldoutStorage,
 	holdoutGroupCache cachev3.HoldoutGroupCache,
+	holdoutMeasuredGroupsCache cachev3.HoldoutMeasuredGroupsCache,
 	cacheInvalidationPublisher publisher.Publisher,
 	logger *zap.Logger,
 ) subscriber.PubSubProcessor {
@@ -146,6 +148,7 @@ func NewCacheRefresher(
 		autoOpsRulesCache:          autoOpsRulesCache,
 		holdoutStorage:             holdoutStorage,
 		holdoutGroupCache:          holdoutGroupCache,
+		holdoutMeasuredGroupsCache: holdoutMeasuredGroupsCache,
 		cacheInvalidationPublisher: cacheInvalidationPublisher,
 		logger:                     logger.Named("cache-refresher"),
 		now:                        time.Now,
@@ -362,14 +365,46 @@ func (c *cacheRefresher) refreshHoldoutGroup(
 	// experiments cache is refreshed here, before the invalidation tells the
 	// gateways to read again. A group without internal experiments leaves the
 	// experiments cache alone.
-	var experimentsErr error
+	//
+	// The same event carries the changes the readers of the internal
+	// experiments need from the group: its targets, with the time each was
+	// added and removed, and its stop. The measured groups are written
+	// first, so a reader that finds the internal experiment in the
+	// experiments cache finds its group too. A group without internal
+	// experiments is not a measured group and leaves that cache alone as
+	// well.
+	var measurementErr error
 	if holdoutGroupHasExperiments(event) {
-		_, experimentsErr = c.putExperiments(ctx, event)
+		measurementErr = c.putHoldoutMeasuredGroups(ctx, event)
+		if _, err := c.putExperiments(ctx, event); err != nil && measurementErr == nil {
+			measurementErr = err
+		}
 	}
 	if err := c.publishCacheInvalidation(ctx, event); err != nil {
 		return err
 	}
-	return experimentsErr
+	return measurementErr
+}
+
+func (c *cacheRefresher) putHoldoutMeasuredGroups(
+	ctx context.Context,
+	event *domaineventproto.Event,
+) error {
+	if c.holdoutMeasuredGroupsCache == nil {
+		return nil
+	}
+	fetchCtx, cancel := context.WithTimeout(ctx, cacheRefresherFetchTimeout)
+	defer cancel()
+	// Captured before reading so the batch cacher cannot overwrite a newer list
+	generation := c.now().UnixNano()
+	groups, err := v2hs.MeasuredGroups(fetchCtx, c.holdoutStorage, event.EnvironmentId, c.now())
+	if err != nil {
+		return err
+	}
+	if _, err := c.holdoutMeasuredGroupsCache.PutIfNewer(groups, event.EnvironmentId, generation); err != nil {
+		return writeError(err)
+	}
+	return nil
 }
 
 // holdoutGroupHasExperiments reports whether the group carried by a

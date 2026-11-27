@@ -1184,6 +1184,7 @@ func (s *server) registerPubSubProcessorMap(
 				cachev3.NewAutoOpsRulesCache(nonPersistentRedisCache, cachev3.NonPersistentAutoOpsRulesCacheTTL),
 				holdoutStorage,
 				cachev3.NewHoldoutGroupCache(nonPersistentRedisCache, 0),
+				cachev3.NewHoldoutMeasuredGroupsCache(nonPersistentRedisCache),
 				cacheInvalidationPublisher,
 				logger,
 			),
@@ -1322,9 +1323,11 @@ func (s *server) registerPubSubProcessorMap(
 				goalEventWriter,
 				goalEventStorage,
 				experimentStorage,
+				holdoutStorage,
 				dwhLocation,
 				nonPersistentRedisClient, // use non-persistent redis instance here
-				persistentRedisClient,    // use persistent redis instance here for goal retry events
+				// use persistent redis instance here for goal retry events and holdout exposure keys
+				persistentRedisClient,
 				exClient,
 				ftClient,
 				name,

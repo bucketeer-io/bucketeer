@@ -27,6 +27,7 @@ import (
 	ecdwh "github.com/bucketeer-io/bucketeer/v2/pkg/eventcounter/storage/v2/dwh_database"
 	experimentclient "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
+	v2hs "github.com/bucketeer-io/bucketeer/v2/pkg/holdout/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/puller/codes"
 	redisv3 "github.com/bucketeer-io/bucketeer/v2/pkg/redis/v3"
@@ -57,7 +58,8 @@ type eventsDWHPersister struct {
 //
 // All data-warehouse storages (evalEventWriter / goalEventWriter / goalEventStorage) are
 // created by the server and injected here — the processor no longer depends on any DWH
-// client or dialect. experimentStorage is backed by the operational database (used by Switch()).
+// client or dialect. experimentStorage is backed by the operational database (used by Switch()),
+// and so is holdoutStorage, which the evaluation event writer reads the measured holdout groups from.
 func NewEventsDWHPersister(
 	ctx context.Context,
 	config interface{},
@@ -65,6 +67,7 @@ func NewEventsDWHPersister(
 	goalEventWriter dwhstorage.GoalEventWriter,
 	goalEventStorage ecdwh.EventStorage,
 	experimentStorage operationalstorage.ExperimentStorage,
+	holdoutStorage v2hs.HoldoutStorage,
 	location *time.Location,
 	redisClient redisv3.Client,
 	persistentRedisClient redisv3.Client,
@@ -103,7 +106,17 @@ func NewEventsDWHPersister(
 		if persisterName == EvaluationEventDWHPersisterName {
 			e.subscriberType = subscriberDedicatedEvaluationEventDWH
 		}
-		e.writer = NewEvalEventWriter(logger, exClient, experimentsCache, location, evalEventWriter, e.subscriberType)
+		e.writer = NewEvalEventWriter(
+			logger,
+			exClient,
+			experimentsCache,
+			holdoutStorage,
+			cachev3.NewHoldoutMeasuredGroupsCache(cachev3.NewRedisCache(redisClient)),
+			persistentRedisClient,
+			location,
+			evalEventWriter,
+			e.subscriberType,
+		)
 
 	case GoalCountEventDWHPersisterName, GoalEventDWHPersisterName:
 		e.subscriberType = subscriberGoalEventDWH

@@ -237,6 +237,21 @@ func (mr *MockHoldoutStorageMockRecorder) ListLiveFeatureTargets(ctx, environmen
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListLiveFeatureTargets", reflect.TypeOf((*MockHoldoutStorage)(nil).ListLiveFeatureTargets), ctx, environmentID, featureID)
 }
 
+// ListMeasuredGroups mocks base method.
+func (m *MockHoldoutStorage) ListMeasuredGroups(ctx context.Context, environmentID string, endedSince int64) ([]*domain.HoldoutGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListMeasuredGroups", ctx, environmentID, endedSince)
+	ret0, _ := ret[0].([]*domain.HoldoutGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListMeasuredGroups indicates an expected call of ListMeasuredGroups.
+func (mr *MockHoldoutStorageMockRecorder) ListMeasuredGroups(ctx, environmentID, endedSince any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMeasuredGroups", reflect.TypeOf((*MockHoldoutStorage)(nil).ListMeasuredGroups), ctx, environmentID, endedSince)
+}
+
 // LockEnvironment mocks base method.
 func (m *MockHoldoutStorage) LockEnvironment(ctx context.Context, environmentID string) error {
 	m.ctrl.T.Helper()

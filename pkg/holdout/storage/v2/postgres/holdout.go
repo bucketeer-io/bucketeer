@@ -59,6 +59,8 @@ var (
 	insertHoldoutGroupSegmentUsersSQL string
 	//go:embed sql/holdout/count_segment_users.sql
 	countSegmentUsersSQL string
+	//go:embed sql/holdout/select_measured_groups.sql
+	selectMeasuredGroupsSQL string
 )
 
 type holdoutStorage struct {
@@ -280,6 +282,17 @@ func (s *holdoutStorage) ListCurrentFeatures(
 	environmentID string,
 	groupIDs []string,
 ) ([]*domain.HoldoutGroupFeature, error) {
+	return s.listFeatures(ctx, environmentID, groupIDs, " AND removed_at = 0")
+}
+
+// listFeatures returns the target rows of the groups. conditionAndOrder ends
+// the statement after the WHERE conditions; callers pass fixed strings.
+func (s *holdoutStorage) listFeatures(
+	ctx context.Context,
+	environmentID string,
+	groupIDs []string,
+	conditionAndOrder string,
+) ([]*domain.HoldoutGroupFeature, error) {
 	if len(groupIDs) == 0 {
 		return nil, nil
 	}
@@ -293,7 +306,7 @@ func (s *holdoutStorage) ListCurrentFeatures(
 	query := fmt.Sprintf(`SELECT
     id, holdout_group_id, feature_id, environment_id, holdout_variation_id, added_at, removed_at
 FROM holdout_group_feature
-WHERE environment_id = $1 AND removed_at = 0 AND holdout_group_id IN (%s)`, strings.Join(placeholders, ", "))
+WHERE environment_id = $1 AND holdout_group_id IN (%s)%s`, strings.Join(placeholders, ", "), conditionAndOrder)
 	rows, err := s.qe.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -397,6 +410,68 @@ func (s *holdoutStorage) ListActiveGroups(
 		}
 		snapshot.Status = proto.HoldoutGroup_Status(status)
 		groups = append(groups, snapshot)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return groups, nil
+}
+
+func (s *holdoutStorage) ListMeasuredGroups(
+	ctx context.Context,
+	environmentID string,
+	endedSince int64,
+) ([]*domain.HoldoutGroup, error) {
+	groups, err := s.selectMeasuredGroups(ctx, environmentID, endedSince)
+	if err != nil || len(groups) == 0 {
+		return nil, err
+	}
+	byID := make(map[string]*domain.HoldoutGroup, len(groups))
+	ids := make([]string, 0, len(groups))
+	for _, group := range groups {
+		byID[group.Id] = group
+		ids = append(ids, group.Id)
+	}
+	features, err := s.listFeatures(ctx, environmentID, ids, " ORDER BY added_at ASC, id ASC")
+	if err != nil {
+		return nil, err
+	}
+	for _, feature := range features {
+		if group, ok := byID[feature.HoldoutGroupId]; ok {
+			group.Features = append(group.Features, feature.HoldoutGroupFeature)
+		}
+	}
+	return groups, nil
+}
+
+func (s *holdoutStorage) selectMeasuredGroups(
+	ctx context.Context,
+	environmentID string,
+	endedSince int64,
+) ([]*domain.HoldoutGroup, error) {
+	rows, err := s.qe.QueryContext(
+		ctx,
+		selectMeasuredGroupsSQL,
+		environmentID,
+		false,
+		int32(proto.HoldoutGroup_RUNNING),
+		int32(proto.HoldoutGroup_ANALYSIS),
+		int32(proto.HoldoutGroup_STOPPED),
+		endedSince,
+		int32(proto.HoldoutGroup_FORCE_STOPPED),
+		endedSince,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var groups []*domain.HoldoutGroup
+	for rows.Next() {
+		group, err := scanHoldoutGroup(rows)
+		if err != nil {
+			return nil, err
+		}
+		groups = append(groups, group)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
