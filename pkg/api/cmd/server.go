@@ -187,11 +187,11 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		project:         cmd.Flag("project", "GCP Project id to use for PubSub.").Required().String(),
 		operationalDatabaseType: cmd.Flag("storage-type", "Operational database type (mysql, postgres).").
 			Default("mysql").String(),
-		mysqlUser:      cmd.Flag("mysql-user", "MySQL user.").Required().String(),
-		mysqlPass:      cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
-		mysqlHost:      cmd.Flag("mysql-host", "MySQL host.").Required().String(),
-		mysqlPort:      cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
-		mysqlDBName:    cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		mysqlUser:      cmd.Flag("mysql-user", "MySQL user. Required when storage-type=mysql.").String(),
+		mysqlPass:      cmd.Flag("mysql-pass", "MySQL password.").String(),
+		mysqlHost:      cmd.Flag("mysql-host", "MySQL host. Required when storage-type=mysql.").String(),
+		mysqlPort:      cmd.Flag("mysql-port", "MySQL port. Required when storage-type=mysql.").Int(),
+		mysqlDBName:    cmd.Flag("mysql-db-name", "MySQL database name. Required when storage-type=mysql.").String(),
 		postgresUser:   cmd.Flag("postgres-user", "PostgreSQL user.").String(),
 		postgresPass:   cmd.Flag("postgres-pass", "PostgreSQL password.").String(),
 		postgresHost:   cmd.Flag("postgres-host", "PostgreSQL host.").String(),
@@ -795,10 +795,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		invalidatorCleanup = cleanup
 	}
 
-	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
+	var mysqlClient mysql.Client
 	var postgresClient postgres.Client
 	var accountStorage v2as.AccountStorage
 	if *s.operationalDatabaseType == "postgres" {
@@ -811,6 +808,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		}
 		accountStorage = accountpostgres.NewAccountStorage(postgresClient)
 	} else {
+		if *s.mysqlUser == "" || *s.mysqlHost == "" || *s.mysqlPort == 0 || *s.mysqlDBName == "" {
+			return fmt.Errorf("mysql-user, mysql-host, mysql-port, and mysql-db-name are required when storage-type=mysql")
+		}
+		mysqlClient, err = s.createMySQLClient(ctx, registerer, logger)
+		if err != nil {
+			return err
+		}
 		accountStorage = accountmysql.NewAccountStorage(mysqlClient)
 	}
 
@@ -1029,6 +1033,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go eventCounterClient.Close()
 		go environmentClient.Close()
 		go redisV3Client.Close()
+		if mysqlClient != nil {
+			go mysqlClient.Close()
+		}
 		if postgresClient != nil {
 			go postgresClient.Close()
 		}

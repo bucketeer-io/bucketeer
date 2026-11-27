@@ -327,11 +327,11 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"Is demo site enabled").Default("false").Bool(),
 		operationalDatabaseType: cmd.Flag("storage-type", "Operational database type (mysql, postgres).").
 			Default("mysql").String(),
-		mysqlUser:      cmd.Flag("mysql-user", "MySQL user.").Required().String(),
-		mysqlPass:      cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
-		mysqlHost:      cmd.Flag("mysql-host", "MySQL host.").Required().String(),
-		mysqlPort:      cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
-		mysqlDBName:    cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		mysqlUser:      cmd.Flag("mysql-user", "MySQL user. Required when storage-type=mysql.").String(),
+		mysqlPass:      cmd.Flag("mysql-pass", "MySQL password.").String(),
+		mysqlHost:      cmd.Flag("mysql-host", "MySQL host. Required when storage-type=mysql.").String(),
+		mysqlPort:      cmd.Flag("mysql-port", "MySQL port. Required when storage-type=mysql.").Int(),
+		mysqlDBName:    cmd.Flag("mysql-db-name", "MySQL database name. Required when storage-type=mysql.").String(),
 		postgresUser:   cmd.Flag("postgres-user", "PostgreSQL user.").String(),
 		postgresPass:   cmd.Flag("postgres-pass", "PostgreSQL password.").String(),
 		postgresHost:   cmd.Flag("postgres-host", "PostgreSQL host.").String(),
@@ -749,12 +749,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		logger.Warn("Stored secrets are not encrypted at rest because encryption-type is none")
 	}
 
-	// TODO: postgres is in development and not fully supported yet.
 	var dbClient database.Client
-	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
+	var mysqlClient mysql.Client
 	var pushStorage v2ps.PushStorage
 	var featureStorage v2fs.FeatureStorage
 	var segmentStorage v2fs.SegmentStorage
@@ -816,6 +812,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		scheduledFlagChangeStorage = featurepostgres.NewScheduledFlagChangeStorage(postgresClient)
 		holdoutStorage = holdoutpostgres.NewHoldoutStorage(postgresClient)
 	} else {
+		if *s.mysqlUser == "" || *s.mysqlHost == "" || *s.mysqlPort == 0 || *s.mysqlDBName == "" {
+			return fmt.Errorf("mysql-user, mysql-host, mysql-port, and mysql-db-name are required when storage-type=mysql")
+		}
+		mysqlClient, err = s.createMySQLClient(ctx, registerer, logger)
+		if err != nil {
+			return err
+		}
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = v2ps.NewMySQLPushStorage(mysqlClient)
 		featureStorage = featuremysql.NewFeatureStorage(mysqlClient)
@@ -1110,7 +1113,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// (separate from mysqlClient / postgresClient) so the closer is non-nil
 	// for the MySQL/Postgres backends and must be closed on shutdown.
 	eventDWHStorage, dwhCloser, err := s.createDWHEventStorage(
-		ctx, dataWarehouseConfig, bigQueryQuerier, bigQueryDataSet, logger,
+		ctx, dataWarehouseConfig, bigQueryQuerier, bigQueryDataSet, registerer, logger,
 	)
 	if err != nil {
 		return err
@@ -1486,7 +1489,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 		// Close clients
 		// These are fast cleanup operations that can run asynchronously.
-		go mysqlClient.Close()
+		if mysqlClient != nil {
+			go mysqlClient.Close()
+		}
 		if postgresClient != nil {
 			go postgresClient.Close()
 		}
@@ -1916,13 +1921,14 @@ func (s *server) createDWHEventStorage(
 	config *DataWarehouseConfig,
 	bigQueryQuerier bqquerier.Client,
 	bigQueryDataSet string,
+	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (dwhdatabase.EventStorage, io.Closer, error) {
 	switch config.Type {
 	case "mysql":
 		clientCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
-		client, err := s.createDWHMySQLClient(clientCtx, config.MySQL, logger)
+		client, err := s.createDWHMySQLClient(clientCtx, config.MySQL, registerer, logger)
 		if err != nil {
 			logger.Error("Failed to create MySQL client for data warehouse",
 				zap.Error(err),
@@ -1955,6 +1961,7 @@ func (s *server) createDWHEventStorage(
 func (s *server) createDWHMySQLClient(
 	ctx context.Context,
 	config DataWarehouseMySQLConfig,
+	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (mysql.Client, error) {
 	user := config.User
@@ -1968,12 +1975,22 @@ func (s *server) createDWHMySQLClient(
 		host = *s.mysqlHost
 		port = *s.mysqlPort
 		database = *s.mysqlDBName
+		if host == "" || database == "" || user == "" {
+			return nil, fmt.Errorf(
+				"data warehouse useMainConnection needs the mysql-user, mysql-host, and mysql-db-name flags",
+			)
+		}
 	}
 	if host == "" || database == "" || user == "" {
 		return nil, fmt.Errorf("mysql host, database, and user are required for data warehouse connection")
 	}
 	if port == 0 {
 		port = 3306
+	}
+	opts := []mysql.Option{mysql.WithLogger(logger)}
+	// The operational MySQL client registers the shared MySQL metrics; register them here only without it.
+	if registerer != nil && *s.operationalDatabaseType == "postgres" {
+		opts = append(opts, mysql.WithMetrics(registerer))
 	}
 	client, err := mysql.NewClient(
 		ctx,
@@ -1982,7 +1999,7 @@ func (s *server) createDWHMySQLClient(
 		host,
 		port,
 		database,
-		mysql.WithLogger(logger),
+		opts...,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create data warehouse MySQL client: %w", err)

@@ -194,12 +194,12 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).String(),
 		operationalDatabaseType: cmd.Flag("storage-type", "Operational database type (mysql, postgres).").
 			Default("mysql").String(),
-		mysqlUser:        cmd.Flag("mysql-user", "MySQL user.").Required().String(),
-		mysqlPass:        cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
-		mysqlHost:        cmd.Flag("mysql-host", "MySQL host.").Required().String(),
-		mysqlPort:        cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
-		mysqlDBName:      cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
-		mysqlDBOpenConns: cmd.Flag("mysql-db-open-conns", "MySQL open connections.").Required().Int(),
+		mysqlUser:        cmd.Flag("mysql-user", "MySQL user. Required when storage-type=mysql.").String(),
+		mysqlPass:        cmd.Flag("mysql-pass", "MySQL password.").String(),
+		mysqlHost:        cmd.Flag("mysql-host", "MySQL host. Required when storage-type=mysql.").String(),
+		mysqlPort:        cmd.Flag("mysql-port", "MySQL port. Required when storage-type=mysql.").Int(),
+		mysqlDBName:      cmd.Flag("mysql-db-name", "MySQL database name. Required when storage-type=mysql.").String(),
+		mysqlDBOpenConns: cmd.Flag("mysql-db-open-conns", "MySQL max open connections (default 10).").Int(),
 		postgresUser:     cmd.Flag("postgres-user", "PostgreSQL user.").String(),
 		postgresPass:     cmd.Flag("postgres-pass", "PostgreSQL password.").String(),
 		postgresHost:     cmd.Flag("postgres-host", "PostgreSQL host.").String(),
@@ -384,13 +384,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
-
 	// Operational-database storages (separate from the data-warehouse clients).
 	var dbClient database.Client
+	var mysqlClient mysql.Client
 	var postgresClient postgres.Client
 	var pushStorage pushstorage.PushStorage
 	var segmentStorage v2fs.SegmentStorage
@@ -420,6 +416,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentStorage = oppostgres.NewExperimentStorage(postgresClient)
 		autoOpsRuleStorage = oppostgres.NewAutoOpsRuleStorage(postgresClient)
 	} else {
+		if *s.mysqlUser == "" || *s.mysqlHost == "" || *s.mysqlPort == 0 || *s.mysqlDBName == "" {
+			return fmt.Errorf("mysql-user, mysql-host, mysql-port, and mysql-db-name are required when storage-type=mysql")
+		}
+		mysqlClient, err = s.createMySQLClient(ctx, registerer, logger)
+		if err != nil {
+			return err
+		}
 		dbClient = database.NewMySQLStorageClient(mysqlClient)
 		pushStorage = pushstorage.NewMySQLPushStorage(mysqlClient)
 		segmentStorage = featuremysql.NewSegmentStorage(mysqlClient)
@@ -660,7 +663,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go featureClient.Close()
 		go autoOpsClient.Close()
 		go batchClient.Close()
-		go mysqlClient.Close()
+		if mysqlClient != nil {
+			go mysqlClient.Close()
+		}
 		if postgresClient != nil {
 			go postgresClient.Close()
 		}
@@ -839,14 +844,19 @@ func (s *server) createMySQLClient(
 ) (mysql.Client, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
+	opts := []mysql.Option{
+		mysql.WithLogger(logger),
+		mysql.WithMetrics(registerer),
+	}
+	if *s.mysqlDBOpenConns > 0 {
+		opts = append(opts, mysql.WithMaxOpenConns(*s.mysqlDBOpenConns))
+	}
 	return mysql.NewClient(
 		ctx,
 		*s.mysqlUser, *s.mysqlPass, *s.mysqlHost,
 		*s.mysqlPort,
 		*s.mysqlDBName,
-		mysql.WithLogger(logger),
-		mysql.WithMetrics(registerer),
-		mysql.WithMaxOpenConns(*s.mysqlDBOpenConns),
+		opts...,
 	)
 }
 
@@ -899,10 +909,30 @@ func (s *server) initDataWarehouseStorages(
 	case "mysql":
 		client := mainMySQLClient
 		var cleanup func()
-		if dwhConfig.MySQL.UseMainConnection {
+		switch {
+		case dwhConfig.MySQL.UseMainConnection && mainMySQLClient != nil:
 			logger.Info("Using main MySQL connection for data warehouse")
-		} else {
-			dedicated, err := createDWHMySQLClient(ctx, &dwhConfig.MySQL, logger)
+		case dwhConfig.MySQL.UseMainConnection:
+			// No main MySQL client when storage-type=postgres, so open it here from the --mysql-* flags.
+			if *s.mysqlUser == "" || *s.mysqlHost == "" || *s.mysqlPort == 0 || *s.mysqlDBName == "" {
+				return nil, nil, nil, nil, fmt.Errorf(
+					"data warehouse mysql.useMainConnection needs the mysql-user, mysql-host, mysql-port, " +
+						"and mysql-db-name flags when storage-type is not mysql",
+				)
+			}
+			mainClient, err := s.createMySQLClient(ctx, registerer, logger)
+			if err != nil {
+				return nil, nil, nil, nil, fmt.Errorf("failed to create main MySQL client for data warehouse: %w", err)
+			}
+			client = mainClient
+			cleanup = func() { mainClient.Close() }
+		default:
+			// The main MySQL client registers the shared MySQL metrics; register them here only without it.
+			var dwhRegisterer metrics.Registerer
+			if mainMySQLClient == nil {
+				dwhRegisterer = registerer
+			}
+			dedicated, err := createDWHMySQLClient(ctx, &dwhConfig.MySQL, dwhRegisterer, logger)
 			if err != nil {
 				return nil, nil, nil, nil, fmt.Errorf("failed to create dedicated MySQL client: %w", err)
 			}
@@ -971,6 +1001,7 @@ func (s *server) initDataWarehouseStorages(
 func createDWHMySQLClient(
 	ctx context.Context,
 	config *MySQLConfig,
+	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (mysql.Client, error) {
 	if config == nil {
@@ -983,6 +1014,10 @@ func createDWHMySQLClient(
 	if port == 0 {
 		port = 3306 // Default MySQL port
 	}
+	opts := []mysql.Option{mysql.WithLogger(logger)}
+	if registerer != nil {
+		opts = append(opts, mysql.WithMetrics(registerer))
+	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	client, err := mysql.NewClient(
@@ -992,7 +1027,7 @@ func createDWHMySQLClient(
 		config.Host,
 		port,
 		config.Database,
-		mysql.WithLogger(logger),
+		opts...,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create MySQL client: %w", err)
