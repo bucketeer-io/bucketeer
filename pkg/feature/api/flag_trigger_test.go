@@ -27,7 +27,6 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
 
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
@@ -46,7 +45,7 @@ func TestCreateFlagTrigger(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := metadata.NewIncomingContext(
-		createContextWithToken(),
+		createContextWithEditor(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
 
@@ -134,7 +133,7 @@ func TestGetFlagTrigger(t *testing.T) {
 		{
 			desc: "Error Validate",
 			context: metadata.NewIncomingContext(
-				createContextWithToken(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			service: createFeatureServiceNew(mockController),
@@ -147,7 +146,7 @@ func TestGetFlagTrigger(t *testing.T) {
 		{
 			desc: "Error Not Found",
 			context: metadata.NewIncomingContext(
-				createContextWithToken(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			service: createFeatureServiceNew(mockController),
@@ -164,7 +163,7 @@ func TestGetFlagTrigger(t *testing.T) {
 		{
 			desc: "Success",
 			context: metadata.NewIncomingContext(
-				createContextWithToken(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			service: createFeatureServiceNew(mockController),
@@ -196,10 +195,10 @@ func TestGetFlagTrigger(t *testing.T) {
 		{
 			desc: "Success with Viewer Account",
 			context: metadata.NewIncomingContext(
-				createContextWithTokenRoleUnassigned(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			service: createFeatureServiceWithSegmentUsersCache(mockController),
 			setup: func(s *FeatureService) {
 				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -223,19 +222,6 @@ func TestGetFlagTrigger(t *testing.T) {
 			input: &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentId: baseEnvironmentId},
 			getExpectedErr: func() error {
 				return nil
-			},
-		},
-		{
-			desc: "errPermissionDenied",
-			context: metadata.NewIncomingContext(
-				createContextWithTokenRoleUnassigned(),
-				metadata.MD{"accept-language": []string{"ja"}},
-			),
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			setup:   func(s *FeatureService) {},
-			input:   &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentId: baseEnvironmentId},
-			getExpectedErr: func() error {
-				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -262,7 +248,7 @@ func TestUpdateFlagTrigger(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := metadata.NewIncomingContext(
-		createContextWithToken(),
+		createContextWithEditor(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
 
@@ -369,7 +355,7 @@ func TestDeleteFlagTrigger(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := metadata.NewIncomingContext(
-		createContextWithToken(),
+		createContextWithEditor(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
 	patterns := []struct {
@@ -437,7 +423,7 @@ func TestFlagTriggerWebhook(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := metadata.NewIncomingContext(
-		createContextWithToken(),
+		createContextWithEditor(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
 
@@ -536,7 +522,7 @@ func TestUpdateEnableFeature(t *testing.T) {
 	defer mockController.Finish()
 
 	ctx := metadata.NewIncomingContext(
-		createContextWithToken(),
+		createContextWithEditor(),
 		metadata.MD{"accept-language": []string{"ja"}},
 	)
 	const (
@@ -728,7 +714,7 @@ func TestListFlagTriggers(t *testing.T) {
 			desc:    "Error Validate",
 			service: createFeatureServiceNew(mockController),
 			context: metadata.NewIncomingContext(
-				createContextWithToken(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup:    nil,
@@ -742,7 +728,7 @@ func TestListFlagTriggers(t *testing.T) {
 			desc:    "Error Invalid Argument",
 			service: createFeatureServiceNew(mockController),
 			context: metadata.NewIncomingContext(
-				createContextWithToken(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup:    nil,
@@ -756,7 +742,7 @@ func TestListFlagTriggers(t *testing.T) {
 			desc:    "Success",
 			service: createFeatureServiceNew(mockController),
 			context: metadata.NewIncomingContext(
-				createContextWithToken(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
@@ -772,9 +758,9 @@ func TestListFlagTriggers(t *testing.T) {
 		},
 		{
 			desc:    "Success with Viewer Account",
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			service: createFeatureServiceWithSegmentUsersCache(mockController),
 			context: metadata.NewIncomingContext(
-				createContextWithTokenRoleUnassigned(),
+				createContextWithEditor(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
@@ -786,19 +772,6 @@ func TestListFlagTriggers(t *testing.T) {
 			expected: &proto.ListFlagTriggersResponse{FlagTriggers: []*proto.ListFlagTriggersResponse_FlagTriggerWithUrl{}, Cursor: "0"},
 			getExpectedErr: func() error {
 				return nil
-			},
-		},
-		{
-			desc: "errPermissionDenied",
-			context: metadata.NewIncomingContext(
-				createContextWithTokenRoleUnassigned(),
-				metadata.MD{"accept-language": []string{"ja"}},
-			),
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			setup:   func(s *FeatureService) {},
-			input:   &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
-			getExpectedErr: func() error {
-				return statusPermissionDenied.Err()
 			},
 		},
 	}

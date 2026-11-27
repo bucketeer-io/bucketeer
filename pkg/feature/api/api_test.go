@@ -17,16 +17,15 @@ package api
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/feature/storage/v2/mock"
 	tagstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mock"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	aoclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
@@ -34,11 +33,9 @@ import (
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -65,29 +62,9 @@ func (u *dummyWebhookCryptoUtil) Decrypt(ctx context.Context, data []byte) ([]by
 	return []byte(data), nil
 }
 
-func createContextWithToken() context.Context {
-	token := &token.AccessToken{
-		Issuer:        "issuer",
-		Audience:      "audience",
-		Expiry:        time.Now().AddDate(100, 0, 0),
-		IssuedAt:      time.Now(),
-		Email:         "email",
-		IsSystemAdmin: true,
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
-}
-
-func createContextWithTokenRoleUnassigned() context.Context {
-	token := &token.AccessToken{
-		Issuer:   "issuer",
-		Audience: "audience",
-		Expiry:   time.Now().AddDate(100, 0, 0),
-		IssuedAt: time.Now(),
-		Email:    "email",
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
+// createContextWithEditor is a context after the authz interceptor allowed the request.
+func createContextWithEditor() context.Context {
+	return authz.WithEditor(context.TODO(), &eventproto.Editor{Email: "email"})
 }
 
 // FIXME: Deprecated. Do not use for a new test. Replace this with createFeatureServiceNew.
@@ -95,20 +72,6 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 	p := publishermock.NewMockPublisher(c)
 	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	p.EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	a := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: "ns0",
-					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-				},
-			},
-		},
-	}
-	a.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	e := experimentclientmock.NewMockClient(c)
 	e.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(&experimentproto.ListExperimentsResponse{}, nil).AnyTimes()
 	at := autoopsclientmock.NewMockClient(c)
@@ -123,7 +86,6 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 		nil,
 		tagstoragemock.NewMockTagStorage(c),
 		databasemock.NewMockClient(c),
-		a,
 		e,
 		cachev3mock.NewMockFeaturesCache(c),
 		nil,
@@ -143,23 +105,6 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 	segmentUsersPublisher := publishermock.NewMockPublisher(c)
 	domainPublisher := publishermock.NewMockPublisher(c)
-	a := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountV2Response{
-		Account: &accountproto.AccountV2{
-			Email: "email",
-		},
-	}
-	a.EXPECT().GetAccountV2(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
-	arByEnv := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{EnvironmentId: "namespace", Role: accountproto.AccountV2_Role_Environment_EDITOR},
-			},
-		},
-	}
-	a.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(arByEnv, nil).AnyTimes()
 	return &FeatureService{
 		flagTriggerStorage:         mock.NewMockFlagTriggerStorage(c),
 		featureStorage:             mock.NewMockFeatureStorage(c),
@@ -168,7 +113,6 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 		scheduledFlagChangeStorage: mock.NewMockScheduledFlagChangeStorage(c),
 		dbClient:                   databasemock.NewMockClient(c),
 		tagStorage:                 tagstoragemock.NewMockTagStorage(c),
-		accountClient:              a,
 		autoOpsClient:              aoclientmock.NewMockClient(c),
 		experimentClient:           experimentclientmock.NewMockClient(c),
 		environmentClient:          envclientmock.NewMockClient(c),
@@ -182,23 +126,9 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 	}
 }
 
-func createFeatureServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, ro accountproto.AccountV2_Role_Organization, re accountproto.AccountV2_Role_Environment) *FeatureService {
+func createFeatureServiceWithSegmentUsersCache(c *gomock.Controller) *FeatureService {
 	segmentUsersPublisher := publishermock.NewMockPublisher(c)
 	domainPublisher := publishermock.NewMockPublisher(c)
-	a := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: ro,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: "ns0",
-					Role:          re,
-				},
-			},
-		},
-	}
-	a.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &FeatureService{
 		flagTriggerStorage:         mock.NewMockFlagTriggerStorage(c),
 		featureStorage:             mock.NewMockFeatureStorage(c),
@@ -207,7 +137,6 @@ func createFeatureServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, r
 		segmentStorage:             mock.NewMockSegmentStorage(c),
 		segmentUserStorage:         mock.NewMockSegmentUserStorage(c),
 		dbClient:                   databasemock.NewMockClient(c),
-		accountClient:              a,
 		autoOpsClient:              aoclientmock.NewMockClient(c),
 		experimentClient:           experimentclientmock.NewMockClient(c),
 		environmentClient:          envclientmock.NewMockClient(c),

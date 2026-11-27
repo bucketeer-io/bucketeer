@@ -42,7 +42,6 @@ import (
 	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
 	tagstoragemock "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/uuid"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	exprproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -65,7 +64,7 @@ func TestGetFeatureMySQL(t *testing.T) {
 		{
 			desc:    "error: id is empty",
 			service: createFeatureServiceNew(mockController),
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			input: &featureproto.GetFeatureRequest{
 				Id:            "",
 				EnvironmentId: "ns0",
@@ -77,7 +76,7 @@ func TestGetFeatureMySQL(t *testing.T) {
 		{
 			desc:    "success",
 			service: createFeatureServiceNew(mockController),
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -95,8 +94,8 @@ func TestGetFeatureMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer Account",
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
-			context: createContextWithTokenRoleUnassigned(),
+			service: createFeatureServiceWithSegmentUsersCache(mockController),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -115,7 +114,7 @@ func TestGetFeatureMySQL(t *testing.T) {
 		{
 			desc:    "success get feature by version",
 			service: createFeatureServiceNew(mockController),
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureByVersion(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
@@ -130,19 +129,6 @@ func TestGetFeatureMySQL(t *testing.T) {
 			},
 			getExpectedErr: func() error {
 				return nil
-			},
-		},
-		{
-			desc:    "errPermissionDenied",
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			context: createContextWithTokenRoleUnassigned(),
-			setup:   func(s *FeatureService) {},
-			input: &featureproto.GetFeatureRequest{
-				Id:            "fid",
-				EnvironmentId: "ns0",
-			},
-			getExpectedErr: func() error {
-				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -179,7 +165,7 @@ func TestGetFeaturesMySQL(t *testing.T) {
 		{
 			desc:    "error: id is nil",
 			service: createFeatureServiceNew(mockController),
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			input:   nil,
 			getExpectedErr: func() error {
 				return statusMissingIDs.Err()
@@ -188,7 +174,7 @@ func TestGetFeaturesMySQL(t *testing.T) {
 		{
 			desc:    "error: contains empty id",
 			service: createFeatureServiceNew(mockController),
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			input:   []string{"id", ""},
 			getExpectedErr: func() error {
 				return statusMissingIDs.Err()
@@ -197,7 +183,7 @@ func TestGetFeaturesMySQL(t *testing.T) {
 		{
 			desc:    "success",
 			service: createFeatureServiceNew(mockController),
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
 					gomock.Any(), gomock.Any(),
@@ -210,8 +196,8 @@ func TestGetFeaturesMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer Account",
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
-			context: createContextWithTokenRoleUnassigned(),
+			service: createFeatureServiceWithSegmentUsersCache(mockController),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
 					gomock.Any(), gomock.Any(),
@@ -220,16 +206,6 @@ func TestGetFeaturesMySQL(t *testing.T) {
 			input: []string{"fid"},
 			getExpectedErr: func() error {
 				return nil
-			},
-		},
-		{
-			desc:    "errPermissionDenied",
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			context: createContextWithTokenRoleUnassigned(),
-			setup:   func(s *FeatureService) {},
-			input:   []string{"fid"},
-			getExpectedErr: func() error {
-				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -272,7 +248,7 @@ func TestListFeaturesMySQL(t *testing.T) {
 		{
 			desc:    "error: invalid order by",
 			service: createFeatureService(mockController),
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeaturesFilteredByExperiment(
 					gomock.Any(), gomock.Any(),
@@ -288,7 +264,7 @@ func TestListFeaturesMySQL(t *testing.T) {
 		{
 			desc:    "success do not has Experiment",
 			service: createFeatureService(mockController),
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeaturesFilteredByExperiment(
 					gomock.Any(), gomock.Any(),
@@ -305,7 +281,7 @@ func TestListFeaturesMySQL(t *testing.T) {
 		{
 			desc:    "success has Experiment",
 			service: createFeatureService(mockController),
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeaturesFilteredByExperiment(
 					gomock.Any(), gomock.Any(),
@@ -323,8 +299,8 @@ func TestListFeaturesMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer Account",
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
-			context: createContextWithTokenRoleUnassigned(),
+			service: createFeatureServiceWithSegmentUsersCache(mockController),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeaturesFilteredByExperiment(
 					gomock.Any(), gomock.Any(),
@@ -337,18 +313,6 @@ func TestListFeaturesMySQL(t *testing.T) {
 			hasExperiment:  false,
 			environmentId:  "ns0",
 			getExpectedErr: func() error { return nil },
-		},
-		{
-			desc:          "errPermissionDenied",
-			service:       createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			context:       createContextWithTokenRoleUnassigned(),
-			setup:         func(s *FeatureService) {},
-			orderBy:       featureproto.ListFeaturesRequest_DEFAULT,
-			hasExperiment: false,
-			environmentId: "ns0",
-			getExpectedErr: func() error {
-				return statusPermissionDenied.Err()
-			},
 		},
 	}
 	for _, p := range patterns {
@@ -378,7 +342,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -596,7 +560,7 @@ func TestEvaluateFeatures(t *testing.T) {
 	}{
 		{
 			desc:     "fail: ErrMissingUser",
-			context:  createContextWithToken(),
+			context:  createContextWithEditor(),
 			service:  createFeatureService(mockController),
 			setup:    nil,
 			input:    &featureproto.EvaluateFeaturesRequest{},
@@ -607,7 +571,7 @@ func TestEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:     "fail: ErrMissingUserID",
-			context:  createContextWithToken(),
+			context:  createContextWithEditor(),
 			service:  createFeatureService(mockController),
 			setup:    nil,
 			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{}},
@@ -618,7 +582,7 @@ func TestEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:    "fail: return errInternal when getting features",
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
@@ -635,7 +599,7 @@ func TestEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:    "success: get from cache",
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
@@ -764,7 +728,7 @@ func TestEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:    "success: get from cache and filter by tag: return empty",
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
@@ -884,7 +848,7 @@ func TestEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:    "success: get features from storage",
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
@@ -905,7 +869,7 @@ func TestEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:    "fail: return errInternal when getting segment users",
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
@@ -967,7 +931,7 @@ func TestEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:    "success: get users from storage",
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
@@ -1042,7 +1006,7 @@ func TestEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:    "success: segment not found evaluates without rules",
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
@@ -1119,8 +1083,8 @@ func TestEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:    "success with viewer account",
-			context: createContextWithTokenRoleUnassigned(),
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			context: createContextWithEditor(),
+			service: createFeatureServiceWithSegmentUsersCache(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
@@ -1136,17 +1100,6 @@ func TestEvaluateFeatures(t *testing.T) {
 			},
 			getExpectedErr: func() error {
 				return nil
-			},
-		},
-		{
-			desc:     "errPermissionDenied",
-			context:  createContextWithTokenRoleUnassigned(),
-			service:  createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			setup:    func(s *FeatureService) {},
-			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
-			expected: nil,
-			getExpectedErr: func() error {
-				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -1197,7 +1150,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 	}{
 		{
 			desc:     "fail: ErrMissingUser",
-			context:  createContextWithToken(),
+			context:  createContextWithEditor(),
 			service:  createFeatureService(mockController),
 			setup:    nil,
 			input:    &featureproto.DebugEvaluateFeaturesRequest{},
@@ -1208,7 +1161,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:    "fail: ErrMissingUserID",
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			service: createFeatureService(mockController),
 			setup:   nil,
 			input: &featureproto.DebugEvaluateFeaturesRequest{
@@ -1223,7 +1176,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:    "fail: return errInternal when getting features",
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
@@ -1244,7 +1197,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:    "success: get from cache",
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
@@ -1386,7 +1339,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:    "fail: return errInternal when getting segment users",
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
@@ -1453,7 +1406,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:    "success: get users from storage",
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
@@ -1533,8 +1486,8 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 		},
 		{
 			desc:    "success with viewer account",
-			context: createContextWithTokenRoleUnassigned(),
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			context: createContextWithEditor(),
+			service: createFeatureServiceWithSegmentUsersCache(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
@@ -1585,22 +1538,8 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 			},
 		},
 		{
-			desc:    "errPermissionDenied",
-			context: createContextWithTokenRoleUnassigned(),
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			setup:   func(s *FeatureService) {},
-			input: &featureproto.DebugEvaluateFeaturesRequest{
-				Users:         []*userproto.User{{Id: "test-id"}},
-				EnvironmentId: "ns0",
-			},
-			expected: nil,
-			getExpectedErr: func() error {
-				return statusPermissionDenied.Err()
-			},
-		},
-		{
 			desc:    "success evaluate multiple users",
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
@@ -1751,7 +1690,7 @@ func TestEvaluateSingleFeature(t *testing.T) {
 	vID3 := newUUID(t)
 	vID4 := newUUID(t)
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -1992,7 +1931,7 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 		{
 			desc:    "success",
 			service: createFeatureServiceNew(mockController),
-			context: createContextWithToken(),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
 					gomock.Any(), gomock.Any(),
@@ -2004,8 +1943,8 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer Account",
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
-			context: createContextWithTokenRoleUnassigned(),
+			service: createFeatureServiceWithSegmentUsersCache(mockController),
+			context: createContextWithEditor(),
 			setup: func(s *FeatureService) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
 					gomock.Any(), gomock.Any(),
@@ -2013,15 +1952,6 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 			},
 			getExpectedErr: func() error {
 				return nil
-			},
-		},
-		{
-			desc:    "errPermissionDenied",
-			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			context: createContextWithTokenRoleUnassigned(),
-			setup:   func(s *FeatureService) {},
-			getExpectedErr: func() error {
-				return statusPermissionDenied.Err()
 			},
 		},
 	}
@@ -2045,131 +1975,12 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 	}
 }
 
-func TestUnauthenticated(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	service := createFeatureService(mockController)
-	patterns := []struct {
-		desc     string
-		action   func(context.Context, *FeatureService) error
-		expected error
-	}{
-		{
-			desc: "GetFeature",
-			action: func(ctx context.Context, fs *FeatureService) error {
-				_, err := fs.GetFeature(ctx, &featureproto.GetFeatureRequest{})
-				return err
-			},
-			expected: statusUnauthenticated.Err(),
-		},
-		{
-			desc: "GetFeatures",
-			action: func(ctx context.Context, fs *FeatureService) error {
-				_, err := fs.GetFeatures(ctx, &featureproto.GetFeaturesRequest{})
-				return err
-			},
-			expected: statusUnauthenticated.Err(),
-		},
-		{
-			desc: "ListFeatures",
-			action: func(ctx context.Context, fs *FeatureService) error {
-				_, err := fs.ListFeatures(ctx, &featureproto.ListFeaturesRequest{})
-				return err
-			},
-			expected: statusUnauthenticated.Err(),
-		},
-		{
-			desc: "ListFeaturesEnabled",
-			action: func(ctx context.Context, fs *FeatureService) error {
-				_, err := fs.ListEnabledFeatures(ctx, &featureproto.ListEnabledFeaturesRequest{})
-				return err
-			},
-			expected: statusUnauthenticated.Err(),
-		},
-		{
-			desc: "EvaluateFeatures",
-			action: func(ctx context.Context, fs *FeatureService) error {
-				_, err := fs.EvaluateFeatures(ctx, &featureproto.EvaluateFeaturesRequest{})
-				return err
-			},
-			expected: statusUnauthenticated.Err(),
-		},
-	}
-	for _, p := range patterns {
-		actual := p.action(ctx, service)
-		assert.Equal(t, p.expected, actual, "%s", p.desc)
-	}
-}
-
-func TestPermissionDenied(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	ctx := createContextWithTokenRoleUnassigned()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-
-	// Use a service with unassigned roles instead of admin
-	service := createFeatureServiceWithGetAccountByEnvironmentMock(
-		mockController,
-		accountproto.AccountV2_Role_Organization_UNASSIGNED,
-		accountproto.AccountV2_Role_Environment_UNASSIGNED,
-	)
-	patterns := []struct {
-		desc     string
-		action   func(context.Context, *FeatureService) error
-		expected error
-	}{
-		{
-			desc: "CreateFeature",
-			action: func(ctx context.Context, fs *FeatureService) error {
-				_, err := fs.CreateFeature(ctx, &featureproto.CreateFeatureRequest{})
-				return err
-			},
-			expected: statusPermissionDenied.Err(),
-		},
-		{
-			desc: "DeleteFeature",
-			action: func(ctx context.Context, fs *FeatureService) error {
-				_, err := fs.DeleteFeature(ctx, &featureproto.DeleteFeatureRequest{
-					Id: "id",
-				})
-				return err
-			},
-			expected: statusPermissionDenied.Err(),
-		},
-		{
-			desc: "CloneFeature",
-			action: func(ctx context.Context, fs *FeatureService) error {
-				_, err := fs.CloneFeature(ctx, &featureproto.CloneFeatureRequest{
-					Id:            "id",
-					EnvironmentId: "ns0",
-				})
-				return err
-			},
-			expected: statusPermissionDenied.Err(),
-		},
-	}
-	for _, p := range patterns {
-		actual := p.action(ctx, service)
-		assert.Equal(t, p.expected, actual, "%s", p.desc)
-	}
-}
-
 func TestDeleteFeatureMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -2252,7 +2063,7 @@ func TestCloneFeatureMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -2358,7 +2169,7 @@ func TestBulkCloneFeatureMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -2695,7 +2506,7 @@ func TestValidateEnvironmentSettings(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
+	ctx := createContextWithEditor()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -2784,14 +2595,8 @@ func TestUpdateFeature(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:        "fail: checkEnvironmentRole",
-			ctx:         context.Background(),
-			input:       &featureproto.UpdateFeatureRequest{},
-			expectedErr: statusUnauthenticated.Err(),
-		},
-		{
 			desc: "fail: id is empty",
-			ctx:  createContextWithToken(),
+			ctx:  createContextWithEditor(),
 			input: &featureproto.UpdateFeatureRequest{
 				EnvironmentId: "eid",
 				Comment:       "comment",
@@ -2807,7 +2612,7 @@ func TestUpdateFeature(t *testing.T) {
 					nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "internal"),
 				)
 			},
-			ctx: createContextWithToken(),
+			ctx: createContextWithEditor(),
 			input: &featureproto.UpdateFeatureRequest{
 				EnvironmentId: "eid",
 				Comment:       "comment",
@@ -2828,7 +2633,7 @@ func TestUpdateFeature(t *testing.T) {
 					&envproto.GetEnvironmentV2Request{Id: "eid"},
 				).Return(nil, pkgErr.NewErrorInternal(pkgErr.FeaturePackageName, "internal"))
 			},
-			ctx: createContextWithToken(),
+			ctx: createContextWithEditor(),
 			input: &featureproto.UpdateFeatureRequest{
 				EnvironmentId: "eid",
 				Comment:       "comment",
@@ -2859,7 +2664,7 @@ func TestUpdateFeature(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(map[string]error{"key": errors.New("internal")})
 			},
-			ctx: createContextWithToken(),
+			ctx: createContextWithEditor(),
 			input: &featureproto.UpdateFeatureRequest{
 				EnvironmentId: "eid",
 				Comment:       "comment",
@@ -2969,7 +2774,7 @@ func TestUpdateFeature(t *testing.T) {
 					},
 				}, 0, int64(0), nil)
 			},
-			ctx: createContextWithToken(),
+			ctx: createContextWithEditor(),
 			input: &featureproto.UpdateFeatureRequest{
 				EnvironmentId: "eid",
 				Comment:       "comment",
@@ -3006,7 +2811,7 @@ func TestUpdateFeature(t *testing.T) {
 				).Return(&domain.Feature{Feature: &featureproto.Feature{Id: "fid"}}, nil)
 				// No ListFeatures, no UpdateFeature: the request stops here.
 			},
-			ctx: createContextWithToken(),
+			ctx: createContextWithEditor(),
 			input: &featureproto.UpdateFeatureRequest{
 				EnvironmentId: "eid",
 				Comment:       "comment",
@@ -3087,7 +2892,7 @@ func TestUpdateFeature(t *testing.T) {
 					},
 				}, 0, int64(0), nil)
 			},
-			ctx: createContextWithToken(),
+			ctx: createContextWithEditor(),
 			input: &featureproto.UpdateFeatureRequest{
 				EnvironmentId: "eid",
 				Comment:       "comment",
@@ -3185,7 +2990,7 @@ func TestUpdateFeature(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.ScheduledFlagChange{}, 0, int64(0), nil)
 			},
-			ctx: createContextWithToken(),
+			ctx: createContextWithEditor(),
 			input: &featureproto.UpdateFeatureRequest{
 				EnvironmentId: "eid",
 				Comment:       "comment",

@@ -131,7 +131,7 @@ func TestListFeaturesPaginationValidation(t *testing.T) {
 					Return(&featureproto.FeatureSummary{}, nil)
 			}
 
-			resp, err := service.ListFeatures(createContextWithToken(), &featureproto.ListFeaturesRequest{
+			resp, err := service.ListFeatures(createContextWithEditor(), &featureproto.ListFeaturesRequest{
 				EnvironmentId: "ns0",
 				PageSize:      tc.pageSize,
 				Cursor:        tc.cursor,
@@ -167,7 +167,7 @@ func TestListEnabledFeaturesPaginationValidation(t *testing.T) {
 					})
 			}
 
-			resp, err := service.ListEnabledFeatures(createContextWithToken(), &featureproto.ListEnabledFeaturesRequest{
+			resp, err := service.ListEnabledFeatures(createContextWithEditor(), &featureproto.ListEnabledFeaturesRequest{
 				EnvironmentId: "ns0",
 				PageSize:      tc.pageSize,
 				Cursor:        tc.cursor,
@@ -207,7 +207,7 @@ func TestListSegmentsPaginationValidation(t *testing.T) {
 					Return([]*featureproto.Feature{}, 0, int64(0), nil)
 			}
 
-			resp, err := service.ListSegments(createContextWithToken(), &featureproto.ListSegmentsRequest{
+			resp, err := service.ListSegments(createContextWithEditor(), &featureproto.ListSegmentsRequest{
 				EnvironmentId: "ns0",
 				PageSize:      tc.pageSize,
 				Cursor:        tc.cursor,
@@ -243,7 +243,7 @@ func TestListSegmentUsersPaginationValidation(t *testing.T) {
 					})
 			}
 
-			resp, err := service.ListSegmentUsers(createContextWithToken(), &featureproto.ListSegmentUsersRequest{
+			resp, err := service.ListSegmentUsers(createContextWithEditor(), &featureproto.ListSegmentUsersRequest{
 				EnvironmentId: "ns0",
 				SegmentId:     "segment-id",
 				PageSize:      tc.pageSize,
@@ -280,7 +280,7 @@ func TestListFlagTriggersPaginationValidation(t *testing.T) {
 					})
 			}
 
-			resp, err := service.ListFlagTriggers(createContextWithToken(), &featureproto.ListFlagTriggersRequest{
+			resp, err := service.ListFlagTriggers(createContextWithEditor(), &featureproto.ListFlagTriggersRequest{
 				EnvironmentId: "ns0",
 				FeatureId:     "feature-id",
 				PageSize:      int32(tc.pageSize),
@@ -317,7 +317,7 @@ func TestListTagsPaginationValidation(t *testing.T) {
 					})
 			}
 
-			resp, err := service.ListTags(createContextWithToken(), &featureproto.ListTagsRequest{
+			resp, err := service.ListTags(createContextWithEditor(), &featureproto.ListTagsRequest{
 				EnvironmentId: "ns0",
 				PageSize:      tc.pageSize,
 				Cursor:        tc.cursor,

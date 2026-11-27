@@ -24,7 +24,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/tag/domain"
 	tagstorage "github.com/bucketeer-io/bucketeer/v2/pkg/tag/storage"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	tagproto "github.com/bucketeer-io/bucketeer/v2/proto/tag"
 )
@@ -33,12 +32,6 @@ func (s *FeatureService) ListTags(
 	ctx context.Context,
 	req *featureproto.ListTagsRequest,
 ) (*featureproto.ListTagsResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	orderBy, err := toTagOrderBy(req.OrderBy)
 	if err != nil {
 		s.logger.Error(

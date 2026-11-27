@@ -30,6 +30,7 @@ import (
 
 	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	experimentdomain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
@@ -39,7 +40,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -57,16 +57,11 @@ func (s *FeatureService) GetFeature(
 	ctx context.Context,
 	req *featureproto.GetFeatureRequest,
 ) (*featureproto.GetFeatureResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateGetFeatureRequest(req); err != nil {
 		return nil, err
 	}
 	var feature *domain.Feature
+	var err error
 	if req.FeatureVersion != nil {
 		feature, err = s.featureStorage.GetFeatureByVersion(
 			ctx,
@@ -134,12 +129,6 @@ func (s *FeatureService) GetFeatures(
 	ctx context.Context,
 	req *featureproto.GetFeaturesRequest,
 ) (*featureproto.GetFeaturesResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateGetFeaturesRequest(req); err != nil {
 		return nil, err
 	}
@@ -204,18 +193,13 @@ func (s *FeatureService) ListFeatures(
 	ctx context.Context,
 	req *featureproto.ListFeaturesRequest,
 ) (*featureproto.ListFeaturesResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}
 	var features []*featureproto.Feature
 	var cursor string
 	var totalCount int64
+	var err error
 	if req.HasExperiment == nil {
 		features, cursor, totalCount, err = s.listFeatures(
 			ctx,
@@ -439,12 +423,6 @@ func (s *FeatureService) ListEnabledFeatures(
 	ctx context.Context,
 	req *featureproto.ListEnabledFeaturesRequest,
 ) (*featureproto.ListEnabledFeaturesResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}
@@ -480,13 +458,8 @@ func (s *FeatureService) CreateFeature(
 	ctx context.Context,
 	req *featureproto.CreateFeatureRequest,
 ) (*featureproto.CreateFeatureResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	err = validateCreateFeatureRequest(req)
+	editor := authz.EditorFrom(ctx)
+	err := validateCreateFeatureRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -576,12 +549,7 @@ func (s *FeatureService) UpdateFeature(
 	ctx context.Context,
 	req *featureproto.UpdateFeatureRequest,
 ) (*featureproto.UpdateFeatureResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if req.Id == "" {
 		return nil, statusMissingID.Err()
 	}
@@ -593,7 +561,7 @@ func (s *FeatureService) UpdateFeature(
 	}
 	var event *eventproto.Event
 	var updatedpb *featureproto.Feature
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		var err error
 		event, updatedpb, err = s.updateFeatureWithinTransaction(ctxWithTx, editor, req)
 		return err
@@ -921,17 +889,12 @@ func (s *FeatureService) DeleteFeature(
 	if err := validateDeleteFeatureRequest(req); err != nil {
 		return nil, err
 	}
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment); err != nil {
 		return nil, err
 	}
 	var eventPb *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		// Lock the flag row first so the holdout target guard below sees the
 		// latest committed enrollment.
 		feature, err := s.featureStorage.GetFeatureForUpdate(contextWithTx, req.Id, req.EnvironmentId)
@@ -1313,12 +1276,6 @@ func (s *FeatureService) EvaluateFeatures(
 	ctx context.Context,
 	req *featureproto.EvaluateFeaturesRequest,
 ) (*featureproto.EvaluateFeaturesResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateEvaluateFeatures(req); err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -1395,13 +1352,7 @@ func (s *FeatureService) DebugEvaluateFeatures(
 	ctx context.Context,
 	req *featureproto.DebugEvaluateFeaturesRequest,
 ) (*featureproto.DebugEvaluateFeaturesResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	err = validateDebugEvaluateFeatures(req)
+	err := validateDebugEvaluateFeatures(req)
 	if err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -1543,23 +1494,8 @@ func (s *FeatureService) CloneFeature(
 	ctx context.Context,
 	req *featureproto.CloneFeatureRequest,
 ) (*featureproto.CloneFeatureResponse, error) {
-	// The source feature is read from req.EnvironmentId, so the caller needs
-	// read access to the source environment in addition to write access to
-	// the target environment.
-	if _, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId,
-	); err != nil {
-		return nil, err
-	}
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.TargetEnvironmentId,
-	)
-	if err != nil {
-		return nil, err
-	}
-	err = validateCloneFeatureRequest(req)
+	editor := authz.EditorFrom(ctx)
+	err := validateCloneFeatureRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -1670,28 +1606,7 @@ func (s *FeatureService) BulkCloneFeature(
 	if err := validateBulkCloneFeatureRequest(req); err != nil {
 		return nil, err
 	}
-	// The source feature is read from req.EnvironmentId, so the caller needs
-	// read access to the source environment in addition to write access to
-	// every target environment.
-	if _, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId,
-	); err != nil {
-		return nil, err
-	}
-	// Check EDITOR permission on ALL target environments upfront.
-	// We collect permission errors and abort before any cloning if any env fails.
-	editors := make(map[string]*eventproto.Editor, len(req.TargetEnvironmentIds))
-	for _, targetEnvID := range req.TargetEnvironmentIds {
-		editor, err := s.checkEnvironmentRole(
-			ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-			targetEnvID,
-		)
-		if err != nil {
-			return nil, err
-		}
-		editors[targetEnvID] = editor
-	}
+	editor := authz.EditorFrom(ctx)
 	f, err := s.featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
@@ -1709,7 +1624,6 @@ func (s *FeatureService) BulkCloneFeature(
 	}
 	results := make([]*featureproto.BulkCloneFeatureResult, 0, len(req.TargetEnvironmentIds))
 	for _, targetEnvID := range req.TargetEnvironmentIds {
-		editor := editors[targetEnvID]
 		// Deep-copy the source feature per iteration to prevent Clone() from
 		// mutating the shared proto slices (Variations/Targets/strategies) and
 		// corrupting event payloads for earlier iterations.

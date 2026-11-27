@@ -37,7 +37,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
 	databasemock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	envproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
@@ -48,26 +47,11 @@ func TestCreateHoldoutGroup(t *testing.T) {
 	t.Parallel()
 	now := time.Now().Unix()
 
-	t.Run("org member is denied", func(t *testing.T) {
-		t.Parallel()
-		controller := gomock.NewController(t)
-		service := createFeatureServiceWithGetAccountByEnvironmentMock(
-			controller,
-			accountproto.AccountV2_Role_Organization_MEMBER,
-			accountproto.AccountV2_Role_Environment_EDITOR,
-		)
-		_, err := service.CreateHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.CreateHoldoutGroupRequest{
-			EnvironmentId: "ns0",
-			Name:          "holdout",
-		})
-		assert.Equal(t, statusPermissionDenied.Err(), err)
-	})
-
 	t.Run("client assignment is rejected", func(t *testing.T) {
 		t.Parallel()
 		controller := gomock.NewController(t)
 		service, _ := newHoldoutService(t, controller)
-		_, err := service.CreateHoldoutGroup(createContextWithTokenRoleUnassigned(), hashCreateRequest(now, &wrapperspb.DoubleValue{Value: 1}))
+		_, err := service.CreateHoldoutGroup(createContextWithEditor(), hashCreateRequest(now, &wrapperspb.DoubleValue{Value: 1}))
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
 	})
 
@@ -85,7 +69,7 @@ func TestCreateHoldoutGroup(t *testing.T) {
 
 		req := hashCreateRequest(now, nil)
 		req.GoalIds = []string{"g1"}
-		resp, err := service.CreateHoldoutGroup(createContextWithTokenRoleUnassigned(), req)
+		resp, err := service.CreateHoldoutGroup(createContextWithEditor(), req)
 		require.NoError(t, err)
 		assert.Equal(t, featureproto.HoldoutGroup_WAITING, resp.HoldoutGroup.Status)
 		assert.Equal(t, "env-seed", resp.HoldoutGroup.SamplingSeed)
@@ -109,7 +93,7 @@ func TestCreateHoldoutGroup(t *testing.T) {
 		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg"}}, nil, nil)
 		storage.EXPECT().CreateHoldoutGroup(gomock.Any(), gomock.Any()).Return(nil)
 
-		resp, err := service.CreateHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.CreateHoldoutGroupRequest{
+		resp, err := service.CreateHoldoutGroup(createContextWithEditor(), &featureproto.CreateHoldoutGroupRequest{
 			EnvironmentId:  "ns0",
 			Name:           "segment holdout",
 			AssignmentType: featureproto.HoldoutGroup_SEGMENT,
@@ -135,7 +119,7 @@ func TestCreateHoldoutGroup(t *testing.T) {
 		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg"}}, nil, nil)
 		storage.EXPECT().CreateHoldoutGroup(gomock.Any(), gomock.Any()).Return(nil)
 
-		resp, err := service.CreateHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.CreateHoldoutGroupRequest{
+		resp, err := service.CreateHoldoutGroup(createContextWithEditor(), &featureproto.CreateHoldoutGroupRequest{
 			EnvironmentId:  "ns0",
 			Name:           "segment holdout",
 			AssignmentType: featureproto.HoldoutGroup_SEGMENT,
@@ -158,7 +142,7 @@ func TestCreateHoldoutGroup(t *testing.T) {
 			StartAt: now + 50, StopAt: now + 500,
 		}}, nil)
 
-		_, err := service.CreateHoldoutGroup(createContextWithTokenRoleUnassigned(), hashCreateRequest(now, nil))
+		_, err := service.CreateHoldoutGroup(createContextWithEditor(), hashCreateRequest(now, nil))
 		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
 	})
 }
@@ -166,24 +150,10 @@ func TestCreateHoldoutGroup(t *testing.T) {
 func TestGetAndListHoldoutGroups(t *testing.T) {
 	t.Parallel()
 
-	t.Run("unauthenticated", func(t *testing.T) {
-		t.Parallel()
-		controller := gomock.NewController(t)
-		service, _ := newHoldoutService(t, controller)
-		_, err := service.GetHoldoutGroup(context.Background(), &featureproto.GetHoldoutGroupRequest{
-			Id: "hg", EnvironmentId: "ns0",
-		})
-		assert.Equal(t, statusUnauthenticated.Err(), err)
-	})
-
 	t.Run("viewer can get and list", func(t *testing.T) {
 		t.Parallel()
 		controller := gomock.NewController(t)
-		service := createFeatureServiceWithGetAccountByEnvironmentMock(
-			controller,
-			accountproto.AccountV2_Role_Organization_MEMBER,
-			accountproto.AccountV2_Role_Environment_VIEWER,
-		)
+		service := createFeatureServiceWithSegmentUsersCache(controller)
 		storage := holdoutmock.NewMockHoldoutStorage(controller)
 		service.holdoutStorage = storage
 		group := waitingHoldout(time.Now().Unix())
@@ -196,7 +166,7 @@ func TestGetAndListHoldoutGroups(t *testing.T) {
 		storage.EXPECT().ListHoldoutGroups(gomock.Any(), gomock.Any()).Return([]*holdoutdomain.HoldoutGroup{group}, 1, int64(1), nil)
 		storage.EXPECT().ListCurrentFeatures(gomock.Any(), "ns0", []string{"hg"}).Return(nil, nil)
 
-		ctx := createContextWithTokenRoleUnassigned()
+		ctx := createContextWithEditor()
 		got, err := service.GetHoldoutGroup(ctx, &featureproto.GetHoldoutGroupRequest{Id: "hg", EnvironmentId: "ns0"})
 		require.NoError(t, err)
 		require.Len(t, got.HoldoutGroup.Features, 1)
@@ -215,7 +185,7 @@ func TestGetAndListHoldoutGroups(t *testing.T) {
 		t.Parallel()
 		controller := gomock.NewController(t)
 		service, _ := newHoldoutService(t, controller)
-		_, err := service.ListHoldoutGroups(createContextWithTokenRoleUnassigned(), &featureproto.ListHoldoutGroupsRequest{
+		_, err := service.ListHoldoutGroups(createContextWithEditor(), &featureproto.ListHoldoutGroupsRequest{
 			EnvironmentId: "ns0",
 			PageSize:      int64(maxPageSizePerRequest + 1),
 		})
@@ -234,7 +204,7 @@ func TestUpdateHoldoutGroup(t *testing.T) {
 	storage.EXPECT().UpdateHoldoutGroup(gomock.Any(), gomock.Any()).Return(nil)
 	storage.EXPECT().ListCurrentFeatures(gomock.Any(), "ns0", []string{"hg"}).Return(nil, nil)
 
-	resp, err := service.UpdateHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.UpdateHoldoutGroupRequest{
+	resp, err := service.UpdateHoldoutGroup(createContextWithEditor(), &featureproto.UpdateHoldoutGroupRequest{
 		Id:            "hg",
 		EnvironmentId: "ns0",
 		Name:          wrapperspb.String("renamed"),
@@ -252,7 +222,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		controller := gomock.NewController(t)
 		service, storage := newHoldoutService(t, controller)
 		expectTransition(t, service, storage, controller, waitingHoldout(now), nil, eventproto.Event_HOLDOUT_GROUP_STARTED)
-		resp, err := service.StartHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupRequest{
+		resp, err := service.StartHoldoutGroup(createContextWithEditor(), &featureproto.StartHoldoutGroupRequest{
 			Id: "hg", EnvironmentId: "ns0",
 		})
 		require.NoError(t, err)
@@ -274,7 +244,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		service.segmentStorage.(*featurestoragemock.MockSegmentStorage).EXPECT().GetSegmentForUpdate(
 			gomock.Any(), "seg", "ns0",
 		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{Id: "seg", Deleted: true}}, nil, nil)
-		_, err := service.StartHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupRequest{
+		_, err := service.StartHoldoutGroup(createContextWithEditor(), &featureproto.StartHoldoutGroupRequest{
 			Id: "hg", EnvironmentId: "ns0",
 		})
 		assert.Equal(t, codes.NotFound, status.Code(err))
@@ -296,7 +266,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		).Return(&featuredomain.Segment{Segment: &featureproto.Segment{
 			Id: "seg", Status: featureproto.Segment_UPLOADING,
 		}}, nil, nil)
-		_, err := service.StartHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupRequest{
+		_, err := service.StartHoldoutGroup(createContextWithEditor(), &featureproto.StartHoldoutGroupRequest{
 			Id: "hg", EnvironmentId: "ns0",
 		})
 		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
@@ -312,7 +282,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return([]holdoutdomain.GroupSnapshot{{
 			ID: "live", Status: featureproto.HoldoutGroup_RUNNING, StartAt: now - 10, StopAt: now + 10,
 		}}, nil)
-		_, err := service.StartHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupRequest{
+		_, err := service.StartHoldoutGroup(createContextWithEditor(), &featureproto.StartHoldoutGroupRequest{
 			Id: "hg", EnvironmentId: "ns0",
 		})
 		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
@@ -326,7 +296,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
 		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(waitingHoldout(now), nil)
 		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
-		_, err := service.StartHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupRequest{
+		_, err := service.StartHoldoutGroup(createContextWithEditor(), &featureproto.StartHoldoutGroupRequest{
 			Id: "hg", EnvironmentId: "ns0", Mode: featureproto.StartHoldoutGroupRequest_SCHEDULED,
 		})
 		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
@@ -339,7 +309,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		group := waitingHoldout(now)
 		group.StartAt = now - 10
 		expectTransition(t, service, storage, controller, group, nil, eventproto.Event_HOLDOUT_GROUP_STARTED)
-		resp, err := service.StartHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupRequest{
+		resp, err := service.StartHoldoutGroup(createContextWithEditor(), &featureproto.StartHoldoutGroupRequest{
 			Id: "hg", EnvironmentId: "ns0", Mode: featureproto.StartHoldoutGroupRequest_SCHEDULED,
 		})
 		require.NoError(t, err)
@@ -355,7 +325,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		group.Status = featureproto.HoldoutGroup_RUNNING
 		group.StartAt = now - 10
 		expectTransition(t, service, storage, controller, group, nil, eventproto.Event_HOLDOUT_GROUP_ANALYSIS_STARTED)
-		resp, err := service.StartHoldoutGroupAnalysis(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupAnalysisRequest{
+		resp, err := service.StartHoldoutGroupAnalysis(createContextWithEditor(), &featureproto.StartHoldoutGroupAnalysisRequest{
 			Id: "hg", EnvironmentId: "ns0",
 		})
 		require.NoError(t, err)
@@ -374,7 +344,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
 		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(group, nil)
 		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
-		_, err := service.StartHoldoutGroupAnalysis(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupAnalysisRequest{
+		_, err := service.StartHoldoutGroupAnalysis(createContextWithEditor(), &featureproto.StartHoldoutGroupAnalysisRequest{
 			Id: "hg", EnvironmentId: "ns0", Mode: featureproto.StartHoldoutGroupAnalysisRequest_SCHEDULED,
 		})
 		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
@@ -389,7 +359,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		group.StartAt = now - 100
 		group.StartAnalysisAt = now - 10
 		expectTransition(t, service, storage, controller, group, nil, eventproto.Event_HOLDOUT_GROUP_ANALYSIS_STARTED)
-		resp, err := service.StartHoldoutGroupAnalysis(createContextWithTokenRoleUnassigned(), &featureproto.StartHoldoutGroupAnalysisRequest{
+		resp, err := service.StartHoldoutGroupAnalysis(createContextWithEditor(), &featureproto.StartHoldoutGroupAnalysisRequest{
 			Id: "hg", EnvironmentId: "ns0", Mode: featureproto.StartHoldoutGroupAnalysisRequest_SCHEDULED,
 		})
 		require.NoError(t, err)
@@ -405,7 +375,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		group.Status = featureproto.HoldoutGroup_RUNNING
 		group.StartAt = now - 10
 		expectTransition(t, service, storage, controller, group, nil, eventproto.Event_HOLDOUT_GROUP_STOPPED)
-		resp, err := service.StopHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.StopHoldoutGroupRequest{
+		resp, err := service.StopHoldoutGroup(createContextWithEditor(), &featureproto.StopHoldoutGroupRequest{
 			Id: "hg", EnvironmentId: "ns0",
 		})
 		require.NoError(t, err)
@@ -424,7 +394,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
 		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(group, nil)
 		storage.EXPECT().ListActiveGroups(gomock.Any(), "ns0").Return(nil, nil)
-		_, err := service.StopHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.StopHoldoutGroupRequest{
+		_, err := service.StopHoldoutGroup(createContextWithEditor(), &featureproto.StopHoldoutGroupRequest{
 			Id: "hg", EnvironmentId: "ns0", Mode: featureproto.StopHoldoutGroupRequest_SCHEDULED,
 		})
 		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
@@ -439,7 +409,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		group.StartAt = now - 100
 		group.StopAt = now - 1
 		expectTransition(t, service, storage, controller, group, nil, eventproto.Event_HOLDOUT_GROUP_STOPPED)
-		resp, err := service.StopHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.StopHoldoutGroupRequest{
+		resp, err := service.StopHoldoutGroup(createContextWithEditor(), &featureproto.StopHoldoutGroupRequest{
 			Id: "hg", EnvironmentId: "ns0", Mode: featureproto.StopHoldoutGroupRequest_SCHEDULED,
 		})
 		require.NoError(t, err)
@@ -453,7 +423,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		group := waitingHoldout(now)
 		group.Status = featureproto.HoldoutGroup_STOPPED
 		expectTransition(t, service, storage, controller, group, nil, eventproto.Event_HOLDOUT_GROUP_ARCHIVED)
-		resp, err := service.ArchiveHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.ArchiveHoldoutGroupRequest{
+		resp, err := service.ArchiveHoldoutGroup(createContextWithEditor(), &featureproto.ArchiveHoldoutGroupRequest{
 			Id: "hg", EnvironmentId: "ns0",
 		})
 		require.NoError(t, err)
@@ -465,7 +435,7 @@ func TestHoldoutGroupLifecycle(t *testing.T) {
 		controller := gomock.NewController(t)
 		service, storage := newHoldoutService(t, controller)
 		expectTransition(t, service, storage, controller, waitingHoldout(now), nil, eventproto.Event_HOLDOUT_GROUP_DELETED)
-		_, err := service.DeleteHoldoutGroup(createContextWithTokenRoleUnassigned(), &featureproto.DeleteHoldoutGroupRequest{
+		_, err := service.DeleteHoldoutGroup(createContextWithEditor(), &featureproto.DeleteHoldoutGroupRequest{
 			Id: "hg", EnvironmentId: "ns0",
 		})
 		require.NoError(t, err)
@@ -494,7 +464,7 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		// The current targets are loaded before the change, inside the transaction.
 		storage.EXPECT().ListCurrentFeatures(gomock.Any(), "ns0", []string{"hg"}).Return(nil, nil)
 
-		resp, err := service.AddHoldoutGroupFeatures(createContextWithTokenRoleUnassigned(), &featureproto.AddHoldoutGroupFeaturesRequest{
+		resp, err := service.AddHoldoutGroupFeatures(createContextWithEditor(), &featureproto.AddHoldoutGroupFeaturesRequest{
 			Id: "hg", EnvironmentId: "ns0",
 			Features: []*featureproto.HoldoutGroupFeatureInput{{FeatureId: "flag", HoldoutVariationId: "var"}},
 		})
@@ -517,7 +487,7 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 			Id:         "flag",
 			Variations: []*featureproto.Variation{{Id: "var"}},
 		}}, nil)
-		_, err := service.AddHoldoutGroupFeatures(createContextWithTokenRoleUnassigned(), &featureproto.AddHoldoutGroupFeaturesRequest{
+		_, err := service.AddHoldoutGroupFeatures(createContextWithEditor(), &featureproto.AddHoldoutGroupFeaturesRequest{
 			Id: "hg", EnvironmentId: "ns0",
 			Features: []*featureproto.HoldoutGroupFeatureInput{{FeatureId: "FLAG", HoldoutVariationId: "var"}},
 		})
@@ -533,7 +503,7 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		expectTx(service)
 		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
 		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(group, nil)
-		_, err := service.AddHoldoutGroupFeatures(createContextWithTokenRoleUnassigned(), &featureproto.AddHoldoutGroupFeaturesRequest{
+		_, err := service.AddHoldoutGroupFeatures(createContextWithEditor(), &featureproto.AddHoldoutGroupFeaturesRequest{
 			Id: "hg", EnvironmentId: "ns0",
 			Features: []*featureproto.HoldoutGroupFeatureInput{{FeatureId: "flag", HoldoutVariationId: "var"}},
 		})
@@ -548,7 +518,7 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
 		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(waitingHoldout(now), nil)
 		expectFeature(service, "flag", "var", true)
-		_, err := service.AddHoldoutGroupFeatures(createContextWithTokenRoleUnassigned(), &featureproto.AddHoldoutGroupFeaturesRequest{
+		_, err := service.AddHoldoutGroupFeatures(createContextWithEditor(), &featureproto.AddHoldoutGroupFeaturesRequest{
 			Id: "hg", EnvironmentId: "ns0",
 			Features: []*featureproto.HoldoutGroupFeatureInput{{FeatureId: "flag", HoldoutVariationId: "var"}},
 		})
@@ -569,7 +539,7 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 			Enabled:    false,
 			Variations: []*featureproto.Variation{{Id: "var"}},
 		}}, nil)
-		_, err := service.AddHoldoutGroupFeatures(createContextWithTokenRoleUnassigned(), &featureproto.AddHoldoutGroupFeaturesRequest{
+		_, err := service.AddHoldoutGroupFeatures(createContextWithEditor(), &featureproto.AddHoldoutGroupFeaturesRequest{
 			Id: "hg", EnvironmentId: "ns0",
 			Features: []*featureproto.HoldoutGroupFeatureInput{{FeatureId: "flag", HoldoutVariationId: "var"}},
 		})
@@ -585,7 +555,7 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		storage.EXPECT().LockEnvironment(gomock.Any(), "ns0").Return(nil)
 		storage.EXPECT().GetHoldoutGroupForUpdate(gomock.Any(), "hg", "ns0").Return(waitingHoldout(now), nil)
 		expectFeature(service, "flag", "var", false)
-		_, err := service.AddHoldoutGroupFeatures(createContextWithTokenRoleUnassigned(), &featureproto.AddHoldoutGroupFeaturesRequest{
+		_, err := service.AddHoldoutGroupFeatures(createContextWithEditor(), &featureproto.AddHoldoutGroupFeaturesRequest{
 			Id: "hg", EnvironmentId: "ns0",
 			Features: []*featureproto.HoldoutGroupFeatureInput{{FeatureId: "flag", HoldoutVariationId: "missing"}},
 		})
@@ -603,7 +573,7 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		storage.EXPECT().ListLiveFeatureTargets(gomock.Any(), "ns0", "flag").Return([]holdoutdomain.FeatureTarget{{
 			GroupID: "hg", FeatureID: "flag", Status: featureproto.HoldoutGroup_WAITING,
 		}}, nil)
-		_, err := service.AddHoldoutGroupFeatures(createContextWithTokenRoleUnassigned(), &featureproto.AddHoldoutGroupFeaturesRequest{
+		_, err := service.AddHoldoutGroupFeatures(createContextWithEditor(), &featureproto.AddHoldoutGroupFeaturesRequest{
 			Id: "hg", EnvironmentId: "ns0",
 			Features: []*featureproto.HoldoutGroupFeatureInput{{FeatureId: "flag", HoldoutVariationId: "var"}},
 		})
@@ -621,7 +591,7 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 		storage.EXPECT().ListLiveFeatureTargets(gomock.Any(), "ns0", "flag").Return([]holdoutdomain.FeatureTarget{{
 			GroupID: "other", GroupName: "other", FeatureID: "flag", Status: featureproto.HoldoutGroup_RUNNING,
 		}}, nil)
-		_, err := service.AddHoldoutGroupFeatures(createContextWithTokenRoleUnassigned(), &featureproto.AddHoldoutGroupFeaturesRequest{
+		_, err := service.AddHoldoutGroupFeatures(createContextWithEditor(), &featureproto.AddHoldoutGroupFeaturesRequest{
 			Id: "hg", EnvironmentId: "ns0",
 			Features: []*featureproto.HoldoutGroupFeatureInput{{FeatureId: "flag", HoldoutVariationId: "var"}},
 		})
@@ -654,7 +624,7 @@ func TestAddAndRemoveHoldoutGroupFeatures(t *testing.T) {
 				HoldoutGroupId: "hg", FeatureId: "other", HoldoutVariationId: "var",
 			}},
 		}, nil)
-		resp, err := service.RemoveHoldoutGroupFeatures(createContextWithTokenRoleUnassigned(), &featureproto.RemoveHoldoutGroupFeaturesRequest{
+		resp, err := service.RemoveHoldoutGroupFeatures(createContextWithEditor(), &featureproto.RemoveHoldoutGroupFeaturesRequest{
 			Id: "hg", EnvironmentId: "ns0", FeatureIds: []string{"flag"},
 		})
 		require.NoError(t, err)
@@ -725,7 +695,7 @@ func TestExecuteScheduledFlagChangeLocksFlagBeforeSchedule(t *testing.T) {
 	)
 	scheduled.EXPECT().UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).Return(nil)
 	_, err := service.ExecuteScheduledFlagChange(
-		createContextWithTokenRoleUnassigned(),
+		createContextWithEditor(),
 		&featureproto.ExecuteScheduledFlagChangeRequest{Id: "sfc", EnvironmentId: "ns0"},
 	)
 	assert.Equal(t, codes.NotFound, status.Code(err))
@@ -750,7 +720,7 @@ func TestExecuteScheduledFlagChangeRechecksScheduleUnderLock(t *testing.T) {
 			Return(executed, nil),
 	)
 	_, err := service.ExecuteScheduledFlagChange(
-		createContextWithTokenRoleUnassigned(),
+		createContextWithEditor(),
 		&featureproto.ExecuteScheduledFlagChangeRequest{Id: "sfc", EnvironmentId: "ns0"},
 	)
 	assert.Equal(t, codes.FailedPrecondition, status.Code(err))
@@ -781,7 +751,7 @@ func TestExecuteScheduledFlagChangeHoldoutErrorIsFailedPrecondition(t *testing.T
 	scheduled.EXPECT().UpdateScheduledFlagChange(gomock.Any(), gomock.Any()).Return(nil)
 
 	_, err := service.ExecuteScheduledFlagChange(
-		createContextWithTokenRoleUnassigned(),
+		createContextWithEditor(),
 		&featureproto.ExecuteScheduledFlagChangeRequest{Id: "sfc", EnvironmentId: "ns0"},
 	)
 	assert.Equal(t, codes.FailedPrecondition, status.Code(err))
@@ -789,7 +759,7 @@ func TestExecuteScheduledFlagChangeHoldoutErrorIsFailedPrecondition(t *testing.T
 
 func TestHoldoutGuardsOnFeatureAndSegment(t *testing.T) {
 	t.Parallel()
-	ctx := createContextWithTokenRoleUnassigned()
+	ctx := createContextWithEditor()
 
 	t.Run("nil storage allows variation removal", func(t *testing.T) {
 		t.Parallel()

@@ -1818,7 +1818,6 @@ func (s *server) createFeatureService(
 		flagTriggerStorage,
 		scheduledFlagChangeStorage,
 		holdoutStorage,
-		accountClient,
 		experimentClient,
 		autoOpsClient,
 		environmentClient,
