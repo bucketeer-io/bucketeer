@@ -30,28 +30,37 @@ const (
 	APIKeyNameMDKey       = "apikey-name"
 )
 
+// Service names a token may carry.
+const (
+	// APIService is the only service that relays public API requests.
+	APIService = "api"
+	// LegacyService is the shared service token issued before tokens were named.
+	LegacyService = "legacy"
+)
+
 // Caller is who is asking, as the authorizer sees them. A request relayed
 // by the public API gateway is attributed to the API key's maintainer, with
 // the maintainer's own membership and roles.
 type Caller struct {
 	Email string
-	// Service is set for the machine identity of batch and subscriber jobs.
-	Service bool
+	// Service names the calling service (RFC 0050), or is LegacyService for
+	// the shared token; empty for a user.
+	Service string
 	// PublicAPI is set when the request was relayed by the public API gateway.
 	PublicAPI *eventproto.Editor_PublicAPIEditor
 }
 
-// FullAccess reports whether the caller skips the permission checks: a
+// HasFullAccess reports whether the caller skips the permission checks: a
 // service identity that is not relaying a public API request.
-func (c Caller) FullAccess() bool {
-	return c.Service && c.PublicAPI == nil
+func (c Caller) HasFullAccess() bool {
+	return c.Service != "" && c.PublicAPI == nil
 }
 
 // Relayed returns the API key's maintainer as the caller when the public API
-// gateway relayed the request. Only the gateway relays with a service
-// identity, so the metadata is read on service callers only.
+// gateway relayed the request. Only the gateway relays, so the metadata is
+// read from the api service and from the legacy token that has no name.
 func (c Caller) Relayed(ctx context.Context) Caller {
-	if !c.Service {
+	if c.Service != APIService && c.Service != LegacyService {
 		return c
 	}
 	publicAPI := apiKeyEditorFromContext(ctx)

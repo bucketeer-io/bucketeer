@@ -29,6 +29,7 @@ import (
 	accdomain "github.com/bucketeer-io/bucketeer/v2/pkg/account/domain"
 	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	auditlogproto "github.com/bucketeer-io/bucketeer/v2/proto/auditlog"
+	environmentproto "github.com/bucketeer-io/bucketeer/v2/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	insightsproto "github.com/bucketeer-io/bucketeer/v2/proto/insights"
@@ -47,6 +48,7 @@ const (
 	listNotifications  = "/bucketeer.notification.NotificationService/ListNotifications"
 	invalidRule        = "/bucketeer.feature.FeatureService/InvalidRule"
 	createOrganization = "/bucketeer.environment.EnvironmentService/CreateOrganization"
+	getProject         = "/bucketeer.environment.EnvironmentService/GetProject"
 	wrongScope         = "/bucketeer.feature.FeatureService/WrongScope"
 	ping               = "/bucketeer.gateway.Gateway/Ping"
 
@@ -181,7 +183,7 @@ func root() Caller {
 }
 
 func service() Caller {
-	return Caller{Email: "service@example.com", Service: true}
+	return Caller{Email: "service@example.com", Service: APIService}
 }
 
 func relayed(maintainer string) Caller {
@@ -286,7 +288,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			desc:     "service identity without an email has full access",
-			caller:   Caller{Service: true},
+			caller:   Caller{Service: "batch"},
 			method:   updateFeature,
 			req:      &featureproto.UpdateFeatureRequest{EnvironmentId: "env-1"},
 			expected: &eventproto.Editor{IsAdmin: true},
@@ -706,7 +708,7 @@ func TestAuthorizeEditorOfTheTargetScope(t *testing.T) {
 func TestAccessAccountIsCached(t *testing.T) {
 	t.Parallel()
 	loader := &fakeAccounts{accounts: testAccounts()}
-	access := &Access{Caller: Caller{Email: "editor@example.com"}, accounts: &accountCache{loader: loader}}
+	access := &Access{Caller: Caller{Email: "editor@example.com"}, accounts: &accountCache{accountLoader: loader}}
 	scope := ScopeID{Kind: EnvironmentScope, ID: "env-1"}
 	first, err := access.Account(context.Background(), scope)
 	require.NoError(t, err)
@@ -736,6 +738,14 @@ func TestCallerRelayed(t *testing.T) {
 		{desc: "service with an API key", ctx: withKey, caller: service(), expected: relayed("editor@example.com")},
 		{desc: "service without an API key", ctx: context.Background(), caller: service(), expected: service()},
 		{
+			desc: "legacy token with an API key", ctx: withKey,
+			caller: Caller{Service: LegacyService}, expected: relayed("editor@example.com"),
+		},
+		{
+			desc: "other services do not relay", ctx: withKey,
+			caller: Caller{Service: "batch"}, expected: Caller{Service: "batch"},
+		},
+		{
 			desc: "service with empty metadata", caller: service(), expected: service(),
 			ctx: metadata.NewIncomingContext(context.Background(), metadata.Pairs(APIKeyMaintainerMDKey, "x")),
 		},
@@ -748,9 +758,45 @@ func TestCallerRelayed(t *testing.T) {
 	}
 }
 
-func TestCallerFullAccess(t *testing.T) {
+func TestCallerHasFullAccess(t *testing.T) {
 	t.Parallel()
-	assert.True(t, service().FullAccess())
-	assert.False(t, relayed("editor@example.com").FullAccess())
-	assert.False(t, user("editor@example.com").FullAccess())
+	assert.True(t, service().HasFullAccess())
+	assert.False(t, relayed("editor@example.com").HasFullAccess())
+	assert.False(t, user("editor@example.com").HasFullAccess())
+}
+
+func TestAuthorizeWithLookups(t *testing.T) {
+	t.Parallel()
+	rules := Rules{getProject: Need(ProjectRead, InOrgOfProject("id"))}
+	accounts := &fakeAccounts{accounts: testAccounts()}
+	req := &environmentproto.GetProjectRequest{Id: "proj-1"}
+	patterns := []struct {
+		desc         string
+		authorizer   *Authorizer
+		expectedCode codes.Code
+	}{
+		{
+			desc:       "member of the organization of the project",
+			authorizer: New(rules, accounts, WithLookups(fakeLookups{"proj-1": "org-1"})),
+		},
+		{
+			desc:         "unknown project",
+			authorizer:   New(rules, accounts, WithLookups(fakeLookups{})),
+			expectedCode: codes.NotFound,
+		},
+		{
+			desc:         "no lookups",
+			authorizer:   New(rules, accounts),
+			expectedCode: codes.Internal,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			editor, err := p.authorizer.Authorize(context.Background(), user("member@example.com"), getProject, req)
+			assert.Equal(t, p.expectedCode, status.Code(err))
+			if p.expectedCode == codes.OK {
+				assert.Equal(t, memberEditor("member@example.com"), editor)
+			}
+		})
+	}
 }

@@ -234,6 +234,8 @@ spec:
               value: "{{ .Values.env.coderefService }}"
             - name: BUCKETEER_WEB_TIMEZONE
               value: "{{ .Values.env.timezone }}"
+            - name: BUCKETEER_WEB_AUTHZ_SHADOW_SAMPLE_RATE
+              value: "{{ .Values.env.authzShadowSampleRate }}"
             - name: BUCKETEER_WEB_METRICS_PORT
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_WEB_LOG_LEVEL

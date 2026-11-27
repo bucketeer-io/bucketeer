@@ -46,6 +46,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/auth"
 	authapi "github.com/bucketeer-io/bucketeer/v2/pkg/auth/api"
 	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	autoopsapi "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/api"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	v2aos "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
@@ -172,6 +173,7 @@ type server struct {
 	project                                 *string
 	isDemoSiteEnabled                       *bool
 	timezone                                *string
+	authzShadowSampleRate                   *float64
 	certPath                                *string
 	keyPath                                 *string
 	serviceTokenPath                        *string
@@ -555,7 +557,11 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"data-warehouse-config-path",
 			"Path to data warehouse configuration file.",
 		).String(),
-		timezone:         cmd.Flag("timezone", "Time zone").Required().String(),
+		timezone: cmd.Flag("timezone", "Time zone").Required().String(),
+		authzShadowSampleRate: cmd.Flag(
+			"authz-shadow-sample-rate",
+			"Fraction of the requests, 0 to 1, checked by the authz interceptor in shadow mode; 0 turns the check off.",
+		).Default("1").Float64(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
 		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
@@ -997,6 +1003,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
+	// authz interceptor: enforced for the services whose handlers no longer check, shadow for the others.
+	authorizer := authz.New(authz.WebRules, authz.NewAccountLoader(accountClient),
+		authz.WithLookups(authz.NewLookups(environmentClient)))
+	authzInterceptor := authz.NewInterceptor(authorizer, authz.EnforcedWebServices, logger,
+		authz.WithShadowSampleRate(*s.authzShadowSampleRate))
 	// authService
 	authService, err := s.createAuthService(
 		ctx,
@@ -1018,6 +1029,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithPort(*s.authServicePort),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 	)
 	go authServer.Run()
 
@@ -1038,6 +1051,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 	)
 	go accountServer.Run()
 
@@ -1054,6 +1069,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 	)
 	go auditLogServer.Run()
 
@@ -1077,6 +1094,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 	)
 	go autoOpsServer.Run()
 
@@ -1103,6 +1122,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 	)
 	go environmentServer.Run()
 
@@ -1133,6 +1154,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 		// Longer timeouts for web server due to complex BigQuery operations and admin console analytics
 		rpc.WithTimeouts(120*time.Second, 120*time.Second, 180*time.Second),
 	)
@@ -1155,6 +1178,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 	)
 	go experimentServer.Run()
 
@@ -1188,6 +1213,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 	)
 	go featureServer.Run()
 
@@ -1206,6 +1233,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 	)
 	go subscriptionServer.Run()
 
@@ -1225,6 +1254,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 	)
 	go pushServer.Run()
 
@@ -1243,6 +1274,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 	)
 	go tagServer.Run()
 
@@ -1260,6 +1293,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 	)
 	go codeReferenceServer.Run()
 
@@ -1277,6 +1312,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 	)
 	go teamServer.Run()
 
@@ -1304,6 +1341,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 	)
 	go insightsServer.Run()
 
@@ -1319,6 +1358,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithVerifier(verifier),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+		rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 	)
 	go notificationServer.Run()
 
@@ -1357,6 +1398,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			rpc.WithVerifier(verifier),
 			rpc.WithMetrics(registerer),
 			rpc.WithLogger(logger),
+			rpc.WithUnaryInterceptor(authzInterceptor.Unary()),
+			rpc.WithStreamInterceptor(authzInterceptor.Stream()),
 		)
 		go aichatServer.Run()
 		// Chat HTTP service for dashboard REST server (SSE streaming)

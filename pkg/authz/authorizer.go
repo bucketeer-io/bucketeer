@@ -63,10 +63,24 @@ type AccountLoader interface {
 type Authorizer struct {
 	rules    Rules
 	accounts AccountLoader
+	lookups  Lookups
 }
 
-func New(rules Rules, accounts AccountLoader) *Authorizer {
-	return &Authorizer{rules: rules, accounts: accounts}
+type Option func(*Authorizer)
+
+// WithLookups provides the lookups that scopes such as InOrgOfProject need.
+func WithLookups(lookups Lookups) Option {
+	return func(a *Authorizer) {
+		a.lookups = lookups
+	}
+}
+
+func New(rules Rules, accounts AccountLoader, opts ...Option) *Authorizer {
+	a := &Authorizer{rules: rules, accounts: accounts}
+	for _, o := range opts {
+		o(a)
+	}
+	return a
 }
 
 // Rule returns the requirement of method.
@@ -96,52 +110,52 @@ func (a *Authorizer) Authorize(
 	if rule.kind == requirePublic {
 		return nil, nil
 	}
-	if caller.Email == "" && !caller.Service {
+	if caller.Email == "" && caller.Service == "" {
 		return nil, ErrUnauthenticated
 	}
 	if caller.PublicAPI != nil && rule.kind != requirePermission {
 		return nil, ErrPermissionDenied
 	}
-	fullAccess := caller.FullAccess()
+	hasFullAccess := caller.HasFullAccess()
 	access := &Access{
-		Method:      method,
-		Request:     req,
-		Caller:      caller,
-		SystemAdmin: fullAccess,
-		accounts:    &accountCache{loader: a.accounts},
+		Method:               method,
+		Request:              req,
+		Caller:               caller,
+		HasSystemAdminAccess: hasFullAccess,
+		accounts:             &accountCache{accountLoader: a.accounts},
 	}
 	var admin *Account
-	if !fullAccess && caller.PublicAPI == nil {
+	if !hasFullAccess && caller.PublicAPI == nil {
 		var err error
 		if admin, err = access.accounts.systemAdmin(ctx, caller.Email); err != nil {
 			return nil, err
 		}
-		access.SystemAdmin = admin != nil
+		access.HasSystemAdminAccess = admin != nil
 	}
 	switch rule.kind {
 	case requireAuthenticated:
 		return editorOf(access, admin, nil), nil
 	case requireSystemAdmin:
-		if !access.SystemAdmin {
+		if !access.HasSystemAdminAccess {
 			return nil, ErrPermissionDenied
 		}
 		return editorOf(access, admin, nil), nil
 	}
 	// A service identity skips the permission checks, but not the guards:
 	// owner protection and the like apply whoever calls.
-	if fullAccess && len(rule.guards) == 0 {
+	if hasFullAccess && len(rule.guards) == 0 {
 		return editorOf(access, nil, nil), nil
 	}
 	// The editor carries the account of the last scope checked: the target
 	// of a clone, as the handlers choose today.
 	var target *Account
 	for _, n := range rule.needs {
-		scopes, err := n.scope.Resolve(req)
+		scopes, err := n.scope.Resolve(ctx, req, a.lookups)
 		if err != nil {
 			return nil, statusOf(err)
 		}
 		access.Scopes = append(access.Scopes, scopes...)
-		if fullAccess {
+		if hasFullAccess {
 			continue
 		}
 		for _, scope := range scopes {
@@ -170,13 +184,13 @@ func (a *Authorizer) Authorize(
 // system admin's is loaded only when the permission needs membership.
 func (a *Authorizer) check(ctx context.Context, access *Access, n need, scope ScopeID) (*Account, error) {
 	var account *Account
-	if !access.SystemAdmin {
+	if !access.HasSystemAdminAccess {
 		var err error
 		if account, err = access.Account(ctx, scope); err != nil {
 			return nil, err
 		}
 	}
-	if access.SystemAdmin && readableBySystemAdmin(n.permission) {
+	if access.HasSystemAdminAccess && readableBySystemAdmin(n.permission) {
 		return account, nil
 	}
 	for _, alternative := range n.alternatives {
@@ -224,7 +238,7 @@ func statusOf(err error) error {
 func editorOf(access *Access, admin, target *Account) *eventproto.Editor {
 	editor := &eventproto.Editor{
 		Email:           access.Caller.Email,
-		IsAdmin:         access.SystemAdmin,
+		IsAdmin:         access.HasSystemAdminAccess,
 		PublicApiEditor: access.Caller.PublicAPI,
 	}
 	named := target
@@ -243,18 +257,18 @@ func editorOf(access *Access, admin, target *Account) *eventproto.Editor {
 
 // accountCache loads each scope's account once per request.
 type accountCache struct {
-	loader AccountLoader
-	loaded map[ScopeID]*Account
+	accountLoader AccountLoader
+	loaded        map[ScopeID]*Account
 }
 
 func (c *accountCache) get(ctx context.Context, email string, scope ScopeID) (*Account, error) {
 	if account, ok := c.loaded[scope]; ok {
 		return account, nil
 	}
-	if c.loader == nil {
+	if c.accountLoader == nil {
 		return nil, ErrInternal
 	}
-	account, err := active(c.loader.Account(ctx, email, scope))
+	account, err := active(c.accountLoader.Account(ctx, email, scope))
 	if err != nil {
 		return nil, err
 	}
@@ -268,10 +282,10 @@ func (c *accountCache) get(ctx context.Context, email string, scope ScopeID) (*A
 // systemAdmin returns the caller's system admin account, or nil when the
 // caller has none or it is disabled.
 func (c *accountCache) systemAdmin(ctx context.Context, email string) (*Account, error) {
-	if c.loader == nil {
+	if c.accountLoader == nil {
 		return nil, ErrInternal
 	}
-	account, err := active(c.loader.SystemAdmin(ctx, email))
+	account, err := active(c.accountLoader.SystemAdmin(ctx, email))
 	if errors.Is(err, ErrUnauthenticated) {
 		return nil, nil
 	}

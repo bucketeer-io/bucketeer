@@ -82,8 +82,11 @@ func (k requirementKind) String() string {
 // Need requires permission in the scope resolved from the request.
 func Need(permission Permission, scope Scope) Requirement {
 	r := Requirement{needs: []need{{permission: permission, scope: scope}}}
-	if !inScope(permission, scope.Kind()) {
-		r.err = fmt.Errorf("%w: %s is not %s-scoped", ErrRule, permission, scope.Kind())
+	for _, kind := range scope.Kinds() {
+		if !inScope(permission, kind) {
+			r.err = fmt.Errorf("%w: %s is not %s-scoped", ErrRule, permission, kind)
+			break
+		}
 	}
 	return r
 }
@@ -141,11 +144,12 @@ func (r Requirement) Guard(guard Guard) Requirement {
 // Access is what conditions and guards see: the request, the caller, the
 // scopes it resolved to and the caller's accounts, loaded on demand.
 type Access struct {
-	Method      string
-	Request     proto.Message
-	Caller      Caller
-	SystemAdmin bool
-	Scopes      []ScopeID
+	Method  string
+	Request proto.Message
+	Caller  Caller
+	Scopes  []ScopeID
+	// HasSystemAdminAccess holds for a system admin and for a full-access service.
+	HasSystemAdminAccess bool
 
 	accounts *accountCache
 }
@@ -182,5 +186,5 @@ func SystemAdmin() Condition {
 }
 
 func (systemAdminCondition) Holds(_ context.Context, access *Access) (bool, error) {
-	return access.SystemAdmin, nil
+	return access.HasSystemAdminAccess, nil
 }
