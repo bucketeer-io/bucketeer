@@ -1078,7 +1078,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureStorage,
 		featureClient,
 		experimentClient,
-		accountClient,
 		authClient,
 		domainTopicPublisher,
 		autoopsapi.WithLogger(logger),

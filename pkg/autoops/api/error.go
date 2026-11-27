@@ -176,10 +176,6 @@ var (
 		))
 	statusAlreadyExists = api.NewGRPCStatus(
 		pkgErr.NewErrorAlreadyExists(pkgErr.AutoopsPackageName, "already exists"))
-	statusUnauthenticated = api.NewGRPCStatus(
-		pkgErr.NewErrorUnauthenticated(pkgErr.AutoopsPackageName, "unauthenticated"))
-	statusPermissionDenied = api.NewGRPCStatus(
-		pkgErr.NewErrorPermissionDenied(pkgErr.AutoopsPackageName, "permission denied"))
 	statusProgressiveRolloutFeatureIDRequired = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(
 			pkgErr.AutoopsPackageName,

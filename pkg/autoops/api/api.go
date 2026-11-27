@@ -28,9 +28,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	authclient "github.com/bucketeer-io/bucketeer/v2/pkg/auth/client"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
@@ -40,10 +40,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	v2os "github.com/bucketeer-io/bucketeer/v2/pkg/opsevent/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
@@ -69,7 +67,6 @@ type AutoOpsService struct {
 	featureStorage   v2fs.FeatureStorage
 	featureClient    featureclient.Client
 	experimentClient experimentclient.Client
-	accountClient    accountclient.Client
 	authClient       authclient.Client
 	publisher        publisher.Publisher
 	opts             *options
@@ -84,7 +81,6 @@ func NewAutoOpsService(
 	featureStorage v2fs.FeatureStorage,
 	featureClient featureclient.Client,
 	experimentClient experimentclient.Client,
-	accountClient accountclient.Client,
 	authClient authclient.Client,
 	publisher publisher.Publisher,
 	opts ...Option,
@@ -103,7 +99,6 @@ func NewAutoOpsService(
 		prStorage:        prStorage,
 		featureClient:    featureClient,
 		experimentClient: experimentClient,
-		accountClient:    accountClient,
 		authClient:       authClient,
 		publisher:        publisher,
 		opts:             dopts,
@@ -119,12 +114,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	ctx context.Context,
 	req *autoopsproto.CreateAutoOpsRuleRequest,
 ) (*autoopsproto.CreateAutoOpsRuleResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	if err := s.validateCreateAutoOpsRuleRequest(ctx, req); err != nil {
 		return nil, err
@@ -460,19 +450,14 @@ func (s *AutoOpsService) StopAutoOpsRule(
 	ctx context.Context,
 	req *autoopsproto.StopAutoOpsRuleRequest,
 ) (*autoopsproto.StopAutoOpsRuleResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	if err := validateStopAutoOpsRuleRequest(req); err != nil {
 		return nil, err
 	}
 
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -523,18 +508,13 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 	ctx context.Context,
 	req *autoopsproto.DeleteAutoOpsRuleRequest,
 ) (*autoopsproto.DeleteAutoOpsRuleResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := validateDeleteAutoOpsRuleRequest(req); err != nil {
 		return nil, err
 	}
 
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -585,12 +565,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 	ctx context.Context,
 	req *autoopsproto.UpdateAutoOpsRuleRequest,
 ) (*autoopsproto.UpdateAutoOpsRuleResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	if err := s.validateUpdateAutoOpsRuleRequest(req); err != nil {
 		return nil, err
@@ -612,7 +587,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 		}
 	}
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -801,12 +776,6 @@ func (s *AutoOpsService) GetAutoOpsRule(
 	ctx context.Context,
 	req *autoopsproto.GetAutoOpsRuleRequest,
 ) (*autoopsproto.GetAutoOpsRuleResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := s.validateGetAutoOpsRuleRequest(req); err != nil {
 		return nil, err
 	}
@@ -855,12 +824,6 @@ func (s *AutoOpsService) ListAutoOpsRules(
 	ctx context.Context,
 	req *autoopsproto.ListAutoOpsRulesRequest,
 ) (*autoopsproto.ListAutoOpsRulesResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	autoOpsRules, cursor, err := s.listAutoOpsRules(
 		ctx,
 		req.PageSize,
@@ -913,12 +876,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	ctx context.Context,
 	req *autoopsproto.ExecuteAutoOpsRequest,
 ) (*autoopsproto.ExecuteAutoOpsResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	if err := s.validateExecuteAutoOpsRequest(req); err != nil {
 		return nil, err
@@ -1215,12 +1173,6 @@ func (s *AutoOpsService) ListOpsCounts(
 	ctx context.Context,
 	req *autoopsproto.ListOpsCountsRequest,
 ) (*autoopsproto.ListOpsCountsResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateListPagination(req.PageSize, req.Cursor); err != nil {
 		return nil, err
 	}
@@ -1306,30 +1258,4 @@ func (s *AutoOpsService) getGoal(
 		return nil, err
 	}
 	return resp.Goal, nil
-}
-
-func (s *AutoOpsService) checkEnvironmentRole(
-	ctx context.Context,
-	requiredRole accountproto.AccountV2_Role_Environment,
-	environmentId string,
-) (*eventproto.Editor, error) {
-	return role.CheckEnvironmentRoleWithLog(
-		ctx,
-		requiredRole,
-		environmentId,
-		func(email string) (*accountproto.AccountV2, error) {
-			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
-				Email:         email,
-				EnvironmentId: environmentId,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return resp.Account, nil
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
 }

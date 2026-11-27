@@ -77,7 +77,7 @@ func TestListOpsCountsPaginationValidation(t *testing.T) {
 			mockController := gomock.NewController(t)
 			defer mockController.Finish()
 
-			ctx := createContextWithTokenRoleUnassigned(t)
+			ctx := createContextWithEditor()
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{"accept-language": []string{"ja"}})
 
 			service := createAutoOpsService(mockController)

@@ -26,12 +26,12 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/autoops/domain"
 	v2as "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/storage/v2"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	exprpto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
@@ -46,12 +46,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 	ctx context.Context,
 	req *autoopsproto.CreateProgressiveRolloutRequest,
 ) (*autoopsproto.CreateProgressiveRolloutResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	if err := s.validateCreateProgressiveRolloutRequest(ctx, req); err != nil {
 		return nil, err
@@ -121,12 +116,6 @@ func (s *AutoOpsService) GetProgressiveRollout(
 	ctx context.Context,
 	req *autoopsproto.GetProgressiveRolloutRequest,
 ) (*autoopsproto.GetProgressiveRolloutResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := s.validateGetProgressiveRolloutRequest(req); err != nil {
 		return nil, err
 	}
@@ -154,18 +143,13 @@ func (s *AutoOpsService) StopProgressiveRollout(
 	ctx context.Context,
 	req *autoopsproto.StopProgressiveRolloutRequest,
 ) (*autoopsproto.StopProgressiveRolloutResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 
 	if err := s.validateStopProgressiveRolloutRequest(req); err != nil {
 		return nil, err
 	}
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		progressiveRollout, err := s.prStorage.GetProgressiveRollout(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -230,18 +214,13 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 	ctx context.Context,
 	req *autoopsproto.DeleteProgressiveRolloutRequest,
 ) (*autoopsproto.DeleteProgressiveRolloutResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if err := s.validateDeleteProgressiveRolloutRequest(req); err != nil {
 		return nil, err
 	}
 
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(contextWithTx context.Context) error {
 		progressiveRollout, err := s.prStorage.GetProgressiveRollout(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -296,12 +275,6 @@ func (s *AutoOpsService) ListProgressiveRollouts(
 	ctx context.Context,
 	req *autoopsproto.ListProgressiveRolloutsRequest,
 ) (*autoopsproto.ListProgressiveRolloutsResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	progressiveRollout, totalCount, nextOffset, err := s.listProgressiveRollouts(
 		ctx,
 		req,
@@ -320,13 +293,8 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 	ctx context.Context,
 	req *autoopsproto.ExecuteProgressiveRolloutRequest,
 ) (*autoopsproto.ExecuteProgressiveRolloutResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	err = s.validateExecuteProgressiveRolloutRequest(req)
+	editor := authz.EditorFrom(ctx)
+	err := s.validateExecuteProgressiveRolloutRequest(req)
 	if err != nil {
 		s.logger.Error(
 			"Failed to validate execute progressive rollout request",
