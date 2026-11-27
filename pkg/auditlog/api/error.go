@@ -26,6 +26,8 @@ var (
 		pkgErr.NewErrorPermissionDenied(pkgErr.AuditlogPackageName, "permission denied"))
 	statusMissingID = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuditlogPackageName, "missing ID", "ID"))
+	statusMissingEnvironmentID = api.NewGRPCStatus(
+		pkgErr.NewErrorInvalidArgEmpty(pkgErr.AuditlogPackageName, "missing environment_id", "environment_id"))
 	statusMissingEnvironmentOrOrganization = api.NewGRPCStatus(
 		pkgErr.NewErrorInvalidArgEmpty(
 			pkgErr.AuditlogPackageName,

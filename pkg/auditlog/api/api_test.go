@@ -612,6 +612,15 @@ func TestListFeatureHistory(t *testing.T) {
 		expectedErr error
 	}{
 		{
+			desc:        "err: ErrMissingEnvironmentID",
+			service:     newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
+			context:     createContextWithToken(t, false),
+			setup:       nil,
+			input:       &proto.ListFeatureHistoryRequest{},
+			expected:    nil,
+			expectedErr: statusMissingEnvironmentID.Err(),
+		},
+		{
 			desc:        "err: ErrInvalidCursor",
 			service:     newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context:     createContextWithToken(t, false),

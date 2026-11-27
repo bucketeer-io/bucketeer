@@ -32,6 +32,7 @@ var (
 	)
 	ErrInvalidListTagsCursor  = errors.New("tag storage: invalid list tags cursor")
 	ErrInvalidListTagsOrderBy = errors.New("tag storage: invalid list tags order by")
+	ErrMissingListTagsScope   = errors.New("tag storage: missing environment_id or organization_id")
 )
 
 type TagStorage interface {

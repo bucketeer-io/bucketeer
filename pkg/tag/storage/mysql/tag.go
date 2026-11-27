@@ -162,6 +162,9 @@ func (s *tagStorage) ListTags(
 	if err != nil {
 		return nil, 0, 0, err
 	}
+	if p.EnvironmentID == "" && p.OrganizationID == "" && len(p.EnvironmentIDs) == 0 {
+		return nil, 0, 0, tagstorage.ErrMissingListTagsScope
+	}
 	filters := []*mysqlstorage.FilterV2{}
 	if p.EnvironmentID != "" {
 		filters = append(filters, &mysqlstorage.FilterV2{
