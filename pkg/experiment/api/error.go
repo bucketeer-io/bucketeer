@@ -65,8 +65,4 @@ var (
 		))
 	statusAlreadyExists = api.NewGRPCStatus(
 		pkgErr.NewErrorAlreadyExists(pkgErr.ExperimentPackageName, "already exists"))
-	statusUnauthenticated = api.NewGRPCStatus(
-		pkgErr.NewErrorUnauthenticated(pkgErr.ExperimentPackageName, "unauthenticated"))
-	statusPermissionDenied = api.NewGRPCStatus(
-		pkgErr.NewErrorPermissionDenied(pkgErr.ExperimentPackageName, "permission denied"))
 )

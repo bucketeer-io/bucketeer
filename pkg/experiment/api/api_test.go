@@ -17,23 +17,20 @@ package api
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 	md "google.golang.org/grpc/metadata"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client/mock"
 	bkterr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
 	storagemock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	dbmock "github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database/mock"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
 
@@ -53,7 +50,6 @@ func TestNewExperimentService(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	featureClientMock := featureclientmock.NewMockClient(mockController)
-	accountClientMock := accountclientmock.NewMockClient(mockController)
 	autoOpsClientMock := autoopsclientmock.NewMockClient(mockController)
 	dbClientMock := dbmock.NewMockClient(mockController)
 	experimentStorageMock := storagemock.NewMockExperimentStorage(mockController)
@@ -62,7 +58,6 @@ func TestNewExperimentService(t *testing.T) {
 	logger := zap.NewNop()
 	s := NewExperimentService(
 		featureClientMock,
-		accountClientMock,
 		autoOpsClientMock,
 		dbClientMock,
 		experimentStorageMock,
@@ -73,26 +68,7 @@ func TestNewExperimentService(t *testing.T) {
 	assert.IsType(t, &experimentService{}, s)
 }
 
-func createExperimentService(c *gomock.Controller, specifiedEnvironmentId *string, specifiedOrgRole *accountproto.AccountV2_Role_Organization, specifiedEnvRole *accountproto.AccountV2_Role_Environment) *experimentService {
-	var or accountproto.AccountV2_Role_Organization
-	var er accountproto.AccountV2_Role_Environment
-	var envId string
-	if specifiedOrgRole != nil {
-		or = *specifiedOrgRole
-	} else {
-		or = accountproto.AccountV2_Role_Organization_ADMIN
-	}
-	if specifiedEnvRole != nil {
-		er = *specifiedEnvRole
-	} else {
-		er = accountproto.AccountV2_Role_Environment_EDITOR
-	}
-	if specifiedEnvironmentId != nil {
-		envId = *specifiedEnvironmentId
-	} else {
-		envId = "ns0"
-	}
-
+func createExperimentService(c *gomock.Controller) *experimentService {
 	featureClientMock := featureclientmock.NewMockClient(c)
 	fr := &featureproto.GetFeatureResponse{
 		Feature: &featureproto.Feature{
@@ -124,26 +100,11 @@ func createExperimentService(c *gomock.Controller, specifiedEnvironmentId *strin
 		}},
 	}
 	featureClientMock.EXPECT().GetFeatures(gomock.Any(), gomock.Any()).Return(fsr, nil).AnyTimes()
-	accountClientMock := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: or,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: envId,
-					Role:          er,
-				},
-			},
-		},
-	}
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	autoOpsClientMock := autoopsclientmock.NewMockClient(c)
 	dbClientMock := dbmock.NewMockClient(c)
 	p := publishermock.NewMockPublisher(c)
 	return &experimentService{
 		featureClient:     featureClientMock,
-		accountClient:     accountClientMock,
 		autoOpsClient:     autoOpsClientMock,
 		dbClient:          dbClientMock,
 		experimentStorage: storagemock.NewMockExperimentStorage(c),
@@ -153,38 +114,15 @@ func createExperimentService(c *gomock.Controller, specifiedEnvironmentId *strin
 	}
 }
 
-func createContextWithToken() context.Context {
-	return createContextWithTokenAndMetadata(nil)
+// createContextWithEditor is a context after the authz interceptor allowed the request.
+func createContextWithEditor() context.Context {
+	return createContextWithEditorAndMetadata(nil)
 }
 
-func createContextWithTokenAndMetadata(metadata map[string][]string) context.Context {
-	token := &token.AccessToken{
-		Issuer:   "issuer",
-		Audience: "audience",
-		Expiry:   time.Now().AddDate(100, 0, 0),
-		IssuedAt: time.Now(),
-		Email:    "email",
-	}
+func createContextWithEditorAndMetadata(metadata map[string][]string) context.Context {
 	ctx := context.TODO()
 	if metadata != nil {
 		ctx = md.NewIncomingContext(ctx, metadata)
 	}
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
-}
-
-func createContextWithTokenRoleUnassigned() context.Context {
-	token := &token.AccessToken{
-		Issuer:   "issuer",
-		Audience: "audience",
-		Expiry:   time.Now().AddDate(100, 0, 0),
-		IssuedAt: time.Now(),
-		Email:    "email",
-	}
-	ctx := context.TODO()
-	return context.WithValue(ctx, rpc.AccessTokenKey, token)
-}
-
-// convert to pointer
-func toPtr[T any](value T) *T {
-	return &value
+	return authz.WithEditor(ctx, &eventproto.Editor{Email: "email"})
 }

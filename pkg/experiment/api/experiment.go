@@ -25,11 +25,11 @@ import (
 	pb "google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
@@ -44,12 +44,6 @@ func (s *experimentService) GetExperiment(
 	ctx context.Context,
 	req *proto.GetExperimentRequest,
 ) (*proto.GetExperimentResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if err := validateGetExperimentRequest(req); err != nil {
 		return nil, err
 	}
@@ -76,12 +70,6 @@ func (s *experimentService) ListExperiments(
 	ctx context.Context,
 	req *proto.ListExperimentsRequest,
 ) (*proto.ListExperimentsResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	params := v2es.ListExperimentsParams{
 		EnvironmentID:  req.EnvironmentId,
 		FeatureID:      req.FeatureId,
@@ -152,13 +140,8 @@ func (s *experimentService) CreateExperiment(
 	ctx context.Context,
 	req *proto.CreateExperimentRequest,
 ) (*proto.CreateExperimentResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	err = validateCreateExperimentRequest(req)
+	editor := authz.EditorFrom(ctx)
+	err := validateCreateExperimentRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -307,13 +290,8 @@ func (s *experimentService) UpdateExperiment(
 	ctx context.Context,
 	req *proto.UpdateExperimentRequest,
 ) (*proto.UpdateExperimentResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	err = validateUpdateExperimentRequest(req)
+	editor := authz.EditorFrom(ctx)
+	err := validateUpdateExperimentRequest(req)
 	if err != nil {
 		s.logger.Error(
 			"Failed validate update experiment request",
@@ -433,18 +411,13 @@ func (s *experimentService) DeleteExperiment(
 	ctx context.Context,
 	req *proto.DeleteExperimentRequest,
 ) (*proto.DeleteExperimentResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if err = validateDeleteExperimentRequest(req); err != nil {
+	editor := authz.EditorFrom(ctx)
+	if err := validateDeleteExperimentRequest(req); err != nil {
 		return nil, err
 	}
 
 	var experimentPb *domain.Experiment
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		experiment, err := s.experimentStorage.GetExperiment(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(

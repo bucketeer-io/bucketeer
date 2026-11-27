@@ -24,11 +24,11 @@ import (
 	pb "google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
+	"github.com/bucketeer-io/bucketeer/v2/pkg/authz"
 	domainevent "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/v2/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
@@ -37,12 +37,6 @@ import (
 var goalIDRegex = regexp.MustCompile("^[a-zA-Z0-9-]+$")
 
 func (s *experimentService) GetGoal(ctx context.Context, req *proto.GetGoalRequest) (*proto.GetGoalResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	if req.Id == "" {
 		return nil, statusGoalIDRequired.Err()
 	}
@@ -83,12 +77,6 @@ func (s *experimentService) ListGoals(
 	ctx context.Context,
 	req *proto.ListGoalsRequest,
 ) (*proto.ListGoalsResponse, error) {
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
 	params := v2es.ListGoalsParams{
 		EnvironmentID:  req.EnvironmentId,
 		SearchKeyword:  req.SearchKeyword,
@@ -179,13 +167,8 @@ func (s *experimentService) CreateGoal(
 	ctx context.Context,
 	req *proto.CreateGoalRequest,
 ) (*proto.CreateGoalResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	if err = validateCreateGoalRequest(req); err != nil {
+	editor := authz.EditorFrom(ctx)
+	if err := validateCreateGoalRequest(req); err != nil {
 		return nil, err
 	}
 	goal, err := domain.NewGoal(req.Id, req.Name, req.Description, req.ConnectionType)
@@ -263,13 +246,8 @@ func (s *experimentService) UpdateGoal(
 	ctx context.Context,
 	req *proto.UpdateGoalRequest,
 ) (*proto.UpdateGoalResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
-	err = s.validateUpdateGoalRequest(req)
+	editor := authz.EditorFrom(ctx)
+	err := s.validateUpdateGoalRequest(req)
 	if err != nil {
 		return nil, err
 	}
@@ -345,17 +323,12 @@ func (s *experimentService) DeleteGoal(
 	ctx context.Context,
 	req *proto.DeleteGoalRequest,
 ) (*proto.DeleteGoalResponse, error) {
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentId)
-	if err != nil {
-		return nil, err
-	}
+	editor := authz.EditorFrom(ctx)
 	if req.Id == "" {
 		return nil, statusGoalIDRequired.Err()
 	}
 	var event *eventproto.Event
-	err = s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
+	err := s.dbClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context) error {
 		goal, err := s.goalStorage.GetGoal(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err

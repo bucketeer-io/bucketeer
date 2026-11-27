@@ -20,17 +20,13 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	accountclient "github.com/bucketeer-io/bucketeer/v2/pkg/account/client"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/api/api"
 	autoopsclient "github.com/bucketeer-io/bucketeer/v2/pkg/autoops/client"
 	storage "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/storage/v2"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/log"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/pubsub/publisher"
-	"github.com/bucketeer-io/bucketeer/v2/pkg/role"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/storage/v2/database"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/experiment"
 )
@@ -49,7 +45,6 @@ func WithLogger(l *zap.Logger) Option {
 
 type experimentService struct {
 	featureClient     featureclient.Client
-	accountClient     accountclient.Client
 	autoOpsClient     autoopsclient.Client
 	dbClient          database.Client
 	experimentStorage storage.ExperimentStorage
@@ -61,7 +56,6 @@ type experimentService struct {
 
 func NewExperimentService(
 	featureClient featureclient.Client,
-	accountClient accountclient.Client,
 	autoOpsClient autoopsclient.Client,
 	dbClient database.Client,
 	experimentStorage storage.ExperimentStorage,
@@ -77,7 +71,6 @@ func NewExperimentService(
 	}
 	return &experimentService{
 		featureClient:     featureClient,
-		accountClient:     accountClient,
 		autoOpsClient:     autoOpsClient,
 		dbClient:          dbClient,
 		experimentStorage: experimentStorage,
@@ -90,32 +83,6 @@ func NewExperimentService(
 
 func (s *experimentService) Register(server *grpc.Server) {
 	proto.RegisterExperimentServiceServer(server, s)
-}
-
-func (s *experimentService) checkEnvironmentRole(
-	ctx context.Context,
-	requiredRole accountproto.AccountV2_Role_Environment,
-	environmentId string,
-) (*eventproto.Editor, error) {
-	return role.CheckEnvironmentRoleWithLog(
-		ctx,
-		requiredRole,
-		environmentId,
-		func(email string) (*accountproto.AccountV2, error) {
-			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
-				Email:         email,
-				EnvironmentId: environmentId,
-			})
-			if err != nil {
-				return nil, err
-			}
-			return resp.Account, nil
-		},
-		s.logger,
-		statusUnauthenticated.Err(),
-		statusPermissionDenied.Err(),
-		func(err error) error { return api.NewGRPCStatus(err).Err() },
-	)
 }
 
 // publishDomainEvent publishes a domain event after the transaction that
