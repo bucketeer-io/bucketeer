@@ -664,6 +664,101 @@ func TestEvalEvtWriterHoldoutExposureTargetsAndWindow(t *testing.T) {
 	}
 }
 
+// The experiments list and the measured groups are cached apart. A group
+// that has stopped can be read together with an internal experiment that
+// still has the window it had before the stop.
+func TestEvalEvtWriterHoldoutExposureStoppedGroupWithOlderExperiments(t *testing.T) {
+	t.Parallel()
+	users := exposureUsers(t)
+	stoppedAt := exposureDayStart + 100
+	forceStopped := func() *ftproto.HoldoutGroup {
+		group := exposureHashGroup()
+		group.Status = ftproto.HoldoutGroup_FORCE_STOPPED
+		group.StoppedAt = stoppedAt
+		return group
+	}
+	// A scheduled stop is dated by stop_at. stopped_at is the later time
+	// the status was changed at.
+	stopped := func() *ftproto.HoldoutGroup {
+		group := exposureHashGroup()
+		group.Status = ftproto.HoldoutGroup_STOPPED
+		group.StopAt = stoppedAt
+		group.StoppedAt = stoppedAt + 30
+		return group
+	}
+	// Still serving, with a stop_at that was moved earlier.
+	shortened := func() *ftproto.HoldoutGroup {
+		group := exposureHashGroup()
+		group.StopAt = stoppedAt
+		return group
+	}
+	newHarness := func(t *testing.T, group *ftproto.HoldoutGroup) *evalWriterHarness {
+		// The window of the experiment still ends at exposureGroupStopAt.
+		return newEvalWriterHarness(t).
+			withExperiments(exposureMeasurementExperiment()).
+			withCachedGroups(group).
+			withAppend(nil, nil)
+	}
+
+	patterns := []struct {
+		desc      string
+		group     func() *ftproto.HoldoutGroup
+		timestamp int64
+		written   bool
+	}{
+		{desc: "a manual stop: the second before stopped_at", group: forceStopped, timestamp: stoppedAt - 1, written: true},
+		{desc: "a manual stop: at stopped_at", group: forceStopped, timestamp: stoppedAt},
+		{desc: "a manual stop: after stopped_at", group: forceStopped, timestamp: stoppedAt + 10},
+		{desc: "a scheduled stop: the second before stop_at", group: stopped, timestamp: stoppedAt - 1, written: true},
+		{desc: "a scheduled stop: at stop_at", group: stopped, timestamp: stoppedAt},
+		{desc: "a scheduled stop: between stop_at and stopped_at", group: stopped, timestamp: stoppedAt + 10},
+		{desc: "a serving group: the second before its stop_at", group: shortened, timestamp: stoppedAt - 1, written: true},
+		{desc: "a serving group: at its stop_at", group: shortened, timestamp: stoppedAt},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			h := newHarness(t, p.group())
+			// Without keys attached, a Redis call fails the test: an event
+			// after the stop must not ask for the key of the user.
+			if p.written {
+				h.withKeys()
+			}
+			fails := h.write(eventDWHMap{
+				"evt": exposureEvent(users.comparison, p.timestamp, servedNormallyReason()),
+			})
+			assert.Empty(t, fails)
+			if p.written {
+				assert.Len(t, h.lastRows(), 1)
+			} else {
+				assert.Empty(t, h.lastRows())
+			}
+		})
+	}
+
+	t.Run("an event after the stop leaves the key to a late event before the stop", func(t *testing.T) {
+		t.Parallel()
+		h := newHarness(t, forceStopped())
+		keys := h.withKeys()
+		fails := h.write(eventDWHMap{
+			"evt-after": exposureEvent(users.comparison, stoppedAt+10, servedNormallyReason()),
+		})
+		assert.Empty(t, fails)
+		assert.Empty(t, h.lastRows())
+		assert.Empty(t, keys.asked)
+
+		fails = h.write(eventDWHMap{
+			"evt-before": exposureEvent(users.comparison, stoppedAt-10, servedNormallyReason()),
+		})
+		assert.Empty(t, fails)
+		rows := h.lastRows()
+		require.Len(t, rows, 1)
+		row := rows[holdoutExposureRowID("evt-before", exposureGroupID)]
+		require.NotNil(t, row)
+		assert.Equal(t, holdoutdomain.NotInHoldoutVariationID, row.VariationId)
+	})
+}
+
 func TestHoldoutMeasurementPeriod(t *testing.T) {
 	t.Parallel()
 	both := []*exproto.Experiment{exposureMeasurementExperiment(), exposureAnalysisExperiment()}
@@ -1068,6 +1163,25 @@ func TestEvalEvtWriterMeasuredGroupsSource(t *testing.T) {
 		h.holdoutStorage.EXPECT().ListMeasuredGroups(gomock.Any(), exposureEnvID, endedSince).
 			Return(stored(other, exposureHashGroup()), nil)
 		h.measuredGroupsCache.EXPECT().PutIfNewer(gomock.Any(), exposureEnvID, now.UnixNano()).Return(true, nil)
+		assert.Empty(t, h.write(event()))
+		assert.Len(t, h.lastRows(), 1)
+	})
+
+	// The cache refresher writes an empty list when it cannot read the
+	// groups after a change.
+	t.Run("a cached empty list reads the storage", func(t *testing.T) {
+		t.Parallel()
+		h := newHarness(t)
+		h.withKeys()
+		group := exposureHashGroup()
+		h.measuredGroupsCache.EXPECT().Get(exposureEnvID).Return(&ftproto.HoldoutGroups{}, nil)
+		h.holdoutStorage.EXPECT().ListMeasuredGroups(gomock.Any(), exposureEnvID, endedSince).
+			Return(stored(group), nil)
+		h.measuredGroupsCache.EXPECT().PutIfNewer(
+			&ftproto.HoldoutGroups{HoldoutGroups: []*ftproto.HoldoutGroup{group}},
+			exposureEnvID,
+			now.UnixNano(),
+		).Return(true, nil)
 		assert.Empty(t, h.write(event()))
 		assert.Len(t, h.lastRows(), 1)
 	})

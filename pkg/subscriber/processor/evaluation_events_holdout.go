@@ -192,10 +192,11 @@ func hasEveryGroup(groups *ftproto.HoldoutGroups, internal map[string][]*exproto
 }
 
 // match returns what evt counts for: the measured group that targeted the
-// flag at the time of the event, inside the window of one of its internal
-// experiments, and the variation of the user. It returns nil when the event
-// counts for no group. It reads nothing: the variation is decided here, so
-// an event of a user in neither variation never reaches Redis.
+// flag at the time of the event, before the stop of the group and inside the
+// window of one of its internal experiments, and the variation of the user.
+// It returns nil when the event counts for no group. It reads nothing: the
+// variation is decided here, so an event of a user in neither variation
+// never reaches Redis.
 func (d *holdoutExposureDeriver) match(
 	evt *eventproto.EvaluationEvent,
 	measured []*measuredHoldoutGroup,
@@ -211,6 +212,14 @@ func (d *holdoutExposureDeriver) match(
 		return nil
 	}
 	for _, m := range measured {
+		// The experiments list and the measured groups are cached apart, so
+		// a group that has stopped can meet an internal experiment that
+		// still has its window before the stop. The row of an event after
+		// the stop would be outside the window the calculator reads and
+		// would take the key of the user's row of that day.
+		if evt.Timestamp >= holdoutdomain.InternalExperimentStopAt(m.group) {
+			continue
+		}
 		periodStartAt, ok := holdoutMeasurementPeriod(m.experiments, evt.Timestamp)
 		if !ok || !isHoldoutTargetAt(m.group, evt.FeatureId, evt.Timestamp) {
 			continue

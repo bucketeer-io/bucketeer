@@ -1212,13 +1212,41 @@ func TestCacheRefresherHoldoutEventRefreshesExperiments(t *testing.T) {
 		h.expectHoldoutSnapshot(group)
 		h.storage.EXPECT().ListMeasuredGroups(gomock.Any(), "env-1", gomock.Any()).
 			Return(nil, context.DeadlineExceeded)
-		// The measured groups cache is not written.
+		// The list that could not be read is replaced by an empty one at the
+		// generation of this refresh, so the list cached before the change
+		// is not read as the current one.
+		h.measuredGroupsCache.EXPECT().PutIfNewer(
+			gomock.Cond(func(groups *featureproto.HoldoutGroups) bool {
+				return groups != nil && len(groups.HoldoutGroups) == 0
+			}),
+			"env-1",
+			refresherFixedGeneration,
+		).Return(true, nil)
 		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
 			Return(&experimentproto.ListExperimentsResponse{}, nil)
 		h.experimentsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).Return(true, nil)
 		h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 		err := h.refresher.refresh(context.Background(), holdoutGroupEvent(t, group))
 		require.ErrorIs(t, err, context.DeadlineExceeded)
+		assert.True(t, isRepeatable(err))
+	})
+
+	t.Run("a failed read whose empty list cannot be written is repeatable and still publishes", func(t *testing.T) {
+		t.Parallel()
+		h := newHoldoutExperimentsRefresher(t)
+		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1", ExperimentId: "internal"}
+		h.expectHoldoutSnapshot(group)
+		// Not repeatable by itself: the failed cache write makes it so.
+		h.storage.EXPECT().ListMeasuredGroups(gomock.Any(), "env-1", gomock.Any()).
+			Return(nil, errors.New("bad row"))
+		h.measuredGroupsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+			Return(false, errors.New("OOM command not allowed"))
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
+			Return(&experimentproto.ListExperimentsResponse{}, nil)
+		h.experimentsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).Return(true, nil)
+		h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		err := h.refresher.refresh(context.Background(), holdoutGroupEvent(t, group))
+		require.Error(t, err)
 		assert.True(t, isRepeatable(err))
 	})
 

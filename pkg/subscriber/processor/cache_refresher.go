@@ -399,6 +399,15 @@ func (c *cacheRefresher) putHoldoutMeasuredGroups(
 	generation := c.now().UnixNano()
 	groups, err := v2hs.MeasuredGroups(fetchCtx, c.holdoutStorage, event.EnvironmentId, c.now())
 	if err != nil {
+		// The cached list is older than the change this event carries, for
+		// example a new target, and a reader cannot tell. The empty list
+		// written at this generation has the group of no internal
+		// experiment, so a reader reads the storage instead, and it rejects
+		// an older in-flight read.
+		barrier := &featureproto.HoldoutGroups{}
+		if _, putErr := c.holdoutMeasuredGroupsCache.PutIfNewer(barrier, event.EnvironmentId, generation); putErr != nil {
+			return writeError(putErr)
+		}
 		return err
 	}
 	if _, err := c.holdoutMeasuredGroupsCache.PutIfNewer(groups, event.EnvironmentId, generation); err != nil {

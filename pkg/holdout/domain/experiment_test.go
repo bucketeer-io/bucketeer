@@ -287,3 +287,25 @@ func TestMirrorToExperiment(t *testing.T) {
 		assert.Equal(t, later, experiment.StoppedAt)
 	})
 }
+
+func TestInternalExperimentStopAt(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		status   featureproto.HoldoutGroup_Status
+		expected int64
+	}{
+		{desc: "waiting", status: featureproto.HoldoutGroup_WAITING, expected: 200},
+		{desc: "running", status: featureproto.HoldoutGroup_RUNNING, expected: 200},
+		{desc: "analysis", status: featureproto.HoldoutGroup_ANALYSIS, expected: 200},
+		{desc: "a scheduled stop is dated by stop_at", status: featureproto.HoldoutGroup_STOPPED, expected: 200},
+		{desc: "a manual stop is dated by stopped_at", status: featureproto.HoldoutGroup_FORCE_STOPPED, expected: 150},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			group := &featureproto.HoldoutGroup{Status: p.status, StopAt: 200, StoppedAt: 150}
+			assert.Equal(t, p.expected, InternalExperimentStopAt(group))
+		})
+	}
+}
