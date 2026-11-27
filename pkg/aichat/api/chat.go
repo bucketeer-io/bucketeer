@@ -18,7 +18,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	aichatproto "github.com/bucketeer-io/bucketeer/v2/proto/aichat"
 )
 
@@ -29,7 +28,7 @@ func (s *AIChatService) Chat(
 ) error {
 	ctx := stream.Context()
 
-	// Input validation (before authorization to avoid unnecessary RPC)
+	// Input validation
 	if req.EnvironmentId == "" {
 		return statusMissingEnvironmentID.Err()
 	}
@@ -40,22 +39,12 @@ func (s *AIChatService) Chat(
 		return statusTooManyMessages.Err()
 	}
 
-	// Rate limit check (before auth to avoid unnecessary RPC on hot path)
+	// Rate limit check
 	if s.rateLimiter != nil {
 		token, ok := rpc.GetAccessToken(ctx)
 		if ok && !s.rateLimiter.Allow(token.Email) {
 			return statusRateLimitExceeded.Err()
 		}
-	}
-
-	// Authorization check (Viewer role minimum)
-	_, err := s.checkEnvironmentRole(
-		ctx,
-		accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId,
-	)
-	if err != nil {
-		return err
 	}
 
 	// Stream chat

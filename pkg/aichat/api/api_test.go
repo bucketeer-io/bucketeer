@@ -27,12 +27,10 @@ import (
 	"google.golang.org/grpc/codes"
 	gstatus "google.golang.org/grpc/status"
 
-	accountclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm"
 	llmmock "github.com/bucketeer-io/bucketeer/v2/pkg/aichat/llm/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/token"
-	accountproto "github.com/bucketeer-io/bucketeer/v2/proto/account"
 	aichatproto "github.com/bucketeer-io/bucketeer/v2/proto/aichat"
 )
 
@@ -52,28 +50,8 @@ func createContextWithToken(t *testing.T) context.Context {
 func createAIChatServiceForTest(
 	t *testing.T,
 	c *gomock.Controller,
-	orgRole accountproto.AccountV2_Role_Organization,
-	envRole accountproto.AccountV2_Role_Environment,
 ) *AIChatService {
 	t.Helper()
-
-	accountClientMock := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "test@example.com",
-			OrganizationRole: orgRole,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: "env-1",
-					Role:          envRole,
-				},
-			},
-		},
-	}
-	accountClientMock.EXPECT().
-		GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).
-		Return(ar, nil).
-		AnyTimes()
 
 	mockLLM := llmmock.NewMockClient(c)
 	mockLLM.EXPECT().
@@ -98,7 +76,6 @@ func createAIChatServiceForTest(
 		mockLLM,
 		nil,
 		ChatConfig{Model: "test", MaxTokens: 100, Temperature: 0.5},
-		accountClientMock,
 		nil,
 		zap.NewNop(),
 	)
@@ -129,14 +106,6 @@ func TestGetSuggestions(t *testing.T) {
 		expectedErr codes.Code
 	}{
 		{
-			desc: "error: unauthenticated",
-			ctx:  t.Context(),
-			req: &aichatproto.GetSuggestionsRequest{
-				EnvironmentId: "env-1",
-			},
-			expectedErr: codes.Unauthenticated,
-		},
-		{
 			desc: "error: empty environment id",
 			ctx:  createContextWithToken(t),
 			req: &aichatproto.GetSuggestionsRequest{
@@ -158,11 +127,7 @@ func TestGetSuggestions(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			svc := createAIChatServiceForTest(
-				t, mockController,
-				accountproto.AccountV2_Role_Organization_ADMIN,
-				accountproto.AccountV2_Role_Environment_VIEWER,
-			)
+			svc := createAIChatServiceForTest(t, mockController)
 			resp, err := svc.GetSuggestions(p.ctx, p.req)
 			if p.expectedErr == codes.OK {
 				assert.NoError(t, err)
@@ -197,17 +162,6 @@ func TestChat(t *testing.T) {
 		expectedErr codes.Code
 		checkResp   bool
 	}{
-		{
-			desc: "error: unauthenticated",
-			ctx:  t.Context(),
-			req: &aichatproto.ChatRequest{
-				EnvironmentId: "env-1",
-				Messages: []*aichatproto.ChatMessage{
-					{Role: aichatproto.ChatMessage_ROLE_USER, Content: "hi"},
-				},
-			},
-			expectedErr: codes.Unauthenticated,
-		},
 		{
 			desc: "error: empty environment id",
 			ctx:  createContextWithToken(t),
@@ -249,11 +203,7 @@ func TestChat(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			svc := createAIChatServiceForTest(
-				t, mockController,
-				accountproto.AccountV2_Role_Organization_ADMIN,
-				accountproto.AccountV2_Role_Environment_VIEWER,
-			)
+			svc := createAIChatServiceForTest(t, mockController)
 			stream := &mockChatStream{ctx: p.ctx}
 			err := svc.Chat(p.req, stream)
 			if p.expectedErr == codes.OK {
