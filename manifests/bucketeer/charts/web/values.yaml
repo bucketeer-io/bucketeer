@@ -127,6 +127,7 @@ env:
   walkthroughEnabled: true
   accessTokenTTL: 10m
   refreshTokenTTL: 168h
+  maxSignInAge: 720h
 affinity: {}
 nodeSelector: {}
 priorityClassName: ""

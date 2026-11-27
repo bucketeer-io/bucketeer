@@ -186,6 +186,7 @@ web:
     googleTagManagerId:
     accessTokenTTL: 5m
     refreshTokenTTL: 168h
+    maxSignInAge: 720h
   tls:
     service:
       secret: bucketeer-service-cert

@@ -440,7 +440,7 @@ func TestAuthService_GenerateToken_WithCustomTTLs(t *testing.T) {
 			refreshTokenTTL := service.opts.refreshTokenTTL
 
 			ctx, email, isSystemAdmin := p.inputFunc()
-			token, err := service.generateToken(ctx, email, isSystemAdmin)
+			token, err := service.generateToken(ctx, email, isSystemAdmin, time.Now())
 
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
