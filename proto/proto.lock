@@ -30251,6 +30251,17 @@
             ]
           },
           {
+            "name": "HoldoutGroups",
+            "fields": [
+              {
+                "id": 1,
+                "name": "holdout_groups",
+                "type": "HoldoutGroup",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "HoldoutGroupFeature",
             "fields": [
               {

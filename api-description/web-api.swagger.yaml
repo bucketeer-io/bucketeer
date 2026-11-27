@@ -14050,7 +14050,10 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureHoldoutGroupFeature'
-        description: Current targets (removed_at = 0). Populated on read; not a column.
+        description: |-
+          The target flags. Populated on read; not a column. The API and the
+          serving snapshot carry the current targets (removed_at = 0). The list
+          of measured groups carries every target row, removed ones included.
     description: |-
       HoldoutGroup is an environment-scoped control group. Membership is fixed at
       creation. Phase 1 stores and manages the group; evaluation does not read it.

@@ -61,6 +61,28 @@ func IsHeldOut(
 	}
 }
 
+// IsInHoldoutComparisonRange reports whether the user's bucket lies in the
+// comparison range of a HASH group: the arc of the same size as the holdout
+// arc that starts where the holdout arc ends,
+// [bucket_start+percentage, bucket_start+2*percentage)/100 on [0, 1),
+// wrapping at 1. The bucket is the one IsHeldOut tests, so the two arcs
+// never share a user. The users in the comparison range take the normal
+// evaluation path; measurement compares the held-out users with them.
+// A nil group, a SEGMENT group and an empty user ID are never in it.
+func IsInHoldoutComparisonRange(group *ftproto.HoldoutGroup, userID string) bool {
+	if group == nil || userID == "" || group.AssignmentType != ftproto.HoldoutGroup_HASH {
+		return false
+	}
+	if group.SamplingSeed == "" || group.Percentage <= 0 {
+		return false
+	}
+	// The start is reduced onto [0, 100) on the DECIMAL(6,3) grid, because
+	// holdoutArcContains expects a start inside the circle.
+	startUnits := int64(math.Round((group.BucketStart+group.Percentage)*1000)) % holdoutPercentScale
+	bucket := (&bucketeer{}).bucket(holdoutHashInput(group.EnvironmentId, userID, group.SamplingSeed))
+	return holdoutArcContains(bucket, float64(startUnits)/1000, group.Percentage)
+}
+
 func holdoutHashInput(environmentID, userID, seed string) string {
 	return fmt.Sprintf("holdout-%s-%s-%s", environmentID, userID, seed)
 }

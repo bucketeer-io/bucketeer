@@ -67,6 +67,12 @@ const (
 	codeFailedToAppendGoalEvents            = "FailedToAppendGoalEvents"
 	codeLinked                              = "Linked"
 	appVersion                              = "app_version"
+	// Codes of the evaluation event DWH persisters for holdout groups.
+	codeEvaluationEventHeldOut             = "EvaluationEventHeldOut"
+	codeHoldoutExposureLinked              = "HoldoutExposureLinked"
+	codeFailedToListMeasuredHoldoutGroups  = "FailedToListMeasuredHoldoutGroups"
+	codeFailedToDeduplicateHoldoutExposure = "FailedToDeduplicateHoldoutExposure"
+	codeExperimentsOlderThanHoldoutGroup   = "ExperimentsOlderThanHoldoutGroup"
 )
 
 var (

@@ -41,6 +41,7 @@ import (
 	cachev3mock "github.com/bucketeer-io/bucketeer/v2/pkg/cache/v3/mock"
 	domaineventdomain "github.com/bucketeer-io/bucketeer/v2/pkg/domainevent/domain"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/client/mock"
+	experimentdomain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	featureclient "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client"
 	featureclientmock "github.com/bucketeer-io/bucketeer/v2/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/holdout/domain"
@@ -108,6 +109,7 @@ func newCacheRefresherWithMocks(t *testing.T) (*cacheRefresher, *cacheRefresherM
 		m.autoOpsRulesCache,
 		nil,
 		nil,
+		nil,
 		m.invalidationPublisher,
 		zap.NewNop(),
 	).(*cacheRefresher)
@@ -126,7 +128,7 @@ var (
 func TestNewCacheRefresherUsesWallClock(t *testing.T) {
 	t.Parallel()
 	p := NewCacheRefresher(
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, zap.NewNop(),
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, zap.NewNop(),
 	).(*cacheRefresher)
 	require.NotNil(t, p.now)
 	before := time.Now()
@@ -856,6 +858,7 @@ func TestCacheRefresherHoldoutGroup(t *testing.T) {
 		nil, nil, nil, nil, nil, nil, nil, nil, nil,
 		storage,
 		holdoutCache,
+		nil,
 		publisher,
 		zap.NewNop(),
 	).(*cacheRefresher)
@@ -930,7 +933,7 @@ func TestCacheRefresherHoldoutEventDoesNotTouchFeatureCache(t *testing.T) {
 	refresher := NewCacheRefresher(
 		featureClient, nil, nil, nil,
 		featuresCache, nil, nil, nil, nil,
-		storage, holdoutCache,
+		storage, holdoutCache, nil,
 		publisher,
 		zap.NewNop(),
 	).(*cacheRefresher)
@@ -1028,6 +1031,10 @@ type holdoutExperimentsRefresher struct {
 	experimentClient *experimentclientmock.MockClient
 	experimentsCache *cachev3mock.MockExperimentsCache
 	publisher        *publishermock.MockPublisher
+	// measuredGroupsCache has no default expectation: a test that does not
+	// call expectMeasuredGroups fails when the cache or ListMeasuredGroups
+	// is reached.
+	measuredGroupsCache *cachev3mock.MockHoldoutMeasuredGroupsCache
 }
 
 func newHoldoutExperimentsRefresher(t *testing.T) *holdoutExperimentsRefresher {
@@ -1039,11 +1046,13 @@ func newHoldoutExperimentsRefresher(t *testing.T) *holdoutExperimentsRefresher {
 		experimentClient: experimentclientmock.NewMockClient(controller),
 		experimentsCache: cachev3mock.NewMockExperimentsCache(controller),
 		publisher:        publishermock.NewMockPublisher(controller),
+
+		measuredGroupsCache: cachev3mock.NewMockHoldoutMeasuredGroupsCache(controller),
 	}
 	h.refresher = NewCacheRefresher(
 		nil, h.experimentClient, nil, nil,
 		nil, nil, nil, h.experimentsCache, nil,
-		h.storage, h.holdoutCache,
+		h.storage, h.holdoutCache, h.measuredGroupsCache,
 		h.publisher,
 		zap.NewNop(),
 	).(*cacheRefresher)
@@ -1058,6 +1067,27 @@ func (h *holdoutExperimentsRefresher) expectHoldoutSnapshot(group *featureproto.
 		Return(&domain.HoldoutGroup{HoldoutGroup: group}, nil)
 	return h.holdoutCache.EXPECT().
 		PutIfNewer(group, "env-1", refresherFixedGeneration).
+		Return(true, nil)
+}
+
+// expectMeasuredGroups expects the measured groups to be read for the window
+// that ends at the refresher's clock and cached, and returns the cache write.
+func (h *holdoutExperimentsRefresher) expectMeasuredGroups(groups ...*featureproto.HoldoutGroup) *gomock.Call {
+	stored := make([]*domain.HoldoutGroup, 0, len(groups))
+	cached := &featureproto.HoldoutGroups{HoldoutGroups: make([]*featureproto.HoldoutGroup, 0, len(groups))}
+	for _, group := range groups {
+		stored = append(stored, &domain.HoldoutGroup{HoldoutGroup: group})
+		cached.HoldoutGroups = append(cached.HoldoutGroups, group)
+	}
+	h.storage.EXPECT().
+		ListMeasuredGroups(
+			gomock.Any(),
+			"env-1",
+			refresherFixedNow.Add(-experimentdomain.StoppedExperimentEventWindow).Unix(),
+		).
+		Return(stored, nil)
+	return h.measuredGroupsCache.EXPECT().
+		PutIfNewer(cached, "env-1", refresherFixedGeneration).
 		Return(true, nil)
 }
 
@@ -1097,6 +1127,9 @@ func TestCacheRefresherHoldoutEventRefreshesExperiments(t *testing.T) {
 			t.Parallel()
 			h := newHoldoutExperimentsRefresher(t)
 			holdoutPut := h.expectHoldoutSnapshot(group)
+			// The measured groups are cached before the experiments, so a
+			// reader of the internal experiment finds its group.
+			measuredPut := h.expectMeasuredGroups(group).After(holdoutPut)
 			list := h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).DoAndReturn(
 				func(
 					_ context.Context,
@@ -1115,7 +1148,7 @@ func TestCacheRefresherHoldoutEventRefreshesExperiments(t *testing.T) {
 						Experiments: []*experimentproto.Experiment{internal},
 					}, nil
 				},
-			).After(holdoutPut)
+			).After(measuredPut)
 			experimentsPut := h.experimentsCache.EXPECT().PutIfNewer(
 				&experimentproto.Experiments{Experiments: []*experimentproto.Experiment{internal}},
 				"env-1",
@@ -1131,6 +1164,7 @@ func TestCacheRefresherHoldoutEventRefreshesExperiments(t *testing.T) {
 		h := newHoldoutExperimentsRefresher(t)
 		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1"}
 		h.expectHoldoutSnapshot(group)
+		h.expectMeasuredGroups()
 		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
 			Return(&experimentproto.ListExperimentsResponse{}, nil)
 		h.experimentsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).Return(true, nil)
@@ -1145,6 +1179,7 @@ func TestCacheRefresherHoldoutEventRefreshesExperiments(t *testing.T) {
 		h := newHoldoutExperimentsRefresher(t)
 		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1", ExperimentId: "internal"}
 		h.expectHoldoutSnapshot(group)
+		h.expectMeasuredGroups(group)
 		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
 			Return(nil, context.DeadlineExceeded)
 		// The experiments cache is not written.
@@ -1159,6 +1194,7 @@ func TestCacheRefresherHoldoutEventRefreshesExperiments(t *testing.T) {
 		h := newHoldoutExperimentsRefresher(t)
 		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1", ExperimentId: "internal"}
 		h.expectHoldoutSnapshot(group)
+		h.expectMeasuredGroups(group)
 		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
 			Return(&experimentproto.ListExperimentsResponse{}, nil)
 		h.experimentsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
@@ -1168,11 +1204,141 @@ func TestCacheRefresherHoldoutEventRefreshesExperiments(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, isRepeatable(err))
 	})
+
+	// The measured groups and the experiments are read apart from the
+	// serving snapshot, and their readers need the change too.
+	t.Run("a failed read of the serving snapshot still refreshes the measured groups and the experiments", func(t *testing.T) {
+		t.Parallel()
+		h := newHoldoutExperimentsRefresher(t)
+		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1", ExperimentId: "internal"}
+		h.storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").Return(nil, errors.New("db"))
+		barrierPut := h.holdoutCache.EXPECT().
+			PutIfNewer(evaluation.UnavailableHoldoutSnapshot(), "env-1", refresherFixedGeneration).
+			Return(true, nil)
+		measuredPut := h.expectMeasuredGroups(group).After(barrierPut)
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
+			Return(&experimentproto.ListExperimentsResponse{}, nil).After(measuredPut)
+		experimentsPut := h.experimentsCache.EXPECT().
+			PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).Return(true, nil)
+		h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).After(experimentsPut)
+		assert.EqualError(t, h.refresher.refresh(context.Background(), holdoutGroupEvent(t, group)), "db")
+	})
+
+	t.Run("a failed read of the serving snapshot and of the measured groups replaces both", func(t *testing.T) {
+		t.Parallel()
+		h := newHoldoutExperimentsRefresher(t)
+		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1", ExperimentId: "internal"}
+		h.storage.EXPECT().GetLiveServingGroup(gomock.Any(), "env-1").Return(nil, errors.New("db"))
+		h.holdoutCache.EXPECT().
+			PutIfNewer(evaluation.UnavailableHoldoutSnapshot(), "env-1", refresherFixedGeneration).
+			Return(true, nil)
+		h.storage.EXPECT().ListMeasuredGroups(gomock.Any(), "env-1", gomock.Any()).
+			Return(nil, context.DeadlineExceeded)
+		h.measuredGroupsCache.EXPECT().PutIfNewer(
+			gomock.Cond(func(groups *featureproto.HoldoutGroups) bool {
+				return groups != nil && len(groups.HoldoutGroups) == 0
+			}),
+			"env-1",
+			refresherFixedGeneration,
+		).Return(true, nil)
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
+			Return(&experimentproto.ListExperimentsResponse{}, nil)
+		h.experimentsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).Return(true, nil)
+		h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		err := h.refresher.refresh(context.Background(), holdoutGroupEvent(t, group))
+		// The serving error alone would drop the event. The measurement
+		// error can be retried, so the event is redelivered.
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+		assert.True(t, isRepeatable(err))
+	})
+
+	t.Run("a failed read of the measured groups still refreshes the experiments and publishes", func(t *testing.T) {
+		t.Parallel()
+		h := newHoldoutExperimentsRefresher(t)
+		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1", ExperimentId: "internal"}
+		h.expectHoldoutSnapshot(group)
+		h.storage.EXPECT().ListMeasuredGroups(gomock.Any(), "env-1", gomock.Any()).
+			Return(nil, context.DeadlineExceeded)
+		// The list that could not be read is replaced by an empty one at the
+		// generation of this refresh, so the list cached before the change
+		// is not read as the current one.
+		h.measuredGroupsCache.EXPECT().PutIfNewer(
+			gomock.Cond(func(groups *featureproto.HoldoutGroups) bool {
+				return groups != nil && len(groups.HoldoutGroups) == 0
+			}),
+			"env-1",
+			refresherFixedGeneration,
+		).Return(true, nil)
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
+			Return(&experimentproto.ListExperimentsResponse{}, nil)
+		h.experimentsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).Return(true, nil)
+		h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		err := h.refresher.refresh(context.Background(), holdoutGroupEvent(t, group))
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+		assert.True(t, isRepeatable(err))
+	})
+
+	t.Run("a dropped measured groups error does not hide a repeatable experiments error", func(t *testing.T) {
+		t.Parallel()
+		h := newHoldoutExperimentsRefresher(t)
+		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1", ExperimentId: "internal"}
+		h.expectHoldoutSnapshot(group)
+		h.storage.EXPECT().ListMeasuredGroups(gomock.Any(), "env-1", gomock.Any()).
+			Return(nil, errors.New("db"))
+		h.measuredGroupsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+			Return(true, nil)
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
+			Return(nil, context.DeadlineExceeded)
+		h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		err := h.refresher.refresh(context.Background(), holdoutGroupEvent(t, group))
+		// The measured groups error alone would drop the event, and the
+		// experiments cache would keep the state from before the change.
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+		assert.True(t, isRepeatable(err))
+	})
+
+	t.Run("a failed read whose empty list cannot be written is repeatable and still publishes", func(t *testing.T) {
+		t.Parallel()
+		h := newHoldoutExperimentsRefresher(t)
+		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1", ExperimentId: "internal"}
+		h.expectHoldoutSnapshot(group)
+		// Not repeatable by itself: the failed cache write makes it so.
+		h.storage.EXPECT().ListMeasuredGroups(gomock.Any(), "env-1", gomock.Any()).
+			Return(nil, errors.New("bad row"))
+		h.measuredGroupsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+			Return(false, errors.New("OOM command not allowed"))
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
+			Return(&experimentproto.ListExperimentsResponse{}, nil)
+		h.experimentsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).Return(true, nil)
+		h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		err := h.refresher.refresh(context.Background(), holdoutGroupEvent(t, group))
+		require.Error(t, err)
+		assert.True(t, isRepeatable(err))
+	})
+
+	t.Run("a refused measured groups cache write is repeatable and still publishes", func(t *testing.T) {
+		t.Parallel()
+		h := newHoldoutExperimentsRefresher(t)
+		group := &featureproto.HoldoutGroup{Id: "hg", EnvironmentId: "env-1", ExperimentId: "internal"}
+		h.expectHoldoutSnapshot(group)
+		h.storage.EXPECT().ListMeasuredGroups(gomock.Any(), "env-1", gomock.Any()).
+			Return([]*domain.HoldoutGroup{{HoldoutGroup: group}}, nil)
+		h.measuredGroupsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).
+			Return(false, errors.New("OOM command not allowed"))
+		h.experimentClient.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).
+			Return(&experimentproto.ListExperimentsResponse{}, nil)
+		h.experimentsCache.EXPECT().PutIfNewer(gomock.Any(), "env-1", refresherFixedGeneration).Return(true, nil)
+		h.publisher.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		err := h.refresher.refresh(context.Background(), holdoutGroupEvent(t, group))
+		require.Error(t, err)
+		assert.True(t, isRepeatable(err))
+	})
 }
 
 // A group without goals has no internal experiment, and its events must not
-// reach the experiments cache: the experiment client and the experiments
-// cache have no expectation, so a call to either fails the test.
+// reach the experiments cache or the measured groups cache: the experiment
+// client, the experiments cache, ListMeasuredGroups and the measured groups
+// cache have no expectation, so a call to any of them fails the test.
 func TestCacheRefresherHoldoutEventWithoutExperimentsLeavesExperimentsCache(t *testing.T) {
 	t.Parallel()
 	types := []domaineventproto.Event_Type{
@@ -1202,6 +1368,84 @@ func TestCacheRefresherHoldoutEventWithoutExperimentsLeavesExperimentsCache(t *t
 			event := holdoutGroupEvent(t, group)
 			event.Type = eventType
 			require.NoError(t, h.refresher.refresh(context.Background(), event))
+		})
+	}
+}
+
+func TestHoldoutRefreshError(t *testing.T) {
+	t.Parallel()
+	dropped := errors.New("db")
+	otherDropped := errors.New("other")
+	repeatable := context.DeadlineExceeded
+	otherRepeatable := writeError(errors.New("OOM"))
+	patterns := []struct {
+		desc           string
+		serving        error
+		measuredGroups error
+		experiments    error
+		expected       error
+	}{
+		{desc: "no error"},
+		{desc: "only the serving error", serving: dropped, expected: dropped},
+		{desc: "only the measured groups error", measuredGroups: dropped, expected: dropped},
+		{desc: "only the experiments error", experiments: dropped, expected: dropped},
+		{
+			desc:           "the first repeatable error comes first",
+			serving:        repeatable,
+			measuredGroups: otherRepeatable,
+			experiments:    otherRepeatable,
+			expected:       repeatable,
+		},
+		{
+			desc:           "a repeatable serving error is kept over errors that are not",
+			serving:        repeatable,
+			measuredGroups: dropped,
+			experiments:    otherDropped,
+			expected:       repeatable,
+		},
+		{
+			desc:           "a repeatable measured groups error replaces a serving error that is not",
+			serving:        dropped,
+			measuredGroups: repeatable,
+			expected:       repeatable,
+		},
+		{
+			desc:        "a repeatable experiments error replaces a serving error that is not",
+			serving:     dropped,
+			experiments: repeatable,
+			expected:    repeatable,
+		},
+		{
+			desc:           "a repeatable experiments error replaces a measured groups error that is not",
+			measuredGroups: dropped,
+			experiments:    repeatable,
+			expected:       repeatable,
+		},
+		{
+			desc:           "a repeatable experiments error replaces two errors that are not",
+			serving:        dropped,
+			measuredGroups: otherDropped,
+			experiments:    repeatable,
+			expected:       repeatable,
+		},
+		{
+			desc:           "none is repeatable",
+			serving:        dropped,
+			measuredGroups: otherDropped,
+			experiments:    otherDropped,
+			expected:       dropped,
+		},
+		{
+			desc:           "none of the measurement errors is repeatable",
+			measuredGroups: otherDropped,
+			experiments:    dropped,
+			expected:       otherDropped,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, p.expected, holdoutRefreshError(p.serving, p.measuredGroups, p.experiments))
 		})
 	}
 }

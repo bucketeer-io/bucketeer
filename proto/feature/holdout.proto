@@ -70,8 +70,16 @@ message HoldoutGroup {
   int64 updated_at = 22;
   bool archived = 23;
   bool deleted = 24;
-  // Current targets (removed_at = 0). Populated on read; not a column.
+  // The target flags. Populated on read; not a column. The API and the
+  // serving snapshot carry the current targets (removed_at = 0). The list
+  // of measured groups carries every target row, removed ones included.
   repeated HoldoutGroupFeature features = 25;
+}
+
+// HoldoutGroups is the list of the holdout groups of one environment that
+// the analytics pipeline measures, as the cache stores it.
+message HoldoutGroups {
+  repeated HoldoutGroup holdout_groups = 1;
 }
 
 message HoldoutGroupFeature {

@@ -32,11 +32,12 @@ import (
 )
 
 type holdoutGroupCacher struct {
-	environmentClient envclient.Client
-	storage           v2hs.HoldoutStorage
-	caches            []cachev3.HoldoutGroupCache
-	opts              *jobs.Options
-	logger            *zap.Logger
+	environmentClient    envclient.Client
+	storage              v2hs.HoldoutStorage
+	caches               []cachev3.HoldoutGroupCache
+	measuredGroupsCaches []cachev3.HoldoutMeasuredGroupsCache
+	opts                 *jobs.Options
+	logger               *zap.Logger
 }
 
 func NewHoldoutGroupCacher(
@@ -52,15 +53,18 @@ func NewHoldoutGroupCacher(
 		opt(dopts)
 	}
 	caches := make([]cachev3.HoldoutGroupCache, 0, len(multiCaches))
+	measuredGroupsCaches := make([]cachev3.HoldoutMeasuredGroupsCache, 0, len(multiCaches))
 	for _, multiCache := range multiCaches {
 		caches = append(caches, cachev3.NewHoldoutGroupCache(multiCache, 0))
+		measuredGroupsCaches = append(measuredGroupsCaches, cachev3.NewHoldoutMeasuredGroupsCache(multiCache))
 	}
 	return &holdoutGroupCacher{
-		environmentClient: environmentClient,
-		storage:           storage,
-		caches:            caches,
-		opts:              dopts,
-		logger:            dopts.Logger.Named("holdout-group-cacher"),
+		environmentClient:    environmentClient,
+		storage:              storage,
+		caches:               caches,
+		measuredGroupsCaches: measuredGroupsCaches,
+		opts:                 dopts,
+		logger:               dopts.Logger.Named("holdout-group-cacher"),
 	}
 }
 
@@ -81,20 +85,49 @@ func (c *holdoutGroupCacher) Run(ctx context.Context) (lastErr error) {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		// Captured before the read so a slower writer cannot overwrite a newer snapshot.
-		generation := time.Now().UnixNano()
-		snapshot, err := v2hs.ServingSnapshot(ctx, c.storage, env.Id)
-		if err != nil {
-			c.logger.Error("Failed to read the live holdout group",
-				zap.Error(err),
-				zap.String("environmentId", env.Id),
-			)
+		// The two caches are refreshed independently: a failure of one must
+		// not leave the other stale.
+		if err := c.refreshServingSnapshot(ctx, env.Id); err != nil {
 			lastErr = err
-			continue
 		}
-		c.putCache(snapshot, env.Id, generation)
+		if err := c.refreshMeasuredGroups(ctx, env.Id); err != nil {
+			lastErr = err
+		}
 	}
 	return lastErr
+}
+
+func (c *holdoutGroupCacher) refreshServingSnapshot(ctx context.Context, environmentID string) error {
+	// Captured before the read so a slower writer cannot overwrite a newer snapshot.
+	generation := time.Now().UnixNano()
+	snapshot, err := v2hs.ServingSnapshot(ctx, c.storage, environmentID)
+	if err != nil {
+		c.logger.Error("Failed to read the live holdout group",
+			zap.Error(err),
+			zap.String("environmentId", environmentID),
+		)
+		return err
+	}
+	c.putCache(snapshot, environmentID, generation)
+	return nil
+}
+
+// refreshMeasuredGroups stores the groups the analytics pipeline measures.
+// The list is empty for an environment without such a group, which is every
+// environment whose groups have no goals.
+func (c *holdoutGroupCacher) refreshMeasuredGroups(ctx context.Context, environmentID string) error {
+	// Captured before the read so a slower writer cannot overwrite a newer list.
+	now := time.Now()
+	groups, err := v2hs.MeasuredGroups(ctx, c.storage, environmentID, now)
+	if err != nil {
+		c.logger.Error("Failed to read the measured holdout groups",
+			zap.Error(err),
+			zap.String("environmentId", environmentID),
+		)
+		return err
+	}
+	c.putMeasuredGroups(groups, environmentID, now.UnixNano())
+	return nil
 }
 
 func (c *holdoutGroupCacher) listAllEnvironments(
@@ -143,4 +176,33 @@ func (c *holdoutGroupCacher) putCache(
 	}
 	wg.Wait()
 	return updatedInstances
+}
+
+func (c *holdoutGroupCacher) putMeasuredGroups(
+	groups *ftproto.HoldoutGroups,
+	environmentID string,
+	generation int64,
+) {
+	var wg sync.WaitGroup
+	for _, cache := range c.measuredGroupsCaches {
+		wg.Add(1)
+		go func(cache cachev3.HoldoutMeasuredGroupsCache) {
+			defer wg.Done()
+			accepted, err := cache.PutIfNewer(groups, environmentID, generation)
+			if err != nil {
+				c.logger.Error("Failed to cache measured holdout groups",
+					zap.Error(err),
+					zap.String("environmentId", environmentID),
+				)
+				return
+			}
+			if !accepted {
+				c.logger.Info("Skipped measured holdout groups cache write: a newer list is already cached",
+					zap.String("environmentId", environmentID),
+					zap.Int64("generation", generation),
+				)
+			}
+		}(cache)
+	}
+	wg.Wait()
 }

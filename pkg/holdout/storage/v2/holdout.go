@@ -21,8 +21,10 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	pkgErr "github.com/bucketeer-io/bucketeer/v2/pkg/error"
+	experimentdomain "github.com/bucketeer-io/bucketeer/v2/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/v2/pkg/holdout/domain"
 	proto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 )
@@ -95,6 +97,42 @@ type HoldoutStorage interface {
 	CountSegmentUsers(ctx context.Context, segmentID, environmentID string, limit int64) (int64, error)
 	// ListLiveFeatureTargets returns current target rows of WAITING, RUNNING, or ANALYSIS groups.
 	ListLiveFeatureTargets(ctx context.Context, environmentID, featureID string) ([]domain.FeatureTarget, error)
+	// ListMeasuredGroups returns the groups that have an internal experiment
+	// and are serving, or stopped at endedSince or later, archived ones
+	// included. A scheduled stop is dated by stop_at and a manual stop by
+	// stopped_at, which is the stop_at of the internal experiments of the
+	// group in each case. Every target row of a group is attached, removed
+	// ones included, so a reader can tell which flags the group targeted at
+	// a past time. A group without an internal experiment is never returned.
+	// The order is start_at, then id; target rows are in added_at, then id
+	// order.
+	ListMeasuredGroups(ctx context.Context, environmentID string, endedSince int64) ([]*domain.HoldoutGroup, error)
+}
+
+// MeasuredGroups is the proto stored in the measured groups cache: the
+// groups of the environment whose internal experiments the analytics
+// pipeline still lists at now, which is until StoppedExperimentEventWindow
+// after they stopped. Every writer (batch cacher, subscriber) builds the
+// list here so they publish the same one.
+func MeasuredGroups(
+	ctx context.Context,
+	storage HoldoutStorage,
+	environmentID string,
+	now time.Time,
+) (*proto.HoldoutGroups, error) {
+	groups, err := storage.ListMeasuredGroups(
+		ctx,
+		environmentID,
+		now.Add(-experimentdomain.StoppedExperimentEventWindow).Unix(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	list := &proto.HoldoutGroups{HoldoutGroups: make([]*proto.HoldoutGroup, 0, len(groups))}
+	for _, group := range groups {
+		list.HoldoutGroups = append(list.HoldoutGroups, group.HoldoutGroup)
+	}
+	return list, nil
 }
 
 // ServingSnapshot is the proto stored in the holdout cache.

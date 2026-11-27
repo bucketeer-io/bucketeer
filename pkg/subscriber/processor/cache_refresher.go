@@ -108,6 +108,7 @@ type cacheRefresher struct {
 	autoOpsRulesCache          cachev3.AutoOpsRulesCache
 	holdoutStorage             v2hs.HoldoutStorage
 	holdoutGroupCache          cachev3.HoldoutGroupCache
+	holdoutMeasuredGroupsCache cachev3.HoldoutMeasuredGroupsCache
 	cacheInvalidationPublisher publisher.Publisher
 	logger                     *zap.Logger
 	// now supplies the features snapshot generation; overridable in tests.
@@ -131,6 +132,7 @@ func NewCacheRefresher(
 	autoOpsRulesCache cachev3.AutoOpsRulesCache,
 	holdoutStorage v2hs.HoldoutStorage,
 	holdoutGroupCache cachev3.HoldoutGroupCache,
+	holdoutMeasuredGroupsCache cachev3.HoldoutMeasuredGroupsCache,
 	cacheInvalidationPublisher publisher.Publisher,
 	logger *zap.Logger,
 ) subscriber.PubSubProcessor {
@@ -146,6 +148,7 @@ func NewCacheRefresher(
 		autoOpsRulesCache:          autoOpsRulesCache,
 		holdoutStorage:             holdoutStorage,
 		holdoutGroupCache:          holdoutGroupCache,
+		holdoutMeasuredGroupsCache: holdoutMeasuredGroupsCache,
 		cacheInvalidationPublisher: cacheInvalidationPublisher,
 		logger:                     logger.Named("cache-refresher"),
 		now:                        time.Now,
@@ -331,25 +334,18 @@ func (c *cacheRefresher) refreshHoldoutGroup(
 	defer cancel()
 	// Captured before the read so a minute-cacher snapshot cannot overwrite a newer stop.
 	generation := c.now().UnixNano()
-	snapshot, err := v2hs.ServingSnapshot(fetchCtx, c.holdoutStorage, event.EnvironmentId)
-	if err != nil {
+	snapshot, readErr := v2hs.ServingSnapshot(fetchCtx, c.holdoutStorage, event.EnvironmentId)
+	if readErr != nil {
 		// A failed read must not delete the generation marker. The unavailable
 		// snapshot written at this generation rejects the older in-flight read,
 		// and marks evaluation IDs so recovery forces a full evaluation.
-		barrier := evaluation.UnavailableHoldoutSnapshot()
-		if _, putErr := c.holdoutGroupCache.PutIfNewer(barrier, event.EnvironmentId, generation); putErr != nil {
-			return writeError(putErr)
-		}
-		if pubErr := c.publishCacheInvalidation(ctx, event); pubErr != nil {
-			return pubErr
-		}
-		return err
+		snapshot = evaluation.UnavailableHoldoutSnapshot()
 	}
 	accepted, err := c.holdoutGroupCache.PutIfNewer(snapshot, event.EnvironmentId, generation)
 	if err != nil {
 		return writeError(err)
 	}
-	if !accepted {
+	if readErr == nil && !accepted {
 		c.logger.Info("Skipped holdout redis cache write: a newer snapshot is already cached",
 			zap.String("environmentId", event.EnvironmentId),
 			zap.String("entityId", event.EntityId),
@@ -362,14 +358,78 @@ func (c *cacheRefresher) refreshHoldoutGroup(
 	// experiments cache is refreshed here, before the invalidation tells the
 	// gateways to read again. A group without internal experiments leaves the
 	// experiments cache alone.
-	var experimentsErr error
+	//
+	// The same event carries the changes the readers of the internal
+	// experiments need from the group: its targets, with the time each was
+	// added and removed, and its stop. The measured groups are written
+	// first, so a reader that finds the internal experiment in the
+	// experiments cache finds its group too. A group without internal
+	// experiments is not a measured group and leaves that cache alone as
+	// well.
+	//
+	// Both are refreshed when the serving snapshot could not be read too:
+	// they are read apart from it, and their readers would otherwise keep
+	// the state from before the change.
+	var measuredGroupsErr, experimentsErr error
 	if holdoutGroupHasExperiments(event) {
+		measuredGroupsErr = c.putHoldoutMeasuredGroups(ctx, event)
 		_, experimentsErr = c.putExperiments(ctx, event)
 	}
 	if err := c.publishCacheInvalidation(ctx, event); err != nil {
 		return err
 	}
-	return experimentsErr
+	return holdoutRefreshError(readErr, measuredGroupsErr, experimentsErr)
+}
+
+// holdoutRefreshError returns the error of a holdout refresh whose caches
+// failed apart, from the errors in the order the caches are refreshed. It is
+// the first repeatable one, so the event is redelivered whenever a
+// redelivery can still fix one of the caches, and the first one when none is
+// repeatable.
+func holdoutRefreshError(errs ...error) error {
+	var first error
+	for _, err := range errs {
+		if err == nil {
+			continue
+		}
+		if isRepeatable(err) {
+			return err
+		}
+		if first == nil {
+			first = err
+		}
+	}
+	return first
+}
+
+func (c *cacheRefresher) putHoldoutMeasuredGroups(
+	ctx context.Context,
+	event *domaineventproto.Event,
+) error {
+	if c.holdoutMeasuredGroupsCache == nil {
+		return nil
+	}
+	fetchCtx, cancel := context.WithTimeout(ctx, cacheRefresherFetchTimeout)
+	defer cancel()
+	// Captured before reading so the batch cacher cannot overwrite a newer list
+	generation := c.now().UnixNano()
+	groups, err := v2hs.MeasuredGroups(fetchCtx, c.holdoutStorage, event.EnvironmentId, c.now())
+	if err != nil {
+		// The cached list is older than the change this event carries, for
+		// example a new target, and a reader cannot tell. The empty list
+		// written at this generation has the group of no internal
+		// experiment, so a reader reads the storage instead, and it rejects
+		// an older in-flight read.
+		barrier := &featureproto.HoldoutGroups{}
+		if _, putErr := c.holdoutMeasuredGroupsCache.PutIfNewer(barrier, event.EnvironmentId, generation); putErr != nil {
+			return writeError(putErr)
+		}
+		return err
+	}
+	if _, err := c.holdoutMeasuredGroupsCache.PutIfNewer(groups, event.EnvironmentId, generation); err != nil {
+		return writeError(err)
+	}
+	return nil
 }
 
 // holdoutGroupHasExperiments reports whether the group carried by a

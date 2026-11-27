@@ -30,6 +30,15 @@ var (
 	ErrReasonNil                                 = errors.New("eventpersister: reason is nil")
 	ErrEvaluationsAreEmpty                       = errors.New("eventpersister: evaluations are empty")
 	ErrEvaluationEventIssuedAfterExperimentEnded = errors.New("eventpersister: evaluation event issued after experiment ended") //nolint:lll
+	// ErrEvaluationEventHeldOut is returned when the evaluation event has the
+	// HOLDOUT reason. The experiment of the flag does not count such a user.
+	ErrEvaluationEventHeldOut = errors.New("eventpersister: evaluation event of a held-out user")
+	// errMeasuredHoldoutGroupsChanged is returned when the measured holdout
+	// groups read from the storage were replaced in the cache by a list read
+	// later, and that list cannot be used either. The events are retried.
+	errMeasuredHoldoutGroupsChanged = errors.New(
+		"eventpersister: the measured holdout groups changed while they were read",
+	)
 	// ErrGoalEventOlderThanEvaluation is returned when the goal event timestamp is older
 	// than the user's latest evaluation timestamp. Because the client SDK sets both
 	// timestamps when the events are generated, this means the goal event was created

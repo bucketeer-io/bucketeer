@@ -284,6 +284,9 @@ func (e ExperimentCalculator) computeExperimentSRM(
 			SkipReason: "no goal results available to derive observed traffic split",
 		}
 	}
+	if isHoldoutExperiment(experiment) {
+		return e.computeHoldoutExperimentSRM(ctx, environmentID, experiment, goalResults)
+	}
 	feature, err := e.getFeatureForSRM(ctx, environmentID, experiment)
 	if err != nil {
 		// Log at warn level — the SRM check is best-effort diagnostic
@@ -312,6 +315,46 @@ func (e ExperimentCalculator) computeExperimentSRM(
 		}
 	}
 	return computeSRM(goalResults[0].VariationResults, feature, DefaultSRMThreshold)
+}
+
+// isHoldoutExperiment reports whether e is the internal experiment of a
+// holdout group.
+func isHoldoutExperiment(e *experiment.Experiment) bool {
+	return e.Kind == experiment.Experiment_HOLDOUT
+}
+
+// computeHoldoutExperimentSRM is computeExperimentSRM for the internal
+// experiment of a holdout group. The feature ID of such an experiment is the
+// ID of the group and no flag has it, so the expected split is read from the
+// group. A group that cannot be fetched gives SKIPPED, like a flag that
+// cannot be fetched.
+func (e ExperimentCalculator) computeHoldoutExperimentSRM(
+	ctx context.Context,
+	environmentID string,
+	experiment *experiment.Experiment,
+	goalResults []*eventcounter.GoalResult,
+) *eventcounter.SrmResult {
+	resp, err := e.featureClient.GetHoldoutGroup(ctx, &featureproto.GetHoldoutGroupRequest{
+		Id:            experiment.FeatureId,
+		EnvironmentId: environmentID,
+	})
+	if err != nil {
+		e.logger.Warn("SRM check: failed to fetch holdout group, marking SKIPPED",
+			log.FieldsFromIncomingContext(ctx).AddFields(
+				zap.String("environmentId", environmentID),
+				zap.String("holdoutGroupId", experiment.FeatureId),
+				zap.String("experimentId", experiment.Id),
+				zap.Error(err),
+			)...,
+		)
+		// Generic message for the same reason as in computeExperimentSRM.
+		return &eventcounter.SrmResult{
+			Status:     eventcounter.SrmResult_SKIPPED,
+			Threshold:  DefaultSRMThreshold,
+			SkipReason: "could not fetch holdout group",
+		}
+	}
+	return computeHoldoutSRM(goalResults[0].VariationResults, resp.HoldoutGroup, DefaultSRMThreshold)
 }
 
 func (e ExperimentCalculator) getFeatureForSRM(

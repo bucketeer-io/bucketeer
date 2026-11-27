@@ -129,15 +129,11 @@ func (g *HoldoutGroup) MirrorToExperiment(experiment *experimentdomain.Experimen
 	switch g.Status {
 	case featureproto.HoldoutGroup_RUNNING, featureproto.HoldoutGroup_ANALYSIS:
 		experiment.Status = experimentproto.Experiment_RUNNING
-		experiment.StopAt = g.StopAt
+		experiment.StopAt = InternalExperimentStopAt(g.HoldoutGroup)
 		experiment.StoppedAt = math.MaxInt64
-	case featureproto.HoldoutGroup_STOPPED:
+	case featureproto.HoldoutGroup_STOPPED, featureproto.HoldoutGroup_FORCE_STOPPED:
 		experiment.Status = experimentproto.Experiment_STOPPED
-		experiment.StopAt = g.StopAt
-		experiment.StoppedAt = g.StoppedAt
-	case featureproto.HoldoutGroup_FORCE_STOPPED:
-		experiment.Status = experimentproto.Experiment_STOPPED
-		experiment.StopAt = g.StoppedAt
+		experiment.StopAt = InternalExperimentStopAt(g.HoldoutGroup)
 		experiment.StoppedAt = g.StoppedAt
 	}
 	if proto.Equal(before, experiment.Experiment) {
@@ -145,4 +141,14 @@ func (g *HoldoutGroup) MirrorToExperiment(experiment *experimentdomain.Experimen
 	}
 	experiment.UpdatedAt = now
 	return true
+}
+
+// InternalExperimentStopAt returns the stop_at that MirrorToExperiment gives
+// the internal experiments of the group: the group's stopped_at after a
+// manual stop, and its stop_at otherwise.
+func InternalExperimentStopAt(g *featureproto.HoldoutGroup) int64 {
+	if g.Status == featureproto.HoldoutGroup_FORCE_STOPPED {
+		return g.StoppedAt
+	}
+	return g.StopAt
 }
