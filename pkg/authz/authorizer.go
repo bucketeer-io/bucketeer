@@ -122,7 +122,7 @@ func (a *Authorizer) Authorize(
 		Request:              req,
 		Caller:               caller,
 		HasSystemAdminAccess: hasFullAccess,
-		accounts:             &accountCache{loader: a.accounts},
+		accounts:             &accountCache{accountLoader: a.accounts},
 	}
 	var admin *Account
 	if !hasFullAccess && caller.PublicAPI == nil {
@@ -257,18 +257,18 @@ func editorOf(access *Access, admin, target *Account) *eventproto.Editor {
 
 // accountCache loads each scope's account once per request.
 type accountCache struct {
-	loader AccountLoader
-	loaded map[ScopeID]*Account
+	accountLoader AccountLoader
+	loaded        map[ScopeID]*Account
 }
 
 func (c *accountCache) get(ctx context.Context, email string, scope ScopeID) (*Account, error) {
 	if account, ok := c.loaded[scope]; ok {
 		return account, nil
 	}
-	if c.loader == nil {
+	if c.accountLoader == nil {
 		return nil, ErrInternal
 	}
-	account, err := active(c.loader.Account(ctx, email, scope))
+	account, err := active(c.accountLoader.Account(ctx, email, scope))
 	if err != nil {
 		return nil, err
 	}
@@ -282,10 +282,10 @@ func (c *accountCache) get(ctx context.Context, email string, scope ScopeID) (*A
 // systemAdmin returns the caller's system admin account, or nil when the
 // caller has none or it is disabled.
 func (c *accountCache) systemAdmin(ctx context.Context, email string) (*Account, error) {
-	if c.loader == nil {
+	if c.accountLoader == nil {
 		return nil, ErrInternal
 	}
-	account, err := active(c.loader.SystemAdmin(ctx, email))
+	account, err := active(c.accountLoader.SystemAdmin(ctx, email))
 	if errors.Is(err, ErrUnauthenticated) {
 		return nil, nil
 	}

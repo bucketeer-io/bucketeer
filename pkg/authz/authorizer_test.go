@@ -708,7 +708,7 @@ func TestAuthorizeEditorOfTheTargetScope(t *testing.T) {
 func TestAccessAccountIsCached(t *testing.T) {
 	t.Parallel()
 	loader := &fakeAccounts{accounts: testAccounts()}
-	access := &Access{Caller: Caller{Email: "editor@example.com"}, accounts: &accountCache{loader: loader}}
+	access := &Access{Caller: Caller{Email: "editor@example.com"}, accounts: &accountCache{accountLoader: loader}}
 	scope := ScopeID{Kind: EnvironmentScope, ID: "env-1"}
 	first, err := access.Account(context.Background(), scope)
 	require.NoError(t, err)
